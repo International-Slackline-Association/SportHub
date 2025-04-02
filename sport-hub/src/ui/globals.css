@@ -87,8 +87,9 @@ html, body {
 }
 
 .nav-logo img {
-  max-width: 426;
+  max-width: 426px;
   max-height: 100%;
+  min-width: 51px;
   width: auto;
   height: auto;
   display: block;
@@ -97,9 +98,41 @@ html, body {
 /* Footer */
 
 footer {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
   width: 100%;
   background: var(--ISA-green);
   color: white;
   text-align: center;
-  padding: 10px;
+  padding: 40px;
+  padding-left: 120px;
+  padding-right: 120px;
+  gap: 20px;
+  align-items: center;
+}
+
+.footer-column {
+  display: flex;
+  flex-direction: column;
+  width: 33%;
+  gap: 20px;
+  align-items: center;
+  font-size: 14;
+}
+
+.footer-column img {
+  width: auto;
+  height: auto;
+  display: block;
+}
+
+.sport-img {
+  max-width: 140px;
+  max-height: 60px;
+}
+
+.isa-logo {
+  max-width: 200px;
+  max-height: 80px;
 }

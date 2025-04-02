@@ -1,9 +1,8 @@
 import Image from "next/image";
 import Menu from "./menu";
-import Link from "next/link"
 
 export default function Navbar() {
-    const nav_items = {
+    const nav_items: Record<string, { href: string }> = {
         "Home": {
             "href": "/"
         },
