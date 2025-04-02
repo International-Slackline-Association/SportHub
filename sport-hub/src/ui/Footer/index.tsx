@@ -3,6 +3,10 @@
 import Link from "next/link";
 import Image from "next/image";
 
+type FooterProps = {
+    column_height?: number;
+}
+
 const footer_items: { [key: string]: string } = {
     "Frequently Asked Questions": "/faq",
     "Event Registration": "/events",
@@ -18,9 +22,9 @@ const chunkArray = (arr: string[], size: number) => {
     );
 };
 
-const Footer: React.FC = () => {
+const Footer: React.FC<FooterProps> = ({ column_height = 3 }) => {
     // TODO: change "3" to a prop input value
-    const split_arrs = chunkArray(Object.keys(footer_items), 3)
+    const split_arrs = chunkArray(Object.keys(footer_items), column_height)
 
     return (
         <footer className="clearfix font-bold">
@@ -35,7 +39,7 @@ const Footer: React.FC = () => {
             ))}
             <div className="footer-column">
                 <Image 
-                className="isa-logo"
+                    className="isa-logo"
                     src="/static/images/ISA_logo.png"
                     alt="logo"
                     width={623}
@@ -50,7 +54,7 @@ const Footer: React.FC = () => {
                 />
             </div>
         </footer>
-    )
-}
+    );
+};
 
 export default Footer;
