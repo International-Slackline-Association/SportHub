@@ -1,6 +1,6 @@
 ![](/sport-hub/public/favicon.ico)
 
-[![](https://dcbadge.limes.pink/api/server/EUUGjDtgGD)](https://discord.gg/EUUGjDtgGD)
+[![](https://dcbadge.limes.pink/api/server/ugeS27zcuD)](https://discord.gg/ugeS27zcuD)
 
 # ISA SportHub
 
