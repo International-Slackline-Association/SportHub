@@ -8,7 +8,7 @@ Welcome to the ISA SportHub repo! This project is currently a monorepo with the 
 
 All Frontend code is Next.js in the [sport-hub](/sport-hub) directory and all Backend code is in the [sport-hub-backend]() directory.
 
-Join the discord channel to get involved with development, ask questions, and keep track of the latest features.
+Join the discord channel to get involved with development, ask questions, and keep track of the latest changes in the `github-webhook` channel.
 
 ## Getting Started
 
