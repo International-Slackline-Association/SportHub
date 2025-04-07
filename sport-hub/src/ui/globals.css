@@ -1,13 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --ISA-green: #009F9A;
-  --btn-pressed-green: #0A6564;
+  --primary: #009F9A; /* ISA Green */
+  --primary-dark: #0A6564;
 }
 
 @theme inline {
   --font-main: var(--font-open-sans);
 }
+
+/* Also covers tablets in portrait and landscape mode */
+@custom-variant desktop (@media (width >= theme(--breakpoint-sm)));
 
 /* General */
 
@@ -42,97 +45,129 @@ html, body {
 /* NavBar */
 
 .navbar {
-  width: 100%;
-  height: 80px;
-  overflow: hidden;
-  background: var(--ISA-green);
+  align-items: center;
+  background: var(--primary);
   color: white;
   display: flex;
   flex-direction: row;
+  height: 80px;
   justify-content: space-between;
+  overflow: hidden;
+  width: 100%;
 }
 
-.menu {
+nav ul {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   justify-content: flex-end;
   gap: 10px;
   align-items: center;
   text-align: center;
   margin: 10px;
   font-size: 16;
+
+  @variant desktop {
+    flex-direction: row;
+  }
 }
 
-.btn {
+nav a {
   @apply font-bold py-3 px-4 rounded;
 }
 
-.btn-nav {
-  background: var(--ISA-green);
+nav a:hover,
+nav a[aria-current] {
+  background: var(--primary-dark)
 }
 
-.btn-nav-active,
-.btn-nav:hover{
-  background: var(--btn-pressed-green);
+.navbar .mobile-menu-button {
+  @apply text-5xl flex-grow pr-4;
+  text-align: right;
 }
-
-.nav-logo {
-  flex: 1;
-  margin: 10px;
-  margin-left: 60px;
-  max-height: 100%;
-  display: flex;
-  justify-content: left;
-  overflow: hidden;
+ 
+.navbar .nav-logo {
+  height: 100%;
+  padding: 10px;
 }
 
 .nav-logo img {
+  display: block;
   max-width: 426px;
   max-height: 100%;
   min-width: 51px;
   width: auto;
   height: auto;
-  display: block;
+}
+
+.navbar .mobile-menu-drawer {
+  @apply fixed top-0 left-0 h-full w-64 shadow-lg;
+  background: white;
+  color: var(--primary);
 }
 
 /* Footer */
 
 footer {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-around;
-  width: 100%;
-  background: var(--ISA-green);
-  color: white;
-  text-align: center;
-  padding: 40px;
-  padding-left: 120px;
-  padding-right: 120px;
-  gap: 20px;
+  @apply font-bold p-4;
   align-items: center;
-}
-
-.footer-column {
+  background: var(--primary);
+  color: white;
   display: flex;
   flex-direction: column;
-  width: 33%;
-  gap: 20px;
-  align-items: center;
-  font-size: 14;
+  justify-content: space-around;
+  text-align: center;
+  @variant desktop {
+    @apply px-40 py-7;
+    flex-direction: row;
+    height: 156px;
+  }
 }
 
-.footer-column img {
-  width: auto;
-  height: auto;
-  display: block;
+.footer-grid {
+  display: grid;
+  flex-grow: 1;
+  font-size: 12px;
+  grid-template-columns: 1fr;
+  height: 100%;
+  margin-bottom: --spacing(5);
+
+  @variant desktop {
+    font-size: 14px;
+    grid-template-columns: 1fr 1fr;
+    margin-bottom: 0;
+  }
+}
+
+.footer-grid a {
+  @apply font-bold py-3 px-4 rounded;
+  align-self: center;
+}
+
+.footer-column-logos {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  font-size: 14;
+  gap: 20px;
+  width: 33%;
 }
 
 .sport-img {
-  max-width: 140px;
-  max-height: 60px;
+  max-width: 70px;
+  max-height: 30px;
+
+  @variant desktop {
+    max-width: 104px;
+    max-height: 60px;
+  }
 }
 
 .isa-logo {
-  max-width: 200px;
-  max-height: 80px;
+  max-width: 100px;
+  max-height: 40px;
+
+  @variant desktop {
+    max-width: 200px;
+    max-height: 80px;
+  }
 }
