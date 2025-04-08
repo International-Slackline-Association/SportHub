@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import "@/ui/globals.css";
-import Footer from "@/ui/Footer";
-import Navbar from "@/ui/Navigation"
+import "@ui/globals.css";
+import Footer from "@ui/Footer";
+import Navigation from "@ui/Navigation"
 import { Open_Sans } from "next/font/google"
 
 export const metadata: Metadata = {
@@ -23,7 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={open_sans_font.variable}>
       <body className="font-main">
-        <Navbar />
+        <Navigation />
         <div className="main-content">
           {children}
         </div>

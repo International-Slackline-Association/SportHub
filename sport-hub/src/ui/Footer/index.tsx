@@ -1,43 +1,27 @@
-'use client'
-
 import Link from "next/link";
 import Image from "next/image";
+import { LinkType } from "@ui/Navigation";
 
-type FooterProps = {
-    column_height?: number;
-}
+const footer_items: LinkType[] = [
+    { name: "Frequently Asked Questions", href: "/faq" },
+    { name: "ISA Members and Partners", href: "/partners" },
+    { name: "Event Registration", href: "/events" },
+    { name: "Open Source", href: "https://github.com/International-Slackline-Association" },
+    { name: "About ISA Sports", href: "/about" },
+    { name: "Contact Us", href: "/contact" },
+];
 
-const footer_items: { [key: string]: string } = {
-    "Frequently Asked Questions": "/faq",
-    "Event Registration": "/events",
-    "About ISA Sports": "/about",
-    "ISA Members and Partners": "/partners",
-    "Open Source": "https://github.com/International-Slackline-Association",
-    "Contact Us": "/contact"
-}
-
-const chunkArray = (arr: string[], size: number) => {
-    return Array.from({ length: Math.ceil(arr.length / size) }, (_, index) =>
-        arr.slice(index * size, index * size + size)
-    );
-};
-
-const Footer: React.FC<FooterProps> = ({ column_height = 3 }) => {
-    // TODO: change "3" to a prop input value
-    const split_arrs = chunkArray(Object.keys(footer_items), column_height)
-
+const Footer = () => {
     return (
-        <footer className="clearfix font-bold">
-            {split_arrs.map((chunk, index) => (
-                <div key={index} className="footer-column">
-                    {chunk.map((item) => (
-                        <Link key={item} href={footer_items[item]}>
-                            {item}
-                        </Link>
-                    ))}
-                </div>
-            ))}
-            <div className="footer-column">
+        <footer>
+            <div className="footer-grid">
+                {footer_items.map(({ href, name }) => (
+                    <Link key={name} href={href}>
+                        {name}
+                    </Link>
+                ))}
+            </div>
+            <div className="footer-column-logos">
                 <Image 
                     className="isa-logo"
                     src="/static/images/ISA_logo.png"
