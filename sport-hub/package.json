@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@tanstack/react-table": "^8.21.2",
     "google": "link:next/font/google",
     "next": "15.2.3",
     "postcss": "^8.5.3",

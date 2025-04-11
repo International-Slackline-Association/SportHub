@@ -23,9 +23,11 @@
     "paths": {
       "@ui/*": ["src/ui/*"],
       "@utils/*": ["src/utils/*"],
+      "@types/*": ["src/types/*"],
+      "@mocks/*": ["src/mocks/*"],
     },
     "rootDir": "."
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "types/**/*.d.ts"],
   "exclude": ["node_modules"]
 }

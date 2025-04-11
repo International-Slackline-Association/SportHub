@@ -38,9 +38,7 @@ const NavLink = ({ children, href, onClick }: NavLinkProps) => {
   const pathname = usePathname();
   const isActive = pathname === href;
   return (
-    <Link aria-current={isActive ? "page" : undefined} href={href} onClick={() => {
-      onClick && onClick();
-    }}>
+    <Link aria-current={isActive ? "page" : undefined} href={href} onClick={onClick}>
       {children}
     </Link>
   );
@@ -94,7 +92,7 @@ export default function Navigation() {
               id="mobile-menu-drawer"
               aria-hidden={!menuOpen}
               className={`mobile-menu-drawer transition-transform duration-300 ease-in-out ${
-                menuOpen ? "translate-x-0" : "-translate-x-full"
+                menuOpen ? "translate-x-full" : "-translate-x-0"
               }`}
             >
               <NavList className="flex-col" onClickItem={() => setMenuOpen(false)} />
