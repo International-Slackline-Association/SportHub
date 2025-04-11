@@ -12,7 +12,7 @@ export function useClientMediaQuery() {
   useEffect(() => {
     const isDesktopMediaQueryList = window.matchMedia(isDesktopQuery);
 
-    const handleMatchChange = (e: MediaQueryListEvent) => {
+    const handleMatchChange = () => {
       setIsDesktop(isDesktopMediaQueryList.matches);
     };
 
