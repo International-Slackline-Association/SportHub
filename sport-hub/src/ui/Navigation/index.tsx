@@ -94,7 +94,7 @@ export default function Navigation() {
               id="mobile-menu-drawer"
               aria-hidden={!menuOpen}
               className={`mobile-menu-drawer transition-transform duration-300 ease-in-out ${
-                menuOpen ? "translate-x-0" : "-translate-x-full"
+                menuOpen ? "translate-x-full" : "-translate-x-0"
               }`}
             >
               <NavList className="flex-col" onClickItem={() => setMenuOpen(false)} />
