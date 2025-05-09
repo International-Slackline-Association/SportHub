@@ -22,3 +22,7 @@ interface Contest {
   thumbnailUrl: string;
   athletes: Athlete[];
 };
+
+type Disciplines = 'speed-highline' | 'freestyle-highline' | 'speed-short';
+
+type Roles = 'Athlete' | 'Judge' | 'Organiser';
