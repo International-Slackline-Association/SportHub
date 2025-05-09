@@ -38,7 +38,9 @@ const NavLink = ({ children, href, onClick }: NavLinkProps) => {
   const pathname = usePathname();
   const isActive = pathname === href;
   return (
-    <Link aria-current={isActive ? "page" : undefined} href={href} onClick={onClick}>
+    <Link aria-current={isActive ? "page" : undefined} href={href} onClick={() => {
+      onClick?.();
+    }}>
       {children}
     </Link>
   );
