@@ -7,7 +7,6 @@ import Image from 'next/image';
 import RoleTags from './RoleTags';
 import styles from './styles.module.css';
 import SocialTags from './SocialTags';
-import { ProfileImage } from '@ui/ProfileImage';
 
 type LabelValuePairProps = {
   label: string;
@@ -32,49 +31,50 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
   const { socialMedia } = profile;
 
   return (
-    <section className={cn("stack", "card", styles.profileCard)}>
-      <div className={cn("stack", "items-center", "gap-4")}>
-        <ProfileImage />
-        <SocialTags socials={socialMedia} />
-        <ClipBoardButton>Copy Profile Link</ClipBoardButton>
+    <section className={cn("flex gap-20", styles.profileCard)}>
+      <div className="w-1/5">
+        <div className="flex flex-col items-center gap-4">
+          {/* Placeholder avatar image */}
+          <div className={styles.avatar}></div>   
+          <SocialTags socials={socialMedia} />
+          <ClipBoardButton>Copy Profile Link</ClipBoardButton>
+        </div>
       </div>
       
-      <div className="stack gap-4 my-4 sm:my-0 sm:w-4/5 sm:gap-2">
-        <div className={cn(styles.nameAndRoles, "stack", "gap-2")}>
+      <div className="w-4/5">
+        <div className="flex flex-col gap-2">
           <div className="flex gap-2">
             <RoleTags roles={profile.roles as Roles[]} />
           </div>
           <h1 className={styles.name}>{profile.name}</h1>
         </div>
         
-        <div className={cn("stack", "gap-4")}>
-          <div className="stack gap-2">
-            <div className={styles.athleteDetails}>
-              <LabelValuePair
-                label="Age"
-                value={profile.age}
-              />
-              <LabelValuePair
-                label="Country"
-                value={(
-                  <div className="flex items-center gap-1">
-                    <Image className="rounded-xs" src="/static/images/flags/canada.svg" alt="Canada Flag" width={20} height={14} />
-                    <span className={styles.detailValue}>{profile.country}</span>
-                  </div>
-                )}
-              />
-              <LabelValuePair
-                label="Website"
-                value={profile.website}
-              />
-            </div>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
+            <LabelValuePair
+              label="Age"
+              value={profile.age}
+            />
+            <LabelValuePair
+              label="Country"
+              value={(
+                <div className="flex items-center gap-1">
+                  <Image className="rounded-xs" src="/static/images/flags/canada.svg" alt="Canada Flag" width={20} height={14} />
+                  <span className={styles.detailValue}>{profile.country}</span>
+                </div>
+              )}
+            />
+            <LabelValuePair
+              label="Website"
+              value={profile.website}
+            />
             <LabelValuePair
               label="Sponsors"
               value={profile.sponsors}
             />
           </div>
           
-          <div className="sm:mt-4">
+          <div className="mt-4">
             <p className={styles.detailLabel}>Disciplines</p>
             <DisciplineTags disciplines={profile.disciplines as Disciplines[]} />
           </div>

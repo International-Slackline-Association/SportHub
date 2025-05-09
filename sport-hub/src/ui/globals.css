@@ -45,18 +45,22 @@
 /* Also covers tablets in portrait and landscape mode */
 @custom-variant desktop (@media (width >= theme(--breakpoint-sm)));
 
-body {
-  background-color: white;
-  color: var(--color-neutral-700);
-  font-family: var(--font-metropolis);
-  margin: 0;
+/* General */
+
+.clearfix::before,
+.clearfix::after {
+    content: " ";
+    display: table;
 }
 
-h1 { 
-  color: var(--color-neutral-600);
-  font-weight: 700;
-  font-size: 32px;
-  line-height: 1em;
+.clearfix::after {
+    clear: both;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 h3 {
@@ -87,7 +91,28 @@ figcaption {
   flex-direction: column;
 }
 
-.cluster {
+.main-content {
+  flex: 1; /* Pushes the footer down */
+  padding: 20px;
+}
+
+/* Typography */
+
+h3 {
+  color: var(--Color-Neutral-700, #3F3F46);
+  font-size: var(--Font-size-H3, 20px);
+  font-style: normal;
+  font-weight: 700;
+  line-height: 28px; /* 140% */
+  margin-bottom: 16px;
+}
+
+/* NavBar */
+
+.navbar {
+  align-items: center;
+  background: var(--primary);
+  color: white;
   display: flex;
   flex-direction: row;
 }

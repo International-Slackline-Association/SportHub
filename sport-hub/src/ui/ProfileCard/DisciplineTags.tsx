@@ -2,16 +2,15 @@ import { cn } from '@utils/cn';
 import styles from './styles.module.css';
 
 type DisciplineTagsProps = {
-  className?: string;
   disciplines: Disciplines[];
 };
 
 const kebabCaseToTitleCase = (str: string) =>
   str.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
 
-const DisciplineTags = ({ className,  disciplines }: DisciplineTagsProps) => {
+const DisciplineTags = ({ disciplines }: DisciplineTagsProps) => {
   return (
-    <div className={cn(styles.disciplineTags, className)}>
+    <div className={styles.disciplineTags}>
       {disciplines.map((discipline) => (
         <div 
           key={discipline} 

@@ -51,12 +51,18 @@ const Table = <TData,>({ options, title }: TableProps<TData>) => {
   });
 
   return (
-    <div className={styles.tableContainer}>
-      <div className={styles.tableTitle}>
-        {title && <h3>{title}</h3>}
-        <TableFilters table={table} />
-      </div>
-      <div className={styles.tableWrapper}>
+    <div>
+      {filterableHeaders.length ? ( 
+        <div className="column-filter-wrapper">
+          {
+            ...filterableHeaders.map((header) => (
+              <TableFilter header={header} key={header.id} rows={prefilteredRows} />
+            ))
+          }
+          <button className="filter-reset-button" onClick={() => table.resetColumnFilters()}>Reset</button>
+        </div>
+      ) : null}
+      <div className="table-wrapper">
         <table>
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (

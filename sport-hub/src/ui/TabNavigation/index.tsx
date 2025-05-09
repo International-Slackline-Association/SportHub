@@ -4,13 +4,12 @@ import { cn } from '@utils/cn';
 export type Tab = {
   id: string;
   label: string;
-  path: string;
 };
 
 type TabNavigationProps = {
+  tabs: Tab[];
   activeTab: string;
   onTabChange: (tabId: string) => void;
-  tabs: Tab[];
 };
 
 const TabNavigation = ({ activeTab, tabs, onTabChange }: TabNavigationProps) => {

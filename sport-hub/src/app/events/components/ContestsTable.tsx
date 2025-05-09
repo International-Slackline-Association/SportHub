@@ -3,8 +3,6 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import Table from '@ui/Table';
 import { mockContestWithAthletes } from "@mocks/contests_with_athletes_sample";
-import Button from '@ui/Button';
-import { cn } from '@utils/cn';
 
 const columnHelper = createColumnHelper<Contest>();
 const columns = [
@@ -44,14 +42,7 @@ const columns = [
 const ContestsTable = () => {
   return (
     <div className="mb-8">
-      <div className={cn("cluster", "items-center", "justify-between")}>
-        <h3>Contests</h3>
-        <a href="/admin/submit/event">
-          <Button className="mt-4 mb-4" variant="primary">
-            Submit Event
-          </Button>
-        </a>
-      </div>
+      <h3>Contests</h3>
       <Table options={{ columns, data: mockContestWithAthletes }} />
     </div>
   );

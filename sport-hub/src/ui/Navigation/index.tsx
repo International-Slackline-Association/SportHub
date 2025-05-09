@@ -69,6 +69,8 @@ const NavList = ({ onClickItem }: NavListProps) => {
 const Navigation = () => {
   const { isDesktop } = useClientMediaQuery();
   const [menuOpen, setMenuOpen] = useState(false);
+  console.log(menuOpen);
+
   return (
     <div className={cn(styles.navbar, "cluster", "clearfix", "inter-500")}>
       <div>

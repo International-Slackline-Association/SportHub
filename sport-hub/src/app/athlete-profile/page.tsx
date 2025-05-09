@@ -9,9 +9,9 @@ import AthleteWorldRecordsTable from './components/AthleteWorldRecordsTable';
 import AthleteWorldFirstsTable from './components/AthleteWorldFirstsTable';
 
 const tabs: Tab[] = [
-  { id: "contests", label: "Contests", path: "contests" },
-  { id: "records", label: "World Records", path: "records" },
-  { id: "firsts", label: "World Firsts", path: "firsts" },
+  { id: 'contests', label: 'Contests' },
+  { id: 'records', label: 'World Records' },
+  { id: 'firsts', label: 'World Firsts' },
 ];
 
 export default function AthleteProfilePage() {
@@ -19,27 +19,26 @@ export default function AthleteProfilePage() {
   const [activeTab, setActiveTab] = useState('contests');
   
   return (
-    <>
+    <main className="p-5 max-w-7xl mx-auto">
       <ProfileCard profile={mockAthleteProfile} />
-      <section className="p-5 sm:p-0">
-        <TabNavigation
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          tabs={tabs}
-        />
-        
-        {activeTab === 'contests' && (
-          <AthleteContestsTable />
-        )}
-        
-        {activeTab === 'records' && (
-          <AthleteWorldRecordsTable />
-        )}
-        
-        {activeTab === 'firsts' && (
-          <AthleteWorldFirstsTable />
-        )}
-      </section>
-    </>
+      
+      <TabNavigation
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        tabs={tabs}
+      />
+      
+      {activeTab === 'contests' && (
+        <AthleteContestsTable />
+      )}
+      
+      {activeTab === 'records' && (
+        <AthleteWorldRecordsTable />
+      )}
+      
+      {activeTab === 'firsts' && (
+        <AthleteWorldFirstsTable />
+      )}
+    </main>
   );
 }
