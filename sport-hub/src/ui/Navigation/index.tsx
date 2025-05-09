@@ -6,8 +6,7 @@ import Image from "next/image"
 import Link from 'next/link';
 import { usePathname } from "next/navigation";
 import { PropsWithChildren, useState } from "react";
-import styles from "./styles.module.css";
-import Drawer from "@ui/Drawer";
+import type { HTMLAttributes } from "react";
 
 // TODO: Explore options for organizing shared types as site grows
 export type LinkType = { name: string; href: string };
@@ -53,7 +52,7 @@ const NavLink = ({ children, href, onClick }: NavLinkProps) => {
   );
 };
 
-type NavListProps =  React.HTMLAttributes<HTMLElement> & { onClickItem?: () => void; };
+type NavListProps =  HTMLAttributes<HTMLElement> & { onClickItem?: () => void; };
 
 const NavList = ({ onClickItem }: NavListProps) => {
   return (
@@ -75,10 +74,9 @@ const Navigation = () => {
       <div>
         <Image
           alt="logo"
-          className={styles.logo}
-          height={247}
-          src="/static/images/sport-hub-logo.png"
           width={426}
+          height={247}
+          priority
         />
       </div>
       {isDesktop ? (
