@@ -1,0 +1,61 @@
+import { createColumnHelper } from '@tanstack/react-table';
+import { AthleteContest, mockAthleteContests } from '@mocks/athlete_profile';
+import Table from '@ui/Table';
+
+const columnHelper = createColumnHelper<AthleteContest>();
+const columns = [
+  columnHelper.accessor("rank", {
+    header: "Rank",
+  }),
+  columnHelper.accessor("eventName", {
+    enableColumnFilter: true,
+    header: "Event",
+    meta: {
+      filterVariant: "text",
+    },
+    filterFn: "includesString",
+  }),
+  columnHelper.accessor("contest", {
+    enableColumnFilter: true,
+    header: "Contest",
+    meta: {
+      filterVariant: "text",
+    },
+    filterFn: "includesString",
+  }),
+  columnHelper.accessor("discipline", {
+    enableColumnFilter: true,
+    header: "Discipline",
+    meta: {
+      filterVariant: "select",
+    },
+  }),
+  columnHelper.accessor("points", {
+    header: "Points",
+  }),
+  columnHelper.accessor("contestSize", {
+    enableColumnFilter: true,
+    header: "Contest Size",
+    meta: {
+      filterVariant: "select",
+    },
+  }),
+  columnHelper.accessor("dates", {
+    header: "Dates",
+  }),
+];
+
+type AthleteContestsTableProps = {
+  contests?: AthleteContest[];
+};
+
+const AthleteContestsTable = ({ contests = mockAthleteContests }: AthleteContestsTableProps) => {
+  return (
+    <div className="mb-8">
+      <h3>Contests</h3>
+      <Table options={{ columns, data: contests }} />
+    </div>
+  );
+};
+
+export default AthleteContestsTable;

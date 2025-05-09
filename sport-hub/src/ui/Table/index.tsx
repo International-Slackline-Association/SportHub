@@ -53,7 +53,7 @@ const Table = <TData,>({ options }: TableProps<TData>) => {
   
   return (
     <div>
-      {filterableHeaders.length && ( 
+      {filterableHeaders.length ? ( 
         <div className="column-filter-wrapper">
           {
             ...filterableHeaders.map((header) => (
@@ -62,7 +62,7 @@ const Table = <TData,>({ options }: TableProps<TData>) => {
           }
           <button className="filter-reset-button" onClick={() => table.resetColumnFilters()}>Reset</button>
         </div>
-      )}
+      ) : null}
       <div className="table-wrapper">
         <table>
           <thead>
