@@ -9,3 +9,10 @@ Welcome to the ISA SportHub repo! This project is currently a monorepo with the 
 All code is Next.js in the [sport-hub](/sport-hub)
 
 Join the discord channel to get involved with development, ask questions, and keep track of the latest changes in the `github-webhook` channel.
+
+# Getting Started
+
+**Build Settings on Amplify**
+
+- Node Version: 22.15.0
+- Pnpm Version: 10.10.0
