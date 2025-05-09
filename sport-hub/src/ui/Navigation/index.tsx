@@ -29,7 +29,11 @@ const navItems: LinkType[] = [
     {
         href: "/world_records",
         name: "World Records",
-    }
+    },
+    {
+        href: "/athlete-profile",
+        name: "Athlete Profile",
+    },
 ];
 
 type NavLinkProps = PropsWithChildren<{ href: string; onClick?: () => void }>;
@@ -63,6 +67,7 @@ const NavList = ({ onClickItem, ...navProps}: NavListProps) => {
 export default function Navigation() {
   const { isDesktop } = useClientMediaQuery();
   const [menuOpen, setMenuOpen] = useState(false);
+  console.log(menuOpen);
 
   return (
     <div className="navbar clearfix">

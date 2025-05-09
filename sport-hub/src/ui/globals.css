@@ -27,12 +27,6 @@
     clear: both;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
 *,
 *::before,
 *::after {
@@ -49,6 +43,17 @@ html, body {
 .main-content {
   flex: 1; /* Pushes the footer down */
   padding: 20px;
+}
+
+/* Typography */
+
+h3 {
+  color: var(--Color-Neutral-700, #3F3F46);
+  font-size: var(--Font-size-H3, 20px);
+  font-style: normal;
+  font-weight: 700;
+  line-height: 28px; /* 140% */
+  margin-bottom: 16px;
 }
 
 /* NavBar */

@@ -3,11 +3,6 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import Table from '@ui/Table';
 import { mockContestWithAthletes } from "@mocks/contests_with_athletes_sample";
-import type { Metadata } from "next";
- 
-export const metadata: Metadata = {
-  title: 'SportHub - Events',
-}
 
 const columnHelper = createColumnHelper<Contest>();
 const columns = [
@@ -42,7 +37,10 @@ const columns = [
 
 const ContestsTable = () => {
   return (
-    <Table options={{ columns, data: mockContestWithAthletes }} />
+    <div className="mb-8">
+      <h3>Contests</h3>
+      <Table options={{ columns, data: mockContestWithAthletes }} />
+    </div>
   );
 };
 
