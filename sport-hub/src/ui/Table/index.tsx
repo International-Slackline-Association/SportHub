@@ -13,6 +13,7 @@ import {
  } from "@tanstack/react-table";
 import { useState } from "react";
 import TableFilter from "./TableFilter";
+import styles from "./styles.module.css";
 
  declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -54,16 +55,16 @@ const Table = <TData,>({ options }: TableProps<TData>) => {
   return (
     <div>
       {filterableHeaders.length ? ( 
-        <div className="column-filter-wrapper">
+        <div className={styles.columnFilterWrapper}>
           {
             ...filterableHeaders.map((header) => (
               <TableFilter header={header} key={header.id} rows={prefilteredRows} />
             ))
           }
-          <button className="filter-reset-button" onClick={() => table.resetColumnFilters()}>Reset</button>
+          <button className={styles.filterResetButton} onClick={() => table.resetColumnFilters()}>Reset</button>
         </div>
       ) : null}
-      <div className="table-wrapper">
+      <div className={styles.tableWrapper}>
         <table>
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
