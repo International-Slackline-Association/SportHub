@@ -1,4 +1,5 @@
-const mockContestWithAthletes = [{
+export const mockContestWithAthletes = [
+  {
     "contestId": "104261",
     "discipline": "7",
     "date": "2024-11-02",
@@ -247,6 +248,5 @@ const mockContestWithAthletes = [{
         "points": 1
       }
     ]
-  }];
-  
-export { mockContestWithAthletes }
+  }
+];
