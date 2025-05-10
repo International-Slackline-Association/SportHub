@@ -16,7 +16,7 @@ const tabs: Tab[] = [
 
 export default function AthleteProfilePage() {
   // TODO: Leverage routing instead of state to make this a SSR page
-  const [activeTab, setActiveTab] = useState('contests');
+  const [activeTab, setAiveTab] = useState('contests');
   
   return (
     <main className="p-5 max-w-7xl mx-auto">
