@@ -14,7 +14,7 @@
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
     "google": "link:next/font/google",
-    "next": "15.2.3",
+    "next": "15.2.4",
     "postcss": "^8.5.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -28,7 +28,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.2.3",
+    "eslint-config-next": "15.2.4",
     "tailwindcss": "^4.0.14",
     "typescript": "^5"
   },
