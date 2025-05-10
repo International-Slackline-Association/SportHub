@@ -14,5 +14,8 @@ Join the discord channel to get involved with development, ask questions, and ke
 
 **Build Settings on Amplify**
 
+
+Probably a good idea to match these locally
+
 - Node Version: 22.15.0
 - Pnpm Version: 10.10.0
