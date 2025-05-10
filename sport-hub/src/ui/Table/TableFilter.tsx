@@ -1,4 +1,5 @@
 import { Header, Row } from "@tanstack/react-table";
+import styles from "./styles.module.css";
 
 type TableFilterProps<TData,> = {
   header: Header<TData, unknown>;
@@ -10,7 +11,7 @@ const TextTableFilter = <TData,>({ header }: TableFilterProps<TData>) => {
   const columnName = column.columnDef?.header?.toString() || "";
 
   return (
-    <div className="column-filter" key={`column-filter-${id}`}>
+    <div className={styles.columnFilter} key={`column-filter-${id}`}>
       <label htmlFor={id}>{columnName}</label>
       <input
         id={id}
@@ -35,7 +36,7 @@ const SelectTableFilter = <TData,>({ header, rows }: TableFilterProps<TData>) =>
   );
 
   return (
-    <div className="column-filter" key={`column-filter-${id}`}>
+    <div className={styles.columnFilter} key={`column-filter-${id}`}>
       <label htmlFor={id}>{columnName}</label>
       <select
         id={id}
