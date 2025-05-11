@@ -17,5 +17,6 @@ Join the discord channel to get involved with development, ask questions, and ke
 
 Probably a good idea to match these locally
 
-- Node Version: 20
+- Node Version: v20.19.0 (npm v10.8.2)
 - Pnpm Version: 10.10.0
+- Next: 15.3.2
