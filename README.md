@@ -17,5 +17,5 @@ Join the discord channel to get involved with development, ask questions, and ke
 
 Probably a good idea to match these locally
 
-- Node Version: 22.15.0
+- Node Version: 20
 - Pnpm Version: 10.10.0
