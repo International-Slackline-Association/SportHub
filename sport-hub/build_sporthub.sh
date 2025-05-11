@@ -7,7 +7,6 @@ BUILD_STATUS=0
 GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 LOG_FILE="build_output.log"
-ESCAPED_LOGS=""
 
 # Trap to ensure cleanup runs regardless of success/failure
 function final_step {
@@ -15,27 +14,34 @@ function final_step {
         STATUS_STR="✅ Build succeeded on branch: $GIT_BRANCH"
     else
         LOG_CONTENT=$(tail -n 50 "$LOG_FILE")
-
-        # Escape the logs for JSON (replace backslashes and quotes)
-        ESCAPED_LOGS=$(echo "$LOG_CONTENT" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g')
-
         STATUS_STR="❌ Build failed on branch: $GIT_BRANCH (exit code: $BUILD_STATUS)"
     fi
 
     if [ -n "$AWS_BRANCH" ]; then
         echo ">>> Running post-build webhook..."
 
+        # Create JSON payload directly with jq
+        JSON_PAYLOAD=$(jq -n \
+            --arg status "$STATUS_STR" \
+            --arg logs "$(tail -n 50 "$LOG_FILE")" \
+            '{content: ($status + "\n```\n" + $logs + "\n```")}')
+
+        # Debug the payload
+        echo "DEBUG: JSON Payload:"
+        echo "$JSON_PAYLOAD"
+
         curl -X POST 'https://discord.com/api/webhooks/1370639745574633584/BkzMi0ab620jq_NUagF4LGR6i3OzvkayadLxgd0rLhTTDG1ekkrxTYRcA5VKBNiiw7Q5' \
-                  -H "Content-Type: application/json" \
-                  -d "{\"content\": $STATUS_STR\n\`\`\`\n$ESCAPED_LOGS\n\`\`\`\}"
-    
-    echo $STATUS_STR
-}
+            -H "Content-Type: application/json" \
+            -d "$JSON_PAYLOAD"
+    fi
+        
+        echo $STATUS_STR
+    }
 
 trap final_step EXIT
 
 echo ">>> Starting build on branch: $GIT_BRANCH"
 
 # Capture build output to file and still show in console
-pnpm run build --turbopack 2>&1 | tee "$LOG_FILE"
+pnpm run build 2>&1 | tee "$LOG_FILE"
 BUILD_STATUS=${PIPESTATUS[0]}
