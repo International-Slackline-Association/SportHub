@@ -3,8 +3,8 @@
 echo ">>> Starting install"
 
 # Install Node 
-nvm install 22.15.0
-nvm use 22.15.0
+# nvm install 22.15.0
+# nvm use 22.15.0
 node -v  # sanity check
 
 # Install pnpm
