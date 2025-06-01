@@ -2,7 +2,7 @@ export const mockAthleteProfile = {
   name: "Taylor St. Germain",
   age: 28,
   country: "Canada",
-  website: "www.taylorstgermain.com",
+  website: "taylorstgermain.com",
   sponsors: "Rikuto Nakamura. Balance Community, Tim Hortons, Canadian Maple Syrup.",
   disciplines: [
     "speed-short",
