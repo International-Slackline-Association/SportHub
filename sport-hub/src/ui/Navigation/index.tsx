@@ -1,10 +1,12 @@
 "use client"
 
+import { cn } from "@utils/cn";
 import { useClientMediaQuery } from "@utils/useClientMediaQuery";
 import Image from "next/image"
 import Link from 'next/link';
 import { usePathname } from "next/navigation";
 import { PropsWithChildren, useState } from "react";
+import styles from "./styles.module.css";
 
 // TODO: Explore options for organizing shared types as site grows
 export type LinkType = { name: string; href: string };
@@ -50,61 +52,66 @@ const NavLink = ({ children, href, onClick }: NavLinkProps) => {
 
 type NavListProps =  React.HTMLAttributes<HTMLElement> & { onClickItem?: () => void; };
 
-const NavList = ({ onClickItem, ...navProps}: NavListProps) => {
+const NavList = ({ onClickItem }: NavListProps) => {
   return (
-    <nav {...navProps}>
-      <ul>
-        {navItems.map(({ name, href }) => (
-          <li key={name}> 
-              <NavLink href={href} onClick={onClickItem}>{name}</NavLink>
-          </li>
-        ))}
-      </ul>
-    </nav>
+    <ul>
+      {navItems.map(({ name, href }) => (
+        <li key={name}> 
+            <NavLink href={href} onClick={onClickItem}>{name}</NavLink>
+        </li>
+      ))}
+    </ul>
   );
 }
 
 export default function Navigation() {
   const { isDesktop } = useClientMediaQuery();
   const [menuOpen, setMenuOpen] = useState(false);
-  console.log(menuOpen);
 
   return (
-    <div className="navbar clearfix">
-      <div className="nav-logo">
-        <Image src="/static/images/sport-hub-logo.png" 
+    <div className={cn(styles.navbar, "cluster", "clearfix", "inter-500")}>
+      <div>
+        <Image
           alt="logo"
-          layout="intrinsic"
-          width={426}
+          className={styles.logo}
           height={247}
+          src="/static/images/sport-hub-logo.png"
+          width={426}
         />
       </div>
-      {
-        isDesktop ? (
-          <NavList className="flex-grow" />
-        ) : (
-          <>
+      {isDesktop ? (
+        <nav>
+          <NavList />
+        </nav>
+      ) : (
+        <>
+          <button
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
+            aria-label="Toggle navigation menu"
+            className={styles.mobileMenuButton}
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            ☰
+          </button>
+          <nav
+            id="mobile-menu-drawer"
+            className={cn(styles.mobileMenuDrawer, {
+              [styles.mobileMenuDrawerClosed]: !menuOpen,
+              [styles.mobileMenuDrawerOpen]: menuOpen,
+            })}
+          >
             <button
-              aria-expanded={menuOpen}
-              aria-controls="mobile-menu"
-              className="mobile-menu-button"
-              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label="Close navigation menu"
+              className={styles.mobileMenuButton}
+              onClick={() => setMenuOpen(false)}
             >
-              <span className="sr-only">Toggle navigation</span>
-              ☰
+              ✕
             </button>
-            <div
-              id="mobile-menu-drawer"
-              aria-hidden={!menuOpen}
-              className={`mobile-menu-drawer transition-transform duration-300 ease-in-out ${
-                menuOpen ? "translate-x-full" : "-translate-x-0"
-              }`}
-            >
-              <NavList className="flex-col" onClickItem={() => setMenuOpen(false)} />
-            </div>
-          </>
-        )
-      }
+            <NavList onClickItem={() => setMenuOpen(false)} />
+          </nav>
+        </>
+      )}
     </div>
   );
-};
+}

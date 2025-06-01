@@ -53,7 +53,7 @@ const Table = <TData,>({ options }: TableProps<TData>) => {
   const prefilteredRows = table.getPreFilteredRowModel().rows;
   
   return (
-    <div>
+    <div className={styles.tableContainer}>
       {filterableHeaders.length ? ( 
         <div className={styles.columnFilterWrapper}>
           {
