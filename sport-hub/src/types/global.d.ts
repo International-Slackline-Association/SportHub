@@ -23,6 +23,18 @@ interface Contest {
   athletes: Athlete[];
 };
 
-type Disciplines = 'speed-highline' | 'freestyle-highline' | 'speed-short';
+interface Ranking {
+  athleteId: string;
+  ageCategory: string;
+  country: string;
+  disciplines: string[];
+  fullName?: string;
+  gender: string;
+  name: string;
+  points: number;
+  surname: string;
+}
+
+type Disciplines = 'speed-highline' | 'freestyle-highline' | 'speed-short' | 'trickline';
 
 type Roles = 'Athlete' | 'Judge' | 'Organiser';

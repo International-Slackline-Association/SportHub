@@ -1,0 +1,56 @@
+.card {
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  text-decoration: none;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  width: 100%;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+}
+
+.name {
+  font-family: 'Metropolis', sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1em;
+  color: #52525B;
+  text-align: center;
+  margin: 0;
+}
+
+.countryContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+}
+
+.flagContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+
+.flag {
+  border-radius: 2px;
+}
+
+.flagContainer span {
+  font-family: 'Metropolis', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: #52525B;
+}

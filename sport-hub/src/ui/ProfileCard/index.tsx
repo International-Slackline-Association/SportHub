@@ -7,6 +7,7 @@ import Image from 'next/image';
 import RoleTags from './RoleTags';
 import styles from './styles.module.css';
 import SocialTags from './SocialTags';
+import { ProfileImage } from '@ui/ProfileImage';
 
 type LabelValuePairProps = {
   label: string;
@@ -31,11 +32,10 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
   const { socialMedia } = profile;
 
   return (
-    <section className={styles.profileCard}>
+    <section className={cn("stack", "card", styles.profileCard)}>
       <div className="sm:w-1/5">
         <div className={cn("stack", "items-center", "gap-4")}>
-          {/* Placeholder avatar image */}
-          <div className={styles.avatar}></div>   
+          <ProfileImage />
           <SocialTags socials={socialMedia} />
           <ClipBoardButton>Copy Profile Link</ClipBoardButton>
         </div>
