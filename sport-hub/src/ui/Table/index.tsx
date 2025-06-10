@@ -12,8 +12,8 @@ import {
    ColumnFiltersState
  } from "@tanstack/react-table";
 import { useState } from "react";
-import TableFilter from "./TableFilter";
 import styles from "./styles.module.css";
+import { TableFilters } from "./TableFilters";
 
  declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -24,9 +24,10 @@ import styles from "./styles.module.css";
 
 type TableProps<TData,> = {
   options: Partial<TableOptions<TData>>;
+  title?: string;
 };
 
-const Table = <TData,>({ options }: TableProps<TData>) => {
+const Table = <TData,>({ options, title }: TableProps<TData>) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const table = useReactTable({
@@ -49,21 +50,12 @@ const Table = <TData,>({ options }: TableProps<TData>) => {
     getFilteredRowModel: getFilteredRowModel(),
   });
 
-  const filterableHeaders = table.getFlatHeaders().filter(header => header.column.getCanFilter());
-  const prefilteredRows = table.getPreFilteredRowModel().rows;
-  
   return (
     <div className={styles.tableContainer}>
-      {filterableHeaders.length ? ( 
-        <div className={styles.columnFilterWrapper}>
-          {
-            ...filterableHeaders.map((header) => (
-              <TableFilter header={header} key={header.id} rows={prefilteredRows} />
-            ))
-          }
-          <button className={styles.filterResetButton} onClick={() => table.resetColumnFilters()}>Reset</button>
-        </div>
-      ) : null}
+      <div className={styles.tableTitle}>
+        {title && <h3>{title}</h3>}
+        <TableFilters table={table} />
+      </div>
       <div className={styles.tableWrapper}>
         <table>
           <thead>

@@ -32,14 +32,6 @@
 .tableContainer tbody tr:last-child td:last-child {
   border-bottom-right-radius: 0.5rem;
 }
-.columnFilterWrapper {
-  display: block;
-  
-  @media (min-width: 24rem) {
-    display: flex;
-    flex-direction: row;
-  }
-}
 
 .columnFilter {
   display: flex;
@@ -62,21 +54,24 @@
   font-weight: 500;
   margin-bottom: 0.5rem !important;
 }
-.filterResetButton {
-  align-self: flex-end;
-  margin-bottom: 0.75rem !important;
-}
- 
-.filterResetButton:hover {
-  background: var(--color-neutral-500);
-  color: white;
-  cursor: pointer;
-}
 
 .tableWrapper {
   overflow-x: scroll;
 
   @media (min-width: 24rem) {
     overflow-x: auto;
+  }
+}
+
+.tableTitle {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  flex-direction: row;
+  padding: 1rem;
+  @media (min-width: 24rem) {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 0;
   }
 }
