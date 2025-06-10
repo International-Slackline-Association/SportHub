@@ -19,7 +19,7 @@ export default function AthleteProfilePage() {
   const [activeTab, setActiveTab] = useState('contests');
   
   return (
-    <main className="sm:p-5 max-w-7xl mx-auto">
+    <main>
       <ProfileCard profile={mockAthleteProfile} />
       <section className="p-5 sm:p-0">
         <TabNavigation

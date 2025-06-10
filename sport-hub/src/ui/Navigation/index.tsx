@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { usePathname } from "next/navigation";
 import { PropsWithChildren, useState } from "react";
 import styles from "./styles.module.css";
+import Drawer from "@ui/Drawer";
 
 // TODO: Explore options for organizing shared types as site grows
 export type LinkType = { name: string; href: string };
@@ -64,10 +65,9 @@ const NavList = ({ onClickItem }: NavListProps) => {
   );
 }
 
-export default function Navigation() {
+const Navigation = () => {
   const { isDesktop } = useClientMediaQuery();
   const [menuOpen, setMenuOpen] = useState(false);
-
   return (
     <div className={cn(styles.navbar, "cluster", "clearfix", "inter-500")}>
       <div>
@@ -88,30 +88,28 @@ export default function Navigation() {
           <button
             aria-expanded={menuOpen}
             aria-controls="mobile-menu"
-            aria-label="Toggle navigation menu"
-            className={styles.mobileMenuButton}
+            aria-label="Open navigation menu"
+            className="text-white text-6xl"
             onClick={() => setMenuOpen(!menuOpen)}
           >
             ☰
           </button>
-          <nav
-            id="mobile-menu-drawer"
-            className={cn(styles.mobileMenuDrawer, {
-              [styles.mobileMenuDrawerClosed]: !menuOpen,
-              [styles.mobileMenuDrawerOpen]: menuOpen,
-            })}
-          >
-            <button
-              aria-label="Close navigation menu"
-              className={styles.mobileMenuButton}
-              onClick={() => setMenuOpen(false)}
-            >
-              ✕
-            </button>
-            <NavList onClickItem={() => setMenuOpen(false)} />
-          </nav>
+          <Drawer isOpen={menuOpen} onClose={() => setMenuOpen(false)} position="right">
+            <nav>
+              <button
+                aria-label="Close navigation menu"
+                className="text-white text-6xl pt-4 pl-4"
+                onClick={() => setMenuOpen(false)}
+              >
+                ✕
+              </button>
+              <NavList onClickItem={() => setMenuOpen(false)} />
+            </nav>
+          </Drawer>
         </>
       )}
     </div>
   );
 }
+
+export default Navigation;
