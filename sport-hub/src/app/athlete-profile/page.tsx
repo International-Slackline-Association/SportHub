@@ -19,26 +19,27 @@ export default function AthleteProfilePage() {
   const [activeTab, setActiveTab] = useState('contests');
   
   return (
-    <main className="p-5 max-w-7xl mx-auto">
+    <main className="sm:p-5 max-w-7xl mx-auto">
       <ProfileCard profile={mockAthleteProfile} />
-      
-      <TabNavigation
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        tabs={tabs}
-      />
-      
-      {activeTab === 'contests' && (
-        <AthleteContestsTable />
-      )}
-      
-      {activeTab === 'records' && (
-        <AthleteWorldRecordsTable />
-      )}
-      
-      {activeTab === 'firsts' && (
-        <AthleteWorldFirstsTable />
-      )}
+      <section className="p-5 sm:p-0">
+        <TabNavigation
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          tabs={tabs}
+        />
+        
+        {activeTab === 'contests' && (
+          <AthleteContestsTable />
+        )}
+        
+        {activeTab === 'records' && (
+          <AthleteWorldRecordsTable />
+        )}
+        
+        {activeTab === 'firsts' && (
+          <AthleteWorldFirstsTable />
+        )}
+      </section>
     </main>
   );
 }
