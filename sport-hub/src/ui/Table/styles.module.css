@@ -1,0 +1,82 @@
+.tableContainer table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.tableContainer thead th {
+  background: var(--color-neutral-100);
+  color: rgba(0,0,0,.8);
+}
+
+.tableContainer th, 
+.tableContainer td {
+  border: 0.5px solid #D4D4D8;
+  padding: 8px;
+  text-align: left;
+}
+
+.tableContainer th:first-child {
+  border-top-left-radius: 0.5rem;
+}
+
+.tableContainer th:last-child {
+  border-top-right-radius: 0.5rem;
+}
+
+.tableContainer tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 0.5rem;
+}
+
+.tableContainer tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 0.5rem;
+}
+.columnFilterWrapper {
+  display: block;
+  
+  @media (min-width: 24rem) {
+    display: flex;
+    flex-direction: row;
+  }
+}
+
+.columnFilter {
+  display: flex;
+  flex-direction: column;
+  margin-right: 0.5rem;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.columnFilter input,
+.columnFilter select,
+.filterResetButton {
+  border: 1px solid #D4D4D8;
+  border-radius: 0.5rem;
+  padding: 0.5rem !important;
+  padding-left: 1rem;
+}
+
+.columnFilter label {
+  font-weight: 500;
+  margin-bottom: 0.5rem !important;
+}
+.filterResetButton {
+  align-self: flex-end;
+  margin-bottom: 0.75rem !important;
+}
+ 
+.filterResetButton:hover {
+  background: var(--color-neutral-500);
+  color: white;
+  cursor: pointer;
+}
+
+.tableWrapper {
+  overflow-x: scroll;
+
+  @media (min-width: 24rem) {
+    overflow-x: auto;
+  }
+}

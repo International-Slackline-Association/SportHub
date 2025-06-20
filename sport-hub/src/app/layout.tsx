@@ -2,18 +2,11 @@ import type { Metadata } from "next";
 import "@ui/globals.css";
 import Footer from "@ui/Footer";
 import Navigation from "@ui/Navigation"
-import { Open_Sans } from "next/font/google"
 
 export const metadata: Metadata = {
   title: "SportHub",
   description: "ISA Slackline Sport Hub",
 };
-
-const open_sans_font = Open_Sans({
-  subsets: ['latin'],
-  style: ['normal'],
-  variable: '--font-open-sans'
-})
 
 export default function RootLayout({
   children,
@@ -21,12 +14,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={open_sans_font.variable}>
-      <body className="font-main">
+    <html lang="en">
+      <body>
         <Navigation />
-        <div className="main-content">
           {children}
-        </div>
         <Footer />
       </body>
     </html>
