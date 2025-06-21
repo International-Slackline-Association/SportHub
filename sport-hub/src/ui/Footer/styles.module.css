@@ -1,6 +1,6 @@
 .footer {
   align-items: center;
-  background-color: var(--color-primary);
+  background: linear-gradient(180deg, var(--color-primary) 0%, #008F8C 100%);
   color: white;
   display: flex;
   flex-direction: column;
@@ -55,7 +55,8 @@
 }
 
 .footerColumnLogos > div {
- height: 25%;
+  height: 50%;
+  width: 100%;
 }
 
 .logo {

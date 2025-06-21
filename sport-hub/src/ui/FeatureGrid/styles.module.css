@@ -54,3 +54,14 @@
   font-size: 14px;
   color: #52525B;
 }
+
+.featuredGrid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 16px;
+  width: 100%;
+
+  @media (min-width: 24rem) {
+  grid-template-columns: repeat(4, 1fr);
+  }
+}

@@ -1,6 +1,6 @@
 .navbar {
   align-items: center;
-  background: var(--color-primary);
+  background: linear-gradient(180deg, var(--color-primary) 0%, #008F8C 100%);
   justify-content: space-between;
   height: 80px;
   overflow: hidden;

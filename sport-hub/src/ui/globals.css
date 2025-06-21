@@ -76,9 +76,10 @@ p {
 
 figcaption {
   color: var(--color-neutral-600);
-  display: contents;
+  display: block;
   font-weight: lighter;
   font-size: 12px;
+  text-align: center;
 }
 
 .stack {
@@ -94,6 +95,21 @@ figcaption {
 .card {
   background-color: var(--color-neutral-50);
   border-radius: 8px;
+}
+
+.heroImage {
+  display: block;
+  object-fit: contain;
+  /* overflow: hidden;
+  position: relative; */
+  height: auto;
+  max-height: 300px;
+  width: 100%;
+
+  @media (min-width: 24rem) {
+    border-radius: 8px;
+    max-height: 542px;
+  }
 }
 
 main {
