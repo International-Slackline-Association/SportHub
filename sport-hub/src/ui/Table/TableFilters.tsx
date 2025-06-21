@@ -29,7 +29,7 @@ export const TableFilters = <TData,>({ table }: TableFiltersProps<TData>) => {
             <TableFilterFields header={header} key={header.id} rows={prefilteredRows} />
           ))
         }
-        <Button onClick={() => table.resetColumnFilters()} variant="secondary">Reset</Button>
+        <Button className={styles.resetButton} onClick={() => table.resetColumnFilters()} variant="secondary">Reset</Button>
       </div>
     );
   }

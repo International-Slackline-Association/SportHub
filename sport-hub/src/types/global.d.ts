@@ -7,20 +7,21 @@ interface Athlete {
 };
 
 interface Contest {
-  contestId: string;
-  discipline: string;
-  date: string;
-  name: string;
-  prize: number;
-  createdAt: string;
-  profileUrl: string;
-  country: string;
-  gender: number;
-  city: string;
-  category: number;
-  normalizedName: string;
-  thumbnailUrl: string;
   athletes: Athlete[];
+  category: number;
+  city: string;
+  contestId: string;
+  country: string;
+  createdAt: string;
+  date: string;
+  discipline: string;
+  gender: number;
+  name: string;
+  normalizedName: string;
+  prize: number;
+  profileUrl: string;
+  thumbnailUrl: string;
+  verified: boolean;
 };
 
 interface Ranking {

@@ -33,6 +33,11 @@
   border-bottom-right-radius: 0.5rem;
 }
 
+.resetButton {
+  height: fit-content;
+  margin: auto 0;
+}
+
 .columnFilter {
   display: flex;
   flex-direction: column;
