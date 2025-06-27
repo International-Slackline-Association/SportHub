@@ -47,18 +47,39 @@
 
 body {
   background-color: white;
-  color: var(--color-neutral-700, #3F3F46);
+  color: var(--color-neutral-700);
   font-family: var(--font-metropolis);
   margin: 0;
 }
 
+h1 { 
+  color: var(--color-neutral-600);
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1em;
+}
+
 h3 {
-  color: var(--color-neutral-700, #3F3F46);
+  color: var(--color-neutral-700);
   font-size: var(--Font-size-H3, 20px);
   font-style: normal;
   font-weight: 700;
-  line-height: 28px; /* 140% */
-  margin-bottom: 16px;
+  line-height: 1.4rem;
+}
+
+p {
+  color: var(--color-neutral-500);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.4em;
+}
+
+figcaption {
+  color: var(--color-neutral-600);
+  display: block;
+  font-weight: lighter;
+  font-size: 12px;
+  text-align: center;
 }
 
 .stack {
@@ -69,4 +90,33 @@ h3 {
 .cluster {
   display: flex;
   flex-direction: row;
+}
+
+.card {
+  background-color: var(--color-neutral-50);
+  border-radius: 8px;
+}
+
+.heroImage {
+  display: block;
+  object-fit: contain;
+  /* overflow: hidden;
+  position: relative; */
+  height: auto;
+  max-height: 300px;
+  width: 100%;
+
+  @media (min-width: 24rem) {
+    border-radius: 8px;
+    max-height: 542px;
+  }
+}
+
+main {
+  padding: 0;
+  
+  @media (min-width: 24rem) {
+    padding: 40px 40px 60px;
+    margin: 0 auto;
+  }
 }

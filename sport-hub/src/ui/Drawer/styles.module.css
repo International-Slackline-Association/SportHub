@@ -1,0 +1,103 @@
+.drawerContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+}
+
+.backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.3s ease;
+}
+
+.drawer {
+  position: absolute;
+  background: var(--color-primary);
+  color: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  z-index: 1001;
+  overflow-y: auto;
+}
+
+/* Position variants */
+.drawer-left {
+  top: 0;
+  left: 0;
+  height: 100%;
+  max-width: 80%;
+  width: 300px;
+  transform: translateX(-100%);
+  animation: slideInLeft 0.3s forwards;
+}
+
+.drawer-right {
+  top: 0;
+  right: 0;
+  height: 100%;
+  max-width: 80%;
+  width: 300px;
+  transform: translateX(100%);
+  animation: slideInRight 0.3s forwards;
+}
+
+.drawer-top {
+  top: 0;
+  left: 0;
+  width: 100%;
+  max-height: 80%;
+  height: 300px;
+  transform: translateY(-100%);
+  animation: slideInTop 0.3s forwards;
+}
+
+.drawer-bottom {
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  max-height: 80%;
+  height: 300px;
+  transform: translateY(100%);
+  animation: slideInBottom 0.3s forwards;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInTop {
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInBottom {
+  to {
+    transform: translateY(0);
+  }
+}
