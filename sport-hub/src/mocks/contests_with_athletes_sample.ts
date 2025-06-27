@@ -1,18 +1,5 @@
-export const mockContestWithAthletes = [
+export const mockContestWithAthletes: Contest[] = [
   {
-    "contestId": "104261",
-    "discipline": "7",
-    "date": "2024-11-02",
-    "name": "9th Shenxianju International Highline challenge",
-    "prize": 1,
-    "createdAt": "2025-02-01T08:32:27.000Z",
-    "profileUrl": "http://images.isa-rankings.org/public/contest/d47abf-8.jpg",
-    "country": "cn",
-    "gender": 2,
-    "city": "Shenxianju ",
-    "category": 3,
-    "normalizedName": "9th shenxianju international highline challenge",
-    "thumbnailUrl": "http://images.isa-rankings.org/public/contest/d47abf-8_thumbnail.jpg",
     "athletes": [
       {
         "athleteId": "ya-cao",
@@ -74,23 +61,23 @@ export const mockContestWithAthletes = [
         "place": "10",
         "points": 1
       }
-    ]
+    ],
+    "category": 3,
+    "city": "Shenxianju ",
+    "contestId": "104261",
+    "country": "cn",
+    "createdAt": "2025-02-01T08:32:27.000Z",
+    "date": "2024-11-02",
+    "discipline": "7",
+    "gender": 2,
+    "name": "9th Shenxianju International Highline challenge",
+    "normalizedName": "9th shenxianju international highline challenge",
+    "prize": 1,
+    "profileUrl": "http://images.isa-rankings.org/public/contest/d47abf-8.jpg",
+    "thumbnailUrl": "http://images.isa-rankings.org/public/contest/d47abf-8_thumbnail.jpg",
+    "verified": true,
   },
   {
-    "contestId": "146383",
-    "discipline": "2",
-    "date": "2022-06-10",
-    "name": "Slack on the Beach - SlackShow",
-    "prize": 330,
-    "createdAt": "2022-10-05T14:36:14.000Z",
-    "profileUrl": "http://images.isa-rankings.org/public/contest/146383-2.jpg",
-    "country": "cz",
-    "gender": 0,
-    "city": "Windy Point",
-    "infoUrl": "https://www.facebook.com/events/3062586427341533",
-    "category": 4,
-    "normalizedName": "slack on the beach - slackshow",
-    "thumbnailUrl": "http://images.isa-rankings.org/public/contest/146383-2_thumbnail.jpg",
     "athletes": [
       {
         "athleteId": "marius-kitowski",
@@ -158,22 +145,24 @@ export const mockContestWithAthletes = [
         "place": "11",
         "points": 1
       }
-    ]
+    ],
+    "contestId": "146383",
+    "category": 4,
+    "city": "Windy Point",
+    "country": "cz",
+    "createdAt": "2022-10-05T14:36:14.000Z",
+    "date": "2022-06-10",
+    "discipline": "2",
+    "gender": 0,
+    "infoUrl": "https://www.facebook.com/events/3062586427341533",
+    "name": "Slack on the Beach - SlackShow",
+    "normalizedName": "slack on the beach - slackshow",
+    "prize": 330,
+    "profileUrl": "http://images.isa-rankings.org/public/contest/146383-2.jpg",
+    "thumbnailUrl": "http://images.isa-rankings.org/public/contest/146383-2_thumbnail.jpg",
+    "verified": false,
   },
   {
-    "contestId": "159405",
-    "discipline": "4",
-    "date": "2019-02-15",
-    "name": "Slack that Beach #8",
-    "prize": 1,
-    "createdAt": "2019-03-31T21:24:44.000Z",
-    "profileUrl": "http://images.isa-rankings.org/public/contest/slack-that-beach-8_2019-4.jpg",
-    "country": "cl",
-    "gender": 0,
-    "city": "Viña del Mar",
-    "category": 2,
-    "normalizedName": "slack that beach #8",
-    "thumbnailUrl": "http://images.isa-rankings.org/public/contest/slack-that-beach-8_2019-4_thumbnail.jpg",
     "athletes": [
       {
         "athleteId": "agustin-palomero",
@@ -247,6 +236,20 @@ export const mockContestWithAthletes = [
         "place": "6",
         "points": 1
       }
-    ]
+    ],
+    "category": 2,
+    "city": "Viña del Mar",
+    "contestId": "159405",
+    "country": "cl",
+    "createdAt": "2019-03-31T21:24:44.000Z",
+    "date": "2019-02-15",
+    "discipline": "4",
+    "gender": 0,
+    "name": "Slack that Beach #8",
+    "normalizedName": "slack that beach #8",
+    "prize": 1,
+    "profileUrl": "http://images.isa-rankings.org/public/contest/slack-that-beach-8_2019-4.jpg",
+    "thumbnailUrl": "http://images.isa-rankings.org/public/contest/slack-that-beach-8_2019-4_thumbnail.jpg",
+    "verified": true,
   }
 ];

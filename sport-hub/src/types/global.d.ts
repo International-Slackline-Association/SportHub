@@ -7,22 +7,35 @@ interface Athlete {
 };
 
 interface Contest {
-  contestId: string;
-  discipline: string;
-  date: string;
-  name: string;
-  prize: number;
-  createdAt: string;
-  profileUrl: string;
-  country: string;
-  gender: number;
-  city: string;
-  category: number;
-  normalizedName: string;
-  thumbnailUrl: string;
   athletes: Athlete[];
+  category: number;
+  city: string;
+  contestId: string;
+  country: string;
+  createdAt: string;
+  date: string;
+  discipline: string;
+  gender: number;
+  name: string;
+  normalizedName: string;
+  prize: number;
+  profileUrl: string;
+  thumbnailUrl: string;
+  verified: boolean;
 };
 
-type Disciplines = 'speed-highline' | 'freestyle-highline' | 'speed-short';
+interface Ranking {
+  athleteId: string;
+  ageCategory: string;
+  country: string;
+  disciplines: string[];
+  fullName?: string;
+  gender: string;
+  name: string;
+  points: number;
+  surname: string;
+}
+
+type Disciplines = 'speed-highline' | 'freestyle-highline' | 'speed-short' | 'trickline';
 
 type Roles = 'Athlete' | 'Judge' | 'Organiser';
