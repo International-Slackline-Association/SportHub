@@ -1,10 +1,4 @@
 .profileCard {
-<<<<<<< HEAD
-  background-color: #FAFAFA;
-  border-radius: 8px;
-  padding: 24px;
-  margin-bottom: 24px;
-=======
   align-items: center;
   background-color: #FAFAFA;
   border-radius: 8px;
@@ -23,7 +17,6 @@
   @media (min-width: 24rem) {
     align-items: flex-start;
   }
->>>>>>> main
 }
 
 .avatar {
@@ -34,8 +27,6 @@
   background-size: cover;
 }
 
-<<<<<<< HEAD
-=======
 .athleteDetails {
   display: flex;
   flex-direction: row;
@@ -47,7 +38,6 @@
   }
 }
 
->>>>>>> main
 .socialIcon {
   width: 28px;
   height: 28px;
