@@ -17,7 +17,7 @@ export async function GET() {
   }
 }
 
-export async function POST(request: { json: () => PromiseLike<{ id: any; name: any; email: any; }> | { id: any; name: any; email: any; }; }) {
+export async function POST(request: { json: () => PromiseLike<{ id: string; name: string; email: string; }> | { id: string; name: string; email: string; }; }) {
   try {
     const { id, name, email } = await request.json();
     
