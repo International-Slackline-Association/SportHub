@@ -37,7 +37,6 @@ export const dynamodb = {
     const command = new ScanCommand({
       TableName: tableName,
     });
-    const credentials = await client.config.credentials();
     const response = await ddb.send(command);
     return response.Items;
   },
