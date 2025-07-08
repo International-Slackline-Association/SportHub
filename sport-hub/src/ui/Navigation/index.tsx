@@ -69,8 +69,9 @@ const NavList = ({ onClickItem }: NavListProps) => {
 }
 
 const Navigation = () => {
-  const { isDesktop } = useClientMediaQuery();
+  const { isDesktop, isHydrated } = useClientMediaQuery();
   const [menuOpen, setMenuOpen] = useState(false);
+  
   return (
     <div className={cn(styles.navbar, "cluster", "clearfix", "inter-500")}>
       <div>
@@ -82,7 +83,18 @@ const Navigation = () => {
           width={426}
         />
       </div>
-      {isDesktop ? (
+      {!isHydrated ? (
+        // Show mobile layout during SSR to prevent hydration mismatch
+        <button
+          aria-expanded={false}
+          aria-controls="mobile-menu"
+          aria-label="Open navigation menu"
+          className="text-white text-6xl"
+          disabled
+        >
+          ☰
+        </button>
+      ) : isDesktop ? (
         <nav>
           <NavList />
         </nav>

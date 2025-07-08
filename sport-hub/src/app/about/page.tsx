@@ -7,20 +7,24 @@ import { useEffect, useState } from 'react';
 //   title: 'SportHub - About',
 // }
 
+interface User {
+  createdAt: string;
+  id: string;
+  name: string;
+  email: string;
+}
+
+type NewUserForm = Omit<User, 'createdAt'>;
+
 export default function AboutPage() {
   const [users, setUsers] = useState<User[]>([]);
-  const [newUser, setNewUser] = useState({ id: '', name: '', email: '' });
-  interface User {
-    createdAt: any;
-    id: number;
-    name: string;
-    email: string;
-  }
-
+  const [newUser, setNewUser] = useState<NewUserForm>({ id: '', name: '', email: '' });
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
+    setIsHydrated(true);
     fetchUsers();
   }, []);
 
@@ -34,15 +38,20 @@ export default function AboutPage() {
     }
   };
 
-  const createUser = async (e: { preventDefault: () => void; }) => {
+  const createUser = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      const userToCreate: User = {
+        ...newUser,
+        createdAt: new Date().toISOString()
+      };
+
       const response = await fetch('/api/about', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newUser),
+        body: JSON.stringify(userToCreate),
       });
 
       if (response.ok) {
@@ -82,8 +91,8 @@ export default function AboutPage() {
     }
   };
 
-  const deleteUser = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
+  const deleteUser = async (id: string) => {
+    if (typeof window !== 'undefined' && !confirm('Are you sure you want to delete this user?')) return;
 
     try {
       await fetch(`/api/about/${id}`, { method: 'DELETE' });
@@ -93,13 +102,31 @@ export default function AboutPage() {
     }
   };
 
-  const startEditing = (user: any) => {
+  const startEditing = (user: User) => {
     setEditingUser({ ...user });
   };
 
   const cancelEditing = () => {
     setEditingUser(null);
   };
+
+  if (!isHydrated) {
+    return (
+      <div className="container mx-auto p-4 max-w-4xl">
+        <h1 className="text-3xl font-bold mb-6">Users Management</h1>
+        <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-4 max-w-4xl">
@@ -207,11 +234,6 @@ export default function AboutPage() {
                   <h3 className="font-semibold text-lg">{user.name}</h3>
                   <p className="text-gray-600">{user.email}</p>
                   <p className="text-sm text-gray-500">ID: {user.id}</p>
-                  {user.createdAt && (
-                    <p className="text-xs text-gray-400">
-                      Created: {new Date(user.createdAt).toLocaleDateString()}
-                    </p>
-                  )}
                 </div>
                 <div className="flex gap-2 ml-4">
                   <button
