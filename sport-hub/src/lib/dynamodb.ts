@@ -4,6 +4,7 @@ import { fromEnv } from "@aws-sdk/credential-providers";
 
 
 // TODO: Set up AWS Cognito authentication(?)
+// TODO: Set up Amplify role for all server-side AWS actions (like dynamodb access)
 const client = new DynamoDBClient({
   region: "us-east-2",
   credentials: fromEnv(),
@@ -14,7 +15,7 @@ const ddb = DynamoDBDocumentClient.from(client);
 
 export const dynamodb = {
   // Create/Update item
-  async putItem(tableName: string, item: any) {
+  async putItem(tableName: string, item: Record<string, unknown>) {
     const command = new PutCommand({
       TableName: tableName,
       Item: item,
@@ -23,7 +24,7 @@ export const dynamodb = {
   },
 
   // Get item by key
-  async getItem(tableName: string, key: Record<string, any>) {
+  async getItem(tableName: string, key: Record<string, unknown>) {
     const command = new GetCommand({
       TableName: tableName,
       Key: key,
@@ -42,7 +43,7 @@ export const dynamodb = {
   },
 
   // Delete item
-  async deleteItem(tableName: string, key: Record<string, any>) {
+  async deleteItem(tableName: string, key: Record<string, unknown>) {
     const command = new DeleteCommand({
       TableName: tableName,
       Key: key,
