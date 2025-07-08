@@ -8,8 +8,11 @@ const isDesktopQuery = `(min-width: ${BREAKPOINT_SM}px)`;
 // Hook to determine device type based on device width
 export function useClientMediaQuery() {
   const [isDesktop, setIsDesktop] = useState<boolean>(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
+    setIsHydrated(true);
+    
     const isDesktopMediaQueryList = window.matchMedia(isDesktopQuery);
 
     const handleMatchChange = () => {
@@ -25,7 +28,8 @@ export function useClientMediaQuery() {
   }, []);
 
   return {
-    isDesktop,
-    isMobile: !isDesktop
+    isDesktop: isHydrated ? isDesktop : false,
+    isMobile: isHydrated ? !isDesktop : true,
+    isHydrated
   };
 };

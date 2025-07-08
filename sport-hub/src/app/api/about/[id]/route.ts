@@ -27,8 +27,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
-    const { id } = params;
-    await dynamodb.deleteItem(TABLE_NAME, { id });
+    const { id } = await params;
+    await dynamodb.deleteItem(TABLE_NAME, { 'rankings-dev-key': id });
     return NextResponse.json({ message: 'User deleted successfully' });
   } catch (error) {
     console.error('DynamoDB error:', error);
@@ -45,7 +45,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const updateData = await request.json();
     
     // Get existing user first
-    const existingUser = await dynamodb.getItem(TABLE_NAME, { id });
+    const existingUser = await dynamodb.getItem(TABLE_NAME, { 'rankings-dev-key': id });
     if (!existingUser) {
       return NextResponse.json(
         { error: 'User not found' },

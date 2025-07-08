@@ -29,6 +29,7 @@ export async function POST(request: { json: () => PromiseLike<{ id: any; name: a
     }
 
     const user = {
+      'rankings-dev-key': id,
       id,
       name,
       email,
