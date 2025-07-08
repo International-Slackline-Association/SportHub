@@ -7,7 +7,7 @@ import { fromEnv } from "@aws-sdk/credential-providers";
 // TODO: Set up Amplify role for all server-side AWS actions (like dynamodb access)
 const client = new DynamoDBClient({
   region: "us-east-2",
-  credentials: fromEnv(),
+  ...(process.env.NODE_ENV === 'development' ? { credentials: fromEnv() } : {})
   // logger: console, // TODO: DEBUG ONLY
 });
 
