@@ -3,7 +3,7 @@ import { dynamodb } from '@lib/dynamodb';
 
 const TABLE_NAME = 'rankings-dev';
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET({ params }: { params: { id: string } }) {
   try {
     const { id } = params;
     const user = await dynamodb.getItem(TABLE_NAME, { id });
@@ -25,7 +25,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE({ params }: { params: { id: string } }) {
   try {
     const { id } = await params;
     await dynamodb.deleteItem(TABLE_NAME, { 'rankings-dev-key': id });

@@ -13,17 +13,20 @@ export function useClientMediaQuery() {
   useEffect(() => {
     setIsHydrated(true);
     
-    const isDesktopMediaQueryList = window.matchMedia(isDesktopQuery);
+    // Ensure we're in the browser before using window
+    if (typeof window !== 'undefined') {
+      const isDesktopMediaQueryList = window.matchMedia(isDesktopQuery);
 
-    const handleMatchChange = () => {
+      const handleMatchChange = () => {
+        setIsDesktop(isDesktopMediaQueryList.matches);
+      };
+
+      isDesktopMediaQueryList.addEventListener('change', handleMatchChange);
       setIsDesktop(isDesktopMediaQueryList.matches);
-    };
 
-    isDesktopMediaQueryList.addEventListener('change', handleMatchChange);
-    setIsDesktop(isDesktopMediaQueryList.matches);
-
-    return () => {
-      isDesktopMediaQueryList.removeEventListener('change', handleMatchChange);
+      return () => {
+        isDesktopMediaQueryList.removeEventListener('change', handleMatchChange);
+      };
     }
   }, []);
 
