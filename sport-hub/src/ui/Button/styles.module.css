@@ -16,16 +16,66 @@
   color: #fff;
 }
 .primary:hover:not(:disabled) {
-  background: var(--color-primary-dark);
+  background: var(--color-green-700);
+}
+.primary:active:not(:disabled) {
+  background: var(--color-green-800);
 }
 
 .secondary {
-  background: #f3f4f6;
-  color: var(--color-primary);
+  background: #fff;
   border: 1px solid var(--color-primary);
+  color: var(--color-primary);
 }
 .secondary:hover:not(:disabled) {
-  background: #e5e7eb;
+  background: var(--color-green-50);
+  border: 1px solid var(--color-green-700);
+}
+.secondary:active:not(:disabled) {
+  background: var(--color-green-100);
+  border: 1px solid var(--color-green-800);
+}
+
+.default {
+  background: #fff;
+  border: 1px solid var(--color-neutral-400);
+  color: var(--color-neutral-400);
+}
+.default:hover:not(:disabled) {
+  background: var(--color-neutral-50);
+  border: 1px solid var(--color-neutral-600);
+  color: var(--color-neutral-600);
+}
+.default:active:not(:disabled) {
+  background: var(--color-neutral-100);
+  border: 1px solid var(--color-neutral-700);
+  color: var(--color-neutral-700);
+}
+
+.destructive {
+  background: var(--color-red-500);
+  color: #fff;
+}
+.destructive:hover:not(:disabled) {
+  background: var(--color-red-700);
+}
+.destructive:active:not(:disabled) {
+  background: var(--color-red-800);
+}
+
+.destructive-secondary {
+  border: 1px solid var(--color-red-500);
+  color: var(--color-red-500);
+}
+.destructive-secondary:hover:not(:disabled) {
+  background: var(--color-red-50);
+  border: 1px solid var(--color-red-700);
+  color: var(--color-red-700);
+}
+.destructive-secondary:active:not(:disabled) {
+  background: var(--color-red-100);
+  border: 1px solid var(--color-red-800);
+  color: var(--color-red-800);
 }
 
 .ghost {
@@ -33,10 +83,12 @@
   color: white;
   border: 1px solid white;
 }
-/* .ghost:hover:not(:disabled) {
-  background: #f3f4f6;
-  border-color: #cbd5e1;
-} */
+.ghost:hover:not(:disabled) {
+  background: var(--color-neutral-50);
+}
+.ghost:active:not(:disabled) {
+  background: var(--color-neutral-100);
+}
 
 .button:disabled {
   opacity: 0.6;

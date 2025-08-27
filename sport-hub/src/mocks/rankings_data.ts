@@ -6,7 +6,7 @@ export interface Athlete {
   country: string;
   gender: 'male' | 'female' | 'other';
   ageCategory: string;
-  disciplines: Disciplines[];
+  disciplines: Discipline[];
   points: number;
   profileImage?: string;
 }

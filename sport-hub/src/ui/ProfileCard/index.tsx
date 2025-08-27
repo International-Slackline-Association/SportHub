@@ -2,12 +2,11 @@ import { AthleteProfile } from '@mocks/athlete_profile';
 import { cn } from '@utils/cn';
 import { JSX } from 'react';
 import ClipBoardButton from './ClipboardButton';
-import DisciplineTags from './DisciplineTags';
 import Image from 'next/image';
-import RoleTags from './RoleTags';
 import styles from './styles.module.css';
 import SocialTags from './SocialTags';
 import { ProfileImage } from '@ui/ProfileImage';
+import { Discipline, Role } from '@ui/Badge';
 
 type LabelValuePairProps = {
   label: string;
@@ -38,15 +37,20 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
         <SocialTags socials={socialMedia} />
         <ClipBoardButton>Copy Profile Link</ClipBoardButton>
       </div>
-      
+
       <div className="stack gap-4 my-4 sm:my-0 sm:w-4/5 sm:gap-2">
         <div className={cn(styles.nameAndRoles, "stack", "gap-2")}>
           <div className="flex gap-2">
-            <RoleTags roles={profile.roles as Roles[]} />
+            {profile.roles.map((role) => (
+              <Role
+                key={role}
+                variant={role as Role}
+              />
+            ))}
           </div>
           <h1 className={styles.name}>{profile.name}</h1>
         </div>
-        
+
         <div className={cn("stack", "gap-4")}>
           <div className="stack gap-2">
             <div className={styles.athleteDetails}>
@@ -73,10 +77,17 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
               value={profile.sponsors}
             />
           </div>
-          
+
           <div className="sm:mt-4">
             <p className={styles.detailLabel}>Disciplines</p>
-            <DisciplineTags disciplines={profile.disciplines as Disciplines[]} />
+            <div className="flex gap-2">
+              {profile.disciplines.map((discipline) => (
+                <Discipline
+                key={discipline}
+                variant={discipline as Discipline}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
