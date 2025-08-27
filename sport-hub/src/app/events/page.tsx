@@ -3,7 +3,7 @@ import Image from 'next/image'
 import ContestsTable from "./components/ContestsTable";
 import { mockFeaturedAthletes } from "@mocks/rankings_data";
 import FeaturedGrid, { FeaturedCard } from "@ui/FeatureGrid";
- 
+
 export const metadata: Metadata = {
   title: 'SportHub - Events',
 }
