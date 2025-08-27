@@ -50,30 +50,6 @@
   cursor: pointer;
 }
 
-.roleTag {
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.2px;
-}
-
-.roleAthlete {
-  background-color: #E84026;
-  color: white;
-}
-
-.roleJudge {
-  background-color: #009F9A;
-  color: white;
-}
-
-.roleOrganiser {
-  background-color: #71717A;
-  color: white;
-}
-
 .name {
   font-size: 24px;
   font-weight: 700;
@@ -93,35 +69,4 @@
   font-weight: 700;
   color: #52525B;
   margin: 0;
-}
-
-.disciplineTags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.disciplineTag {
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.2px;
-}
-
-.disciplineSpeed {
-  background-color: #D7F4E4;
-  color: #1B805F;
-}
-
-.disciplineSpeedHighline {
-  background-color: #DCE7FD;
-  color: #3259E7;
-}
-
-.disciplineFreestyleHighline {
-  background-color: #FFF0C6;
-  color: #DD6702;
 }
