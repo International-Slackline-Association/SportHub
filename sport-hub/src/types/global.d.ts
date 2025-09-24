@@ -37,6 +37,10 @@ interface Ranking {
   surname: string;
 }
 
-type Disciplines = 'speed-highline' | 'freestyle-highline' | 'speed-short' | 'trickline';
+type Discipline = "RIGGING" | "TRICKLINE" | "FREESTYLE_HIGHLINE" | "SPEED_SHORT" | "SPEED_HIGHLINE";
 
-type Roles = 'Athlete' | 'Judge' | 'Organiser';
+type Role = "ATHLETE" | "JUDGE" | "ISA_VERIFIED" | "ORGANIZER";
+
+type Gender = "FEMALE" | "MALE";
+
+type AgeCategory = "PROFESSIONAL" | "AMATEUR" | "SENIOR" | "YOUTH_U16" | "YOUTH_U14";

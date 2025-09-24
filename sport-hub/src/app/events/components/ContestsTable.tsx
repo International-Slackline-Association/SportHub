@@ -47,7 +47,7 @@ const ContestsTable = () => {
       <div className={cn("cluster", "items-center", "justify-between")}>
         <h3>Contests</h3>
         <a href="/admin/submit/event">
-          <Button className="mt-4 mb-4" variant="primary">
+          <Button className="mt-4 mb-4" variant="secondary">
             Submit Event
           </Button>
         </a>
