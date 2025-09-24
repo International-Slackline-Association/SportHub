@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { dynamodb } from '@lib/dynamodb';
 
-const TABLE_NAME = 'rankings-dev';
+const TABLE_NAME = 'rankings';
 
 export async function GET({ params }: { params: { id: string } }) {
   try {
     const { id } = params;
-    const user = await dynamodb.getItem(TABLE_NAME, { id });
+    const user = await dynamodb.getItem(TABLE_NAME, { 'rankings-dev-key': id });
     
     if (!user) {
       return NextResponse.json(
@@ -61,7 +61,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       updatedAt: new Date().toISOString(),
     };
 
-    await dynamodb.putItem(TABLE_NAME, updatedUser);
+    await dynamodb.putItem(TABLE_NAME, updatedUser as unknown as Record<string, unknown>);
     return NextResponse.json(updatedUser);
   } catch (error) {
     console.error('DynamoDB error:', error);

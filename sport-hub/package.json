@@ -7,7 +7,16 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:local": "docker-compose up -d dynamodb-local",
+    "db:setup": "DYNAMODB_LOCAL=true tsx src/lib/db-setup.ts",
+    "db:seed": "DYNAMODB_LOCAL=true tsx src/lib/seed-local-db.ts seed",
+    "db:reset": "DYNAMODB_LOCAL=true tsx src/lib/seed-local-db.ts reset",
+    "db:clear": "DYNAMODB_LOCAL=true tsx src/lib/seed-local-db.ts clear",
+    "db:count": "DYNAMODB_LOCAL=true tsx src/lib/seed-local-db.ts count",
+    "db:stop": "docker-compose stop dynamodb-local",
+    "db:clean": "docker-compose down -v",
+    "test:local": "DYNAMODB_LOCAL=true pnpm run dev"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.821.0",
@@ -35,6 +44,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.3.2",
     "tailwindcss": "^4.0.14",
+    "tsx": "^4.7.1",
     "typescript": "^5"
   },
   "pnpm": {

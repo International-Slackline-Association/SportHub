@@ -12,15 +12,22 @@ interface User {
   id: string;
   name: string;
   email: string;
+  country?: string;
+  totalPoints?: number;
+  contestsParticipated?: number;
+  firstCompetition?: string;
+  lastCompetition?: string;
+  updatedAt?: string;
 }
 
-type NewUserForm = Omit<User, 'createdAt'>;
+type NewUserForm = Omit<User, 'createdAt' | 'totalPoints' | 'contestsParticipated' | 'firstCompetition' | 'lastCompetition' | 'updatedAt'>;
 
 export default function AboutPage() {
   const [users, setUsers] = useState<User[]>([]);
-  const [newUser, setNewUser] = useState<NewUserForm>({ id: '', name: '', email: '' });
+  const [newUser, setNewUser] = useState<NewUserForm>({ id: '', name: '', email: '', country: '' });
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
+  const [fetchingUsers, setFetchingUsers] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
@@ -29,12 +36,23 @@ export default function AboutPage() {
   }, []);
 
   const fetchUsers = async () => {
+    setFetchingUsers(true);
     try {
       const response = await fetch('/api/about');
       const data = await response.json();
-      setUsers(data);
+
+      // Ensure data is an array before setting users
+      if (Array.isArray(data)) {
+        setUsers(data);
+      } else {
+        console.error('API returned non-array data:', data);
+        setUsers([]);
+      }
     } catch (error) {
       console.error('Error fetching users:', error);
+      setUsers([]);
+    } finally {
+      setFetchingUsers(false);
     }
   };
 
@@ -55,7 +73,7 @@ export default function AboutPage() {
       });
 
       if (response.ok) {
-        setNewUser({ id: '', name: '', email: '' });
+        setNewUser({ id: '', name: '', email: '', country: '' });
         fetchUsers();
       }
     } catch (error) {
@@ -77,6 +95,7 @@ export default function AboutPage() {
         body: JSON.stringify({
           name: editingUser.name,
           email: editingUser.email,
+          country: editingUser.country,
         }),
       });
 
@@ -136,18 +155,17 @@ export default function AboutPage() {
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
         <h2 className="text-xl font-semibold mb-4">Add New User</h2>
         <form onSubmit={createUser}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
             <input
               type="text"
-              placeholder="User ID"
+              placeholder="User ID (optional)"
               value={newUser.id}
               onChange={(e) => setNewUser({ ...newUser, id: e.target.value })}
               className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
             />
             <input
               type="text"
-              placeholder="Name"
+              placeholder="Name *"
               value={newUser.name}
               onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
               className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -155,11 +173,18 @@ export default function AboutPage() {
             />
             <input
               type="email"
-              placeholder="Email"
+              placeholder="Email *"
               value={newUser.email}
               onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
               className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
+            />
+            <input
+              type="text"
+              placeholder="Country"
+              value={newUser.country || ''}
+              onChange={(e) => setNewUser({ ...newUser, country: e.target.value })}
+              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <button
@@ -181,7 +206,7 @@ export default function AboutPage() {
               <div className="space-y-4 mb-4">
                 <input
                   type="text"
-                  placeholder="Name"
+                  placeholder="Name *"
                   value={editingUser.name}
                   onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
                   className="w-full border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -189,11 +214,18 @@ export default function AboutPage() {
                 />
                 <input
                   type="email"
-                  placeholder="Email"
+                  placeholder="Email *"
                   value={editingUser.email}
                   onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
                   className="w-full border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
+                />
+                <input
+                  type="text"
+                  placeholder="Country"
+                  value={editingUser.country || ''}
+                  onChange={(e) => setEditingUser({ ...editingUser, country: e.target.value })}
+                  className="w-full border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div className="flex gap-2">
@@ -223,17 +255,31 @@ export default function AboutPage() {
           <h2 className="text-xl font-semibold">Users List</h2>
         </div>
         <div className="divide-y divide-gray-200">
-          {users.length === 0 ? (
+          {fetchingUsers ? (
+            <div className="p-6 text-center text-gray-500">
+              Loading users...
+            </div>
+          ) : users.length === 0 ? (
             <div className="p-6 text-center text-gray-500">
               No users found. Add your first user above.
             </div>
           ) : (
-            users.map((user) => (
+            Array.isArray(users) && users.map((user) => (
               <div key={user.id} className="p-6 flex justify-between items-center hover:bg-gray-50">
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg">{user.name}</h3>
                   <p className="text-gray-600">{user.email}</p>
                   <p className="text-sm text-gray-500">ID: {user.id}</p>
+                  {user.country && <p className="text-sm text-gray-500">Country: {user.country}</p>}
+                  <div className="flex gap-4 text-sm text-gray-500 mt-1">
+                    <span>Points: {user.totalPoints || 0}</span>
+                    <span>Contests: {user.contestsParticipated || 0}</span>
+                  </div>
+                  {(user.firstCompetition || user.lastCompetition) && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      {user.firstCompetition} → {user.lastCompetition}
+                    </p>
+                  )}
                 </div>
                 <div className="flex gap-2 ml-4">
                   <button

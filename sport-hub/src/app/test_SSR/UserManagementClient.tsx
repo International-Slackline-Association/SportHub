@@ -8,6 +8,9 @@ interface User {
   id: string;
   name: string;
   email: string;
+  country?: string;
+  totalPoints?: number;
+  contestsParticipated?: number;
 }
 
 interface UserManagementClientProps {
@@ -37,7 +40,7 @@ export default function UserManagementClient({ user }: UserManagementClientProps
                 <input
                   type="text"
                   name="name"
-                  placeholder="Name"
+                  placeholder="Name *"
                   defaultValue={user.name}
                   className="w-full border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
@@ -45,10 +48,17 @@ export default function UserManagementClient({ user }: UserManagementClientProps
                 <input
                   type="email"
                   name="email"
-                  placeholder="Email"
+                  placeholder="Email *"
                   defaultValue={user.email}
                   className="w-full border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
+                />
+                <input
+                  type="text"
+                  name="country"
+                  placeholder="Country"
+                  defaultValue={user.country || ''}
+                  className="w-full border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div className="flex gap-2">
