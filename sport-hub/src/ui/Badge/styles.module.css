@@ -1,0 +1,220 @@
+/* Badge base styles */
+.badge {
+  align-items: center;
+  border-radius: 4px;
+  border: none;
+  cursor: default;
+  display: inline-flex;
+  font-family: var(--font-metropolis);
+  font-size: 12px;
+  font-weight: 600;
+  gap: 8px;
+  letter-spacing: 1.67%;
+  line-height: 1em;
+  padding: 2px 6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  width: min-content;
+}
+
+/* Contest Size Badges */
+.contestSize {
+  border: 1px solid var(--color-neutral-500);
+}
+
+.contestSize .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.contestSizeMasters {
+  color: var(--color-neutral-500);
+}
+
+.contestSizeMasters .dot {
+  background-color: var(--color-neutral-500);
+}
+
+.contestSizeOpen {
+  color: var(--color-neutral-500);
+}
+
+.contestSizeOpen .dot {
+  background-color: var(--color-primary);
+}
+
+.contestSizeGrandSlam {
+  color: var(--color-neutral-500);
+}
+
+.contestSizeGrandSlam .dot {
+  background-color: var(--color-red-600);
+}
+
+.contestSizeWorldCup {
+  color: var(--color-neutral-500);
+}
+
+.contestSizeWorldCup .dot {
+  background-color: var(--color-green-950);
+}
+
+.contestSizeWorldChampionship {
+  color: var(--color-neutral-500);
+}
+
+.contestSizeWorldChampionship .dot {
+  background-color: var(--color-orange-600);
+}
+
+/* Discipline Badges */
+.disciplineRigging {
+  background-color: var(--color-violet-100);
+  color: var(--color-violet-600);
+}
+
+.disciplineTrickline {
+  background-color: var(--color-red-100);
+  color: var(--color-red-600);
+}
+
+.disciplineFreestyleHighline {
+  background-color: var(--color-yellow-100);
+  color: var(--color-yellow-600);
+}
+
+.disciplineSpeedShort {
+  background-color: var(--color-green-100);
+  color: var(--color-green-600);
+}
+
+.disciplineSpeedHighline {
+  background-color: var(--color-blue-100);
+  color: var(--color-blue-600);
+}
+
+/* Role Badges */
+.roleAthlete {
+  background-color: var(--color-red-600);
+  color: white;
+}
+
+.roleJudge {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.roleOrganizer {
+  background-color: white;
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.roleIsaVerified {
+  background-color: white;
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  width: auto;
+}
+
+.roleIsaVerified .icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+/* Gender Badges */
+.gender {
+  background-color: transparent;
+  color: var(--color-neutral-600);
+}
+
+.gender .icon {
+  width: 8px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.genderMale .icon {
+  width: 10px;
+  height: 16px;
+}
+
+/* Age Category Badges */
+.ageProfessional {
+  background-color: var(--color-neutral-200);
+  color: var(--color-neutral-600);
+}
+
+.ageAmateur {
+  background-color: var(--color-neutral-200);
+  color: var(--color-neutral-600);
+}
+
+.ageSenior {
+  background-color: var(--color-neutral-200);
+  color: var(--color-neutral-600);
+}
+
+.ageYouthU16 {
+  background-color: var(--color-neutral-200);
+  color: var(--color-neutral-600);
+}
+
+.ageYouthU14 {
+  background-color: var(--color-neutral-200);
+  color: var(--color-neutral-600);
+}
+
+/* Generic colored badges */
+.badgeNeutral {
+  background-color: var(--color-neutral-200);
+  color: var(--color-neutral-700);
+}
+
+.badgeBlue {
+  background-color: var(--color-blue-100);
+  color: var(--color-blue-600);
+}
+
+.badgeGreen {
+  background-color: var(--color-green-100);
+  color: var(--color-green-600);
+}
+
+.badgeOrange {
+  background-color: var(--color-orange-100);
+  color: var(--color-orange-600);
+}
+
+.badgePink {
+  background-color: var(--color-pink-100);
+  color: var(--color-pink-600);
+}
+
+.badgeRed {
+  background-color: var(--color-red-100);
+  color: var(--color-red-600);
+}
+
+.badgeTeal {
+  background-color: var(--color-teal-100);
+  color: var(--color-teal-600);
+}
+
+.badgeViolet {
+  background-color: var(--color-violet-100);
+  color: var(--color-violet-600);
+}
+
+.badgeYellow {
+  background-color: var(--color-yellow-100);
+  color: var(--color-yellow-600);
+}
+
+.badgePurple {
+  background-color: var(--color-purple-100);
+  color: var(--color-purple-600);
+}

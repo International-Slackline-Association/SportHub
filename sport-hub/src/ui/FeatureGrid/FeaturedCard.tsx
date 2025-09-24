@@ -2,8 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import styles from "./styles.module.css";
 import { ProfileImage } from "@ui/ProfileImage";
-import DisciplineTags from "@ui/ProfileCard/DisciplineTags";
 import { cn } from "@utils/cn";
+import { Discipline } from "@ui/Badge";
 
 interface FeaturedCardProps {
   id: string;
@@ -11,7 +11,7 @@ interface FeaturedCardProps {
   image: string;
   country: string;
   countryFlag: string;
-  disciplines: Disciplines[];
+  disciplines: Discipline[];
 }
 
 const FeaturedCard = ({
@@ -25,10 +25,10 @@ const FeaturedCard = ({
     <ProfileImage />
     <div className={styles.content}>
       <h2 className={styles.name}>{name}</h2>
-      
+
       <div className={styles.countryContainer}>
         <div className={styles.flagContainer}>
-          <Image 
+          <Image
             src={countryFlag}
             alt={country}
             width={22}
@@ -38,8 +38,14 @@ const FeaturedCard = ({
           <span>{country}</span>
         </div>
       </div>
-      
-      <DisciplineTags className="justify-center" disciplines={disciplines} />
+      <div className="flex gap-2">
+        {disciplines.map((discipline) => (
+          <Discipline
+            key={discipline}
+            variant={discipline as Discipline}
+          />
+        ))}
+      </div>
     </div>
   </Link>
 );
