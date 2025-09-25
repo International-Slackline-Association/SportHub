@@ -2,15 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, notFound } from 'next/navigation';
-import {
-  getAthleteProfile,
-  getAthleteContests,
-  getWorldRecords,
-  getWorldFirsts,
-  type AthleteProfile,
-  type AthleteContest,
-  type WorldRecord,
-  type WorldFirst
+import type {
+  AthleteProfile,
+  AthleteContest,
+  WorldRecord,
+  WorldFirst
 } from '@lib/data-services';
 import { ProfileCard } from '@ui/ProfileCard';
 import { TabGroup } from '@ui/Tab';
@@ -44,20 +40,19 @@ export default function AthleteProfilePage() {
       try {
         setLoading(true);
 
-        // Fetch data from DynamoDB
-        const [profile, contests, worldRecords, worldFirsts] = await Promise.all([
-          getAthleteProfile(athleteId),
-          getAthleteContests(athleteId),
-          getWorldRecords(),
-          getWorldFirsts()
-        ]);
+        // Fetch data from API route
+        const response = await fetch(`/api/athlete/${athleteId}`);
 
-        if (!profile) {
-          setError(true);
-          return;
+        if (!response.ok) {
+          if (response.status === 404) {
+            setError(true);
+            return;
+          }
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        setData({ profile, contests, worldRecords, worldFirsts });
+        const data = await response.json();
+        setData(data);
       } catch (err) {
         console.error('Error loading athlete data:', err);
         setError(true);
