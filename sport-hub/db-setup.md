@@ -6,6 +6,8 @@ Quick guide to get your local DynamoDB instance running with seed data.
 
 - Docker installed and running
 - Node.js and pnpm installed
+- [Environment Files](#environment-files) configuration
+
 
 ## Quick Start
 
