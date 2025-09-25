@@ -94,3 +94,52 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.icon {
+  background: none;
+  border: none;
+  padding: 10px;
+  border-radius: 4px;
+  color: var(--color-neutral-600);
+  min-width: auto;
+  height: auto;
+}
+
+.icon:hover:not(:disabled) {
+  background-color: var(--color-neutral-100);
+}
+
+.icon:active:not(:disabled) {
+  background-color: var(--color-neutral-200);
+}
+
+.icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.tab {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-metropolis);
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1em;
+  text-align: center;
+  transition: all 0.2s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  color: var(--color-neutral-500);
+  min-width: auto;
+  height: auto;
+  border-radius: 0;
+}
+
+.tab:hover:not(:disabled) {
+  color: var(--color-neutral-600);
+}
