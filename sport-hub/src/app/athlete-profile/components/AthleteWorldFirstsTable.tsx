@@ -1,5 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
-import { WorldFirst, mockWorldFirsts } from '@mocks/athlete_profile';
+import { WorldFirst } from '@lib/data-services';
 import Table from '@ui/Table';
 
 const columnHelper = createColumnHelper<WorldFirst>();
@@ -16,14 +16,14 @@ const columns = [
 ];
 
 type AthleteWorldFirstsTableProps = {
-  firsts?: WorldFirst[];
+  worldFirsts: WorldFirst[];
 };
 
-const AthleteWorldFirstsTable = ({ firsts = mockWorldFirsts }: AthleteWorldFirstsTableProps) => {
+const AthleteWorldFirstsTable = ({ worldFirsts }: AthleteWorldFirstsTableProps) => {
   return (
     <div className="mb-8">
       <h3>World Firsts</h3>
-      <Table options={{ columns, data: firsts }} />
+      <Table options={{ columns, data: worldFirsts }} />
     </div>
   );
 };

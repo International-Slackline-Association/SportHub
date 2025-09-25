@@ -1,4 +1,4 @@
-import { AthleteProfile } from '@mocks/athlete_profile';
+import { AthleteProfile } from '@lib/data-services';
 import { cn } from '@utils/cn';
 import { JSX } from 'react';
 import ClipBoardButton from './ClipboardButton';
@@ -33,8 +33,11 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
   return (
     <section className={cn("stack", "card", styles.profileCard)}>
       <div className={cn("stack", "items-center", "gap-4")}>
-        <ProfileImage />
-        <SocialTags socials={socialMedia} />
+        <ProfileImage
+          name={profile.name}
+          alt={`${profile.name} profile image`}
+        />
+        <SocialTags socials={socialMedia || {}} />
         <ClipBoardButton>Copy Profile Link</ClipBoardButton>
       </div>
 
@@ -56,25 +59,40 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
             <div className={styles.athleteDetails}>
               <LabelValuePair
                 label="Age"
-                value={profile.age}
+                value={profile.age || 'N/A'}
               />
               <LabelValuePair
                 label="Country"
-                value={(
-                  <div className="flex items-center gap-1">
-                    <Image className="rounded-xs" src="/static/images/flags/canada.svg" alt="Canada Flag" width={20} height={14} />
-                    <span className={styles.detailValue}>{profile.country}</span>
-                  </div>
-                )}
+                value={
+                  profile.country === 'N/A' || !profile.country ? (
+                    <span className={styles.detailValue}>N/A</span>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <Image
+                        className="rounded-xs"
+                        src={`/static/images/flags/${profile.country.toLowerCase()}.svg`}
+                        alt={`${profile.country} Flag`}
+                        width={20}
+                        height={14}
+                        onError={(e) => {
+                          // Hide flag if image doesn't exist
+                          const target = e.currentTarget as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
+                      />
+                      <span className={styles.detailValue}>{profile.country.toUpperCase()}</span>
+                    </div>
+                  )
+                }
               />
               <LabelValuePair
                 label="Website"
-                value={profile.website}
+                value={profile.website || 'N/A'}
               />
             </div>
             <LabelValuePair
               label="Sponsors"
-              value={profile.sponsors}
+              value={profile.sponsors || 'N/A'}
             />
           </div>
 
