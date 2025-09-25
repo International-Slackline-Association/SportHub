@@ -63,12 +63,27 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
               />
               <LabelValuePair
                 label="Country"
-                value={(
-                  <div className="flex items-center gap-1">
-                    <Image className="rounded-xs" src="/static/images/flags/canada.svg" alt="Canada Flag" width={20} height={14} />
-                    <span className={styles.detailValue}>{profile.country}</span>
-                  </div>
-                )}
+                value={
+                  profile.country === 'N/A' || !profile.country ? (
+                    <span className={styles.detailValue}>N/A</span>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <Image
+                        className="rounded-xs"
+                        src={`/static/images/flags/${profile.country.toLowerCase()}.svg`}
+                        alt={`${profile.country} Flag`}
+                        width={20}
+                        height={14}
+                        onError={(e) => {
+                          // Hide flag if image doesn't exist
+                          const target = e.currentTarget as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
+                      />
+                      <span className={styles.detailValue}>{profile.country.toUpperCase()}</span>
+                    </div>
+                  )
+                }
               />
               <LabelValuePair
                 label="Website"

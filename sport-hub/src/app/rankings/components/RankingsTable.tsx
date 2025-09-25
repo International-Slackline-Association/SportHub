@@ -37,6 +37,32 @@ const columns = [
   columnHelper.accessor('country', {
     enableColumnFilter: true,
     header: 'Country',
+    cell: info => {
+      const country = info.getValue();
+      if (country === 'N/A' || !country) {
+        return <span className="text-gray-500">N/A</span>;
+      }
+
+      // Convert country code to flag
+      const flagUrl = `/static/images/flags/${country.toLowerCase()}.svg`;
+      const countryName = country.toUpperCase(); // You could add a country name lookup here
+
+      return (
+        <div className="flex items-center" title={countryName}>
+          <img
+            src={flagUrl}
+            alt={`${countryName} flag`}
+            className="w-6 h-4 object-cover rounded-sm"
+            onError={(e) => {
+              // Fallback to text if flag image doesn't exist
+              const target = e.currentTarget as HTMLImageElement;
+              target.style.display = 'none';
+            }}
+          />
+          <span className="text-sm text-gray-600">{countryName}</span>
+        </div>
+      );
+    },
     meta: { filterVariant: 'select' },
   }),
   columnHelper.accessor('points', {
