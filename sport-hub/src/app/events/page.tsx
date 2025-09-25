@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import ContestsTable from "./components/ContestsTable";
-import { getContestsData, getFeaturedAthletes } from "@lib/data-services";
+import { getFeaturedAthletes } from "@lib/data-services";
 import FeaturedGrid, { FeaturedCard } from "@ui/FeatureGrid";
 import PageLayout from "@ui/PageLayout";
 
@@ -9,11 +9,8 @@ export const metadata: Metadata = {
 }
 
 export default async function Page() {
-  // Fetch data from DynamoDB
-  const [contests, featuredAthletes] = await Promise.all([
-    getContestsData(),
-    getFeaturedAthletes(4) // Show top athletes as featured for events page
-  ]);
+  // Only fetch featured athletes server-side for SEO
+  const featuredAthletes = await getFeaturedAthletes(4);
 
   return (
     <PageLayout
@@ -39,7 +36,7 @@ export default async function Page() {
         ))}
       </FeaturedGrid>
       <section className="p-4 sm:p-0">
-        <ContestsTable contests={contests} />
+        <ContestsTable />
       </section>
     </PageLayout>
   );
