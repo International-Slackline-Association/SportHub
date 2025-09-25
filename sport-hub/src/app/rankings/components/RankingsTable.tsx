@@ -1,11 +1,11 @@
 "use client";
 
 import { createColumnHelper } from '@tanstack/react-table';
-import { mockRankings } from '@mocks/rankings_data';
+import { AthleteRanking } from '@lib/data-services';
 import Table from '@ui/Table';
 
-const columnHelper = createColumnHelper<Ranking>();
-  
+const columnHelper = createColumnHelper<AthleteRanking>();
+
   const columns = [
     columnHelper.display({
       header: 'Rank',
@@ -16,8 +16,14 @@ const columnHelper = createColumnHelper<Ranking>();
       header: 'Name',
       cell: info => {
         const athlete = info.row.original;
+        const displayName = athlete.fullName || athlete.name || `${athlete.name} ${athlete.surname || ''}`;
         return (
-          athlete.fullName || `${athlete.name} ${athlete.surname}`
+          <a
+            href={`/athlete-profile/${athlete.athleteId}`}
+            className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+          >
+            {displayName}
+          </a>
         );
       },
       meta: { filterVariant: 'text' },
@@ -38,14 +44,12 @@ const columnHelper = createColumnHelper<Ranking>();
   ];
 
 type RankingsTableProps = {
-  rankings?: Ranking[];
+  rankings: AthleteRanking[];
 };
 
-const RankingsTable = ({ rankings = mockRankings }: RankingsTableProps) => {
+const RankingsTable = ({ rankings }: RankingsTableProps) => {
   return (
-    <div className="mb-8">
-      <Table options={{ columns, data: rankings }} title="Rankings" />
-    </div>
+    <Table options={{ columns, data: rankings }} title="Rankings" />
   );
 };
 

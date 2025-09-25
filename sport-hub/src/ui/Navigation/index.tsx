@@ -34,10 +34,6 @@ const navItems: LinkType[] = [
         href: "/world_records",
         name: "World Records",
     },
-    {
-        href: "/athlete-profile",
-        name: "Athlete Profile",
-    },
 ];
 
 type NavLinkProps = PropsWithChildren<{ href: string; onClick?: () => void }>;
@@ -111,13 +107,6 @@ const Navigation = () => {
           </button>
           <Drawer isOpen={menuOpen} onClose={() => setMenuOpen(false)} position="right">
             <nav>
-              <button
-                aria-label="Close navigation menu"
-                className="text-white text-6xl pt-4 pl-4"
-                onClick={() => setMenuOpen(false)}
-              >
-                ✕
-              </button>
               <NavList onClickItem={() => setMenuOpen(false)} />
             </nav>
           </Drawer>

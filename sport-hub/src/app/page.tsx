@@ -1,9 +1,11 @@
-// import Image from "next/image";
+import PageLayout from '@ui/PageLayout'
 
 export default function Home() {
   return (
-    <div className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-      Home Page
-    </div>
+    <PageLayout title="SportHub" description="ISA Slackline Sport Hub">
+      <section className="p-4 sm:p-0">
+        <p>Welcome to the ISA Slackline Sport Hub - your destination for athlete rankings, events, and world records.</p>
+      </section>
+    </PageLayout>
   );
 }

@@ -19,6 +19,17 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 // TODO: Set up Amplify role for all server-side AWS actions (like dynamodb access)
 const clientConfig = {
   region: process.env.AWS_REGION || "us-east-1",
+  // PERFORMANCE OPTIMIZATION: Configure connection pooling
+  maxAttempts: 3,
+  requestHandler: {
+    httpsAgent: {
+      maxSockets: 25, // Reduce from default 50 to prevent socket exhaustion
+      keepAlive: true,
+      keepAliveMsecs: 1000,
+    },
+    connectionTimeout: 2000,
+    requestTimeout: 5000,
+  },
   ...(isLocal ? {
     endpoint: process.env.DYNAMODB_ENDPOINT || "http://localhost:8000",
     credentials: {
