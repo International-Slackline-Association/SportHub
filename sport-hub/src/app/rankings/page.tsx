@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getFeaturedAthletes, getRankingsData } from '@lib/data-services'
+import { getFeaturedAthletes } from '@lib/data-services'
 import RankingsTable from './components/RankingsTable'
 import FeaturedGrid, { FeaturedCard } from '@ui/FeatureGrid'
 import PageLayout from '@ui/PageLayout'
@@ -9,11 +9,8 @@ export const metadata: Metadata = {
 }
 
 export default async function Page() {
-  // Fetch data from DynamoDB
-  const [featuredAthletes, allRankings] = await Promise.all([
-    getFeaturedAthletes(4),
-    getRankingsData()
-  ]);
+  // Only fetch featured athletes server-side for SEO
+  const featuredAthletes = await getFeaturedAthletes(4);
 
   return (
     <PageLayout
@@ -39,7 +36,7 @@ export default async function Page() {
         ))}
       </FeaturedGrid>
       <section className="p-4 sm:p-0">
-        <RankingsTable rankings={allRankings} />
+        <RankingsTable />
       </section>
     </PageLayout>
   )

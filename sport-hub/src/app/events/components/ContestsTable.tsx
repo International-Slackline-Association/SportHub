@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
 import Table from '@ui/Table';
 import { ContestData } from "@lib/data-services";
@@ -69,11 +70,72 @@ const columns = [
   })
 ];
 
-type ContestsTableProps = {
-  contests: ContestData[];
-};
+const ContestsTable = () => {
+  const [contests, setContests] = useState<ContestData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-const ContestsTable = ({ contests }: ContestsTableProps) => {
+  useEffect(() => {
+    async function loadContests() {
+      try {
+        const response = await fetch('/api/events');
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        const data = await response.json();
+        setContests(data);
+      } catch (err) {
+        console.error('Error loading events:', err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadContests();
+  }, []);
+
+  if (loading) {
+    return (
+      <>
+        <div className={cn("cluster", "items-center", "justify-between", "mb-4")}>
+          <h3>Contests</h3>
+          <a href="/admin/submit/event">
+            <Button variant="secondary">
+              Submit Event
+            </Button>
+          </a>
+        </div>
+        <div className="flex items-center justify-center min-h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p>Loading events...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <div className={cn("cluster", "items-center", "justify-between", "mb-4")}>
+          <h3>Contests</h3>
+          <a href="/admin/submit/event">
+            <Button variant="secondary">
+              Submit Event
+            </Button>
+          </a>
+        </div>
+        <div className="flex items-center justify-center min-h-64">
+          <div className="text-center text-red-600">
+            <p>Failed to load events data</p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <div className={cn("cluster", "items-center", "justify-between", "mb-4")}>
