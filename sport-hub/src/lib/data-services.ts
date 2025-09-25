@@ -85,7 +85,7 @@ export async function getRankingsData(): Promise<AthleteRanking[]> {
         name: item.name || '',
         surname: '', // Extract from name if needed
         fullName: item.name || '',
-        country: item.country || 'Unknown', // Fallback to 'Unknown' instead of empty
+        country: item.country || 'N/A', // Fallback to 'N/A' instead of empty
         gender: 'male', // Default, should be stored in DB
         ageCategory: 'Open', // Default, should be stored in DB
         disciplines: ['FREESTYLE_HIGHLINE'], // Default, should be stored in DB
@@ -267,7 +267,7 @@ export async function getAthleteProfile(athleteId: string): Promise<AthleteProfi
 
     return {
       name: user.name || '',
-      country: user.country || '',
+      country: user.country || 'N/A',
       disciplines: ['FREESTYLE_HIGHLINE', 'SPEED_HIGHLINE'], // Default, should be stored in DB
       roles: ['ATHLETE'], // Default, should be stored in DB
       socialMedia: {
