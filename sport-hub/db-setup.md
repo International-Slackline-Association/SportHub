@@ -8,7 +8,6 @@ Quick guide to get your local DynamoDB instance running with seed data.
 - Node.js and pnpm installed
 - [Environment Files](#environment-files) configuration
 
-
 ## Quick Start
 
 ### 1. Start DynamoDB Local
