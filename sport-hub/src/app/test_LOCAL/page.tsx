@@ -13,7 +13,7 @@ export default async function LocalTestPage() {
 
   // Only get stats if tables exist
   let stats = {
-    tables: { rankings: 0, contests: 0, athletes: 0 },
+    tables: {} as Record<string, number>,
     testDataCount: 0,
     realDataCount: 0
   };

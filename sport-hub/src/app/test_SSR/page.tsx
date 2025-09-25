@@ -42,12 +42,12 @@ async function getUsers(): Promise<User[]> {
       contestsParticipated: item.contestsParticipated ?? 0
     })) : [];
     return users;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching users:', error);
     // Handle missing table gracefully - check multiple possible error formats
-    if (error?.name === 'ResourceNotFoundException' ||
-        error?.__type?.includes('ResourceNotFoundException') ||
-        (error?.message && error.message.includes('non-existent table'))) {
+    if ((error && typeof error === 'object' && 'name' in error && error.name === 'ResourceNotFoundException') ||
+        (error && typeof error === 'object' && '__type' in error && typeof error.__type === 'string' && error.__type.includes('ResourceNotFoundException')) ||
+        (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' && error.message.includes('non-existent table'))) {
       console.log(`Table ${TABLE_NAME} does not exist. Visit /test_LOCAL to create tables.`);
     }
     return [];
@@ -111,7 +111,7 @@ export default async function AboutPage() {
           {users.length === 0 ? (
             <div className="p-6 text-center text-gray-500">
               <p>No users found.</p>
-              <p className="text-sm mt-2">If tables don't exist, visit <a href="/test_LOCAL" className="text-blue-600 hover:underline">/test_LOCAL</a> to create them.</p>
+              <p className="text-sm mt-2">If tables don&apos;t exist, visit <a href="/test_LOCAL" className="text-blue-600 hover:underline">/test_LOCAL</a> to create them.</p>
             </div>
           ) : (
             users.map((user) => (

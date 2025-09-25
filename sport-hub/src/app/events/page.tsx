@@ -34,7 +34,7 @@ export default async function Page() {
             image={athlete.profileImage || '/static/images/profiles/default.jpg'}
             country={athlete.country}
             countryFlag={`/static/images/flags/${athlete.country.toLowerCase()}.svg`}
-            disciplines={athlete.disciplines as any}
+            disciplines={athlete.disciplines as Discipline[]}
           />
         ))}
       </FeaturedGrid>
