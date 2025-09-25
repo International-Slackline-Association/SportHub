@@ -1,5 +1,5 @@
 import contestsData from '@mocks/contests_with_athletes.json';
-import type { Contest } from '@types/global.d';
+// Contest type is available globally from types/global.d.ts
 import {
   UserRecord,
   ContestRecord,

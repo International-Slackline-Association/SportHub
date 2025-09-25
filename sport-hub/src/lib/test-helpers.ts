@@ -138,7 +138,7 @@ export class TestHelpers {
     try {
       const items = await dynamodb.scanItems('rankings');
       return (items || []) as UserRecord[];
-    } catch (error) {
+    } catch {
       console.warn('Rankings table not found, returning empty array');
       return [];
     }
@@ -148,7 +148,7 @@ export class TestHelpers {
     try {
       const items = await dynamodb.scanItems('contests');
       return (items || []) as ContestRecord[];
-    } catch (error) {
+    } catch {
       console.warn('Contests table not found, returning empty array');
       return [];
     }
@@ -158,7 +158,7 @@ export class TestHelpers {
     try {
       const items = await dynamodb.scanItems('athletes');
       return (items || []) as AthleteRecord[];
-    } catch (error) {
+    } catch {
       console.warn('Athletes table not found, returning empty array');
       return [];
     }

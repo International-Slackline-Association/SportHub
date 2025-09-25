@@ -21,7 +21,7 @@ const FeaturedCard = ({
   countryFlag,
   disciplines,
 }: FeaturedCardProps) => (
-  <Link href={`/athlete-profile/${id}`} className={cn("stack", "card", styles.card)}>
+  <Link href={`/athlete-profile/${id}`} className={cn("stack", "card", styles.card)} data-card>
     <ProfileImage />
     <div className={styles.content}>
       <h2 className={styles.name}>{name}</h2>

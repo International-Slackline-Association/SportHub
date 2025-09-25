@@ -37,7 +37,7 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
           name={profile.name}
           alt={`${profile.name} profile image`}
         />
-        <SocialTags socials={socialMedia} />
+        <SocialTags socials={socialMedia || {}} />
         <ClipBoardButton>Copy Profile Link</ClipBoardButton>
       </div>
 
@@ -59,7 +59,7 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
             <div className={styles.athleteDetails}>
               <LabelValuePair
                 label="Age"
-                value={profile.age}
+                value={profile.age || 'N/A'}
               />
               <LabelValuePair
                 label="Country"
@@ -72,12 +72,12 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
               />
               <LabelValuePair
                 label="Website"
-                value={profile.website}
+                value={profile.website || 'N/A'}
               />
             </div>
             <LabelValuePair
               label="Sponsors"
-              value={profile.sponsors}
+              value={profile.sponsors || 'N/A'}
             />
           </div>
 

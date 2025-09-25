@@ -160,7 +160,7 @@ export async function getContestsData(): Promise<ContestData[]> {
     }
 
     // OPTIMIZATION: Build athlete lookup map once
-    const athletesByContest = new Map<string, typeof athleteItems[0][]>();
+    const athletesByContest = new Map<string, Record<string, unknown>[]>();
 
     athleteItems?.forEach(athlete => {
       const contestId = athlete.contestId;
@@ -176,26 +176,26 @@ export async function getContestsData(): Promise<ContestData[]> {
     const contests: ContestData[] = contestItems.map(contest => {
       const contestAthletes = (athletesByContest.get(contest.contestId) || [])
         .map(athlete => ({
-          athleteId: athlete.athleteId || '',
-          name: athlete.name || '',
-          place: athlete.place || '',
-          points: athlete.points || 0
+          athleteId: (athlete.athleteId as string) || '',
+          name: (athlete.name as string) || '',
+          place: (athlete.place as string) || '',
+          points: (athlete.points as number) || 0
         }))
         .sort((a, b) => parseInt(a.place) - parseInt(b.place));
 
       return {
-        contestId: contest.contestId || '',
-        name: contest.name || '',
-        date: contest.date || '',
-        country: contest.country || '',
-        city: contest.city || '',
-        discipline: contest.discipline || '',
-        prize: contest.prize || 0,
-        gender: contest.gender || 0,
-        category: contest.category || 0,
-        verified: contest.verified || false,
-        profileUrl: contest.profileUrl || '',
-        thumbnailUrl: contest.thumbnailUrl || '',
+        contestId: (contest.contestId as string) || '',
+        name: (contest.name as string) || '',
+        date: (contest.date as string) || '',
+        country: (contest.country as string) || '',
+        city: (contest.city as string) || '',
+        discipline: (contest.discipline as string) || '',
+        prize: (contest.prize as number) || 0,
+        gender: (contest.gender as number) || 0,
+        category: (contest.category as number) || 0,
+        verified: (contest.verified as boolean) || false,
+        profileUrl: (contest.profileUrl as string) || '',
+        thumbnailUrl: (contest.thumbnailUrl as string) || '',
         athletes: contestAthletes
       };
     });

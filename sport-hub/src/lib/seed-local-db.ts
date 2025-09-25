@@ -178,7 +178,7 @@ export class DatabaseSeeder {
     try {
       const rankings = await dynamodb.scanItems('rankings');
       counts['rankings'] = rankings?.length || 0;
-    } catch (error) {
+    } catch {
       counts['rankings'] = 0;
       console.warn('Rankings table not found');
     }
@@ -186,7 +186,7 @@ export class DatabaseSeeder {
     try {
       const contests = await dynamodb.scanItems('contests');
       counts['contests'] = contests?.length || 0;
-    } catch (error) {
+    } catch {
       counts['contests'] = 0;
       console.warn('Contests table not found');
     }
@@ -194,7 +194,7 @@ export class DatabaseSeeder {
     try {
       const athletes = await dynamodb.scanItems('athletes');
       counts['athletes'] = athletes?.length || 0;
-    } catch (error) {
+    } catch {
       counts['athletes'] = 0;
       console.warn('Athletes table not found');
     }

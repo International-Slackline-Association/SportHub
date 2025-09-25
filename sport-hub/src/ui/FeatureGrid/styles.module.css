@@ -94,12 +94,12 @@
   gap: 1rem;
   width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   scroll-behavior: smooth;
-  scroll-snap-type: x mandatory; /* Enable horizontal snap scrolling */
-  scroll-padding-left: 1rem; /* Ensure proper snap alignment */
   padding-bottom: 0.5rem;
+  justify-content: center;
 
-  /* Hide scrollbar completely for cleaner carousel look */
+  /* Hide scrollbar */
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
