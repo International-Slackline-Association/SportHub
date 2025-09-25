@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-const BREAKPOINT_SM = 640; // Tailwind's default "sm" breakpoint
+const BREAKPOINT_SM = 829; // Custom breakpoint to prevent nav wrapping (adjusted for logo margin)
 const isDesktopQuery = `(min-width: ${BREAKPOINT_SM}px)`;
 
 // Hook to determine device type based on device width
@@ -12,7 +12,7 @@ export function useClientMediaQuery() {
 
   useEffect(() => {
     setIsHydrated(true);
-    
+
     // Ensure we're in the browser before using window
     if (typeof window !== 'undefined') {
       const isDesktopMediaQueryList = window.matchMedia(isDesktopQuery);

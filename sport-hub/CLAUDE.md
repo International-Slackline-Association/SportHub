@@ -36,6 +36,7 @@ src/
 │   ├── Table/             # Data table components
 │   ├── Navigation/        # Navigation components
 │   ├── ProfileCard/       # Profile display components
+│   ├── PageLayout/        # Standard page layout component
 │   └── ...
 ├── lib/                   # Library code and utilities
 ├── utils/                 # Utility functions
@@ -137,6 +138,46 @@ The system includes comprehensive mock data from `src/mocks/contests_with_athlet
 3. Seed with data: `pnpm db:seed` (loads ~2000+ records)
 4. Test operations via `/test_LOCAL` web interface
 5. Clean up: `pnpm db:clear` or `pnpm db:reset`
+
+## Layout Standards
+
+### Page Layout Consistency
+All pages must use consistent width and spacing patterns to ensure visual consistency across the site.
+
+**Required Pattern for All Pages:**
+```tsx
+import PageLayout from '@ui/PageLayout';
+
+export default function YourPage() {
+  return (
+    <PageLayout
+      title="Your Page Title"
+      description="Optional description"
+      heroImage={{ // Optional
+        src: "/static/images/hero-image.jpg",
+        alt: "Alt text",
+        caption: "Optional caption"
+      }}
+    >
+      <section className="p-4 sm:p-0">
+        {/* Your main content sections */}
+      </section>
+    </PageLayout>
+  );
+}
+```
+
+**Key Layout Rules:**
+- Every page MUST use the `PageLayout` component or follow the exact same structure
+- All content sections MUST use `className="p-4 sm:p-0"` for responsive padding
+- This ensures consistent content width across all pages
+- Mobile: 1rem padding, Desktop: relies on main layout's 2.5rem padding
+- Tables automatically constrain to consistent widths with `table-layout: fixed`
+
+**DO NOT:**
+- Create pages with inconsistent padding or width patterns
+- Use different container structures that break width consistency
+- Allow tables to expand beyond the standard content width
 
 ## Notes
 - Project uses ES modules (`"type": "module"`)

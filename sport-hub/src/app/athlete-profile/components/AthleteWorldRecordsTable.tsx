@@ -1,5 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
-import { WorldRecord, mockWorldRecords } from '@mocks/athlete_profile';
+import { WorldRecord } from '@lib/data-services';
 import Table from '@ui/Table';
 
 const columnHelper = createColumnHelper<WorldRecord>();
@@ -19,14 +19,14 @@ const columns = [
 ];
 
 type AthleteWorldRecordsTableProps = {
-  records?: WorldRecord[];
+  worldRecords: WorldRecord[];
 };
 
-const AthleteWorldRecordsTable = ({ records = mockWorldRecords }: AthleteWorldRecordsTableProps) => {
+const AthleteWorldRecordsTable = ({ worldRecords }: AthleteWorldRecordsTableProps) => {
   return (
     <div className="mb-8">
       <h3>World Records</h3>
-      <Table options={{ columns, data: records }} />
+      <Table options={{ columns, data: worldRecords }} />
     </div>
   );
 };

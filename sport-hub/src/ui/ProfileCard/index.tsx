@@ -1,4 +1,4 @@
-import { AthleteProfile } from '@mocks/athlete_profile';
+import { AthleteProfile } from '@lib/data-services';
 import { cn } from '@utils/cn';
 import { JSX } from 'react';
 import ClipBoardButton from './ClipboardButton';
@@ -33,7 +33,10 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
   return (
     <section className={cn("stack", "card", styles.profileCard)}>
       <div className={cn("stack", "items-center", "gap-4")}>
-        <ProfileImage />
+        <ProfileImage
+          name={profile.name}
+          alt={`${profile.name} profile image`}
+        />
         <SocialTags socials={socialMedia} />
         <ClipBoardButton>Copy Profile Link</ClipBoardButton>
       </div>
