@@ -2,30 +2,37 @@
 
 import { useEffect, useState } from 'react'
 
-const BREAKPOINT_SM = 640; // Tailwind's default "sm" breakpoint
+const BREAKPOINT_SM = 829; // Custom breakpoint to prevent nav wrapping (adjusted for logo margin)
 const isDesktopQuery = `(min-width: ${BREAKPOINT_SM}px)`;
 
 // Hook to determine device type based on device width
 export function useClientMediaQuery() {
   const [isDesktop, setIsDesktop] = useState<boolean>(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    const isDesktopMediaQueryList = window.matchMedia(isDesktopQuery);
+    setIsHydrated(true);
 
-    const handleMatchChange = () => {
+    // Ensure we're in the browser before using window
+    if (typeof window !== 'undefined') {
+      const isDesktopMediaQueryList = window.matchMedia(isDesktopQuery);
+
+      const handleMatchChange = () => {
+        setIsDesktop(isDesktopMediaQueryList.matches);
+      };
+
+      isDesktopMediaQueryList.addEventListener('change', handleMatchChange);
       setIsDesktop(isDesktopMediaQueryList.matches);
-    };
 
-    isDesktopMediaQueryList.addEventListener('change', handleMatchChange);
-    setIsDesktop(isDesktopMediaQueryList.matches);
-
-    return () => {
-      isDesktopMediaQueryList.removeEventListener('change', handleMatchChange);
+      return () => {
+        isDesktopMediaQueryList.removeEventListener('change', handleMatchChange);
+      };
     }
   }, []);
 
   return {
-    isDesktop,
-    isMobile: !isDesktop
+    isDesktop: isHydrated ? isDesktop : false,
+    isMobile: isHydrated ? !isDesktop : true,
+    isHydrated
   };
 };

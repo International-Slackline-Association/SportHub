@@ -1,5 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
-import { AthleteContest, mockAthleteContests } from '@mocks/athlete_profile';
+import { AthleteContest } from '@lib/data-services';
 import Table from '@ui/Table';
 
 const columnHelper = createColumnHelper<AthleteContest>();
@@ -46,10 +46,10 @@ const columns = [
 ];
 
 type AthleteContestsTableProps = {
-  contests?: AthleteContest[];
+  contests: AthleteContest[];
 };
 
-const AthleteContestsTable = ({ contests = mockAthleteContests }: AthleteContestsTableProps) => {
+const AthleteContestsTable = ({ contests }: AthleteContestsTableProps) => {
   return (
     <div className="mb-8">
       <h3>Contests</h3>

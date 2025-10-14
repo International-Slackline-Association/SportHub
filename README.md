@@ -6,10 +6,17 @@
 
 Welcome to the ISA SportHub repo! This project is currently a monorepo with the backend and frontend code coexisting in the same place.
 
-All Frontend code is Next.js in the [sport-hub](/sport-hub) directory and all Backend code is in the [sport-hub-backend]() directory.
+All code is Next.js in the [sport-hub](/sport-hub)
 
 Join the discord channel to get involved with development, ask questions, and keep track of the latest changes in the `github-webhook` channel.
 
-## Getting Started
+# Getting Started
 
-Please refer to the individual README files for both Frontend and Backend to get started with development.
+**Build Settings on Amplify**
+
+
+Probably a good idea to match these locally
+
+- Node Version: v20.19.0 (npm v10.8.2)
+- Pnpm Version: 10.10.0
+- Next: 15.3.2

@@ -36,6 +36,9 @@ const Table = <TData,>({ options, title }: TableProps<TData>) => {
     },
     initialState: {
       columnFilters,
+      pagination: {
+        pageSize: 10, // Default to 10 items per page
+      },
     },
     state: {
       columnFilters,
@@ -75,7 +78,7 @@ const Table = <TData,>({ options, title }: TableProps<TData>) => {
             ))}
           </thead>
           <tbody>
-            {table.getFilteredRowModel().rows.map((row) => (
+            {table.getRowModel().rows.map((row) => (
                 <tr key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id}>
@@ -87,6 +90,94 @@ const Table = <TData,>({ options, title }: TableProps<TData>) => {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination Controls */}
+      <div className={styles.paginationContainer}>
+        <div className={styles.paginationInfo}>
+          <span>
+            Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{' '}
+            {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)} of{' '}
+            {table.getFilteredRowModel().rows.length} entries
+          </span>
+        </div>
+
+        <div className={styles.paginationControls}>
+          <div className={styles.pageSizeSelector}>
+            <label htmlFor="pageSize">Show:</label>
+            <select
+              id="pageSize"
+              value={table.getState().pagination.pageSize}
+              onChange={e => {
+                table.setPageSize(Number(e.target.value))
+              }}
+            >
+              {[10, 50, 100, 1000].map(pageSize => (
+                <option key={pageSize} value={pageSize}>
+                  {pageSize}
+                </option>
+              ))}
+            </select>
+            <span>entries</span>
+          </div>
+
+          <div className={styles.pageNavigation}>
+            <button
+              onClick={() => table.setPageIndex(0)}
+              disabled={!table.getCanPreviousPage()}
+              className={styles.pageButton}
+            >
+              {'<<'}
+            </button>
+            <button
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className={styles.pageButton}
+            >
+              {'<'}
+            </button>
+
+            <div className={styles.pageNumbers}>
+              {(() => {
+                const currentPage = table.getState().pagination.pageIndex;
+                const totalPages = table.getPageCount();
+                const pages = [];
+
+                // Show up to 5 page numbers around the current page
+                const startPage = Math.max(0, currentPage - 2);
+                const endPage = Math.min(totalPages - 1, currentPage + 2);
+
+                for (let i = startPage; i <= endPage; i++) {
+                  pages.push(
+                    <button
+                      key={i}
+                      onClick={() => table.setPageIndex(i)}
+                      className={`${styles.pageButton} ${i === currentPage ? styles.activePageButton : ''}`}
+                    >
+                      {i + 1}
+                    </button>
+                  );
+                }
+                return pages;
+              })()}
+            </div>
+
+            <button
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className={styles.pageButton}
+            >
+              {'>'}
+            </button>
+            <button
+              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+              disabled={!table.getCanNextPage()}
+              className={styles.pageButton}
+            >
+              {'>>'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
