@@ -86,11 +86,18 @@
 /* Also covers tablets in portrait and landscape mode */
 @custom-variant desktop (@media (width >= theme(--breakpoint-sm)));
 
+html {
+  height: 100%;
+}
+
 body {
   background-color: white;
   color: var(--color-neutral-700);
   font-family: var(--font-metropolis);
   margin: 0;
+  padding: 0;
+  /* Allow body to shrink below 692px to prevent horizontal scroll issues */
+  min-width: 320px; /* Standard mobile minimum width */
 }
 
 h1 {
@@ -155,9 +162,11 @@ figcaption {
 
 main {
   padding: 0;
-  
+  /* Ensure main content is centered when viewport is wider than minimum */
+  margin: 0 auto;
+  max-width: min(87.5rem, 95vw); /* Responsive maximum width */
+
   @media (min-width: 24rem) {
-    padding: 40px 40px 60px;
-    margin: 0 auto;
+    padding: 2.5rem 2.5rem 3.75rem; /* Convert to rem units */
   }
 }

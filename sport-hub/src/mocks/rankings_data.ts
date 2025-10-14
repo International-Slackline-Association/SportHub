@@ -12,10 +12,10 @@ export interface Athlete {
 }
 
 export const disciplineColors = {
-  "freestyle-highline": { color: "#FFF0C6", textColor: "#DD6702" },
-  "speed-highline": { color: "#DCE7FD", textColor: "#3259E7" },
-  "speed-short": { color: "#D7F4E4", textColor: "#1B805F" },
-  "trickline": { color: "#FFE0E0", textColor: "#EB0000" }
+  "FREESTYLE_HIGHLINE": { color: "#FFF0C6", textColor: "#DD6702" },
+  "SPEED_HIGHLINE": { color: "#DCE7FD", textColor: "#3259E7" },
+  "SPEED_SHORT": { color: "#D7F4E4", textColor: "#1B805F" },
+  "TRICKLINE": { color: "#FFE0E0", textColor: "#EB0000" }
 };
 
 export const mockFeaturedAthletes: Athlete[] = [
@@ -27,7 +27,7 @@ export const mockFeaturedAthletes: Athlete[] = [
     country: "Germany",
     gender: "male",
     ageCategory: "Open",
-    disciplines: ["freestyle-highline"],
+    disciplines: ["FREESTYLE_HIGHLINE"],
     points: 2800,
     profileImage: "/static/images/profiles/friedi-kuhne.jpg"
   },
@@ -39,7 +39,7 @@ export const mockFeaturedAthletes: Athlete[] = [
     country: "Brazil",
     gender: "male",
     ageCategory: "Open",
-    disciplines: ["speed-short", "speed-highline", "freestyle-highline"],
+    disciplines: ["SPEED_SHORT", "SPEED_HIGHLINE", "FREESTYLE_HIGHLINE"],
     points: 2730,
     profileImage: "/static/images/profiles/vidal-st-germain.jpg"
   },
@@ -51,7 +51,7 @@ export const mockFeaturedAthletes: Athlete[] = [
     country: "Italy",
     gender: "male",
     ageCategory: "Youth U18",
-    disciplines: ["freestyle-highline"],
+    disciplines: ["FREESTYLE_HIGHLINE"],
     points: 2650,
     profileImage: "/static/images/profiles/axel-st-germain.jpg"
   },
@@ -63,7 +63,7 @@ export const mockFeaturedAthletes: Athlete[] = [
     country: "Brazil",
     gender: "male",
     ageCategory: "Open",
-    disciplines: ["speed-short", "speed-highline", "freestyle-highline"],
+    disciplines: ["SPEED_SHORT", "SPEED_HIGHLINE", "FREESTYLE_HIGHLINE"],
     points: 2500,
     profileImage: "/static/images/profiles/watson-st-germain.jpg"
   }
@@ -78,7 +78,7 @@ export const mockRankings: Athlete[] = [
     country: "Japan",
     gender: "male",
     ageCategory: "Youth U16",
-    disciplines: ["freestyle-highline", "speed-highline"],
+    disciplines: ["FREESTYLE_HIGHLINE", "SPEED_HIGHLINE"],
     points: 3000,
     profileImage: "/static/images/profiles/rikuto-nakamura.jpg"
   },
@@ -91,7 +91,7 @@ export const mockRankings: Athlete[] = [
     country: "United Kingdom",
     gender: "male",
     ageCategory: "Open",
-    disciplines: ["trickline", "speed-short"],
+    disciplines: ["TRICKLINE", "SPEED_SHORT"],
     points: 2450,
     profileImage: "/static/images/profiles/harry-clouder.jpg"
   },
@@ -103,7 +103,7 @@ export const mockRankings: Athlete[] = [
     country: "Germany",
     gender: "female",
     ageCategory: "Open",
-    disciplines: ["freestyle-highline"],
+    disciplines: ["FREESTYLE_HIGHLINE"],
     points: 2340,
     profileImage: "/static/images/profiles/julia-schmidt.jpg"
   },
@@ -115,7 +115,7 @@ export const mockRankings: Athlete[] = [
     country: "Austria",
     gender: "female",
     ageCategory: "Open",
-    disciplines: ["speed-highline", "freestyle-highline"],
+    disciplines: ["SPEED_HIGHLINE", "FREESTYLE_HIGHLINE"],
     points: 2250,
     profileImage: "/static/images/profiles/anna-merkel.jpg"
   },
@@ -127,7 +127,7 @@ export const mockRankings: Athlete[] = [
     country: "United States",
     gender: "male",
     ageCategory: "Youth U18",
-    disciplines: ["trickline"],
+    disciplines: ["TRICKLINE"],
     points: 2100,
     profileImage: "/static/images/profiles/thomas-walker.jpg"
   },
@@ -139,7 +139,7 @@ export const mockRankings: Athlete[] = [
     country: "Canada",
     gender: "male",
     ageCategory: "Open",
-    disciplines: ["speed-short", "speed-highline"],
+    disciplines: ["SPEED_SHORT", "SPEED_HIGHLINE"],
     points: 2050,
     profileImage: "/static/images/profiles/david-johnson.jpg"
   },
@@ -151,14 +151,14 @@ export const mockRankings: Athlete[] = [
     country: "China",
     gender: "male",
     ageCategory: "Youth U16",
-    disciplines: ["freestyle-highline"],
+    disciplines: ["FREESTYLE_HIGHLINE"],
     points: 1980,
     profileImage: "/static/images/profiles/zhang-wei.jpg"
   }
 ];
 
 export const filterOptions = {
-  disciplines: ["freestyle-highline", "speed-highline", "speed-short", "trickline"],
+  disciplines: ["FREESTYLE_HIGHLINE", "SPEED_HIGHLINE", "SPEED_SHORT", "TRICKLINE"],
   genders: ["male", "female"],
   years: ["2025", "2024", "2023"],
   ageCategories: ["Open", "Youth U18", "Youth U16"],

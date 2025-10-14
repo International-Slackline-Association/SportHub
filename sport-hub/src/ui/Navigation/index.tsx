@@ -6,6 +6,7 @@ import Image from "next/image"
 import Link from 'next/link';
 import { usePathname } from "next/navigation";
 import { PropsWithChildren, useState } from "react";
+import type { HTMLAttributes } from "react";
 import styles from "./styles.module.css";
 import Drawer from "@ui/Drawer";
 
@@ -33,10 +34,6 @@ const navItems: LinkType[] = [
         href: "/world_records",
         name: "World Records",
     },
-    {
-        href: "/athlete-profile",
-        name: "Athlete Profile",
-    },
 ];
 
 type NavLinkProps = PropsWithChildren<{ href: string; onClick?: () => void }>;
@@ -45,13 +42,15 @@ const NavLink = ({ children, href, onClick }: NavLinkProps) => {
   const pathname = usePathname();
   const isActive = pathname === href;
   return (
-    <Link aria-current={isActive ? "page" : undefined} href={href} onClick={onClick}>
+    <Link aria-current={isActive ? "page" : undefined} href={href} onClick={() => {
+      onClick?.();
+    }}>
       {children}
     </Link>
   );
 };
 
-type NavListProps =  React.HTMLAttributes<HTMLElement> & { onClickItem?: () => void; };
+type NavListProps =  HTMLAttributes<HTMLElement> & { onClickItem?: () => void; };
 
 const NavList = ({ onClickItem }: NavListProps) => {
   return (
@@ -66,8 +65,9 @@ const NavList = ({ onClickItem }: NavListProps) => {
 }
 
 const Navigation = () => {
-  const { isDesktop } = useClientMediaQuery();
+  const { isDesktop, isHydrated } = useClientMediaQuery();
   const [menuOpen, setMenuOpen] = useState(false);
+  
   return (
     <div className={cn(styles.navbar, "cluster", "clearfix", "inter-500")}>
       <div>
@@ -79,7 +79,18 @@ const Navigation = () => {
           width={426}
         />
       </div>
-      {isDesktop ? (
+      {!isHydrated ? (
+        // Show mobile layout during SSR to prevent hydration mismatch
+        <button
+          aria-expanded={false}
+          aria-controls="mobile-menu"
+          aria-label="Open navigation menu"
+          className="text-white text-6xl"
+          disabled
+        >
+          ☰
+        </button>
+      ) : isDesktop ? (
         <nav>
           <NavList />
         </nav>
@@ -96,13 +107,6 @@ const Navigation = () => {
           </button>
           <Drawer isOpen={menuOpen} onClose={() => setMenuOpen(false)} position="right">
             <nav>
-              <button
-                aria-label="Close navigation menu"
-                className="text-white text-6xl pt-4 pl-4"
-                onClick={() => setMenuOpen(false)}
-              >
-                ✕
-              </button>
               <NavList onClickItem={() => setMenuOpen(false)} />
             </nav>
           </Drawer>

@@ -25,6 +25,7 @@
       "@utils/*": ["src/utils/*"],
       "@types/*": ["src/types/*"],
       "@mocks/*": ["src/mocks/*"],
+      "@lib/*": ["src/lib/*"]
     },
     "rootDir": "."
   },

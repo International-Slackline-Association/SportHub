@@ -3,19 +3,20 @@
 import { useState } from "react";
 import Button from "@ui/Button";
 import { AgeCategory, Badge, ContestSize, Discipline, Gender, Role } from "@ui/Badge";
+import PageLayout from "@ui/PageLayout";
 import Modal from "@ui/Modal";
 import { TabGroup } from "@ui/Tab";
 
 export default function Page() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("rankings");
+
   return (
-    <div className="stack gap-4">
-      <div className="p-4 sm:p-0">
-        <h1>Component Library</h1>
-        <p>A space to view all our components for testing purposes</p>
-      </div>
-      <section>
+    <PageLayout
+      title="Component Library"
+      description="A space to view all our components for testing purposes"
+    >
+      <section className="p-4 sm:p-0">
         <h2>Buttons</h2>
         <div className="flex flex-row gap-4">
           <Button variant="primary">Primary Button</Button>
@@ -26,7 +27,7 @@ export default function Page() {
           <Button variant="ghost">Ghost Button</Button>
         </div>
       </section>
-      <section>
+      <section className="p-4 sm:p-0">
         <h2>Badges</h2>
         <div className="flex flex-row gap-4">
           <div className="stack gap-4">
@@ -151,6 +152,6 @@ export default function Page() {
           </div>
         </div>
       </section>
-    </div>
+    </PageLayout>
   );
 }
