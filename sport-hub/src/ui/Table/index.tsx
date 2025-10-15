@@ -1,21 +1,21 @@
 "use client"
 
 import { 
-   useReactTable,
-   getCoreRowModel,
-   getPaginationRowModel,
-   getSortedRowModel,
-   getFilteredRowModel,
-   TableOptions,
-   flexRender,
-   RowData,
-   ColumnFiltersState
- } from "@tanstack/react-table";
+  useReactTable,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  TableOptions,
+  flexRender,
+  RowData,
+  ColumnFiltersState
+} from "@tanstack/react-table";
 import { useState } from "react";
 import styles from "./styles.module.css";
 import { TableFilters } from "./TableFilters";
 
- declare module "@tanstack/react-table" {
+declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface ColumnMeta<TData extends RowData, TValue> {
     filterVariant?: "text" | "select";

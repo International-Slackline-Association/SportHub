@@ -37,6 +37,21 @@ interface Ranking {
   surname: string;
 }
 
+interface User {
+  'rankings-dev-key': string;
+  id: string;
+  name: string;
+  email: string;
+  createdAt: string;
+  athleteId?: string;
+  country?: string;
+  firstCompetition?: string;
+  lastCompetition?: string;
+  updatedAt?: string;
+  totalPoints?: number;
+  contestsParticipated?: number;
+}
+
 type Discipline = "RIGGING" | "TRICKLINE" | "FREESTYLE_HIGHLINE" | "SPEED_SHORT" | "SPEED_HIGHLINE";
 
 type Role = "ATHLETE" | "JUDGE" | "ISA_VERIFIED" | "ORGANIZER";

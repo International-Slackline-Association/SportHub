@@ -1,26 +1,13 @@
 import type { Metadata } from 'next';
 import { dynamodb } from '@lib/dynamodb';
-import { createUser, deleteUser } from './actions';
+import { deleteUser } from './actions';
 import UserManagementClient from './UserManagementClient';
+import UserForm from './UserForm';
+import Button from '@ui/Button';
 
 export const metadata: Metadata = {
   title: 'SportHub - About',
 };
-
-interface User {
-  'rankings-dev-key': string;
-  id: string;
-  name: string;
-  email: string;
-  createdAt: string;
-  athleteId?: string;
-  country?: string;
-  firstCompetition?: string;
-  lastCompetition?: string;
-  updatedAt?: string;
-  totalPoints?: number;
-  contestsParticipated?: number;
-}
 
 const TABLE_NAME = 'rankings';
 
@@ -60,46 +47,11 @@ export default async function AboutPage() {
   return (
     <div className="container mx-auto p-4 max-w-4xl">
       <h1 className="text-3xl font-bold mb-6">Users Management</h1>
-      
+
       {/* Add User Form */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
         <h2 className="text-xl font-semibold mb-4">Add New User</h2>
-        <form action={createUser}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-            <input
-              type="text"
-              name="id"
-              placeholder="User ID (optional)"
-              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="text"
-              name="name"
-              placeholder="Name *"
-              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <input
-              type="email"
-              name="email"
-              placeholder="Email *"
-              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <input
-              type="text"
-              name="country"
-              placeholder="Country"
-              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-600 transition-colors"
-          >
-            Add User
-          </button>
-        </form>
+        <UserForm />
       </div>
 
       {/* Users List */}
@@ -135,12 +87,12 @@ export default async function AboutPage() {
                   <UserManagementClient user={user} />
                   <form action={deleteUser} style={{ display: 'inline' }}>
                     <input type="hidden" name="id" value={user.id} />
-                    <button
+                    <Button
                       type="submit"
-                      className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
+                      variant="destructive"
                     >
                       Delete
-                    </button>
+                    </Button>
                   </form>
                 </div>
               </div>

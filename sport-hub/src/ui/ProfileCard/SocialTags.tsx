@@ -1,4 +1,10 @@
-import Image from 'next/image';
+import { SocialIcon } from 'react-social-icons/component';
+import 'react-social-icons/instagram';
+import 'react-social-icons/youtube';
+import 'react-social-icons/tiktok';
+import 'react-social-icons/twitch';
+import 'react-social-icons/whatsapp';
+import 'react-social-icons/facebook';
 
 type SocialMedia = {
   instagram?: string;
@@ -23,12 +29,12 @@ const SocialTags = ({ socials: {
 } }: SocialTagsProps) => {
   return (
     <div className="flex gap-4 mt-2">
-      {instagram && (<Image src="/static/images/social/instagram.svg" alt="Instagram" width={24} height={24} />)}
-      {youtube && (<Image src="/static/images/social/youtube.svg" alt="YouTube" width={24} height={24} />)}
-      {tiktok && (<Image src="/static/images/social/tiktok.svg" alt="TikTok" width={24} height={24} />)}
-      {twitch && (<Image src="/static/images/social/twitch.svg" alt="Twitch" width={24} height={24} />)}
-      {whatsapp && (<Image src="/static/images/social/whatsapp.svg" alt="WhatsApp" width={24} height={24} />)}
-      {facebook && (<Image src="/static/images/social/facebook.svg" alt="Facebook" width={24} height={24} />)}
+      {instagram && (<SocialIcon network="instagram" url={instagram} />)}
+      {youtube && (<SocialIcon network="youtube" url={youtube} />)}
+      {tiktok && (<SocialIcon network="tiktok" url={tiktok} />)}
+      {twitch && (<SocialIcon network="twitch" url={twitch} />)}
+      {whatsapp && (<SocialIcon network="whatsapp" url={whatsapp} />)}
+      {facebook && (<SocialIcon network="facebook" url={facebook} />)}
     </div>
   );
 };
