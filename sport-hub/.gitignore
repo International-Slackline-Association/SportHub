@@ -45,3 +45,7 @@ next-env.d.ts
 # aws management
 src/lib/*.sh
 src/lib/*.json
+
+
+sport-hub/AWSCLIV2.pkg
+

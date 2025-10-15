@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { CircleFlag } from 'react-circle-flags'
 import styles from "./styles.module.css";
 import { ProfileImage } from "@ui/ProfileImage";
 import { cn } from "@utils/cn";
@@ -10,7 +10,6 @@ interface FeaturedCardProps {
   name: string;
   image: string;
   country: string;
-  countryFlag: string;
   disciplines: Discipline[];
 }
 
@@ -18,7 +17,6 @@ const FeaturedCard = ({
   id,
   name,
   country,
-  countryFlag,
   disciplines,
 }: FeaturedCardProps) => (
   <Link href={`/athlete-profile/${id}`} className={cn("stack", "card", styles.card)} data-card>
@@ -28,13 +26,7 @@ const FeaturedCard = ({
 
       <div className={styles.countryContainer}>
         <div className={styles.flagContainer}>
-          <Image
-            src={countryFlag}
-            alt={country}
-            width={22}
-            height={22}
-            className={styles.flag}
-          />
+          <CircleFlag countryCode={country} height={22} width={22} />
           <span>{country}</span>
         </div>
       </div>

@@ -1,0 +1,57 @@
+.spinner {
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Sizes */
+.small {
+  width: 16px;
+  height: 16px;
+  border-width: 1.5px;
+}
+
+.medium {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+.large {
+  width: 24px;
+  height: 24px;
+  border-width: 2px;
+}
+
+/* Colors */
+.primary {
+  color: var(--color-primary, #009F9A);
+}
+
+.white {
+  color: #ffffff;
+}
+
+.neutral {
+  color: #6b7280;
+}
+
+/* Accessibility */
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

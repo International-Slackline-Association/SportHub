@@ -3,21 +3,27 @@ import Button from "../Button";
 import styles from "./styles.module.css";
 
 interface ModalProps {
+  actions?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+  formRef?: React.RefObject<any>;
   isOpen: boolean;
   onClose: () => void;
+  onSave?: () => void;
+  showDefaultActions?: boolean;
   title: string;
-  children: React.ReactNode;
-  actions?: React.ReactNode;
-  className?: string;
 }
 
-const Modal = ({ 
-  isOpen, 
-  onClose, 
-  title, 
-  children, 
+const Modal = ({
   actions,
-  className = "" 
+  children,
+  className = "",
+  formRef,
+  isOpen,
+  onClose,
+  onSave,
+  showDefaultActions = false,
+  title,
 }: ModalProps) => {
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -30,6 +36,25 @@ const Modal = ({
       onClose();
     }
   };
+
+  const handleSave = () => {
+    if (formRef?.current) {
+      formRef.current.submitForm();
+    } else if (onSave) {
+      onSave();
+    }
+  };
+
+  const defaultActions = showDefaultActions ? (
+    <>
+      <Button variant="secondary" onClick={onClose}>
+        Cancel
+      </Button>
+      <Button variant="primary" onClick={handleSave}>
+        Save
+      </Button>
+    </>
+  ) : null;
 
   if (!isOpen) {
     return null;
@@ -59,14 +84,14 @@ const Modal = ({
             </svg>
           </Button>
         </div>
-        
+
         <div className={styles.modalBody}>
           {children}
         </div>
-        
-        {actions && (
+
+        {(actions || defaultActions) && (
           <div className={styles.modalActions}>
-            {actions}
+            {actions || defaultActions}
           </div>
         )}
       </div>
