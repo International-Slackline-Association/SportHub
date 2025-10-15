@@ -1,7 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { FormikHelpers } from 'formik';
 import { updateUser } from './actions';
+import Button from '@ui/Button';
+import Modal from '@ui/Modal';
+import UserForm from './UserForm';
 
 interface User {
   createdAt: string;
@@ -18,68 +22,64 @@ interface UserManagementClientProps {
 }
 
 export default function UserManagementClient({ user }: UserManagementClientProps) {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const formRef = useRef<any>(null);
+
+  // Initial form values
+  const initialValues = {
+    id: user.id,
+    name: user.name,
+    surname: '',
+    gender: 'male',
+    email: user.email,
+    country: user.country || '',
+    isaId: '',
+  };
+
+  const handleFormSubmit = async (values: any, { setSubmitting }: FormikHelpers<any>) => {
+    try {
+      const formData = new FormData();
+      formData.append('id', user.id);
+      formData.append('name', values.name);
+      formData.append('email', values.email);
+      formData.append('country', values.country);
+
+      await updateUser(formData);
+
+      setIsModalOpen(false);
+    } catch (error: any) {
+      if (error?.message === 'NEXT_REDIRECT') {
+        setIsModalOpen(false);
+        return;
+      }
+      console.error('Failed to update user:', error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <>
-      <button
-        onClick={() => setIsEditing(true)}
-        className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition-colors"
+      <Button
+        variant="primary"
+        onClick={() => setIsModalOpen(true)}
       >
         Edit
-      </button>
-
-      {/* Edit User Modal */}
-      {isEditing && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
-            <h2 className="text-xl font-semibold mb-4">Edit User</h2>
-            <form action={updateUser}>
-              <input type="hidden" name="id" value={user.id} />
-              <div className="space-y-4 mb-4">
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Name *"
-                  defaultValue={user.name}
-                  className="w-full border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Email *"
-                  defaultValue={user.email}
-                  className="w-full border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-                <input
-                  type="text"
-                  name="country"
-                  placeholder="Country"
-                  defaultValue={user.country || ''}
-                  className="w-full border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  className="flex-1 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors"
-                >
-                  Update
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(false)}
-                  className="flex-1 bg-gray-500 text-white py-2 rounded-md hover:bg-gray-600 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      </Button>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Edit User"
+        formRef={formRef}
+        showDefaultActions={true}
+      >
+        <UserForm
+          initialValues={initialValues}
+          onSubmit={handleFormSubmit}
+          showSubmitButton={false}
+          formRef={formRef}
+        />
+      </Modal>
     </>
   );
 }

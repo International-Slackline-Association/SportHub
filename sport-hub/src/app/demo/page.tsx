@@ -1,15 +1,39 @@
 "use client";
 
 import { useState } from "react";
+import { Formik, Form } from "formik";
+import * as Yup from "yup";
 import Button from "@ui/Button";
 import { AgeCategory, Badge, ContestSize, Discipline, Gender, Role } from "@ui/Badge";
 import PageLayout from "@ui/PageLayout";
 import Modal from "@ui/Modal";
 import { TabGroup } from "@ui/Tab";
+import { FormikSelectField, FormikSubmitButton, FormikTextField } from "@ui/Form";
 
 export default function Page() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("rankings");
+
+  // Form validation schema for the demo
+  const formValidationSchema = Yup.object({
+    eventName: Yup.string().required("Event name is required"),
+    city: Yup.string().required("City is required"),
+    country: Yup.string().required("Please select a country"),
+    isa: Yup.string(),
+  });
+
+  // Initial form values
+  const initialFormValues = {
+    eventName: "",
+    city: "",
+    country: "",
+    isa: "",
+  };
+
+  const handleFormSubmit = (values: typeof initialFormValues) => {
+    console.log("Demo form submitted:", values);
+    alert("Form submitted! Check console for values.");
+  };
 
   return (
     <PageLayout
@@ -150,6 +174,51 @@ export default function Page() {
               variant="secondary"
             />
           </div>
+        </div>
+      </section>
+      <section className="p-4 sm:p-0">
+        <h2>Form Fields</h2>
+        <div className="max-w-2xl">
+          <Formik
+            initialValues={initialFormValues}
+            validationSchema={formValidationSchema}
+            onSubmit={handleFormSubmit}
+          >
+            {({ isSubmitting }) => (
+              <Form className="stack gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormikTextField
+                    id="eventName"
+                    placeholder="Laax"
+                  />
+                  <FormikTextField
+                    id="city"
+                    placeholder="Laax"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormikSelectField
+                    id="country"
+                    placeholder="Swiss"
+                    options={[
+                      { value: "CH", label: "Switzerland" },
+                      { value: "US", label: "United States" },
+                      { value: "DE", label: "Germany" },
+                      { value: "FR", label: "France" },
+                      { value: "IT", label: "Italy" },
+                    ]}
+                  />
+                </div>
+
+                <div className="flex gap-4">
+                  <FormikSubmitButton />
+                  <Button type="button" variant="secondary">
+                    Cancel
+                  </Button>
+                </div>
+              </Form>
+            )}
+          </Formik>
         </div>
       </section>
     </PageLayout>

@@ -9,8 +9,11 @@ const TABLE_NAME = 'rankings';
 export async function createUser(formData: FormData) {
   const id = formData.get('id') as string;
   const name = formData.get('name') as string;
+  const surname = formData.get('surname') as string;
   const email = formData.get('email') as string;
   const country = formData.get('country') as string;
+  const gender = formData.get('gender') as string;
+  const isaId = formData.get('isaId') as string;
 
   if (!name || !email) {
     throw new Error('Name and email are required fields');
@@ -23,10 +26,13 @@ export async function createUser(formData: FormData) {
     'rankings-dev-key': userId,
     id: userId,
     name,
+    surname,
     email,
     country: country || undefined,
     createdAt: new Date().toISOString(),
     athleteId: userId,
+    gender,
+    isaId,
   };
 
   await dynamodb.putItem(TABLE_NAME, user as unknown as Record<string, unknown>);
