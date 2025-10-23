@@ -1,35 +1,49 @@
-// Improved relational data structure for SportHub
+// Improved data structure for SportHub with embedded participations
+
+export interface EventParticipation {
+  eventId: string;
+  eventName: string;
+  place: string;
+  points: number;
+  date: string;
+  discipline: string;
+  country: string;
+}
 
 export interface UserRecord {
-  // DynamoDB keys
-  pk: string;                    // USER#{athleteId}
-  sk: string;                    // PROFILE
+  // Primary key
+  userId: string;
 
-  // Core user data
-  athleteId: string;
+  // User type and data
+  type: 'athlete' | 'official' | 'admin';
   name: string;
-  email?: string;
+  email: string;
   country?: string;
   createdAt: string;
 
-  // Aggregated statistics (computed from results)
-  totalPoints?: number;
-  contestsParticipated?: number;
+  // Aggregated statistics
+  totalPoints: number;
+  contestsParticipated: number;
   firstCompetition?: string;
   lastCompetition?: string;
 
-  // Legacy compatibility
-  'rankings-dev-key'?: string;   // For backwards compatibility
-  id?: string;                   // Alias for athleteId
+  // Embedded event participations (denormalized for read performance)
+  eventParticipations: EventParticipation[];
 }
 
-export interface ContestRecord {
-  // DynamoDB keys
-  pk: string;                    // CONTEST#{contestId}
-  sk: string;                    // DETAILS
+export interface EventParticipant {
+  userId: string;
+  name: string;
+  place: string;
+  points: number;
+}
 
-  // Core contest data
-  contestId: string;
+export interface EventRecord {
+  // Primary key
+  eventId: string;
+
+  // Event type and data
+  type: 'contest' | 'clinic' | 'meetup';
   name: string;
   normalizedName: string;
   discipline: string;
@@ -41,50 +55,26 @@ export interface ContestRecord {
   category: number;
   createdAt: string;
   profileUrl?: string;
+  thumbnailUrl?: string;
 
-  // Computed statistics
-  participantCount?: number;
-  athleteCount?: number;         // Alias for participantCount
-
-  // Legacy compatibility
-  'contests-key'?: string;       // For backwards compatibility
+  // Embedded participants (denormalized for read performance)
+  participants: EventParticipant[];
 }
 
-export interface ResultRecord {
-  // DynamoDB keys
-  pk: string;                    // USER#{athleteId}
-  sk: string;                    // RESULT#{contestId}
+// Legacy types for backward compatibility
+export interface LegacyUserRecord extends Omit<UserRecord, 'userId'> {
+  'rankings-dev-key': string;
+  id: string;
+  athleteId?: string;
+}
 
-  // Core result data
-  athleteId: string;
+export interface LegacyEventRecord extends Omit<EventRecord, 'eventId' | 'participants'> {
+  'contests-key': string;
   contestId: string;
-  place: string;                 // "1", "2", "DNF", etc.
-  points: number;
-  createdAt: string;
-
-  // GSI for contest-centric queries
-  gsi1pk: string;               // CONTEST#{contestId}
-  gsi1sk: string;               // USER#{athleteId}#{place}
+  athleteCount: number;
 }
 
-export interface ParticipantRecord {
-  // DynamoDB keys
-  pk: string;                   // CONTEST#{contestId}
-  sk: string;                   // PARTICIPANT#{athleteId}
-
-  // Participant data
-  contestId: string;
-  athleteId: string;
-  place: string;
-  points: number;
-
-  // For efficient sorting
-  placeNumeric?: number;        // For proper numeric sorting
-  createdAt: string;
-}
-
-// Legacy compatibility type
-export interface AthleteRecord {
+export interface LegacyAthleteRecord {
   'athletes-key': string;
   athleteId: string;
   name: string;
@@ -98,22 +88,11 @@ export interface AthleteRecord {
   createdAt: string;
 }
 
-// Lookup utility types
-export interface UserWithResults extends UserRecord {
-  results: ResultRecord[];
-}
-
-export interface ContestWithParticipants extends ContestRecord {
-  participants: ParticipantRecord[];
-}
-
-export interface UserContestSummary {
-  athleteId: string;
-  athleteName: string;
-  contestId: string;
-  contestName: string;
-  place: string;
-  points: number;
-  date: string;
-  discipline: string;
+// Utility types
+export interface UserWithDetails extends UserRecord {
+  // Additional computed fields for UI display
+  profileImage?: string;
+  gender?: 'male' | 'female' | 'other';
+  ageCategory?: string;
+  disciplines?: string[];
 }

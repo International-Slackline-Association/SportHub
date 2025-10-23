@@ -2,12 +2,12 @@
 
 import { dynamodb } from './dynamodb';
 import { DatabaseSetup } from './db-setup';
-import { transformContestsData, generateTestUsers, getDataStats, type UserRecord, type ContestRecord, type AthleteRecord } from './seed-data';
+import { transformContestsData, generateTestUsers, getDataStats, type UserRecord, type EventRecord } from './seed-data';
 
 export class DatabaseSeeder {
   private dbSetup = new DatabaseSetup();
 
-  async seedUsers(users: UserRecord[], tableName: string = 'rankings'): Promise<{ success: number; failed: number }> {
+  async seedUsers(users: UserRecord[], tableName: string = 'users'): Promise<{ success: number; failed: number }> {
     console.log(`🌱 Seeding ${users.length} users into ${tableName}...`);
 
     let success = 0;
@@ -21,7 +21,7 @@ export class DatabaseSeeder {
           console.log(`   📝 Seeded ${success} users...`);
         }
       } catch (error) {
-        console.error(`❌ Failed to seed user ${user.id}:`, error);
+        console.error(`❌ Failed to seed user ${user.userId}:`, error);
         failed++;
       }
     }
@@ -30,49 +30,26 @@ export class DatabaseSeeder {
     return { success, failed };
   }
 
-  async seedContests(contests: ContestRecord[], tableName: string = 'contests'): Promise<{ success: number; failed: number }> {
-    console.log(`🏆 Seeding ${contests.length} contests into ${tableName}...`);
+  async seedEvents(events: EventRecord[], tableName: string = 'events'): Promise<{ success: number; failed: number }> {
+    console.log(`🏆 Seeding ${events.length} events into ${tableName}...`);
 
     let success = 0;
     let failed = 0;
 
-    for (const contest of contests) {
+    for (const event of events) {
       try {
-        await dynamodb.putItem(tableName, contest as unknown as Record<string, unknown>);
+        await dynamodb.putItem(tableName, event as unknown as Record<string, unknown>);
         success++;
         if (success % 50 === 0) {
-          console.log(`   🏆 Seeded ${success} contests...`);
+          console.log(`   🏆 Seeded ${success} events...`);
         }
       } catch (error) {
-        console.error(`❌ Failed to seed contest ${contest.contestId}:`, error);
+        console.error(`❌ Failed to seed event ${event.eventId}:`, error);
         failed++;
       }
     }
 
-    console.log(`✅ Contests seeded: ${success} success, ${failed} failed`);
-    return { success, failed };
-  }
-
-  async seedAthletes(athletes: AthleteRecord[], tableName: string = 'athletes'): Promise<{ success: number; failed: number }> {
-    console.log(`🏃 Seeding ${athletes.length} athlete entries into ${tableName}...`);
-
-    let success = 0;
-    let failed = 0;
-
-    for (const athlete of athletes) {
-      try {
-        await dynamodb.putItem(tableName, athlete as unknown as Record<string, unknown>);
-        success++;
-        if (success % 200 === 0) {
-          console.log(`   🏃 Seeded ${success} athlete entries...`);
-        }
-      } catch (error) {
-        console.error(`❌ Failed to seed athlete entry ${athlete['athletes-key']}:`, error);
-        failed++;
-      }
-    }
-
-    console.log(`✅ Athletes seeded: ${success} success, ${failed} failed`);
+    console.log(`✅ Events seeded: ${success} success, ${failed} failed`);
     return { success, failed };
   }
 
@@ -91,12 +68,10 @@ export class DatabaseSeeder {
         try {
           // Determine the key field based on table name
           let keyField: string;
-          if (tableName.includes('rankings')) {
-            keyField = 'rankings-dev-key';
-          } else if (tableName.includes('contests')) {
-            keyField = 'contests-key';
-          } else if (tableName.includes('athletes')) {
-            keyField = 'athletes-key';
+          if (tableName.includes('users')) {
+            keyField = 'userId';
+          } else if (tableName.includes('events')) {
+            keyField = 'eventId';
           } else {
             // Default to id field
             keyField = 'id';
@@ -132,10 +107,10 @@ export class DatabaseSeeder {
     // Show statistics
     const stats = getDataStats();
     console.log('📊 Data Statistics:');
-    console.log(`   Users from contests: ${data.users.length}`);
+    console.log(`   Users from events: ${data.users.length}`);
     console.log(`   Additional test users: ${testUsers.length}`);
-    console.log(`   Total contests: ${data.contests.length}`);
-    console.log(`   Total athlete entries: ${data.athletes.length}`);
+    console.log(`   Total events: ${data.events.length}`);
+    console.log(`   Total participations: ${stats.totalParticipations}`);
     console.log(`   Disciplines: ${stats.disciplines.join(', ')}`);
     console.log(`   Countries: ${stats.countries.join(', ')}`);
     console.log(`   Date range: ${stats.dateRange.earliest} to ${stats.dateRange.latest}`);
@@ -150,9 +125,8 @@ export class DatabaseSeeder {
 
     // Seed data
     const allUsers = [...data.users, ...testUsers];
-    await this.seedUsers(allUsers, 'rankings');
-    await this.seedContests(data.contests, 'contests');
-    await this.seedAthletes(data.athletes, 'athletes');
+    await this.seedUsers(allUsers, 'users');
+    await this.seedEvents(data.events, 'events');
 
     console.log('🎉 Full database seed completed!');
   }
@@ -161,9 +135,8 @@ export class DatabaseSeeder {
     console.log('🔄 Resetting and seeding database...');
 
     // Clear all tables
-    await this.clearTable('rankings');
-    await this.clearTable('contests');
-    await this.clearTable('athletes');
+    await this.clearTable('users');
+    await this.clearTable('events');
 
     // Seed fresh data
     await this.fullSeed(true);
@@ -176,27 +149,19 @@ export class DatabaseSeeder {
 
     // Check each table individually
     try {
-      const rankings = await dynamodb.scanItems('rankings');
-      counts['rankings'] = rankings?.length || 0;
+      const users = await dynamodb.scanItems('users');
+      counts['users'] = users?.length || 0;
     } catch {
-      counts['rankings'] = 0;
-      console.warn('Rankings table not found');
+      counts['users'] = 0;
+      console.warn('Users table not found');
     }
 
     try {
-      const contests = await dynamodb.scanItems('contests');
-      counts['contests'] = contests?.length || 0;
+      const events = await dynamodb.scanItems('events');
+      counts['events'] = events?.length || 0;
     } catch {
-      counts['contests'] = 0;
-      console.warn('Contests table not found');
-    }
-
-    try {
-      const athletes = await dynamodb.scanItems('athletes');
-      counts['athletes'] = athletes?.length || 0;
-    } catch {
-      counts['athletes'] = 0;
-      console.warn('Athletes table not found');
+      counts['events'] = 0;
+      console.warn('Events table not found');
     }
 
     return counts;
@@ -217,9 +182,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       break;
     case 'clear':
       Promise.all([
-        seeder.clearTable('rankings'),
-        seeder.clearTable('contests'),
-        seeder.clearTable('athletes')
+        seeder.clearTable('users'),
+        seeder.clearTable('events')
       ]).catch(console.error);
       break;
     case 'count':

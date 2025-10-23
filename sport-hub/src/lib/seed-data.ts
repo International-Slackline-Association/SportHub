@@ -24,20 +24,38 @@ export interface Athlete {
   points: number;
 }
 
+export interface EventParticipation {
+  eventId: string;
+  eventName: string;
+  place: string;
+  points: number;
+  date: string;
+  discipline: string;
+  country: string;
+  category: number;
+}
+
 export interface UserRecord {
-  'rankings-dev-key': string;
-  id: string;
+  userId: string;
+  type: 'athlete' | 'official' | 'admin';
   name: string;
   email: string;
   createdAt: string;
-  athleteId?: string;
-  totalPoints?: number;
-  contestsParticipated?: number;
+  totalPoints: number;
+  contestsParticipated: number;
+  eventParticipations: EventParticipation[];
 }
 
-export interface ContestRecord {
-  'contests-key': string;
-  contestId: string;
+export interface EventParticipant {
+  userId: string;
+  name: string;
+  place: string;
+  points: number;
+}
+
+export interface EventRecord {
+  eventId: string;
+  type: 'contest' | 'clinic' | 'meetup';
   discipline: string;
   date: string;
   name: string;
@@ -50,41 +68,33 @@ export interface ContestRecord {
   createdAt: string;
   profileUrl?: string;
   thumbnailUrl?: string;
-  athleteCount: number;
-}
-
-export interface AthleteRecord {
-  'athletes-key': string;
-  athleteId: string;
-  name: string;
-  contestId: string;
-  contestName: string;
-  place: string;
-  points: number;
-  date: string;
-  country: string;
-  discipline: string;
-  createdAt: string;
+  participants: EventParticipant[];
 }
 
 // Transform mock data into DynamoDB format
 export function transformContestsData(): {
   users: UserRecord[];
-  contests: ContestRecord[];
-  athletes: AthleteRecord[];
+  events: EventRecord[];
 } {
   const users = new Map<string, UserRecord>();
-  const contests: ContestRecord[] = [];
-  const athletes: AthleteRecord[] = [];
+  const events: EventRecord[] = [];
 
   // Cast the imported data to Contest array
   const contestsTyped = contestsData as Contest[];
 
   contestsTyped.forEach((contest) => {
-    // Transform contest
-    const contestRecord: ContestRecord = {
-      'contests-key': contest.contestId,
-      contestId: contest.contestId,
+    // Transform event participants
+    const participants: EventParticipant[] = contest.athletes.map((athlete) => ({
+      userId: athlete.athleteId,
+      name: athlete.name,
+      place: athlete.place,
+      points: athlete.points,
+    }));
+
+    // Transform event record
+    const eventRecord: EventRecord = {
+      eventId: contest.contestId,
+      type: 'contest',
       discipline: contest.discipline,
       date: contest.date,
       name: contest.name,
@@ -97,43 +107,38 @@ export function transformContestsData(): {
       createdAt: contest.createdAt,
       profileUrl: contest.profileUrl,
       thumbnailUrl: contest.thumbnailUrl,
-      athleteCount: contest.athletes.length,
+      participants,
     };
-    contests.push(contestRecord);
+    events.push(eventRecord);
 
-    // Transform athletes and aggregate user data
+    // Aggregate user data with embedded event participations
     contest.athletes.forEach((athlete) => {
-      // Create athlete record
-      const athleteRecord: AthleteRecord = {
-        'athletes-key': `${athlete.athleteId}-${contest.contestId}`,
-        athleteId: athlete.athleteId,
-        name: athlete.name,
-        contestId: contest.contestId,
-        contestName: contest.name,
+      const participation: EventParticipation = {
+        eventId: contest.contestId,
+        eventName: contest.name,
         place: athlete.place,
         points: athlete.points,
         date: contest.date,
-        country: contest.country,
         discipline: contest.discipline,
-        createdAt: new Date().toISOString(),
+        country: contest.country,
+        category: contest.category,
       };
-      athletes.push(athleteRecord);
 
-      // Aggregate user data
       if (users.has(athlete.athleteId)) {
         const existingUser = users.get(athlete.athleteId)!;
-        existingUser.totalPoints = (existingUser.totalPoints || 0) + athlete.points;
-        existingUser.contestsParticipated = (existingUser.contestsParticipated || 0) + 1;
+        existingUser.totalPoints += athlete.points;
+        existingUser.contestsParticipated += 1;
+        existingUser.eventParticipations.push(participation);
       } else {
         const userRecord: UserRecord = {
-          'rankings-dev-key': athlete.athleteId,
-          id: athlete.athleteId,
+          userId: athlete.athleteId,
+          type: 'athlete',
           name: athlete.name,
           email: `${athlete.athleteId.replace('-', '.')}@sporthub.local`,
           createdAt: new Date().toISOString(),
-          athleteId: athlete.athleteId,
           totalPoints: athlete.points,
           contestsParticipated: 1,
+          eventParticipations: [participation],
         };
         users.set(athlete.athleteId, userRecord);
       }
@@ -142,8 +147,7 @@ export function transformContestsData(): {
 
   return {
     users: Array.from(users.values()),
-    contests,
-    athletes,
+    events,
   };
 }
 
@@ -159,11 +163,14 @@ export function generateTestUsers(count: number = 10): UserRecord[] {
     const name = names[i % names.length];
     const id = `test-user-${i + 1}`;
     testUsers.push({
-      'rankings-dev-key': id,
-      id,
+      userId: id,
+      type: 'athlete',
       name: `${name} ${i + 1}`,
       email: `test.user.${i + 1}@sporthub.local`,
       createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+      totalPoints: 0,
+      contestsParticipated: 0,
+      eventParticipations: [],
     });
   }
 
@@ -175,13 +182,13 @@ export function getDataStats() {
   const data = transformContestsData();
   return {
     totalUsers: data.users.length,
-    totalContests: data.contests.length,
-    totalAthleteEntries: data.athletes.length,
-    disciplines: [...new Set(data.contests.map(c => c.discipline))],
-    countries: [...new Set(data.contests.map(c => c.country))],
+    totalEvents: data.events.length,
+    totalParticipations: data.users.reduce((sum, u) => sum + u.eventParticipations.length, 0),
+    disciplines: [...new Set(data.events.map(e => e.discipline))],
+    countries: [...new Set(data.events.map(e => e.country))],
     dateRange: {
-      earliest: data.contests.reduce((min, c) => c.date < min ? c.date : min, data.contests[0]?.date),
-      latest: data.contests.reduce((max, c) => c.date > max ? c.date : max, data.contests[0]?.date),
+      earliest: data.events.reduce((min, e) => e.date < min ? e.date : min, data.events[0]?.date),
+      latest: data.events.reduce((max, e) => e.date > max ? e.date : max, data.events[0]?.date),
     }
   };
 }
