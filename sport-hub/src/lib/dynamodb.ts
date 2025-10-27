@@ -18,7 +18,7 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 // TODO: Set up AWS Cognito authentication(?)
 // TODO: Set up Amplify role for all server-side AWS actions (like dynamodb access)
 const clientConfig = {
-  region: process.env.AWS_REGION || "us-east-1",
+  region: process.env.AWS_REGION || "us-east-2",
   // PERFORMANCE OPTIMIZATION: Configure connection pooling
   maxAttempts: 3,
   requestHandler: {
