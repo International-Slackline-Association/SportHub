@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: 'SportHub - About',
 };
 
-const TABLE_NAME = process.env.DYNAMODB_LOCAL === 'true' ? 'rankings' : 'rankings-dev';
+const TABLE_NAME = 'rankings';
 
 async function getUsers(): Promise<User[]> {
   try {

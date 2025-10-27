@@ -50,9 +50,11 @@ const ddb = DynamoDBDocumentClient.from(client);
 
 // Table name helpers for different environments
 export const getTableName = (baseName: string) => {
+  // For local DynamoDB (docker), use local- prefix
   if (isLocal) return `local-${baseName}`;
-  if (isDevelopment) return `${baseName}-dev`;
-  return baseName;
+  // For everything else (AWS), always use -dev suffix
+  // This ensures we never touch production tables
+  return `${baseName}-dev`;
 };
 
 export const dynamodb = {
