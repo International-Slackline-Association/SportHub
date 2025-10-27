@@ -51,10 +51,10 @@ If you prefer CLI over web interface:
 pnpm db:local
 
 # 2. Create tables (requires manual script execution)
-DYNAMODB_LOCAL=true DYNAMODB_ENDPOINT=http://localhost:8000 AWS_REGION=us-east-1 npx tsx src/lib/db-setup.ts
+DYNAMODB_LOCAL=true DYNAMODB_ENDPOINT=http://localhost:8000 AWS_REGION=us-east-2 npx tsx src/lib/db-setup.ts
 
 # 3. Seed data (requires manual script execution)
-DYNAMODB_LOCAL=true DYNAMODB_ENDPOINT=http://localhost:8000 AWS_REGION=us-east-1 npx tsx src/lib/seed-local-db.ts seed
+DYNAMODB_LOCAL=true DYNAMODB_ENDPOINT=http://localhost:8000 AWS_REGION=us-east-2 npx tsx src/lib/seed-local-db.ts seed
 ```
 
 ## Test Pages
@@ -100,7 +100,7 @@ The system uses `.env.local` for local development:
 ```env
 DYNAMODB_LOCAL=true
 DYNAMODB_ENDPOINT=http://localhost:8000
-AWS_REGION=us-east-1
+AWS_REGION=us-east-2
 AWS_ACCESS_KEY_ID=dummy
 AWS_SECRET_ACCESS_KEY=dummy
 NODE_ENV=development

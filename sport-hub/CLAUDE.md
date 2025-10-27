@@ -102,7 +102,7 @@ src/
 ```env
 DYNAMODB_LOCAL=true
 DYNAMODB_ENDPOINT=http://localhost:8000
-AWS_REGION=us-east-1
+AWS_REGION=us-east-2
 AWS_ACCESS_KEY_ID=dummy
 AWS_SECRET_ACCESS_KEY=dummy
 NODE_ENV=development
@@ -110,7 +110,7 @@ NODE_ENV=development
 
 **Development with AWS** (`.env`):
 ```env
-AWS_REGION=us-east-1
+AWS_REGION=us-east-2
 AWS_ACCESS_KEY_ID=your_actual_key
 AWS_SECRET_ACCESS_KEY=your_actual_secret
 NODE_ENV=development
