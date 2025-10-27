@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { FormikHelpers } from 'formik';
+import { FormikHelpers, type FormikProps } from 'formik';
 import { updateUser } from './actions';
 import Button from '@ui/Button';
 import Modal from '@ui/Modal';
@@ -21,9 +21,19 @@ interface UserManagementClientProps {
   readonly user: User;
 }
 
+interface FormValues {
+  id: string;
+  name: string;
+  surname: string;
+  gender: string;
+  email: string;
+  country?: string;
+  isaId?: string;
+}
+
 export default function UserManagementClient({ user }: UserManagementClientProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const formRef = useRef<any>(null);
+  const formRef = useRef<FormikProps<FormValues>>(null);
 
   // Initial form values
   const initialValues = {
@@ -36,19 +46,21 @@ export default function UserManagementClient({ user }: UserManagementClientProps
     isaId: '',
   };
 
-  const handleFormSubmit = async (values: any, { setSubmitting }: FormikHelpers<any>) => {
+  const handleFormSubmit = async (values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
     try {
       const formData = new FormData();
       formData.append('id', user.id);
       formData.append('name', values.name);
       formData.append('email', values.email);
-      formData.append('country', values.country);
+      if (values.country) {
+        formData.append('country', values.country);
+      }
 
       await updateUser(formData);
 
       setIsModalOpen(false);
-    } catch (error: any) {
-      if (error?.message === 'NEXT_REDIRECT') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
         setIsModalOpen(false);
         return;
       }
