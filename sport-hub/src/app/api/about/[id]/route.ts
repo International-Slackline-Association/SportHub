@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { dynamodb } from '@lib/dynamodb';
 
-const TABLE_NAME = process.env.DYNAMODB_LOCAL === 'true' ? 'rankings' : 'rankings-dev';
+const TABLE_NAME = 'rankings';
 
 export async function GET({ params }: { params: { id: string } }) {
   try {

@@ -4,7 +4,7 @@ import { dynamodb } from '@lib/dynamodb';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-const TABLE_NAME = process.env.DYNAMODB_LOCAL === 'true' ? 'rankings' : 'rankings-dev';
+const TABLE_NAME = 'rankings';
 
 export async function createUser(formData: FormData) {
   const id = formData.get('id') as string;
