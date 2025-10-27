@@ -52,7 +52,7 @@ export const FormikTextField = ({
   return (
     <FormikFormField id={id} label={label} className={className}>
       <Field name={id}>
-        {({ field, meta }: any) => (
+        {({ field, meta }: { field: Record<string, unknown>; meta: { touched: boolean; error?: string } }) => (
           <div className={styles.inputContainer}>
             <input
               {...field}
@@ -80,7 +80,7 @@ export const FormikSelectField = ({
   return (
     <FormikFormField id={id} label={label} className={className}>
       <Field name={id}>
-        {({ field, meta }: any) => (
+        {({ field, meta }: { field: Record<string, unknown>; meta: { touched: boolean; error?: string } }) => (
           <div className={styles.inputContainer}>
             <select
               {...field}
@@ -102,7 +102,7 @@ export const FormikSelectField = ({
   );
 };
 
-export const FormikSubmitButton = ({ children }: PropsWithChildren<{}>) => {
+export const FormikSubmitButton = ({ children }: PropsWithChildren<Record<string, never>>) => {
   const { isSubmitting, isValid, dirty } = useFormikContext();
 
   return (
