@@ -32,10 +32,7 @@ COGNITO_REGION=eu-central-1
 
 # NextAuth Configuration (v5)
 AUTH_SECRET=<generated-secret>
-# For local development:
 AUTH_URL=http://localhost:3000
-# For backwards compatibility:
-NEXTAUTH_URL=http://localhost:3000
 ```
 
 **Required Actions:**
@@ -64,10 +61,10 @@ NextAuth v5 uses different environment variable names than v4:
 
 | Old (v4)          | New (v5)      | Notes                              |
 |-------------------|---------------|------------------------------------|
-| `NEXTAUTH_URL`    | `AUTH_URL`    | **Preferred in v5** - Base URL     |
-| `NEXTAUTH_SECRET` | `AUTH_SECRET` | **Required** - JWT encryption key  |
+| `NEXTAUTH_URL`    | `AUTH_URL`    | **Use v5 naming** - Base URL       |
+| `NEXTAUTH_SECRET` | `AUTH_SECRET` | **Use v5 naming** - JWT encryption |
 
-Both old and new names are supported for backwards compatibility.
+**Note:** NextAuth v5 uses `AUTH_*` naming. The old `NEXTAUTH_*` variables are deprecated.
 
 ### Required Variables
 
@@ -84,8 +81,7 @@ Both old and new names are supported for backwards compatibility.
 
 | Variable          | Description                          | Notes                        |
 |-------------------|--------------------------------------|------------------------------|
-| `NEXTAUTH_URL`    | Legacy base URL variable             | Use `AUTH_URL` instead       |
-| `NEXTAUTH_SECRET` | Legacy secret variable               | Use `AUTH_SECRET` instead    |
+| `AUTH_URL`        | Application base URL                 | Optional (auto-detected)     |
 
 ---
 
@@ -222,11 +218,6 @@ AUTH_URL=https://main.d1a2b3c4d5e6f.amplifyapp.com
 
 Replace with your actual Amplify domain! You can find it in the Amplify Console under your app.
 
-**For backwards compatibility, also set:**
-```
-NEXTAUTH_URL=https://main.d1a2b3c4d5e6f.amplifyapp.com
-```
-
 ⚠️ **Critical:** `AUTH_URL` must be your actual Amplify domain, NOT `localhost:3000`!
 
 #### Step 2: Mark Secrets
@@ -286,7 +277,6 @@ Required Variables:
 
 Optional Variables:
 ✅ AUTH_URL: https://your-domain.amplifyapp.com
-✅ NEXTAUTH_URL: https://your-domain.amplifyapp.com
 
 🌐 Auth URL being used: https://your-domain.amplifyapp.com
 ================================
@@ -466,7 +456,7 @@ node sport-hub/scripts/check-env.js
 
 **Cause:**
 - `AUTH_URL` environment variable in Amplify is set to `localhost:3000`
-- Or `AUTH_URL` is not set at all, falling back to old `NEXTAUTH_URL`
+- Or `AUTH_URL` is not set and auto-detection is failing
 
 **Solution:**
 1. In **Amplify Console** → **Environment variables**

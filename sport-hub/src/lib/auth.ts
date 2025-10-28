@@ -7,7 +7,7 @@ if (process.env.NODE_ENV !== 'production') {
     clientId: process.env.COGNITO_CLIENT_ID,
     region: process.env.COGNITO_REGION,
     poolId: process.env.COGNITO_USER_POOL_ID,
-    authUrl: process.env.NEXTAUTH_URL || 'auto-detected',
+    authUrl: process.env.AUTH_URL || 'auto-detected',
   })
 }
 
