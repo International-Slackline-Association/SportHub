@@ -20,12 +20,5 @@ declare module "next-auth" {
   }
 }
 
-declare module "next-auth/jwt" {
-  /**
-   * Extends the JWT token type to include Cognito tokens
-   */
-  interface JWT {
-    accessToken?: string
-    idToken?: string
-  }
-}
+// Note: JWT token extensions are handled inline in the callbacks
+// NextAuth v5 beta doesn't support module augmentation for next-auth/jwt
