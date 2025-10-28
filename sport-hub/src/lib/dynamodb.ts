@@ -18,7 +18,7 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 // TODO: Set up AWS Cognito authentication(?)
 // TODO: Set up Amplify role for all server-side AWS actions (like dynamodb access)
 const clientConfig = {
-  region: process.env.AWS_REGION || "us-east-1",
+  region: process.env.AWS_REGION || "us-east-2",
   // PERFORMANCE OPTIMIZATION: Configure connection pooling
   maxAttempts: 3,
   requestHandler: {
@@ -50,9 +50,11 @@ const ddb = DynamoDBDocumentClient.from(client);
 
 // Table name helpers for different environments
 export const getTableName = (baseName: string) => {
+  // For local DynamoDB (docker), use local- prefix
   if (isLocal) return `local-${baseName}`;
-  if (isDevelopment) return `${baseName}-dev`;
-  return baseName;
+  // For everything else (AWS), always use -dev suffix
+  // This ensures we never touch production tables
+  return `${baseName}-dev`;
 };
 
 export const dynamodb = {

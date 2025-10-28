@@ -1,6 +1,6 @@
 'use client';
 
-import { Formik, Form, FormikHelpers } from 'formik';
+import { Formik, Form, FormikHelpers, type FormikProps } from 'formik';
 import * as Yup from 'yup';
 import { createUser } from './actions';
 import { FormikSelectField, FormikSubmitButton, FormikTextField, countryCodeOptions, genderOptions } from '@ui/Form';
@@ -40,7 +40,7 @@ interface UserFormProps {
   initialValues?: Form;
   onSubmit?: (values: Form, helpers: FormikHelpers<Form>) => Promise<void>;
   showSubmitButton?: boolean;
-  formRef?: React.RefObject<any>;
+  formRef?: React.RefObject<FormikProps<Form> | null>;
 }
 
 export default function UserForm({
@@ -62,9 +62,9 @@ export default function UserForm({
       await createUser(formData);
       resetForm();
       setApiSuccess(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
       setSubmitting(false);
-      setApiError(`Failed to create user: ${error?.message}`);
+      setApiError(`Failed to create user: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
