@@ -13,6 +13,12 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+
+  // Enable instrumentation for server startup logging
+  // @ts-ignore - instrumentationHook is valid but TypeScript types may be outdated
+  experimental: {
+    instrumentationHook: true,
+  } as any,
 };
 
 export default nextConfig;
