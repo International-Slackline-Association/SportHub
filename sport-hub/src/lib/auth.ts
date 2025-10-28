@@ -1,0 +1,53 @@
+import NextAuth from "next-auth"
+import Cognito from "next-auth/providers/cognito"
+
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  providers: [
+    Cognito({
+      clientId: process.env.COGNITO_CLIENT_ID!,
+      clientSecret: process.env.COGNITO_CLIENT_SECRET!,
+      issuer: `https://cognito-idp.${process.env.COGNITO_REGION}.amazonaws.com/${process.env.COGNITO_USER_POOL_ID}`,
+      // Only using scopes enabled in Cognito
+      authorization: {
+        params: {
+          scope: "openid email"
+        }
+      }
+    })
+  ],
+  callbacks: {
+    async jwt({ token, user, account, profile }) {
+      // Pass Cognito user info to token
+      if (account && profile) {
+        token.sub = profile.sub
+        token.email = profile.email
+        token.name = profile.name
+        token.picture = profile.picture
+        token.accessToken = account.access_token
+        token.idToken = account.id_token
+      }
+      return token
+    },
+    async session({ session, token }) {
+      // Pass token data to session
+      if (token) {
+        session.user.id = token.sub as string
+        session.user.email = token.email as string
+        session.user.name = token.name as string
+        session.user.image = token.picture as string
+        session.accessToken = token.accessToken as string
+        session.idToken = token.idToken as string
+      }
+      return session
+    }
+  },
+  pages: {
+    signIn: '/auth/signin',
+    error: '/auth/error',
+  },
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  trustHost: true,
+})
