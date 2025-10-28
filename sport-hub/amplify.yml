@@ -1,0 +1,28 @@
+version: 1
+applications:
+  - frontend:
+      phases:
+        preBuild:
+          commands:
+            - nvm use 20
+            - node -v
+            # Check environment variables before build
+            - node scripts/check-env.js
+            - chmod +x scripts/setup_environ.sh
+            - ./scripts/setup_environ.sh
+        build:
+          commands:
+            - chmod +x scripts/build_sporthub.sh
+            - ./scripts/build_sporthub.sh
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - .next/cache/**/*
+          - node_modules/**/*
+      environment:
+        variables:
+          NODE_VERSION: 22.15.0
+    appRoot: sport-hub
