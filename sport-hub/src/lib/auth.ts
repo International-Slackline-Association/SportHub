@@ -16,13 +16,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     })
   ],
   callbacks: {
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, account, profile }) {
       // Pass Cognito user info to token
       if (account && profile) {
-        token.sub = profile.sub
-        token.email = profile.email
-        token.name = profile.name
-        token.picture = profile.picture
+        token.sub = profile.sub ?? undefined
+        token.email = profile.email ?? undefined
+        token.name = profile.name ?? undefined
+        token.picture = profile.picture ?? undefined
         token.accessToken = account.access_token
         token.idToken = account.id_token
       }
