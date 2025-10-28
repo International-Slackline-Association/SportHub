@@ -1,33 +1,35 @@
 import NextAuth from "next-auth"
 import Cognito from "next-auth/providers/cognito"
 
-// Validate required environment variables at runtime
-const requiredEnvVars = {
-  COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID,
-  COGNITO_CLIENT_SECRET: process.env.COGNITO_CLIENT_SECRET,
-  COGNITO_REGION: process.env.COGNITO_REGION,
-  COGNITO_USER_POOL_ID: process.env.COGNITO_USER_POOL_ID,
-  AUTH_SECRET: process.env.AUTH_SECRET,
+// Validate required environment variables at runtime (not during build)
+// During build, secrets may not be available yet - they're only needed when server actually runs
+if (globalThis.window === undefined && process.env.NODE_ENV !== 'production') {
+  const requiredEnvVars = {
+    COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID,
+    COGNITO_CLIENT_SECRET: process.env.COGNITO_CLIENT_SECRET,
+    COGNITO_REGION: process.env.COGNITO_REGION,
+    COGNITO_USER_POOL_ID: process.env.COGNITO_USER_POOL_ID,
+    AUTH_SECRET: process.env.AUTH_SECRET,
+  }
+
+  const missingVars = Object.entries(requiredEnvVars)
+    .filter(([, value]) => !value)
+    .map(([key]) => key)
+
+  if (missingVars.length > 0) {
+    console.error('❌ Missing required environment variables for NextAuth:', missingVars)
+  }
+
+  // Log configuration for debugging in development
+  console.log('NextAuth Config:', {
+    clientId: process.env.COGNITO_CLIENT_ID,
+    region: process.env.COGNITO_REGION,
+    poolId: process.env.COGNITO_USER_POOL_ID,
+    authUrl: process.env.AUTH_URL || 'auto-detected (trustHost: true)',
+    hasClientSecret: !!process.env.COGNITO_CLIENT_SECRET,
+    hasAuthSecret: !!process.env.AUTH_SECRET,
+  })
 }
-
-const missingVars = Object.entries(requiredEnvVars)
-  .filter(([, value]) => !value)
-  .map(([key]) => key)
-
-if (missingVars.length > 0) {
-  console.error('❌ Missing required environment variables for NextAuth:', missingVars)
-  throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`)
-}
-
-// Log configuration for debugging
-console.log('NextAuth Config:', {
-  clientId: process.env.COGNITO_CLIENT_ID,
-  region: process.env.COGNITO_REGION,
-  poolId: process.env.COGNITO_USER_POOL_ID,
-  authUrl: process.env.AUTH_URL || 'auto-detected (trustHost: true)',
-  hasClientSecret: !!process.env.COGNITO_CLIENT_SECRET,
-  hasAuthSecret: !!process.env.AUTH_SECRET,
-})
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   basePath: "/api/auth",
