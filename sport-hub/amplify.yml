@@ -12,6 +12,13 @@ applications:
             - ./scripts/setup_environ.sh
         build:
           commands:
+            # Inject runtime environment variables into .env.production for Next.js server-side access
+            - echo "AUTH_SECRET=$AUTH_SECRET" >> .env.production
+            - echo "COGNITO_CLIENT_SECRET=$COGNITO_CLIENT_SECRET" >> .env.production
+            - echo "COGNITO_CLIENT_ID=$COGNITO_CLIENT_ID" >> .env.production
+            - echo "COGNITO_REGION=$COGNITO_REGION" >> .env.production
+            - echo "COGNITO_USER_POOL_ID=$COGNITO_USER_POOL_ID" >> .env.production
+            - echo "AUTH_URL=$AUTH_URL" >> .env.production
             - chmod +x scripts/build_sporthub.sh
             - ./scripts/build_sporthub.sh
       artifacts:
