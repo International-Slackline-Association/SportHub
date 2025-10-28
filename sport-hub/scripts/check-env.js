@@ -17,9 +17,7 @@ const runtimeOnlyVars = [
 ];
 
 const optionalVars = [
-  'AUTH_URL',          // NextAuth v5 preferred (runtime)
-  'NEXTAUTH_URL',      // Backwards compatibility (runtime)
-  'NEXTAUTH_SECRET'    // Alternative to AUTH_SECRET (runtime)
+  'AUTH_URL',  // NextAuth v5 base URL (runtime)
 ];
 
 const amplifyVars = [
@@ -35,6 +33,12 @@ const unnecessaryVars = [
   { name: 'AWS_REGION', reason: 'Duplicate of COGNITO_REGION' },
   { name: 'AMPLIFY_DIFF_DEPLOY', reason: 'Amplify auto-managed' },
   { name: 'DYNAMODB_LOCAL', reason: 'Only for local development' },
+];
+
+// Deprecated variables (NextAuth v4 naming, replaced in v5)
+const deprecatedVars = [
+  { name: 'NEXTAUTH_URL', replacement: 'AUTH_URL' },
+  { name: 'NEXTAUTH_SECRET', replacement: 'AUTH_SECRET' },
 ];
 
 let allBuildVarsPresent = true;
@@ -67,9 +71,7 @@ console.log('\nOptional Variables:');
 optionalVars.forEach(varName => {
   const value = process.env[varName];
   const isPresent = !!value;
-  const displayValue = varName.includes('SECRET')
-    ? (value ? '***PRESENT***' : 'NOT SET')
-    : (value || 'NOT SET');
+  const displayValue = value || 'NOT SET';
 
   console.log(`${isPresent ? '✅' : 'ℹ️ '} ${varName}: ${displayValue}`);
 });
@@ -81,6 +83,16 @@ amplifyVars.forEach(varName => {
   const displayValue = value || 'NOT SET';
   console.log(`${isPresent ? '✅' : 'ℹ️ '} ${varName}: ${displayValue}`);
 });
+
+// Check for deprecated variables
+const deprecatedPresent = deprecatedVars.filter(v => process.env[v.name]);
+if (deprecatedPresent.length > 0) {
+  console.log('\n⚠️  Deprecated Variables (use NextAuth v5 naming):');
+  deprecatedPresent.forEach(v => {
+    console.log(`⚠️  ${v.name}: ${process.env[v.name]}`);
+    console.log(`   └─ Replace with: ${v.replacement}`);
+  });
+}
 
 // Check for unnecessary variables
 const unnecessaryPresent = unnecessaryVars.filter(v => process.env[v.name]);
@@ -98,7 +110,7 @@ if (unnecessaryPresent.length > 0) {
 console.log('================================');
 
 // Special check for URL variables
-const authUrl = process.env.AUTH_URL || process.env.NEXTAUTH_URL;
+const authUrl = process.env.AUTH_URL;
 if (authUrl) {
   console.log(`🌐 Auth URL: ${authUrl}`);
 
@@ -135,7 +147,7 @@ if (!allBuildVarsPresent) {
   console.log('✅ All required build-time environment variables are present');
   console.log('\n💡 Note: Runtime secrets will be validated when the server starts.');
   
-  if (unnecessaryPresent.length > 0) {
-    console.log('\n💡 Tip: Consider removing unnecessary variables to clean up your configuration.');
+  if (unnecessaryPresent.length > 0 || deprecatedPresent.length > 0) {
+    console.log('\n💡 Tip: Consider cleaning up unnecessary and deprecated variables.');
   }
 }
