@@ -187,10 +187,17 @@ https://your-amplify-domain.amplifyapp.com
 
 ### AWS Amplify Production
 
-#### Prerequisites
+> **📘 For complete Amplify deployment guide, see [AMPLIFY_DEPLOYMENT.md](./AMPLIFY_DEPLOYMENT.md)**
+>
+> This includes:
+> - Complete environment variable configuration
+> - Build configuration and scripts
+> - Troubleshooting guide
+> - Security best practices
 
-- AWS Amplify app configured
-- Access to Amplify Console and Cognito Console
+#### Quick Setup
+
+For detailed step-by-step instructions, see [AMPLIFY_DEPLOYMENT.md](./AMPLIFY_DEPLOYMENT.md#initial-setup).
 
 #### Step 1: Configure Environment Variables in Amplify
 

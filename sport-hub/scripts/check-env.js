@@ -3,35 +3,64 @@
 console.log('🔍 Environment Variables Check:');
 console.log('================================');
 
-const requiredVars = [
+// Build-time required variables (needed during `next build`)
+const requiredBuildVars = [
   'COGNITO_CLIENT_ID',
-  'COGNITO_CLIENT_SECRET',
   'COGNITO_REGION',
   'COGNITO_USER_POOL_ID',
-  'AUTH_SECRET'
+];
+
+// Runtime-only variables (only needed when server runs, NOT during build)
+const runtimeOnlyVars = [
+  'COGNITO_CLIENT_SECRET',  // Only used at runtime for OAuth
+  'AUTH_SECRET',            // Only used at runtime for JWT signing
 ];
 
 const optionalVars = [
-  'AUTH_URL',          // NextAuth v5 preferred
-  'NEXTAUTH_URL',      // Backwards compatibility
-  'NEXTAUTH_SECRET'    // Alternative to AUTH_SECRET
+  'AUTH_URL',          // NextAuth v5 preferred (runtime)
+  'NEXTAUTH_URL',      // Backwards compatibility (runtime)
+  'NEXTAUTH_SECRET'    // Alternative to AUTH_SECRET (runtime)
 ];
 
-let allPresent = true;
+const amplifyVars = [
+  'AMPLIFY_MONOREPO_APP_ROOT',  // Amplify monorepo config
+  'AWS_BRANCH',                  // Amplify branch (auto-set)
+  'AWS_APP_ID',                  // Amplify app ID (auto-set)
+];
 
-console.log('Required Variables:');
-requiredVars.forEach(varName => {
+// Unnecessary variables - Amplify provides these or they're not needed
+const unnecessaryVars = [
+  { name: 'AWS_ACCESS_KEY_ID', reason: 'Amplify provides via IAM role' },
+  { name: 'AWS_SECRET_ACCESS_KEY', reason: 'Amplify provides via IAM role' },
+  { name: 'AWS_REGION', reason: 'Duplicate of COGNITO_REGION' },
+  { name: 'AMPLIFY_DIFF_DEPLOY', reason: 'Amplify auto-managed' },
+  { name: 'DYNAMODB_LOCAL', reason: 'Only for local development' },
+];
+
+let allBuildVarsPresent = true;
+
+console.log('Build-Time Required Variables:');
+requiredBuildVars.forEach(varName => {
   const value = process.env[varName];
   const isPresent = !!value;
-  const displayValue = varName.includes('SECRET')
-    ? (value ? '***PRESENT***' : 'MISSING')
-    : (value || 'MISSING');
+  const displayValue = value || 'MISSING';
 
   console.log(`${isPresent ? '✅' : '❌'} ${varName}: ${displayValue}`);
 
   if (!isPresent) {
-    allPresent = false;
+    allBuildVarsPresent = false;
   }
+});
+
+console.log('\nRuntime-Only Variables (not required for build):');
+runtimeOnlyVars.forEach(varName => {
+  const value = process.env[varName];
+  const isPresent = !!value;
+  const displayValue = varName.includes('SECRET')
+    ? (value ? '***PRESENT***' : 'NOT SET (OK - only needed at runtime)')
+    : (value || 'NOT SET');
+
+  console.log(`${isPresent ? '✅' : 'ℹ️ '} ${varName}: ${displayValue}`);
 });
 
 console.log('\nOptional Variables:');
@@ -39,30 +68,74 @@ optionalVars.forEach(varName => {
   const value = process.env[varName];
   const isPresent = !!value;
   const displayValue = varName.includes('SECRET')
-    ? (value ? '***PRESENT***' : 'MISSING')
-    : (value || 'MISSING');
+    ? (value ? '***PRESENT***' : 'NOT SET')
+    : (value || 'NOT SET');
 
   console.log(`${isPresent ? '✅' : 'ℹ️ '} ${varName}: ${displayValue}`);
 });
+
+console.log('\nAmplify-Specific Variables:');
+amplifyVars.forEach(varName => {
+  const value = process.env[varName];
+  const isPresent = !!value;
+  const displayValue = value || 'NOT SET';
+  console.log(`${isPresent ? '✅' : 'ℹ️ '} ${varName}: ${displayValue}`);
+});
+
+// Check for unnecessary variables
+const unnecessaryPresent = unnecessaryVars.filter(v => process.env[v.name]);
+if (unnecessaryPresent.length > 0) {
+  console.log('\n⚠️  Unnecessary Variables (optional - can be removed):');
+  unnecessaryPresent.forEach(v => {
+    const value = v.name.includes('SECRET') || v.name.includes('KEY')
+      ? '***SET***'
+      : (process.env[v.name] || '');
+    console.log(`⚠️  ${v.name}: ${value}`);
+    console.log(`   └─ ${v.reason}`);
+  });
+}
 
 console.log('================================');
 
 // Special check for URL variables
 const authUrl = process.env.AUTH_URL || process.env.NEXTAUTH_URL;
 if (authUrl) {
-  console.log(`🌐 Auth URL being used: ${authUrl}`);
+  console.log(`🌐 Auth URL: ${authUrl}`);
+
+  // Check if URL incorrectly includes callback path
+  if (authUrl.includes('/api/auth/callback')) {
+    console.error('❌ ERROR: AUTH_URL should NOT include callback path!');
+    console.error(`   Current: ${authUrl}`);
+    console.error(`   Should be: ${authUrl.split('/api/auth/callback')[0]}`);
+    allBuildVarsPresent = false;
+  }
+
   if (authUrl.includes('localhost')) {
     console.warn('⚠️  WARNING: Using localhost URL - update for production!');
   }
 } else {
-  console.log('🌐 Auth URL: Using auto-detection (trustHost: true)');
+  console.log('🌐 Auth URL: Not set (will use auto-detection via trustHost)');
+}
+
+// Check monorepo config
+if (process.env.AMPLIFY_MONOREPO_APP_ROOT) {
+  console.log(`📁 Monorepo app root: ${process.env.AMPLIFY_MONOREPO_APP_ROOT}`);
+} else if (process.env.AWS_BRANCH) {
+  console.warn('⚠️  Running in Amplify but AMPLIFY_MONOREPO_APP_ROOT not set');
 }
 
 console.log('================================');
 
-if (!allPresent) {
-  console.error('❌ Some required environment variables are missing!');
+if (!allBuildVarsPresent) {
+  console.error('❌ Some required build-time environment variables are missing!');
+  console.error('\n💡 Note: Runtime secrets (AUTH_SECRET, COGNITO_CLIENT_SECRET) are NOT needed during build.');
+  console.error('   They only need to be available when the server runs.');
   process.exit(1);
 } else {
-  console.log('✅ All required environment variables are present');
+  console.log('✅ All required build-time environment variables are present');
+  console.log('\n💡 Note: Runtime secrets will be validated when the server starts.');
+  
+  if (unnecessaryPresent.length > 0) {
+    console.log('\n💡 Tip: Consider removing unnecessary variables to clean up your configuration.');
+  }
 }
