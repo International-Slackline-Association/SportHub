@@ -9,6 +9,7 @@ import { PropsWithChildren, useState } from "react";
 import type { HTMLAttributes } from "react";
 import styles from "./styles.module.css";
 import Drawer from "@ui/Drawer";
+import UserMenu from "@ui/UserMenu";
 
 // TODO: Explore options for organizing shared types as site grows
 export type LinkType = { name: string; href: string };
@@ -91,20 +92,26 @@ const Navigation = () => {
           ☰
         </button>
       ) : isDesktop ? (
-        <nav>
-          <NavList />
-        </nav>
+        <div className="flex items-center gap-4">
+          <nav>
+            <NavList />
+          </nav>
+          <UserMenu />
+        </div>
       ) : (
         <>
-          <button
-            aria-expanded={menuOpen}
-            aria-controls="mobile-menu"
-            aria-label="Open navigation menu"
-            className="text-white text-6xl"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            ☰
-          </button>
+          <div className="flex items-center gap-4">
+            <UserMenu />
+            <button
+              aria-expanded={menuOpen}
+              aria-controls="mobile-menu"
+              aria-label="Open navigation menu"
+              className="text-white text-6xl"
+              onClick={() => setMenuOpen(!menuOpen)}
+            >
+              ☰
+            </button>
+          </div>
           <Drawer isOpen={menuOpen} onClose={() => setMenuOpen(false)} position="right">
             <nav>
               <NavList onClickItem={() => setMenuOpen(false)} />
