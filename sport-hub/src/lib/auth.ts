@@ -1,7 +1,18 @@
 import NextAuth from "next-auth"
 import Cognito from "next-auth/providers/cognito"
 
+// Log configuration for debugging (only in non-production or with safe values)
+if (process.env.NODE_ENV !== 'production') {
+  console.log('Auth Config:', {
+    clientId: process.env.COGNITO_CLIENT_ID,
+    region: process.env.COGNITO_REGION,
+    poolId: process.env.COGNITO_USER_POOL_ID,
+    authUrl: process.env.NEXTAUTH_URL || 'auto-detected',
+  })
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  basePath: "/api/auth",
   providers: [
     Cognito({
       clientId: process.env.COGNITO_CLIENT_ID!,
