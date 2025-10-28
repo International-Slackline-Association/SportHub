@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: 'SportHub - Local Database Testing',
 };
 
+// Force dynamic rendering to avoid build-time AWS calls
+export const dynamic = 'force-dynamic';
+
 export default async function LocalTestPage() {
   // Check if test environment is ready
   const envStatus = await testHelpers.isTestEnvironmentReady();
