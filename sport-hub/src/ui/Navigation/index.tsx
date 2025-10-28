@@ -92,7 +92,7 @@ const Navigation = () => {
           ☰
         </button>
       ) : isDesktop ? (
-        <div className="flex items-center gap-4">
+        <div className={styles.navContainer}>
           <nav>
             <NavList />
           </nav>
@@ -100,7 +100,7 @@ const Navigation = () => {
         </div>
       ) : (
         <>
-          <div className="flex items-center gap-4">
+          <div className={styles.navContainer}>
             <UserMenu />
             <button
               aria-expanded={menuOpen}

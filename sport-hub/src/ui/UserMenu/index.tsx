@@ -3,6 +3,7 @@
 import { useSession, signIn, signOut } from "next-auth/react"
 import { useState, useRef, useEffect } from "react"
 import { cn } from "@utils/cn"
+import Button from "@ui/Button"
 
 export default function UserMenu() {
   const { data: session, status } = useSession()
@@ -33,12 +34,12 @@ export default function UserMenu() {
 
   if (!session) {
     return (
-      <button
+      <Button
         onClick={() => signIn("cognito")}
-        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
+        variant="primary"
       >
         Sign In
-      </button>
+      </Button>
     )
   }
 
