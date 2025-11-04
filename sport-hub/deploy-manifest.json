@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "framework": {
+    "name": "nextjs",
+    "version": "15.3.4"
+  },
+  "imageOptimization": {
+    "path": "/_next/image",
+    "loader": "default"
+  }
+}
