@@ -40,12 +40,12 @@ export default async function LocalTestPage() {
   if (envStatus.ready) {
     try {
       const users = await testHelpers.getAllUsers();
-      const contests = await testHelpers.getAllContests();
-      const athletes = await testHelpers.getAllAthletes();
+      const events = await testHelpers.getAllEvents();
 
       sampleUsers = users.slice(0, 5);
-      sampleContests = contests.slice(0, 3);
-      sampleAthletes = athletes.slice(0, 10);
+      sampleContests = events.slice(0, 3);
+      // No more separate athletes table - participations are embedded in users
+      sampleAthletes = null;
     } catch (error) {
       console.error('Error fetching sample data:', error);
     }
@@ -123,12 +123,12 @@ export default async function LocalTestPage() {
             <div className="text-sm text-gray-600">Unique Athletes</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-blue-600">{dataStats.totalAthleteEntries}</div>
-            <div className="text-sm text-gray-600">Athlete Entries</div>
+            <div className="text-2xl font-bold text-blue-600">{dataStats.totalParticipations}</div>
+            <div className="text-sm text-gray-600">Event Participations</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-blue-600">{dataStats.totalContests}</div>
-            <div className="text-sm text-gray-600">Contests</div>
+            <div className="text-2xl font-bold text-blue-600">{dataStats.totalEvents}</div>
+            <div className="text-sm text-gray-600">Events</div>
           </div>
           <div>
             <div className="text-2xl font-bold text-blue-600">{dataStats.disciplines.length}</div>
@@ -170,8 +170,8 @@ export default async function LocalTestPage() {
                   </thead>
                   <tbody>
                     {sampleUsers.map((user) => (
-                      <tr key={user.id} className="border-b hover:bg-gray-50">
-                        <td className="p-2 font-mono text-xs">{user.id}</td>
+                      <tr key={user.userId} className="border-b hover:bg-gray-50">
+                        <td className="p-2 font-mono text-xs">{user.userId}</td>
                         <td className="p-2">{user.name}</td>
                         <td className="p-2">{user.email}</td>
                         <td className="p-2">{user.totalPoints || 0}</td>

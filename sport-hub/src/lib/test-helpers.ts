@@ -1,7 +1,7 @@
 import { dynamodb } from './dynamodb';
 import { DatabaseSetup } from './db-setup';
 import { DatabaseSeeder } from './seed-local-db';
-import { type UserRecord, type ContestRecord, type AthleteRecord } from './seed-data';
+import { type UserRecord, type EventRecord } from './seed-data';
 
 export class TestHelpers {
   private dbSetup = new DatabaseSetup();
@@ -9,52 +9,36 @@ export class TestHelpers {
 
   // Test data generators
   generateTestUser(overrides: Partial<UserRecord> = {}): UserRecord {
-    const id = overrides.id || `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const userId = overrides.userId || `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     return {
-      'rankings-dev-key': id,
-      id,
+      userId,
+      type: 'athlete',
       name: overrides.name || 'Test User',
-      email: overrides.email || `${id}@test.local`,
+      email: overrides.email || `${userId}@test.local`,
       createdAt: overrides.createdAt || new Date().toISOString(),
+      totalPoints: overrides.totalPoints || 0,
+      contestsParticipated: overrides.contestsParticipated || 0,
+      eventParticipations: overrides.eventParticipations || [],
       ...overrides
     };
   }
 
-  generateTestContest(overrides: Partial<ContestRecord> = {}): ContestRecord {
-    const contestId = overrides.contestId || `test-contest-${Date.now()}`;
+  generateTestEvent(overrides: Partial<EventRecord> = {}): EventRecord {
+    const eventId = overrides.eventId || `test-event-${Date.now()}`;
     return {
-      'contests-key': contestId,
-      contestId,
-      discipline: overrides.discipline || '1',
+      eventId,
+      type: 'contest',
+      discipline: overrides.discipline || 'FREESTYLE_HIGHLINE',
       date: overrides.date || new Date().toISOString().split('T')[0],
-      name: overrides.name || 'Test Contest',
-      normalizedName: overrides.normalizedName || 'test contest',
-      prize: overrides.prize || 1,
+      name: overrides.name || 'Test Event',
+      normalizedName: overrides.normalizedName || 'test event',
+      prize: overrides.prize || 1000,
       country: overrides.country || 'us',
-      gender: overrides.gender || 1,
+      gender: overrides.gender || 0,
       city: overrides.city || 'Test City',
       category: overrides.category || 1,
       createdAt: overrides.createdAt || new Date().toISOString(),
-      athleteCount: overrides.athleteCount || 0,
-      ...overrides
-    };
-  }
-
-  generateTestAthlete(overrides: Partial<AthleteRecord> = {}): AthleteRecord {
-    const athleteId = overrides.athleteId || `test-athlete-${Date.now()}`;
-    const contestId = overrides.contestId || `test-contest-${Date.now()}`;
-    return {
-      'athletes-key': `${athleteId}-${contestId}`,
-      athleteId,
-      name: overrides.name || 'Test Athlete',
-      contestId,
-      contestName: overrides.contestName || 'Test Contest',
-      place: overrides.place || '1',
-      points: overrides.points || 100,
-      date: overrides.date || new Date().toISOString().split('T')[0],
-      country: overrides.country || 'us',
-      discipline: overrides.discipline || '1',
-      createdAt: overrides.createdAt || new Date().toISOString(),
+      participants: overrides.participants || [],
       ...overrides
     };
   }
@@ -62,20 +46,14 @@ export class TestHelpers {
   // Database operations
   async createTestUser(data?: Partial<UserRecord>): Promise<UserRecord> {
     const user = this.generateTestUser(data);
-    await dynamodb.putItem('rankings', user as unknown as Record<string, unknown>);
+    await dynamodb.putItem('users', user as unknown as Record<string, unknown>);
     return user;
   }
 
-  async createTestContest(data?: Partial<ContestRecord>): Promise<ContestRecord> {
-    const contest = this.generateTestContest(data);
-    await dynamodb.putItem('contests', contest as unknown as Record<string, unknown>);
-    return contest;
-  }
-
-  async createTestAthlete(data?: Partial<AthleteRecord>): Promise<AthleteRecord> {
-    const athlete = this.generateTestAthlete(data);
-    await dynamodb.putItem('athletes', athlete as unknown as Record<string, unknown>);
-    return athlete;
+  async createTestEvent(data?: Partial<EventRecord>): Promise<EventRecord> {
+    const event = this.generateTestEvent(data);
+    await dynamodb.putItem('events', event as unknown as Record<string, unknown>);
+    return event;
   }
 
   // Cleanup operations
@@ -83,33 +61,22 @@ export class TestHelpers {
     let totalCleaned = 0;
 
     // Clean users
-    const users = await dynamodb.scanItems('rankings');
+    const users = await dynamodb.scanItems('users');
     if (users) {
       for (const user of users) {
-        if (user.id?.toString().startsWith(testPrefix)) {
-          await dynamodb.deleteItem('rankings', { 'rankings-dev-key': user.id });
+        if (user.userId?.toString().startsWith(testPrefix)) {
+          await dynamodb.deleteItem('users', { userId: user.userId });
           totalCleaned++;
         }
       }
     }
 
-    // Clean contests
-    const contests = await dynamodb.scanItems('contests');
-    if (contests) {
-      for (const contest of contests) {
-        if (contest.contestId?.toString().startsWith(testPrefix)) {
-          await dynamodb.deleteItem('contests', { 'contests-key': contest.contestId });
-          totalCleaned++;
-        }
-      }
-    }
-
-    // Clean athletes
-    const athletes = await dynamodb.scanItems('athletes');
-    if (athletes) {
-      for (const athlete of athletes) {
-        if (athlete.athleteId?.toString().startsWith(testPrefix)) {
-          await dynamodb.deleteItem('athletes', { 'athletes-key': athlete['athletes-key'] });
+    // Clean events
+    const events = await dynamodb.scanItems('events');
+    if (events) {
+      for (const event of events) {
+        if (event.eventId?.toString().startsWith(testPrefix)) {
+          await dynamodb.deleteItem('events', { eventId: event.eventId });
           totalCleaned++;
         }
       }
@@ -119,54 +86,39 @@ export class TestHelpers {
   }
 
   // Query helpers
-  async findUserById(id: string): Promise<UserRecord | null> {
-    const item = await dynamodb.getItem('rankings', { 'rankings-dev-key': id });
+  async findUserById(userId: string): Promise<UserRecord | null> {
+    const item = await dynamodb.getItem('users', { userId });
     return item as UserRecord | null;
   }
 
-  async findContestById(contestId: string): Promise<ContestRecord | null> {
-    const item = await dynamodb.getItem('contests', { 'contests-key': contestId });
-    return item as ContestRecord | null;
-  }
-
-  async findAthleteEntry(athleteId: string, contestId: string): Promise<AthleteRecord | null> {
-    const item = await dynamodb.getItem('athletes', { 'athletes-key': `${athleteId}-${contestId}` });
-    return item as AthleteRecord | null;
+  async findEventById(eventId: string): Promise<EventRecord | null> {
+    const item = await dynamodb.getItem('events', { eventId });
+    return item as EventRecord | null;
   }
 
   async getAllUsers(): Promise<UserRecord[]> {
     try {
-      const items = await dynamodb.scanItems('rankings');
+      const items = await dynamodb.scanItems('users');
       return (items || []) as UserRecord[];
     } catch {
-      console.warn('Rankings table not found, returning empty array');
+      console.warn('Users table not found, returning empty array');
       return [];
     }
   }
 
-  async getAllContests(): Promise<ContestRecord[]> {
+  async getAllEvents(): Promise<EventRecord[]> {
     try {
-      const items = await dynamodb.scanItems('contests');
-      return (items || []) as ContestRecord[];
+      const items = await dynamodb.scanItems('events');
+      return (items || []) as EventRecord[];
     } catch {
-      console.warn('Contests table not found, returning empty array');
-      return [];
-    }
-  }
-
-  async getAllAthletes(): Promise<AthleteRecord[]> {
-    try {
-      const items = await dynamodb.scanItems('athletes');
-      return (items || []) as AthleteRecord[];
-    } catch {
-      console.warn('Athletes table not found, returning empty array');
+      console.warn('Events table not found, returning empty array');
       return [];
     }
   }
 
   // Test environment helpers
   async isTestEnvironmentReady(): Promise<{ ready: boolean; missing: string[] }> {
-    const requiredTables = ['rankings', 'contests', 'athletes'];
+    const requiredTables = ['users', 'events'];
     const missing: string[] = [];
 
     for (const table of requiredTables) {
@@ -227,30 +179,20 @@ export class TestHelpers {
     return (
       !!user &&
       typeof user === 'object' &&
-      typeof (user as Record<string, unknown>).id === 'string' &&
+      typeof (user as Record<string, unknown>).userId === 'string' &&
       typeof (user as Record<string, unknown>).name === 'string' &&
       typeof (user as Record<string, unknown>).email === 'string' &&
       typeof (user as Record<string, unknown>).createdAt === 'string'
     );
   }
 
-  validateContest(contest: unknown): contest is ContestRecord {
+  validateEvent(event: unknown): event is EventRecord {
     return (
-      !!contest &&
-      typeof contest === 'object' &&
-      typeof (contest as Record<string, unknown>).contestId === 'string' &&
-      typeof (contest as Record<string, unknown>).name === 'string' &&
-      typeof (contest as Record<string, unknown>).date === 'string'
-    );
-  }
-
-  validateAthlete(athlete: unknown): athlete is AthleteRecord {
-    return (
-      !!athlete &&
-      typeof athlete === 'object' &&
-      typeof (athlete as Record<string, unknown>).athleteId === 'string' &&
-      typeof (athlete as Record<string, unknown>).name === 'string' &&
-      typeof (athlete as Record<string, unknown>).contestId === 'string'
+      !!event &&
+      typeof event === 'object' &&
+      typeof (event as Record<string, unknown>).eventId === 'string' &&
+      typeof (event as Record<string, unknown>).name === 'string' &&
+      typeof (event as Record<string, unknown>).date === 'string'
     );
   }
 
@@ -268,7 +210,7 @@ export class TestHelpers {
 
     const users = await this.getAllUsers();
     for (const user of users) {
-      if (user.id.startsWith('test-')) {
+      if (user.userId.startsWith('test-')) {
         testDataCount++;
       } else {
         realDataCount++;
