@@ -13,19 +13,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-
-  // AWS Amplify does NOT pass environment variables to Lambda at runtime
-  // They must be embedded during build using the env config
-  // These values are read from Amplify Environment Variables during build
-  // and baked into the Next.js server bundle
-  env: {
-    COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID,
-    COGNITO_CLIENT_SECRET: process.env.COGNITO_CLIENT_SECRET,
-    COGNITO_REGION: process.env.COGNITO_REGION,
-    COGNITO_USER_POOL_ID: process.env.COGNITO_USER_POOL_ID,
-    AUTH_SECRET: process.env.AUTH_SECRET,
-    AUTH_URL: process.env.AUTH_URL,
-  },
 };
 
 export default nextConfig;
