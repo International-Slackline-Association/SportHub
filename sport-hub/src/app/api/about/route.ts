@@ -23,7 +23,7 @@ export async function GET() {
   }
 }
 
-export async function POST(request: { json: () => PromiseLike<{ id: string; name: string; email: string; country?: string; }> | { id: string; name: string; email: string; country?: string; }; }) {
+export async function POST(request: Request) {
   try {
     const { id, name, email, country } = await request.json();
     

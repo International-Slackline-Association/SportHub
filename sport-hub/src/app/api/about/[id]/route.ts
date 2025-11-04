@@ -3,18 +3,21 @@ import { dynamodb } from '@lib/dynamodb';
 
 const TABLE_NAME = 'rankings';
 
-export async function GET({ params }: { params: { id: string } }) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const user = await dynamodb.getItem(TABLE_NAME, { 'rankings-dev-key': id });
-    
+
     if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
       );
     }
-    
+
     return NextResponse.json(user);
   } catch (error) {
     console.error('DynamoDB error:', error);
@@ -25,7 +28,10 @@ export async function GET({ params }: { params: { id: string } }) {
   }
 }
 
-export async function DELETE({ params }: { params: { id: string } }) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const { id } = await params;
     await dynamodb.deleteItem(TABLE_NAME, { 'rankings-dev-key': id });
@@ -39,9 +45,9 @@ export async function DELETE({ params }: { params: { id: string } }) {
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const updateData = await request.json();
     
     // Get existing user first
