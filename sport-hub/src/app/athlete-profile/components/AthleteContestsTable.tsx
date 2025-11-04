@@ -1,6 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { AthleteContest } from '@lib/data-services';
 import Table from '@ui/Table';
+import Link from 'next/link';
 
 const columnHelper = createColumnHelper<AthleteContest>();
 const columns = [
@@ -14,6 +15,11 @@ const columns = [
       filterVariant: "text",
     },
     filterFn: "includesString",
+    cell: (info) => (
+      <Link href={`/events/${info.row.original.eventId}`} className="text-blue-600 hover:underline">
+        {info.getValue()}
+      </Link>
+    ),
   }),
   columnHelper.accessor("contest", {
     enableColumnFilter: true,
