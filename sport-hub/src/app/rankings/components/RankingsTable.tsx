@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
 import { AthleteRanking } from '@lib/data-services';
 import Table from '@ui/Table';
+import Image from 'next/image';
 
 const columnHelper = createColumnHelper<AthleteRanking>();
 
@@ -48,16 +49,13 @@ const columns = [
       const countryName = country.toUpperCase(); // You could add a country name lookup here
 
       return (
-        <div className="flex items-center" title={countryName}>
-          <img
+        <div className="flex items-center gap-2" title={countryName}>
+          <Image
             src={flagUrl}
             alt={`${countryName} flag`}
-            className="w-6 h-4 object-cover rounded-sm"
-            onError={(e) => {
-              // Fallback to text if flag image doesn't exist
-              const target = e.currentTarget as HTMLImageElement;
-              target.style.display = 'none';
-            }}
+            width={24}
+            height={16}
+            className="object-cover rounded-sm"
           />
           <span className="text-sm text-gray-600">{countryName}</span>
         </div>

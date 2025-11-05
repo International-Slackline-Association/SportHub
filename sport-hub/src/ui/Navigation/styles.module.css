@@ -1,6 +1,6 @@
 .navbar {
   align-items: center;
-  background: linear-gradient(180deg, var(--color-primary) 0%, #008F8C 100%);
+  background: var(--color-primary);
   justify-content: space-between;
   min-height: 7rem; /* Header adjusts to accommodate 5rem logo + padding */
   padding: 1rem;
@@ -14,17 +14,18 @@
   align-items: center;
   display: flex;
   flex-direction: row; /* Always horizontal when desktop nav is shown */
-  font-size: 1.2rem;
-  gap: 1rem;
+  font-size: var(--nav-font-size);
+  font-weight: var(--nav-font-weight);
+  gap: var(--nav-gap);
   justify-content: flex-end;
   list-style: none;
   padding: 0;
 }
 
 .navbar nav a {
-  border-radius: 8px;
+  border-radius: var(--nav-border-radius);
   color: white;
-  padding: 0.5rem 1rem;
+  padding: var(--nav-padding);
   text-decoration: none;
 }
 
@@ -42,4 +43,10 @@
   height: 5rem;
   width: auto;
   margin-right: 1rem; /* Prevent overlap with nav controls */
+}
+
+.navContainer {
+  display: flex;
+  align-items: center;
+  gap: var(--nav-gap);
 }

@@ -20,7 +20,7 @@ services:
     environment:
       - AWS_ACCESS_KEY_ID=dummy
       - AWS_SECRET_ACCESS_KEY=dummy
-      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_DEFAULT_REGION=us-east-2
       - AWS_ENDPOINT_URL=http://dynamodb-local:8000
     volumes:
       - ./src/lib:/scripts
