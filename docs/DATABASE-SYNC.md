@@ -21,38 +21,25 @@ pnpm db:count    # Verify data loaded
 pnpm sync:compare
 ```
 
-Shows you the differences between local and remote table schemas.
+Shows you the differences between all local and remote tables (users-dev, events-dev).
 
-### 3. Sync Data
+### 3. Sync All Data
 
-**Option A: Add data to existing remote table**
 ```bash
-pnpm sync:import
+pnpm sync:all
 ```
 
-**Option B: Recreate remote table (destructive)**
-```bash
-pnpm sync:recreate
-```
+This syncs ALL tables to remote. Creates tables if they don't exist.
 
-⚠️ **WARNING**: `sync:recreate` deletes the remote table and all its data!
+⚠️ **WARNING**: Always compare first to verify what will be synced!
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `pnpm sync:compare` | Compare local and remote table schemas |
-| `pnpm sync:export` | Export local data to `data-exports/` directory |
-| `pnpm sync:import` | Import local data to remote table (adds items) |
-| `pnpm sync:recreate` | Delete and recreate remote table with local schema |
-
-### Advanced Usage
-
-```bash
-# Dry run (preview without changes)
-tsx scripts/sync-dynamodb.ts --dry-run --sync
-tsx scripts/sync-dynamodb.ts --dry-run --recreate
-```
+| `pnpm sync:compare` | Compare all local and remote table schemas |
+| `pnpm sync:all` | Sync all tables to remote (creates if needed) |
+| `pnpm sync:recreate` | Delete and recreate all remote tables (DESTRUCTIVE) |
 
 ## Prerequisites
 
@@ -87,22 +74,22 @@ aws configure
 
 ### First-Time Setup
 
-Remote table doesn't exist yet:
+Remote tables don't exist yet:
 
 ```bash
-# 1. Export and review local data
-pnpm sync:export
+# 1. Compare to see what will be created
+pnpm sync:compare
 
-# 2. Create remote table and import data
-pnpm sync:recreate
+# 2. Create remote tables and import data
+pnpm sync:all
 ```
 
-### Update Existing Table
+### Update Existing Tables
 
-Schema is the same, just updating data:
+Data has changed, sync to remote:
 
 ```bash
-pnpm sync:import
+pnpm sync:all
 ```
 
 ⚠️ This **adds** items to remote. To replace all data, use `sync:recreate`.
@@ -115,45 +102,32 @@ Local schema has changed (e.g., added GSI, changed keys):
 # 1. Compare to see differences
 pnpm sync:compare
 
-# 2. Recreate remote table
+# 2. Recreate remote tables
 pnpm sync:recreate
-```
-
-### Backup Before Changes
-
-```bash
-# Export local data to files
-pnpm sync:export
-
-# Files saved in data-exports/:
-# - table-schema.json
-# - table-data.json
 ```
 
 ## How It Works
 
 ### Compare (`sync:compare`)
-- Reads both local and remote table schemas
-- Shows key schema, attributes, and indexes
-- Highlights differences
 
-### Export (`sync:export`)
-- Scans entire local table
-- Saves schema to `data-exports/table-schema.json`
-- Saves all items to `data-exports/table-data.json`
-- Useful for backups and debugging
+- Scans both local and remote tables (users-dev, events-dev)
+- Shows key schema, attributes, indexes, and item counts
+- Highlights which tables exist and differences
 
-### Import (`sync:import`)
-- Reads local table data
-- Writes to remote table in batches of 25 (AWS limit)
-- **Adds** items to remote table (doesn't delete existing)
-- Handles pagination for large datasets
+### Sync All (`sync:all`)
+
+- Scans all local tables (local-users, local-events)
+- Creates remote tables if they don't exist
+- Writes to remote tables in batches of 25 (AWS limit)
+- **Adds** items to remote tables (doesn't delete existing)
+- Shows progress for each table
 
 ### Recreate (`sync:recreate`)
+
 1. Shows 5-second countdown (gives you time to cancel)
-2. Deletes remote table completely
-3. Creates new table with local schema
-4. Imports all data from local table
+2. Deletes ALL remote tables completely
+3. Creates new tables with local schemas
+4. Imports all data from local tables
 5. Preserves GSIs and billing mode (PAY_PER_REQUEST)
 
 ## Troubleshooting
