@@ -2,9 +2,10 @@
 
 import { useSession, signIn, signOut } from "next-auth/react"
 import { useState, useRef, useEffect } from "react"
-import { cn } from "@utils/cn"
+import styles from "./styles.module.css"
 import Button from "@ui/Button"
 import Image from "next/image"
+import { cn } from "@utils/cn"
 
 export default function UserMenu() {
   const { data: session, status } = useSession()
@@ -27,8 +28,8 @@ export default function UserMenu() {
 
   if (status === "loading") {
     return (
-      <div className="flex items-center gap-2">
-        <div className="h-8 w-8 rounded-full bg-gray-300 animate-pulse" />
+      <div className={styles.userMenuLoading}>
+        <div className={styles.userMenuLoadingAvatar} />
       </div>
     )
   }
@@ -45,12 +46,13 @@ export default function UserMenu() {
   }
 
   return (
-    <div className="relative" ref={menuRef}>
-      <button
+    <div className={styles.userMenuRelative} ref={menuRef}>
+      <Button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
+        className={styles.userMenuButton}
         aria-expanded={isOpen}
         aria-haspopup="true"
+        variant="ghost"
       >
         {session.user.image ? (
           <Image
@@ -58,60 +60,55 @@ export default function UserMenu() {
             alt={session.user.name || "User"}
             width={32}
             height={32}
-            className="rounded-full"
+            className={styles.userAvatar}
           />
         ) : (
-          <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium">
+          <div className={styles.userAvatar}>
             {session.user.name?.charAt(0).toUpperCase() || session.user.email?.charAt(0).toUpperCase() || "U"}
           </div>
         )}
-        <div className="hidden sm:block text-left">
-          <div className="text-sm font-medium text-gray-900">
+        <div className={styles.userMenuText}>
+          <div className={styles.userMenuName}>
             {session.user.name || "User"}
           </div>
-          <div className="text-xs text-gray-500">
+          <div className={styles.userMenuEmail}>
             {session.user.email}
           </div>
         </div>
         <svg
-          className={cn(
-            "h-4 w-4 transition-transform text-gray-600",
-            isOpen && "rotate-180"
-          )}
+          className={cn(styles.chevron, isOpen && styles.chevronOpen)}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
-      </button>
+      </Button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
-          <div className="py-1">
-            <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-200">
-              <div className="font-medium">{session.user.name}</div>
-              <div className="text-xs text-gray-500 mt-1">{session.user.email}</div>
-            </div>
-
-            <a
-              href="/dashboard"
-              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              onClick={() => setIsOpen(false)}
-            >
-              Dashboard
-            </a>
-
-            <button
-              onClick={() => {
-                setIsOpen(false)
-                signOut({ callbackUrl: "/" })
-              }}
-              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-            >
-              Sign Out
-            </button>
+        <div className={styles.userMenuDropdown}>
+          <div className={styles.userMenuDropdownHeader}>
+            <div className={styles.userMenuDropdownName}>{session.user.name}</div>
+            <div className={styles.userMenuDropdownEmail}>{session.user.email}</div>
           </div>
+
+          <a
+            href="/dashboard"
+            className={styles.userMenuDropdownLink}
+            onClick={() => setIsOpen(false)}
+          >
+            Dashboard
+          </a>
+
+          <button
+            onClick={() => {
+              setIsOpen(false)
+              signOut({ callbackUrl: "/" })
+            }}
+            className={styles.userMenuDropdownSignOut}
+          >
+            Sign Out
+          </button>
         </div>
       )}
     </div>

@@ -161,7 +161,7 @@ figcaption {
   max-height: 300px;
   width: 100%;
 
-  @media (min-width: 24rem) {
+  @media (min-width: 25rem) {
     border-radius: 8px;
     max-height: 542px;
   }
@@ -169,11 +169,13 @@ figcaption {
 
 main {
   padding: 0;
-  /* Ensure main content is centered when viewport is wider than minimum */
-  margin: 0 auto;
-  max-width: min(87.5rem, 95vw); /* Responsive maximum width */
+  margin: 0;
+  max-width: 100%;
 
-  @media (min-width: 24rem) {
+  @media (min-width: 25rem) {
+    /* Ensure main content is centered when viewport is wider than minimum */
+    margin: 0 auto;
+    max-width: min(87.5rem, 95vw); /* Responsive maximum width */
     padding: 2.5rem 2.5rem 3.75rem; /* Convert to rem units */
   }
 }

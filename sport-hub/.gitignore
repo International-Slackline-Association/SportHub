@@ -47,5 +47,5 @@ src/lib/*.sh
 src/lib/*.json
 
 
-sport-hub/AWSCLIV2.pkg
+AWSCLIV2.pkg
 
