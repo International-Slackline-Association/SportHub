@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "@ui/globals.css";
 import Footer from "@ui/Footer";
 import Navigation from "@ui/Navigation"
+import SessionProvider from "./SessionProvider"
 
 export const metadata: Metadata = {
   title: "SportHub",
@@ -16,11 +17,13 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className="min-h-screen flex flex-col">
-        <Navigation />
-        <main className="flex-1">
-          {children}
-        </main>
-        <Footer />
+        <SessionProvider>
+          <Navigation />
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
+        </SessionProvider>
       </body>
     </html>
   );

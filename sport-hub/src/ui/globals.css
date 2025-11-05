@@ -81,6 +81,13 @@
   --color-violet-600: #8966FF;
 
   --font-metropolis: "Metropolis", sans-serif;
+
+  /* Navigation and button shared styles */
+  --nav-font-size: 1.2rem;
+  --nav-font-weight: 500;
+  --nav-padding: 0.5rem 1rem;
+  --nav-border-radius: 8px;
+  --nav-gap: 1rem;
 }
 
 /* Also covers tablets in portrait and landscape mode */

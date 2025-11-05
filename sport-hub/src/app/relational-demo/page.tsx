@@ -1,5 +1,7 @@
 import { relationalQueries } from '@lib/relational-transform';
 
+// NOTE: This page uses the original mocks data and shows examples of how to relate data
+
 export default function RelationalDemo() {
   // Get all available contests and pick the first one with participants
   const allContests = relationalQueries.searchContests('');

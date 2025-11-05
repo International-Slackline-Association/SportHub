@@ -6,7 +6,7 @@ interface ModalProps {
   actions?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
-  formRef?: React.RefObject<any>;
+  formRef?: React.RefObject<{ submitForm: () => Promise<void> | void } | null>;
   isOpen: boolean;
   onClose: () => void;
   onSave?: () => void;

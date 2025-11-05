@@ -3,7 +3,7 @@ import { getAthleteProfile, getAthleteContests, getWorldRecords, getWorldFirsts 
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { athleteId: string } }
+  { params }: { params: Promise<{ athleteId: string }> }
 ) {
   try {
     const { athleteId } = await params;
