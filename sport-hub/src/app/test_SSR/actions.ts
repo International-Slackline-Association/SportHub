@@ -4,7 +4,7 @@ import { dynamodb } from '@lib/dynamodb';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-const TABLE_NAME = 'rankings';
+const TABLE_NAME = 'users';
 
 export async function createUser(formData: FormData) {
   const id = formData.get('id') as string;
@@ -23,14 +23,13 @@ export async function createUser(formData: FormData) {
   const userId = id || `athlete-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   const user = {
-    'rankings-dev-key': userId,
+    userId: userId,
     id: userId,
     name,
     surname,
     email,
     country: country || undefined,
     createdAt: new Date().toISOString(),
-    athleteId: userId,
     gender,
     isaId,
   };
@@ -50,7 +49,7 @@ export async function updateUser(formData: FormData) {
   }
 
   // Get existing user first
-  const existingUser = await dynamodb.getItem(TABLE_NAME, { 'rankings-dev-key': id });
+  const existingUser = await dynamodb.getItem(TABLE_NAME, { userId: id });
   if (!existingUser) {
     throw new Error('User not found');
   }
@@ -75,6 +74,6 @@ export async function deleteUser(formData: FormData) {
     throw new Error('Missing user ID');
   }
 
-  await dynamodb.deleteItem(TABLE_NAME, { 'rankings-dev-key': id });
+  await dynamodb.deleteItem(TABLE_NAME, { userId: id });
   revalidatePath('/about_SSR');
 }

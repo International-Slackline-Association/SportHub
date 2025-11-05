@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   title: 'SportHub - Events',
 }
 
+// Enable ISR (Incremental Static Regeneration)
+// Revalidate this page every hour (3600 seconds)
+export const revalidate = 3600
+
 export default async function Page() {
   // Only fetch featured athletes server-side for SEO
   const featuredAthletes = await getFeaturedAthletes(4);
@@ -25,8 +29,8 @@ export default async function Page() {
       <FeaturedGrid title="Featured Athletes">
         {featuredAthletes.map(athlete => (
           <FeaturedCard
-            key={athlete.athleteId}
-            id={athlete.athleteId}
+            key={athlete.userId}
+            id={athlete.userId}
             name={athlete.fullName || athlete.name}
             image={athlete.profileImage || '/static/images/profiles/default.jpg'}
             country={athlete.country}

@@ -9,19 +9,18 @@ export const metadata: Metadata = {
   title: 'SportHub - About',
 };
 
-const TABLE_NAME = 'rankings';
+const TABLE_NAME = 'users';
 
 async function getUsers(): Promise<User[]> {
   try {
     const items = await dynamodb.scanItems(TABLE_NAME);
     const users = items ? items.map(item => ({
-      'rankings-dev-key': item['rankings-dev-key'] ?? '',
       id: item.id ?? '',
       name: item.name ?? '',
       email: item.email ?? '',
       createdAt: item.createdAt ?? '',
       updatedAt: item.updatedAt,
-      athleteId: item.athleteId,
+      userId: item.userId,
       country: item.country,
       firstCompetition: item.firstCompetition,
       lastCompetition: item.lastCompetition,

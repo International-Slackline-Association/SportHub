@@ -1,7 +1,7 @@
 import { dynamodb } from '@lib/dynamodb'
 import { NextResponse } from 'next/server';
 
-const TABLE_NAME = 'rankings';
+const TABLE_NAME = 'users';
 
 export async function GET() {
   try {
@@ -38,13 +38,11 @@ export async function POST(request: Request) {
     const userId = id || `athlete-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     const user = {
-      'rankings-dev-key': userId,
-      id: userId,
+      userId: userId,
       name,
       email,
       country: country || undefined,
       createdAt: new Date().toISOString(),
-      athleteId: userId,
     };
 
     await dynamodb.putItem(TABLE_NAME, user as unknown as Record<string, unknown>);

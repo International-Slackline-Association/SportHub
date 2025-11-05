@@ -35,17 +35,14 @@ export default async function LocalTestPage() {
   // Get sample data only if environment is ready
   let sampleUsers = null;
   let sampleContests = null;
-  let sampleAthletes = null;
 
   if (envStatus.ready) {
     try {
       const users = await testHelpers.getAllUsers();
-      const contests = await testHelpers.getAllContests();
-      const athletes = await testHelpers.getAllAthletes();
+      const events = await testHelpers.getAllEvents();
 
       sampleUsers = users.slice(0, 5);
-      sampleContests = contests.slice(0, 3);
-      sampleAthletes = athletes.slice(0, 10);
+      sampleContests = events.slice(0, 3);
     } catch (error) {
       console.error('Error fetching sample data:', error);
     }
@@ -123,12 +120,12 @@ export default async function LocalTestPage() {
             <div className="text-sm text-gray-600">Unique Athletes</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-blue-600">{dataStats.totalAthleteEntries}</div>
-            <div className="text-sm text-gray-600">Athlete Entries</div>
+            <div className="text-2xl font-bold text-blue-600">{dataStats.totalParticipations}</div>
+            <div className="text-sm text-gray-600">Event Participations</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-blue-600">{dataStats.totalContests}</div>
-            <div className="text-sm text-gray-600">Contests</div>
+            <div className="text-2xl font-bold text-blue-600">{dataStats.totalEvents}</div>
+            <div className="text-sm text-gray-600">Events</div>
           </div>
           <div>
             <div className="text-2xl font-bold text-blue-600">{dataStats.disciplines.length}</div>
@@ -151,7 +148,7 @@ export default async function LocalTestPage() {
       />
 
       {/* Sample Data Display */}
-      {envStatus.ready && (sampleUsers || sampleContests || sampleAthletes) && (
+      {envStatus.ready && (sampleUsers || sampleContests) && (
         <div className="mt-8 space-y-8">
           {/* Sample Users */}
           {sampleUsers && sampleUsers.length > 0 && (
@@ -170,8 +167,8 @@ export default async function LocalTestPage() {
                   </thead>
                   <tbody>
                     {sampleUsers.map((user) => (
-                      <tr key={user.id} className="border-b hover:bg-gray-50">
-                        <td className="p-2 font-mono text-xs">{user.id}</td>
+                      <tr key={user.userId} className="border-b hover:bg-gray-50">
+                        <td className="p-2 font-mono text-xs">{user.userId}</td>
                         <td className="p-2">{user.name}</td>
                         <td className="p-2">{user.email}</td>
                         <td className="p-2">{user.totalPoints || 0}</td>
@@ -201,43 +198,12 @@ export default async function LocalTestPage() {
                   </thead>
                   <tbody>
                     {sampleContests.map((contest) => (
-                      <tr key={contest.contestId} className="border-b hover:bg-gray-50">
-                        <td className="p-2 font-mono text-xs">{contest.contestId}</td>
+                      <tr key={contest.eventId} className="border-b hover:bg-gray-50">
+                        <td className="p-2 font-mono text-xs">{contest.eventId}</td>
                         <td className="p-2">{contest.name}</td>
                         <td className="p-2">{contest.date}</td>
                         <td className="p-2 uppercase">{contest.country}</td>
-                        <td className="p-2">{contest.athleteCount}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* Sample Athletes */}
-          {sampleAthletes && sampleAthletes.length > 0 && (
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h2 className="text-xl font-semibold mb-4">Sample Athlete Entries</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-2">Athlete</th>
-                      <th className="text-left p-2">Contest</th>
-                      <th className="text-left p-2">Place</th>
-                      <th className="text-left p-2">Points</th>
-                      <th className="text-left p-2">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sampleAthletes.map((athlete) => (
-                      <tr key={athlete['athletes-key']} className="border-b hover:bg-gray-50">
-                        <td className="p-2">{athlete.name}</td>
-                        <td className="p-2">{athlete.contestName}</td>
-                        <td className="p-2 text-center">{athlete.place}</td>
-                        <td className="p-2 text-center">{athlete.points}</td>
-                        <td className="p-2">{athlete.date}</td>
+                        <td className="p-2">{contest.participants?.length || 0}</td>
                       </tr>
                     ))}
                   </tbody>

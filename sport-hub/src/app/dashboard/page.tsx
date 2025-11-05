@@ -1,5 +1,6 @@
 import { auth } from "@lib/auth"
 import { redirect } from "next/navigation"
+import Link from "next/link"
 import PageLayout from "@ui/PageLayout"
 
 export default async function DashboardPage() {
@@ -57,18 +58,18 @@ export default async function DashboardPage() {
             <div className="pt-4">
               <h3 className="text-lg font-semibold mb-2">Quick Actions</h3>
               <div className="flex gap-3">
-                <a
+                <Link
                   href="/rankings"
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
                 >
                   View Rankings
-                </a>
-                <a
+                </Link>
+                <Link
                   href="/events"
                   className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                 >
                   Browse Events
-                </a>
+                </Link>
               </div>
             </div>
           </div>
