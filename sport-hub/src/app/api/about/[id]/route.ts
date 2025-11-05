@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { dynamodb } from '@lib/dynamodb';
 
-const TABLE_NAME = process.env.DYNAMODB_LOCAL === 'true' ? 'rankings' : 'rankings-dev';
+const TABLE_NAME = 'users';
 
 export async function GET(
   request: Request,
@@ -9,7 +9,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const user = await dynamodb.getItem(TABLE_NAME, { 'rankings-dev-key': id });
+    const user = await dynamodb.getItem(TABLE_NAME, { userId: id });
 
     if (!user) {
       return NextResponse.json(
@@ -34,7 +34,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    await dynamodb.deleteItem(TABLE_NAME, { 'rankings-dev-key': id });
+    await dynamodb.deleteItem(TABLE_NAME, { userId: id });
     return NextResponse.json({ message: 'User deleted successfully' });
   } catch (error) {
     console.error('DynamoDB error:', error);
@@ -51,7 +51,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const updateData = await request.json();
     
     // Get existing user first
-    const existingUser = await dynamodb.getItem(TABLE_NAME, { 'rankings-dev-key': id });
+    const existingUser = await dynamodb.getItem(TABLE_NAME, { userId: id });
     if (!existingUser) {
       return NextResponse.json(
         { error: 'User not found' },
