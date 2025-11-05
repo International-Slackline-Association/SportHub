@@ -30,7 +30,7 @@ export async function createUser(formData: FormData) {
     email,
     country: country || undefined,
     createdAt: new Date().toISOString(),
-    athleteId: userId,
+    userId: userId,
     gender,
     isaId,
   };

@@ -16,6 +16,13 @@
     "db:count": "DYNAMODB_LOCAL=true tsx src/lib/seed-local-db.ts count",
     "db:stop": "docker-compose stop dynamodb-local",
     "db:clean": "docker-compose down -v",
+    "sync:compare": "tsx scripts/sync-dynamodb.ts",
+    "sync:export": "tsx scripts/sync-dynamodb.ts --export",
+    "sync:import": "tsx scripts/sync-dynamodb.ts --sync",
+    "sync:recreate": "tsx scripts/sync-dynamodb.ts --recreate",
+    "revalidate:all": "./scripts/revalidate-pages.sh",
+    "revalidate:rankings": "./scripts/revalidate-pages.sh rankings",
+    "revalidate:events": "./scripts/revalidate-pages.sh events",
     "test:local": "DYNAMODB_LOCAL=true pnpm run dev"
   },
   "dependencies": {
@@ -46,6 +53,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "15.3.2",
     "tailwindcss": "^4.0.14",

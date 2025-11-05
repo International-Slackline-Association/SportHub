@@ -7,13 +7,13 @@ const isLocal = process.env.DYNAMODB_LOCAL === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 // DEBUG: Log environment variables (uncomment when debugging)
-// console.log('🐛 DynamoDB Environment Debug:');
-// console.log('  DYNAMODB_LOCAL:', process.env.DYNAMODB_LOCAL);
-// console.log('  DYNAMODB_ENDPOINT:', process.env.DYNAMODB_ENDPOINT);
-// console.log('  NODE_ENV:', process.env.NODE_ENV);
-// console.log('  AWS_REGION:', process.env.AWS_REGION);
-// console.log('  isLocal:', isLocal);
-// console.log('  isDevelopment:', isDevelopment);
+console.log('🐛 DynamoDB Environment Debug:');
+console.log('  DYNAMODB_LOCAL:', process.env.DYNAMODB_LOCAL);
+console.log('  DYNAMODB_ENDPOINT:', process.env.DYNAMODB_ENDPOINT);
+console.log('  NODE_ENV:', process.env.NODE_ENV);
+console.log('  AWS_REGION:', process.env.AWS_REGION);
+console.log('  isLocal:', isLocal);
+console.log('  isDevelopment:', isDevelopment);
 
 // TODO: Set up AWS Cognito authentication(?)
 // TODO: Set up Amplify role for all server-side AWS actions (like dynamodb access)

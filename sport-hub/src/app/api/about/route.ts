@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       email,
       country: country || undefined,
       createdAt: new Date().toISOString(),
-      athleteId: userId,
+      userId: userId,
     };
 
     await dynamodb.putItem(TABLE_NAME, user as unknown as Record<string, unknown>);
