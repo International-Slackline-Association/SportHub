@@ -16,30 +16,21 @@ export interface TableSchema {
 // Table schemas for the application
 export const TABLE_SCHEMAS: TableSchema[] = [
   {
-    tableName: 'rankings',
+    tableName: 'users',
     keySchema: [
-      { AttributeName: 'rankings-dev-key', KeyType: 'HASH' }
+      { AttributeName: 'userId', KeyType: 'HASH' }
     ],
     attributeDefinitions: [
-      { AttributeName: 'rankings-dev-key', AttributeType: 'S' }
+      { AttributeName: 'userId', AttributeType: 'S' }
     ]
   },
   {
-    tableName: 'contests',
+    tableName: 'events',
     keySchema: [
-      { AttributeName: 'contests-key', KeyType: 'HASH' }
+      { AttributeName: 'eventId', KeyType: 'HASH' }
     ],
     attributeDefinitions: [
-      { AttributeName: 'contests-key', AttributeType: 'S' }
-    ]
-  },
-  {
-    tableName: 'athletes',
-    keySchema: [
-      { AttributeName: 'athletes-key', KeyType: 'HASH' }
-    ],
-    attributeDefinitions: [
-      { AttributeName: 'athletes-key', AttributeType: 'S' }
+      { AttributeName: 'eventId', AttributeType: 'S' }
     ]
   }
 ];
