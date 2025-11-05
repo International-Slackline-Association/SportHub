@@ -18,7 +18,6 @@ export async function GET(
       );
     }
 
-
     return NextResponse.json(user);
   } catch (error) {
     console.error('DynamoDB error:', error);
@@ -29,10 +28,6 @@ export async function GET(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -50,13 +45,14 @@ export async function DELETE(
   }
 }
 
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const { id } = await params;
-    const { id } = await params;
     const updateData = await request.json();
-    
+
     // Get existing user first
     const existingUser = await dynamodb.getItem(TABLE_NAME, { userId: id });
     if (!existingUser) {
