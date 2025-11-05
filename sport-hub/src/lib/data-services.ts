@@ -162,7 +162,7 @@ export async function getContestsData(): Promise<ContestData[]> {
       .map(event => {
         const participants = (event.participants || [])
           .map((participant: { userId?: string; name?: string; place?: string; points?: number }) => ({
-            athleteId: participant.userId || '',
+            userId: participant.userId || '',
             name: participant.name || '',
             place: participant.place || '',
             points: participant.points || 0
