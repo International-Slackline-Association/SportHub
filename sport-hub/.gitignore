@@ -46,6 +46,8 @@ next-env.d.ts
 src/lib/*.sh
 src/lib/*.json
 
+# databse sync\
+/data-exports
 
 sport-hub/AWSCLIV2.pkg
 
