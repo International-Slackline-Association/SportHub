@@ -9,13 +9,13 @@ export const metadata: Metadata = {
   title: 'SportHub - About',
 };
 
-const TABLE_NAME = process.env.DYNAMODB_LOCAL === 'true' ? 'rankings' : 'rankings-dev';
+const TABLE_NAME = 'users';
 
 async function getUsers(): Promise<User[]> {
   try {
     const items = await dynamodb.scanItems(TABLE_NAME);
     const users = items ? items.map(item => ({
-      'rankings-dev-key': item['rankings-dev-key'] ?? '',
+      userId: item[userId] ?? '',
       id: item.id ?? '',
       name: item.name ?? '',
       email: item.email ?? '',
