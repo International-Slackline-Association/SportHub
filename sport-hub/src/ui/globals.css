@@ -25,7 +25,12 @@
 }
 
 :root {
-  --breakpoint-desktop: 24rem; /* 384px --breakpoint-sm */
+  /* Responsive breakpoints - mobile-first approach */
+  --breakpoint-xs: 20rem;    /* 320px - Small phones */
+  --breakpoint-sm: 40rem;    /* 640px - Large phones / Small tablets */
+  --breakpoint-md: 48rem;    /* 768px - Tablets */
+  --breakpoint-lg: 64rem;    /* 1024px - Small laptops */
+  --breakpoint-xl: 80rem;    /* 1280px - Desktops */
 
   --color-primary: #009F9A; /* ISA Green */
   --color-primary-dark: #0A6564;
@@ -161,7 +166,7 @@ figcaption {
   max-height: 300px;
   width: 100%;
 
-  @media (min-width: 24rem) {
+  @media (min-width: 40rem) {  /* --breakpoint-sm: Large phones/tablets */
     border-radius: 8px;
     max-height: 542px;
   }
@@ -169,11 +174,13 @@ figcaption {
 
 main {
   padding: 0;
-  /* Ensure main content is centered when viewport is wider than minimum */
-  margin: 0 auto;
-  max-width: min(87.5rem, 95vw); /* Responsive maximum width */
+  margin: 0;
+  max-width: 100%;
 
-  @media (min-width: 24rem) {
+  @media (min-width: 40rem) {  /* --breakpoint-sm: Large phones/tablets */
+    /* Ensure main content is centered when viewport is wider than minimum */
+    margin: 0 auto;
+    max-width: min(87.5rem, 95vw); /* Responsive maximum width */
     padding: 2.5rem 2.5rem 3.75rem; /* Convert to rem units */
   }
 }

@@ -1,0 +1,34 @@
+.pageHeader {
+  padding: 1rem;
+}
+
+.overlayTextOnImage {
+  position: absolute;
+  padding-top: 0.25rem;
+  padding-left: 0.25rem;
+
+  @media (min-width: 25rem) {
+    position: inherit;
+  }
+
+  h1 {
+    color: var(--color-neutral-50);
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 0.25rem;
+
+    @media (min-width: 25rem) {
+      color: var(--color-neutral-700);
+      font-size: 2.25rem;
+    }
+  }
+
+  p {
+    color: var(--color-neutral-50);
+    font-size: 0.5rem;
+    @media (min-width: 25rem) {
+      color: var(--color-neutral-700);
+      font-size: 1rem;
+    }
+  }
+}

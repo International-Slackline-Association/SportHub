@@ -2,11 +2,14 @@
   align-items: center;
   background: var(--color-primary);
   justify-content: space-between;
-  min-height: 7rem; /* Header adjusts to accommodate 5rem logo + padding */
   padding: 1rem;
   width: 100%;
   flex-shrink: 0; /* Prevent header from shrinking */
   display: flex;
+
+  @media (min-width: 25rem) {
+    min-height: 4rem; /* Header adjusts to accommodate 5rem logo + padding */
+  }
 }
 
 /* Desktop navigation styles */
@@ -40,13 +43,26 @@
 
 .logo {
   object-fit: contain;
-  height: 5rem;
+  height: 2.5rem;
   width: auto;
   margin-right: 1rem; /* Prevent overlap with nav controls */
+
+  @media (min-width: 25rem) {
+    min-height: 3rem; /* Header adjusts to accommodate 5rem logo + padding */
+  }
 }
 
 .navContainer {
   display: flex;
   align-items: center;
   gap: var(--nav-gap);
+}
+
+.mobileMenuButton {
+  color: var(--color-neutral-50);
+  font-size: 1.5rem;
+
+  @media (min-width: 25rem) {
+    height: 6rem;
+  }
 }
