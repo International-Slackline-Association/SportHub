@@ -6,6 +6,7 @@ import Table from '@ui/Table';
 import { ContestData } from "@lib/data-services";
 import Button from '@ui/Button';
 import { cn } from '@utils/cn';
+import Link from 'next/link';
 
 const columnHelper = createColumnHelper<ContestData>();
 const columns = [
@@ -16,6 +17,11 @@ const columns = [
       filterVariant: "text",
     },
     filterFn: "includesString",
+    cell: (info) => (
+      <Link href={`/events/${info.row.original.eventId}`} className="text-blue-600 hover:underline">
+        {info.getValue()}
+      </Link>
+    ),
   }),
   columnHelper.accessor("date", {
     enableColumnFilter: true,
@@ -56,7 +62,7 @@ const columns = [
 
       return (
         <a
-          href={`/athlete-profile/${winner.athleteId}`}
+          href={`/athlete-profile/${winner.userId}`}
           className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
         >
           {winner.name}

@@ -1,9 +1,8 @@
 import { dynamodb } from './dynamodb';
 
 // Table names
-const RANKINGS_TABLE = 'rankings';
-const CONTESTS_TABLE = 'contests';
-const ATHLETES_TABLE = 'athletes';
+const USERS_TABLE = 'users';
+const EVENTS_TABLE = 'events';
 
 // PERFORMANCE OPTIMIZATION: Simple in-memory cache with TTL
 interface CacheEntry<T> {
@@ -49,7 +48,7 @@ const cache = new SimpleCache();
 // ===========================================
 
 export interface AthleteRanking {
-  athleteId: string;
+  userId: string;
   name: string;
   surname?: string;
   fullName?: string;
@@ -74,14 +73,15 @@ export async function getRankingsData(): Promise<AthleteRanking[]> {
   if (cached) return cached;
 
   try {
-    const items = await dynamodb.scanItems(RANKINGS_TABLE);
+    const items = await dynamodb.scanItems(USERS_TABLE);
     if (!items || items.length === 0) {
       return [];
     }
 
     const rankings = items
+      .filter((item) => item.type === 'athlete') // Only include athletes
       .map((item): AthleteRanking => ({
-        athleteId: item.athleteId || item.id || '',
+        userId: item.userId || '',
         name: item.name || '',
         surname: '', // Extract from name if needed
         fullName: item.name || '',
@@ -119,7 +119,7 @@ export async function getFeaturedAthletes(limit: number = 4): Promise<AthleteRan
 // ===========================================
 
 export interface ContestData {
-  contestId: string;
+  eventId: string;
   name: string;
   date: string;
   country: string;
@@ -132,7 +132,7 @@ export interface ContestData {
   profileUrl?: string;
   thumbnailUrl?: string;
   athletes: Array<{
-    athleteId: string;
+    userId: string;
     name: string;
     place: string;
     points: number;
@@ -141,7 +141,7 @@ export interface ContestData {
 
 /**
  * Get all contests for events table
- * OPTIMIZED: Single scan instead of N+1 queries + Caching
+ * OPTIMIZED: Single scan with embedded participants + Caching
  */
 export async function getContestsData(): Promise<ContestData[]> {
   const cacheKey = 'contests-data';
@@ -149,56 +149,42 @@ export async function getContestsData(): Promise<ContestData[]> {
   if (cached) return cached;
 
   try {
-    // OPTIMIZATION: Fetch both datasets once, not N times
-    const [contestItems, athleteItems] = await Promise.all([
-      dynamodb.scanItems(CONTESTS_TABLE),
-      dynamodb.scanItems(ATHLETES_TABLE)
-    ]);
+    // Single scan - no more joins needed!
+    const eventItems = await dynamodb.scanItems(EVENTS_TABLE);
 
-    if (!contestItems || contestItems.length === 0) {
+    if (!eventItems || eventItems.length === 0) {
       return [];
     }
 
-    // OPTIMIZATION: Build athlete lookup map once
-    const athletesByContest = new Map<string, Record<string, unknown>[]>();
+    // Map events to contest data format
+    const contests: ContestData[] = eventItems
+      .filter((event) => event.type === 'contest') // Only include contests
+      .map(event => {
+        const participants = (event.participants || [])
+          .map((participant: { userId?: string; name?: string; place?: string; points?: number }) => ({
+            athleteId: participant.userId || '',
+            name: participant.name || '',
+            place: participant.place || '',
+            points: participant.points || 0
+          }))
+          .sort((a: { place: string }, b: { place: string }) => parseInt(a.place) - parseInt(b.place));
 
-    athleteItems?.forEach(athlete => {
-      const contestId = athlete.contestId;
-      if (!contestId) return;
-
-      if (!athletesByContest.has(contestId)) {
-        athletesByContest.set(contestId, []);
-      }
-      athletesByContest.get(contestId)!.push(athlete);
-    });
-
-    // OPTIMIZATION: No more concurrent queries, just map lookups
-    const contests: ContestData[] = contestItems.map(contest => {
-      const contestAthletes = (athletesByContest.get(contest.contestId) || [])
-        .map(athlete => ({
-          athleteId: (athlete.athleteId as string) || '',
-          name: (athlete.name as string) || '',
-          place: (athlete.place as string) || '',
-          points: (athlete.points as number) || 0
-        }))
-        .sort((a, b) => parseInt(a.place) - parseInt(b.place));
-
-      return {
-        contestId: (contest.contestId as string) || '',
-        name: (contest.name as string) || '',
-        date: (contest.date as string) || '',
-        country: (contest.country as string) || '',
-        city: (contest.city as string) || '',
-        discipline: (contest.discipline as string) || '',
-        prize: (contest.prize as number) || 0,
-        gender: (contest.gender as number) || 0,
-        category: (contest.category as number) || 0,
-        verified: (contest.verified as boolean) || false,
-        profileUrl: (contest.profileUrl as string) || '',
-        thumbnailUrl: (contest.thumbnailUrl as string) || '',
-        athletes: contestAthletes
-      };
-    });
+        return {
+          eventId: event.eventId || '',
+          name: event.name || '',
+          date: event.date || '',
+          country: event.country || '',
+          city: event.city || '',
+          discipline: event.discipline || '',
+          prize: event.prize || 0,
+          gender: event.gender || 0,
+          category: event.category || 0,
+          verified: true, // All seeded events are verified
+          profileUrl: event.profileUrl || '',
+          thumbnailUrl: event.thumbnailUrl || '',
+          athletes: participants
+        };
+      });
 
     const sortedContests = contests.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -234,6 +220,7 @@ export interface AthleteProfile {
 
 export interface AthleteContest {
   rank: number;
+  eventId: string;
   eventName: string;
   contest: string;
   discipline: string;
@@ -260,7 +247,7 @@ export interface WorldFirst {
  */
 export async function getAthleteProfile(athleteId: string): Promise<AthleteProfile | null> {
   try {
-    const user = await dynamodb.getItem(RANKINGS_TABLE, { 'rankings-dev-key': athleteId });
+    const user = await dynamodb.getItem(USERS_TABLE, { userId: athleteId });
     if (!user) {
       return null;
     }
@@ -283,41 +270,36 @@ export async function getAthleteProfile(athleteId: string): Promise<AthleteProfi
 
 /**
  * Get athlete contests/results by athlete ID
- * OPTIMIZED: Batch queries instead of N+1
+ * OPTIMIZED: Single query with embedded participations
  */
 export async function getAthleteContests(athleteId: string): Promise<AthleteContest[]> {
   try {
-    const athleteResults = await dynamodb.scanItems(ATHLETES_TABLE);
-    const userResults = athleteResults?.filter(result => result.athleteId === athleteId) || [];
+    // Single query to get user with embedded participations
+    const user = await dynamodb.getItem(USERS_TABLE, { userId: athleteId });
 
-    if (userResults.length === 0) {
+    if (!user || !user.eventParticipations) {
       return [];
     }
 
-    // Fetch all contests at once instead of one by one
-    const allContests = await dynamodb.scanItems(CONTESTS_TABLE);
-    const contestsMap = new Map();
-
-    allContests?.forEach(contest => {
-      if (contest['contests-key']) {
-        contestsMap.set(contest['contests-key'], contest);
-      }
-    });
-
-    // OPTIMIZATION: Build results using map lookup instead of async queries
-    const contests: AthleteContest[] = userResults.map(result => {
-      const contest = contestsMap.get(result.contestId);
-
-      return {
-        rank: parseInt(result.place) || 0,
-        eventName: contest?.name || result.contestName || '',
-        contest: `${contest?.discipline || ''} - Contest`,
-        discipline: contest?.discipline || '',
-        points: result.points || 0,
-        contestSize: getContestSize(contest?.category || 0),
-        dates: formatDate(contest?.date || result.date || '')
-      };
-    });
+    // Map embedded participations to contest format
+    const contests: AthleteContest[] = user.eventParticipations.map((participation: {
+      place?: string;
+      eventId?: string;
+      eventName?: string;
+      discipline?: string;
+      points?: number;
+      category?: number;
+      date?: string;
+    }) => ({
+      rank: parseInt(participation.place || '0') || 0,
+      eventId: participation.eventId || '',
+      eventName: participation.eventName || '',
+      contest: `${participation.discipline || ''} - Contest`,
+      discipline: participation.discipline || '',
+      points: participation.points || 0,
+      contestSize: getContestSize(participation.category || 0),
+      dates: formatDate(participation.date || '')
+    }));
 
     return contests.sort((a, b) => b.points - a.points);
   } catch (error) {

@@ -21,7 +21,7 @@ const columns = [
       const displayName = athlete.fullName || athlete.name || `${athlete.name} ${athlete.surname || ''}`;
       return (
         <a
-          href={`/athlete-profile/${athlete.athleteId}`}
+          href={`/athlete-profile/${athlete.userId}`}
           className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
         >
           {displayName}

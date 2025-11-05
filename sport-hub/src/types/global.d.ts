@@ -38,7 +38,6 @@ interface Ranking {
 }
 
 interface User {
-  'rankings-dev-key': string;
   id: string;
   name: string;
   email: string;
