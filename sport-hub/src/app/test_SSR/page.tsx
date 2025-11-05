@@ -21,7 +21,7 @@ async function getUsers(): Promise<User[]> {
       email: item.email ?? '',
       createdAt: item.createdAt ?? '',
       updatedAt: item.updatedAt,
-      athleteId: item.athleteId,
+      userId: item.userId,
       country: item.country,
       firstCompetition: item.firstCompetition,
       lastCompetition: item.lastCompetition,

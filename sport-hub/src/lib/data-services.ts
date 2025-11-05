@@ -48,7 +48,7 @@ const cache = new SimpleCache();
 // ===========================================
 
 export interface AthleteRanking {
-  athleteId: string;
+  userId: string;
   name: string;
   surname?: string;
   fullName?: string;
@@ -81,7 +81,7 @@ export async function getRankingsData(): Promise<AthleteRanking[]> {
     const rankings = items
       .filter((item) => item.type === 'athlete') // Only include athletes
       .map((item): AthleteRanking => ({
-        athleteId: item.userId || '',
+        userId: item.userId || '',
         name: item.name || '',
         surname: '', // Extract from name if needed
         fullName: item.name || '',
@@ -119,7 +119,7 @@ export async function getFeaturedAthletes(limit: number = 4): Promise<AthleteRan
 // ===========================================
 
 export interface ContestData {
-  contestId: string;
+  eventId: string;
   name: string;
   date: string;
   country: string;
@@ -132,7 +132,7 @@ export interface ContestData {
   profileUrl?: string;
   thumbnailUrl?: string;
   athletes: Array<{
-    athleteId: string;
+    userId: string;
     name: string;
     place: string;
     points: number;
@@ -161,16 +161,16 @@ export async function getContestsData(): Promise<ContestData[]> {
       .filter((event) => event.type === 'contest') // Only include contests
       .map(event => {
         const participants = (event.participants || [])
-          .map((participant: any) => ({
+          .map((participant: { userId?: string; name?: string; place?: string; points?: number }) => ({
             athleteId: participant.userId || '',
             name: participant.name || '',
             place: participant.place || '',
             points: participant.points || 0
           }))
-          .sort((a: any, b: any) => parseInt(a.place) - parseInt(b.place));
+          .sort((a: { place: string }, b: { place: string }) => parseInt(a.place) - parseInt(b.place));
 
         return {
-          contestId: event.eventId || '',
+          eventId: event.eventId || '',
           name: event.name || '',
           date: event.date || '',
           country: event.country || '',
@@ -282,8 +282,16 @@ export async function getAthleteContests(athleteId: string): Promise<AthleteCont
     }
 
     // Map embedded participations to contest format
-    const contests: AthleteContest[] = user.eventParticipations.map((participation: any) => ({
-      rank: parseInt(participation.place) || 0,
+    const contests: AthleteContest[] = user.eventParticipations.map((participation: {
+      place?: string;
+      eventId?: string;
+      eventName?: string;
+      discipline?: string;
+      points?: number;
+      category?: number;
+      date?: string;
+    }) => ({
+      rank: parseInt(participation.place || '0') || 0,
       eventId: participation.eventId || '',
       eventName: participation.eventName || '',
       contest: `${participation.discipline || ''} - Contest`,

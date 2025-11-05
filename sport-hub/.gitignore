@@ -49,3 +49,8 @@ src/lib/*.json
 
 sport-hub/AWSCLIV2.pkg
 
+# claude\
+*.claude
+
+# database sync
+/data-exports

@@ -14,7 +14,7 @@ export default async function EventPage({ params }: EventPageProps) {
 
   // Fetch all contests and find the specific one
   const contests = await getContestsData();
-  const event = contests.find(c => c.contestId === eventId);
+  const event = contests.find(c => c.eventId === eventId);
 
   if (!event) {
     notFound();
@@ -82,7 +82,7 @@ export default async function EventPage({ params }: EventPageProps) {
                       <td className="p-3 font-semibold">{participant.place}</td>
                       <td className="p-3">
                         <Link
-                          href={`/athlete-profile/${participant.athleteId}`}
+                          href={`/athlete-profile/${participant.userId}`}
                           className="text-blue-600 hover:underline"
                         >
                           {participant.name}
