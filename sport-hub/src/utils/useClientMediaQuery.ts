@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-const BREAKPOINT_SM = 829; // Custom breakpoint to prevent nav wrapping (adjusted for logo margin)
+const BREAKPOINT_SM = 640; // Standardized breakpoint: 40rem = 640px (large phones/tablets)
 const isDesktopQuery = `(min-width: ${BREAKPOINT_SM}px)`;
 
 // Hook to determine device type based on device width
