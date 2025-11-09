@@ -6,9 +6,12 @@ type TableFilterProps<TData,> = {
   rows: Row<TData>[];
 }
 
+const getColumnName = <TData,>(header: Header<TData, unknown>) =>
+  header.column.columnDef.header?.toString() || header.column.columnDef.id || "";
+
 const TextTableFilter = <TData,>({ header }: TableFilterProps<TData>) => {
   const { id, column } = header;
-  const columnName = column.columnDef?.header?.toString() || "";
+  const columnName = getColumnName(header);
 
   return (
     <div className={styles.columnFilter} key={`column-filter-${id}`}>
@@ -27,7 +30,7 @@ const TextTableFilter = <TData,>({ header }: TableFilterProps<TData>) => {
 
 const SelectTableFilter = <TData,>({ header, rows }: TableFilterProps<TData>) => {
   const { id, column } = header;
-  const columnName = column.columnDef.header?.toString();
+  const columnName = getColumnName(header);
 
   // Casts option values to string to stay synced with filter table state.
   // Columns with non-string data will need to cast to string in order for filtering to work.
