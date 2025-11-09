@@ -104,10 +104,11 @@ const mobileColumns = [
     header: 'Age Category',
     meta: { filterVariant: 'select' },
   }),
-  // Temporary workaround to include country filter for mobile view
+  // Workaround to include country filter for mobile view but 
   columnHelper.accessor('country', {
     enableColumnFilter: true,
-    header: 'Country',
+    header: '',
+    id: "Country",
     cell: () => <></>,
     meta: { filterVariant: 'select' },
     size: 0

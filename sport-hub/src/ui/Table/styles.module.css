@@ -122,10 +122,13 @@
 
 .tableFilters {
   align-items: start;
+  display: flex;
+  flex-direction: column;
   flex-basis: 100%;
 
   @media (min-width: 40rem) {
     align-items: end;
+    flex-direction: row;
   }
 }
 

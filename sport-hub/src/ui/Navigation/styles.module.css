@@ -37,10 +37,6 @@
   background: var(--color-primary-dark)
 }
 
-.navbar > div {
-  height: -webkit-fill-available;
-}
-
 .logo {
   object-fit: contain;
   height: 2.5rem;

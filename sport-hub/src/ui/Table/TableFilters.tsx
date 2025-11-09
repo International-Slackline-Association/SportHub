@@ -71,17 +71,19 @@ export const TableFilters = <TData,>({ table }: TableFiltersProps<TData>) => {
 
   if (!filterableHeaders.length) return null;
 
+  const FilterSection = () => (
+    <div className={styles.tableFilters}>
+      {
+        ...filterableHeaders.map((header) => (
+          <TableFilterFields header={header} key={header.id} rows={prefilteredRows} />
+        ))
+      }
+      <Button className={styles.resetButton} onClick={() => table.resetColumnFilters()} variant="ghost">Reset</Button>
+    </div>
+  );
+
   if (isDesktop) {
-    return (
-      <div className={cn(styles.tableFilters, "cluster")}>
-        {
-          ...filterableHeaders.map((header) => (
-            <TableFilterFields header={header} key={header.id} rows={prefilteredRows} />
-          ))
-        }
-        <Button className={styles.resetButton} onClick={() => table.resetColumnFilters()} variant="ghost">Reset</Button>
-      </div>
-    );
+    return <FilterSection />;
   }
 
   return (
@@ -97,15 +99,8 @@ export const TableFilters = <TData,>({ table }: TableFiltersProps<TData>) => {
         <FilterIcon className={styles.filterIcon} />
         <span className="pl-2">{menuOpen ? "Hide Filters" : "Show Filters"}</span>
       </Button>
-      <div className={[styles.tableFilters, "py-4", menuOpen && styles.accordionOpen, !menuOpen && styles.accordionClose].filter(Boolean).join(" ")}>
-        <div className={cn(styles.tableFilters, "stack")}>
-          {
-            ...filterableHeaders.map((header) => (
-              <TableFilterFields header={header} key={header.id} rows={prefilteredRows} />
-            ))
-          }
-        </div>
-        <Button className={styles.resetButton} onClick={() => table.resetColumnFilters()} variant="ghost">Reset</Button>
+      <div className={cn("py-4", menuOpen && styles.accordionOpen, !menuOpen && styles.accordionClose)}>
+        <FilterSection/>
       </div>
     </>
   );
