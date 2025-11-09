@@ -7,7 +7,7 @@
   flex-shrink: 0; /* Prevent header from shrinking */
   display: flex;
 
-  @media (min-width: 25rem) {
+  @media (min-width: 40rem) {  /* --breakpoint-sm: 640px */
     min-height: 4rem; /* Header adjusts to accommodate 5rem logo + padding */
   }
 }
@@ -47,7 +47,7 @@
   width: auto;
   margin-right: 1rem; /* Prevent overlap with nav controls */
 
-  @media (min-width: 25rem) {
+  @media (min-width: 40rem) {  /* --breakpoint-sm: 640px */
     min-height: 3rem; /* Header adjusts to accommodate 5rem logo + padding */
   }
 }
@@ -62,7 +62,7 @@
   color: var(--color-neutral-50);
   font-size: 1.5rem;
 
-  @media (min-width: 25rem) {
+  @media (min-width: 40rem) {  /* --breakpoint-sm: 640px */
     height: 6rem;
   }
 }
