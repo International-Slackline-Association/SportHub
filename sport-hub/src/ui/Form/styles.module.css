@@ -84,3 +84,56 @@
   }
 }
 
+/* Checkbox and Radio Groups */
+.checkboxField {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: start;
+  align-items: center;
+  gap: 8px;
+}
+
+.horizontalGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.verticalGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.checkbox,
+.radio {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #009F9A; /* Primary color for checked state */
+  flex-shrink: 0;
+}
+
+.checkbox:focus,
+.radio:focus {
+  outline: 2px solid #009F9A;
+  outline-offset: 2px;
+}
+
+.checkbox:disabled,
+.radio:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+@media (max-width: 40rem) {
+  .radioGroup {
+    gap: 16px; /* More spacing on mobile for easier tapping */
+  }
+
+  .checkbox,
+  .radio {
+    width: 24px;
+    height: 24px;
+  }
+}

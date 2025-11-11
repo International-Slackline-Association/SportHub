@@ -80,7 +80,8 @@ const columns = [
 const SubmitButton = () => {
   const { data: session } = useSession();
   const ADMIN_IDS = ["6f75dd45-2d90-4804-920f-d180ff71411a", "6501e189-14a7-48f4-8e22-620ac3d3760b"];
-  if (!ADMIN_IDS.includes(session?.user?.id || "")) {
+  const hideSubmitButton = !ADMIN_IDS.includes(session?.user?.id || "");
+  if (hideSubmitButton) {
     return null;
   }
   return (
