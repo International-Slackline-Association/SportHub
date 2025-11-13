@@ -7,6 +7,7 @@ import { ContestData } from "@lib/data-services";
 import Button from '@ui/Button';
 import { cn } from '@utils/cn';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 
 const columnHelper = createColumnHelper<ContestData>();
 const columns = [
@@ -76,6 +77,21 @@ const columns = [
   })
 ];
 
+const SubmitButton = () => {
+  const { data: session } = useSession();
+  const ADMIN_IDS = ["6f75dd45-2d90-4804-920f-d180ff71411a", "6501e189-14a7-48f4-8e22-620ac3d3760b"];
+  if (!ADMIN_IDS.includes(session?.user?.id || "")) {
+    return null;
+  }
+  return (
+    <a href="/admin/submit/event">
+      <Button variant="secondary">
+        Submit Event
+      </Button>
+    </a>
+  );
+};
+
 const ContestsTable = () => {
   const [contests, setContests] = useState<ContestData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,11 +122,7 @@ const ContestsTable = () => {
       <>
         <div className={cn("cluster", "items-center", "justify-between", "mb-4")}>
           <h3>Contests</h3>
-          <a href="/admin/submit/event">
-            <Button variant="secondary">
-              Submit Event
-            </Button>
-          </a>
+          <SubmitButton />
         </div>
         <div className="flex items-center justify-center min-h-64">
           <div className="text-center">
@@ -127,11 +139,7 @@ const ContestsTable = () => {
       <>
         <div className={cn("cluster", "items-center", "justify-between", "mb-4")}>
           <h3>Contests</h3>
-          <a href="/admin/submit/event">
-            <Button variant="secondary">
-              Submit Event
-            </Button>
-          </a>
+          <SubmitButton />
         </div>
         <div className="flex items-center justify-center min-h-64">
           <div className="text-center text-red-600">
@@ -144,15 +152,10 @@ const ContestsTable = () => {
 
   return (
     <>
-      <div className={cn("cluster", "items-center", "justify-between", "mb-4")}>
-        <h3>Contests</h3>
-        <a href="/admin/submit/event">
-          <Button variant="secondary">
-            Submit Event
-          </Button>
-        </a>
+      <div className={cn("cluster", "items-center", "justify-end", "mb-4")}>
+        <SubmitButton />
       </div>
-      <Table options={{ columns, data: contests }} />
+      <Table options={{ columns, data: contests }} title="Events" />
     </>
   );
 };

@@ -82,6 +82,7 @@ export const dynamodb = {
     const command = new ScanCommand({
       TableName: getTableName(tableName),
     });
+
     const response = await ddb.send(command);
     return response.Items;
   },
