@@ -4,11 +4,53 @@ import { useState, useEffect } from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
 import { AthleteRanking } from '@lib/data-services';
 import Table from '@ui/Table';
-import Image from 'next/image';
+import { useClientMediaQuery } from '@utils/useClientMediaQuery';
+import Link from 'next/link';
+import { CircleFlag } from 'react-circle-flags';
 
 const columnHelper = createColumnHelper<AthleteRanking>();
 
-const columns = [
+const CountryFlagWithName = ({ countryCode, defaultValue="N/A" }: { countryCode: string, defaultValue?: string }) => {
+  if (countryCode === 'N/A' || !countryCode) {
+    return <span className="text-gray-500">{defaultValue}</span>;
+  }
+
+  // Convert country code to flag
+  const countryName = countryCode.toUpperCase(); // You could add a country name lookup here
+
+  return (
+    <div className="flex items-center gap-2" title={countryName}>
+      <CircleFlag countryCode={"es"} height={22} width={22} />
+      <span className="text-sm text-gray-600">{countryName}</span>
+    </div>
+  );
+};
+
+const NameCell = ({ athlete, showCountry=false }: { athlete: AthleteRanking, showCountry?: boolean }) => {
+  const displayName = athlete.fullName || athlete.name || `${athlete.name} ${athlete.surname || ''}`;
+
+  if (showCountry) {
+    return (
+      <div className="stack">
+        <Link
+          className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+          href={`/athlete-profile/${athlete.userId}`}
+        >
+          {displayName}
+        </Link>
+        <CountryFlagWithName countryCode={athlete.country} defaultValue="" />
+    </div>
+    );
+  }
+
+  return (
+    <Link href={`/athlete-profile/${athlete.userId}`}>
+      {displayName}
+    </Link>
+  );
+};
+
+const desktopColumns = [
   columnHelper.display({
     header: 'Rank',
     cell: info => info.row.index + 1,
@@ -16,18 +58,9 @@ const columns = [
   columnHelper.accessor('fullName', {
     enableColumnFilter: true,
     header: 'Name',
-    cell: info => {
-      const athlete = info.row.original;
-      const displayName = athlete.fullName || athlete.name || `${athlete.name} ${athlete.surname || ''}`;
-      return (
-        <a
-          href={`/athlete-profile/${athlete.userId}`}
-          className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
-        >
-          {displayName}
-        </a>
-      );
-    },
+    cell: info => (
+      <NameCell athlete={info.row.original} />
+    ),
     meta: { filterVariant: 'text' },
   }),
   columnHelper.accessor('ageCategory', {
@@ -38,29 +71,9 @@ const columns = [
   columnHelper.accessor('country', {
     enableColumnFilter: true,
     header: 'Country',
-    cell: info => {
-      const country = info.getValue();
-      if (country === 'N/A' || !country) {
-        return <span className="text-gray-500">N/A</span>;
-      }
-
-      // Convert country code to flag
-      const flagUrl = `/static/images/flags/${country.toLowerCase()}.svg`;
-      const countryName = country.toUpperCase(); // You could add a country name lookup here
-
-      return (
-        <div className="flex items-center gap-2" title={countryName}>
-          <Image
-            src={flagUrl}
-            alt={`${countryName} flag`}
-            width={24}
-            height={16}
-            className="object-cover rounded-sm"
-          />
-          <span className="text-sm text-gray-600">{countryName}</span>
-        </div>
-      );
-    },
+    cell: info => (
+      <CountryFlagWithName countryCode={info.getValue()} />
+    ),
     meta: { filterVariant: 'select' },
   }),
   columnHelper.accessor('points', {
@@ -68,7 +81,41 @@ const columns = [
   }),
 ];
 
+const mobileColumns = [
+  columnHelper.display({
+    cell: info => info.row.index + 1,
+    header: '',
+    id: "rank",
+    size: 36,
+  }),
+  columnHelper.accessor('fullName', {
+    enableColumnFilter: true,
+    header: 'Name',
+    cell: info => (
+      <NameCell athlete={info.row.original} showCountry />
+    ),
+    meta: { filterVariant: 'text' },
+  }),
+  columnHelper.accessor('points', {
+    header: 'Points',
+  }),
+  columnHelper.accessor('ageCategory', {
+    enableColumnFilter: true,
+    header: 'Age Category',
+    meta: { filterVariant: 'select' },
+  }),
+  // Temporary workaround to include country filter for mobile view
+  columnHelper.accessor('country', {
+    enableColumnFilter: true,
+    header: 'Country',
+    cell: () => <></>,
+    meta: { filterVariant: 'select' },
+    size: 0
+  }),
+];
+
 const RankingsTable = () => {
+  const { isDesktop } = useClientMediaQuery();
   const [rankings, setRankings] = useState<AthleteRanking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -115,7 +162,7 @@ const RankingsTable = () => {
   }
 
   return (
-    <Table options={{ columns, data: rankings }} title="Rankings" />
+    <Table options={{ columns: isDesktop ? desktopColumns : mobileColumns, data: rankings }} title="Rankings" />
   );
 };
 
