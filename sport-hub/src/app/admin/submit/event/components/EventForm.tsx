@@ -6,12 +6,10 @@ import {
   FormikTextField,
   FormikSelectField,
   FormikCheckboxGroup,
-  countryCodeOptions
+  countryCodeOptions,
+  disciplineOptions
 } from '@ui/Form';
-import {
-  disciplineOptions,
-  EventSubmissionFormValues
-} from '../types';
+import { EventSubmissionFormValues } from '../types';
 import { cn } from '@utils/cn';
 import styles from './styles.module.css'
 import { ChevronIcon } from '@ui/Icons';
@@ -53,14 +51,14 @@ const CollapsibleSection = ({
 };
 
 export default function EventForm() {
-  const { values } = useFormikContext<EventSubmissionFormValues>();
+  const { values, errors } = useFormikContext<EventSubmissionFormValues>();
 
   return (
     <div className={styles.eventForm}>
       <CollapsibleSection title="General Information" defaultOpen>
         <div className={styles.formGrid}>
           <FormikTextField
-            id="event.eventName"
+            id="event.name"
             label="Event Name"
             placeholder="Enter event name"
             required
@@ -85,16 +83,9 @@ export default function EventForm() {
             required
           />
           <FormikTextField
-            id="event.startDate"
-            label="Start Date"
-            placeholder="MM/DD/YYYY"
-            type="date"
-            required
-          />
-          <FormikTextField
-            id="event.endDate"
-            label="End Date"
-            placeholder="MM/DD/YYYY"
+            id="event.date"
+            label="Date"
+            placeholder="YYYY-MM-DD"
             type="date"
             required
           />
@@ -110,29 +101,29 @@ export default function EventForm() {
       <CollapsibleSection title="Social Media" defaultOpen>
         <div className={styles.formGrid}>
           <FormikTextField
-            id="event.instagram"
+            id="event.socialMedia.instagram"
             label="Instagram"
             placeholder="@username or profile URL"
           />
           <FormikTextField
-            id="event.youtube"
+            id="event.socialMedia.youtube"
             label="YouTube"
             placeholder="https://youtube.com/..."
             type="url"
           />
           <FormikTextField
-            id="event.facebook"
+            id="event.socialMedia.facebook"
             label="Facebook"
             placeholder="https://facebook.com/..."
             type="url"
           />
           <FormikTextField
-            id="event.tiktok"
+            id="event.socialMedia.tiktok"
             label="TikTok"
             placeholder="@username or profile URL"
           />
           <FormikTextField
-            id="event.twitch"
+            id="event.socialMedia.twitch"
             label="Twitch"
             placeholder="https://twitch.tv/..."
             type="url"
@@ -142,10 +133,13 @@ export default function EventForm() {
 
       {/* Debug info - remove in production */}
       {process.env.NODE_ENV === 'development' && (
-        <details className={styles.debugInfo}>
-          <summary>Form Values (Debug)</summary>
-          <pre>{JSON.stringify(values.event, null, 2)}</pre>
-        </details>
+        <>
+          <details className={styles.debugInfo}>
+            <summary>Form State (Debug)</summary>
+            <pre>values.event = {JSON.stringify(values.event, null, 2)}</pre>
+            <pre>errors.event = {JSON.stringify(errors.event, null, 2)}</pre>
+          </details>
+        </>
       )}
     </div>
   );

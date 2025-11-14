@@ -55,6 +55,6 @@ type Discipline = "RIGGING" | "TRICKLINE" | "FREESTYLE_HIGHLINE" | "SPEED_SHORT"
 
 type Role = "ATHLETE" | "JUDGE" | "ISA_VERIFIED" | "ORGANIZER";
 
-type Gender = "FEMALE" | "MALE";
+type Gender = "FEMALE" | "MALE" | "NON_BINARY" | "OTHER";
 
 type AgeCategory = "PROFESSIONAL" | "AMATEUR" | "SENIOR" | "YOUTH_U16" | "YOUTH_U14";

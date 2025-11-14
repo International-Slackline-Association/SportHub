@@ -2,7 +2,7 @@
 
 import { dynamodb } from '@lib/dynamodb';
 import { revalidatePath } from 'next/cache';
-import { EventSubmissionFormValues, EventFormValues } from './components/types';
+import { EventSubmissionFormValues, EventFormValues } from './types';
 
 const EVENTS_TABLE = 'events';
 
@@ -11,46 +11,32 @@ function generateEventId(): string {
   return `event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
-// Transform form data to database format
-function transformEventData(formValues: EventFormValues) {
-  return {
-    eventId: generateEventId(),
-    name: formValues.eventName,
-    city: formValues.city,
-    country: formValues.country,
-    startDate: formValues.startDate,
-    endDate: formValues.endDate,
-    website: formValues.website || null,
-    youtubeVideo: formValues.youtubeVideo || null,
-    avatarUrl: formValues.avatarUrl || null,
-    disciplines: formValues.disciplines || [],
-    socialMedia: {
-      instagram: formValues.instagram || null,
-      facebook: formValues.facebook || null,
-    },
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    status: 'draft', // draft, published, cancelled
-  };
-}
 
 /**
  * Save event to DynamoDB
  */
-export async function saveEvent(values: EventSubmissionFormValues) {
+export async function saveEvent({ event }: EventSubmissionFormValues) {
   try {
-    const eventData = transformEventData(values.event);
-    
+    // Transform form data to database format
+    const eventId = generateEventId();
+    const eventData = {
+      ...event,
+      eventId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      status: 'draft', // draft, published, cancelled
+    };
+
     // Save to DynamoDB
+    console.log("Saving event ", eventId);
     await dynamodb.putItem(EVENTS_TABLE, eventData);
-    
+
     // Revalidate events page to show new data
     revalidatePath('/events');
-    revalidatePath('/events/submit-event');
-    
+
     return {
+      eventId,
       success: true,
-      eventId: eventData.eventId,
       message: 'Event saved successfully',
     };
   } catch (error) {
@@ -115,10 +101,10 @@ export async function getAllEvents() {
 export async function deleteEvent(eventId: string) {
   try {
     await dynamodb.deleteItem(EVENTS_TABLE, { eventId });
-    
+
     // Revalidate events page
     revalidatePath('/events');
-    
+
     return {
       success: true,
       message: 'Event deleted successfully',
@@ -139,26 +125,26 @@ export async function updateEventStatus(eventId: string, status: 'draft' | 'publ
   try {
     // First get the existing event
     const result = await getEvent(eventId);
-    
+
     if (!result.success || !result.event) {
       return {
         success: false,
         error: 'Event not found',
       };
     }
-    
+
     // Update with new status
     const updatedEvent = {
       ...result.event,
       status,
       updatedAt: new Date().toISOString(),
     };
-    
+
     await dynamodb.putItem(EVENTS_TABLE, updatedEvent);
-    
+
     // Revalidate events page
     revalidatePath('/events');
-    
+
     return {
       success: true,
       message: `Event status updated to ${status}`,

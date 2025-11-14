@@ -1,13 +1,8 @@
-.submitEventContainer {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px 16px;
-}
-
 .formWrapper {
   display: flex;
   flex-direction: column;
   gap: 32px;
+  padding: 24px 16px;
 }
 
 .borderBottom {
@@ -41,7 +36,7 @@
 
 /* Desktop breakpoint - 40rem (640px) */
 @media (min-width: 40rem) {
-  .submitEventContainer {
+  .formWrapper {
     padding: 32px 24px;
   }
 
@@ -52,11 +47,8 @@
 
 /* Large desktop - 64rem (1024px) */
 @media (min-width: 64rem) {
-  .submitEventContainer {
-    padding: 48px 32px;
-  }
-
   .formWrapper {
+    padding: 48px 32px;
     gap: 40px;
   }
 }
