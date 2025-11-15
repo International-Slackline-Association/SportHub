@@ -1,22 +1,10 @@
-import { auth } from "@lib/auth"
-import { redirect } from "next/navigation"
-import PageLayout from "@ui/PageLayout"
-import { Metadata } from "next"
+import PageLayout from '@ui/PageLayout';
+import SubmitEventClient from './components/SubmitEventClient';
 
-export const metadata: Metadata = {
-  title: 'SportHub - Admin',
-}
-
-export default async function AdminPage() {
-  const session = await auth()
-
-  if (!session) {
-    redirect("/auth/signin")
-  }
-
+export default function SubmitEventPage() {
   return (
     <PageLayout title="Event Submission">
-      Submit Event page
+      <SubmitEventClient />
     </PageLayout>
-  )
+  );
 }
