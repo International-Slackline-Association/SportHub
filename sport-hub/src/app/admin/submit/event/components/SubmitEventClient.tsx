@@ -17,23 +17,21 @@ const eventSubmissionValidationSchema = Yup.object({
   event: eventValidationSchema,
 });
 
-export default async function SubmitEventClient() {
+export default function SubmitEventClient() {
   const [activeTab, setActiveTab] = useState('event');
 
-  const handleSubmit = async (
+  const handleSubmit = (
     values: EventSubmissionFormValues,
     { setSubmitting, resetForm }: { setSubmitting: (isSubmitting: boolean) => void; resetForm: () => void }
-  ) => {
-    try {
-      await saveEvent(values);
+  ) =>
+    saveEvent(values).then(() => {
       resetForm();
-    } catch (error) {
+    }).catch((error) => {
       console.error('Error submitting event:', error);
       alert('Failed to submit event. Please try again.');
-    } finally {
+    }).finally(() => {
       setSubmitting(false);
-    }
-  };
+    });
 
   return (
     <Formik

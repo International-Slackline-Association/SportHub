@@ -25,7 +25,7 @@ export interface Option {
   label: string;
 }
 
-interface BaseFormFieldProps {
+export interface BaseFormFieldProps {
   className?: string;
   disabled?: boolean;
   id?: string;

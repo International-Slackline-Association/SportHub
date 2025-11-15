@@ -2,7 +2,7 @@
 
 import { dynamodb } from '@lib/dynamodb';
 import { revalidatePath } from 'next/cache';
-import { EventSubmissionFormValues, EventFormValues } from './types';
+import { EventSubmissionFormValues } from './types';
 
 const EVENTS_TABLE = 'events';
 

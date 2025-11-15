@@ -13,6 +13,7 @@ import { EventSubmissionFormValues } from '../types';
 import { cn } from '@utils/cn';
 import styles from './styles.module.css'
 import { ChevronIcon } from '@ui/Icons';
+import EventAutocomplete from './EventAutocomplete';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -51,17 +52,29 @@ const CollapsibleSection = ({
 };
 
 export default function EventForm() {
-  const { values, errors } = useFormikContext<EventSubmissionFormValues>();
+  const { values, errors, setValues } = useFormikContext<EventSubmissionFormValues>();
 
   return (
     <div className={styles.eventForm}>
       <CollapsibleSection title="General Information" defaultOpen>
         <div className={styles.formGrid}>
-          <FormikTextField
-            id="event.name"
-            label="Event Name"
-            placeholder="Enter event name"
-            required
+          <EventAutocomplete
+            onSelect={(item) => {
+              console.log(item);
+              setValues({
+                event: {
+                name: item.name,
+                  city: item.city,
+                  country: item.country.toUpperCase(),
+                  date: item.date,
+                  website: item.website,
+                  socialMedia: item.socialMedia || {},
+                  disciplines: item.disciplines || [],
+                  avatarUrl: item.avatarUrl,
+                  youtubeVideo: item.youtubeVideo
+                }
+              });
+            }}
           />
           <FormikTextField
             id="event.website"
