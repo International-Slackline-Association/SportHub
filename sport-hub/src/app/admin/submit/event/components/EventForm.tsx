@@ -14,6 +14,7 @@ import { cn } from '@utils/cn';
 import styles from './styles.module.css'
 import { ChevronIcon } from '@ui/Icons';
 import EventAutocomplete from './EventAutocomplete';
+import FormikAutocomplete from '@ui/Form/FormikAutocomplete';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -56,26 +57,12 @@ export default function EventForm() {
 
   return (
     <div className={styles.eventForm}>
+      <section>
+        test
+      </section>
       <CollapsibleSection title="General Information" defaultOpen>
         <div className={styles.formGrid}>
-          <EventAutocomplete
-            onSelect={(item) => {
-              console.log(item);
-              setValues({
-                event: {
-                name: item.name,
-                  city: item.city,
-                  country: item.country.toUpperCase(),
-                  date: item.date,
-                  website: item.website,
-                  socialMedia: item.socialMedia || {},
-                  disciplines: item.disciplines || [],
-                  avatarUrl: item.avatarUrl,
-                  youtubeVideo: item.youtubeVideo
-                }
-              });
-            }}
-          />
+          <EventAutocomplete />
           <FormikTextField
             id="event.website"
             label="Website"
@@ -103,6 +90,7 @@ export default function EventForm() {
             required
           />
           <FormikCheckboxGroup
+            className={styles.disciplinesCheckboxGroup}
             direction="row"
             id="event.disciplines"
             label="Disciplines"

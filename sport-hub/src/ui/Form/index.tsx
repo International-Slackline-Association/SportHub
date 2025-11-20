@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from 'react';
-import { Field, ErrorMessage, useFormikContext, FieldInputProps, FieldMetaProps, FormikBag, FormikProps } from 'formik';
+import { Field, ErrorMessage, useFormikContext, FieldInputProps, FieldMetaProps } from 'formik';
 import styles from './styles.module.css';
 import Button from '@ui/Button';
 import Spinner from '@ui/Spinner';
@@ -25,16 +25,12 @@ export interface Option {
   label: string;
 }
 
-export interface BaseFormFieldProps {
-  className?: string;
-  disabled?: boolean;
-  id?: string;
+export interface BaseFormFieldProps<Element> extends React.InputHTMLAttributes<Element> {
   label?: string;
-  placeholder?: string;
 }
 
-interface FormikFieldProps <Value,>{ field: FieldInputProps<Value>; meta: FieldMetaProps<Value>; form: any }
-const FormikFormField = (props: PropsWithChildren<TextFieldProps | SelectFieldProps>) => {
+export interface FormikFieldProps <Value,>{ field: FieldInputProps<Value>; meta: FieldMetaProps<Value>; form: any }
+export const FormikFormField = (props: PropsWithChildren<TextFieldProps | SelectFieldProps>) => {
   const { id, label, className, children } = props;
   const displayLabel = label || pascalCaseToTitleCase(id || "");
   return (
@@ -43,12 +39,12 @@ const FormikFormField = (props: PropsWithChildren<TextFieldProps | SelectFieldPr
         {displayLabel}
       </label>
       {children}
-      <ErrorMessage name={id || props.name || ""} component="div" className={styles.errorMessage} />
+      <ErrorMessage name={`${id}-error`} component="div" className={styles.errorMessage} />
     </div>
   );
 };
 
-interface TextFieldProps extends BaseFormFieldProps, React.InputHTMLAttributes<HTMLInputElement>{};
+interface TextFieldProps extends BaseFormFieldProps<HTMLInputElement>{};
 export const FormikTextField = ({
   className,
   id,
@@ -67,6 +63,7 @@ export const FormikTextField = ({
               id={id}
               name={id}
               type="text"
+              value={field.value || ""}
             />
           </div>
         )}
@@ -75,7 +72,7 @@ export const FormikTextField = ({
   );
 };
 
-interface SelectFieldProps extends BaseFormFieldProps, React.SelectHTMLAttributes<HTMLSelectElement>{
+interface SelectFieldProps extends BaseFormFieldProps<HTMLSelectElement> {
   options: Option[];
 };
 export const FormikSelectField = ({
@@ -115,7 +112,7 @@ export const FormikCheckboxField = ({
   className,
   id,
   label,
-}: PropsWithChildren<BaseFormFieldProps>) => (
+}: PropsWithChildren<BaseFormFieldProps<HTMLInputElement>>) => (
   <FormikFormField id={id} label={label} className={cn(styles.checkboxField, className)}>
     <Field name={id}>
       {({ field, form }: FormikFieldProps<boolean>) => (
@@ -130,7 +127,7 @@ export const FormikCheckboxField = ({
   </FormikFormField>
 );
 
-interface FormikCheckboxGroupProps extends BaseFormFieldProps{
+interface FormikCheckboxGroupProps extends BaseFormFieldProps<HTMLElement>{
   direction?: 'row' | 'column';
   options: Option[];
 }
@@ -178,7 +175,7 @@ export const FormikCheckboxGroup = ({
   </FormikFormField>
 );
 
-interface RadioGroupProps extends BaseFormFieldProps{
+interface RadioGroupProps extends BaseFormFieldProps<HTMLElement>{
   direction?: 'row' | 'column';
   options: Option[];
 }
