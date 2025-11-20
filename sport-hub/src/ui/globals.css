@@ -34,17 +34,17 @@
 
   --color-primary: #009F9A; /* ISA Green */
   --color-primary-dark: #0A6564;
-  --color-neutral-50: oklch(0.985 0 0);
-  --color-neutral-100: oklch(0.97 0 0);
-  --color-neutral-200: oklch(0.922 0 0);
-  --color-neutral-300: oklch(0.87 0 0);
-  --color-neutral-400: oklch(0.708 0 0);
-  --color-neutral-500: oklch(0.556 0 0);
-  --color-neutral-600: oklch(0.439 0 0);
-  --color-neutral-700: oklch(0.371 0 0);
-  --color-neutral-800: oklch(0.269 0 0);
-  --color-neutral-900: oklch(0.205 0 0);
-  --color-neutral-950: oklch(0.145 0 0);
+  --color-neutral-50: #FBFBFB;
+  --color-neutral-100: #F7F7F7;
+  --color-neutral-200: #E8E8E8;
+  --color-neutral-300: #DEDEDE;
+  --color-neutral-400: #B5B5B5;
+  --color-neutral-500: #8E8E8E;
+  --color-neutral-600: #707070;
+  --color-neutral-700: #5E5E5E;
+  --color-neutral-800: #454545;
+  --color-neutral-900: #353535;
+  --color-neutral-950: #252525;
   --color-green-50: #EFFEFC;
   --color-green-100: #C7FFF7;
   --color-green-200: #90FFEF;

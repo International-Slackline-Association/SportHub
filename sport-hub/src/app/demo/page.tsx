@@ -9,6 +9,7 @@ import PageLayout from "@ui/PageLayout";
 import Modal from "@ui/Modal";
 import { TabGroup } from "@ui/Tab";
 import { FormikCheckboxField, FormikCheckboxGroup, FormikRadioGroup, FormikSelectField, FormikSubmitButton, FormikTextField } from "@ui/Form";
+import FormikAutocomplete from "@ui/Form/FormikAutocomplete";
 
 export default function Page() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,6 +25,7 @@ export default function Page() {
       .min(1, "Please select at least one discipline")
       .required("Please select at least one discipline"),
     level: Yup.string(),
+    lineType: Yup.string(),
   });
 
   // Initial form values
@@ -34,6 +36,7 @@ export default function Page() {
     verified: false,
     disciplines: [],
     level: "1",
+    lineType: "",
   };
 
   const handleFormSubmit = (values: typeof initialFormValues) => {
@@ -214,13 +217,27 @@ export default function Page() {
                       { value: "IT", label: "Italy" },
                     ]}
                   />
-                  <FormikCheckboxField id="verified" label="ISA Verified" />
+                  <FormikAutocomplete
+                    id="lineType"
+                    label="Autocomplete Field"
+                    options={[
+                      { value: "slackline", label: "Slackline" },
+                      { value: "waterline", label: "Waterline" },
+                      { value: "highline", label: "Highline" },
+                      { value: "midline", label: "Midline" },
+                      { value: "fireline", label: "Fireline" },
+                      { value: "parkline", label: "Parkline" },
+                      { value: "longline", label: "Longline" },
+                    ]}
+                    placeholder="Types of slacklines"
+                  />
+                  <FormikCheckboxField id="verified" label="Single Checkbox" />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormikCheckboxGroup
                     direction="row"
                     id="disciplines"
-                    label="Disciplines"
+                    label="Checkbox Group"
                     options={[
                       { label: "A", value: "a" },
                       { label: "B", value: "b" },

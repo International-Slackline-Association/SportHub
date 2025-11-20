@@ -103,13 +103,6 @@ export default function SubmitEventClient() {
               {isSubmitting ? 'Submitting...' : 'Submit Event'}
             </Button>
           </div>
-
-          {/* Validation feedback */}
-          {dirty && !isValid && (
-            <div className={styles.validationHint}>
-              Please fix the errors above before submitting
-            </div>
-          )}
         </Form>
       )}
     </Formik>

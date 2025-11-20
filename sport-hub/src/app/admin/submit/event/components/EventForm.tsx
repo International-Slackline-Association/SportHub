@@ -14,6 +14,8 @@ import { cn } from '@utils/cn';
 import styles from './styles.module.css'
 import { ChevronIcon } from '@ui/Icons';
 import EventAutocomplete from './EventAutocomplete';
+import YouTubePreviewTextField from './YouTubePreviewTextField';
+import AvatarUploadImageField from './AvatarUploadImageField';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -52,30 +54,24 @@ const CollapsibleSection = ({
 };
 
 export default function EventForm() {
-  const { values, errors, setValues } = useFormikContext<EventSubmissionFormValues>();
+  const { dirty, errors, isValid, values, } = useFormikContext<EventSubmissionFormValues>();
 
   return (
     <div className={styles.eventForm}>
+      {dirty && !isValid && (
+        <div className={cn(styles.validationHint, styles.error)}>
+          Please fix errors before submitting
+        </div>
+      )}
+      <section>
+        <div className={cn(styles.formGrid, styles.sectionContent)}>
+          <AvatarUploadImageField />
+          <YouTubePreviewTextField />
+        </div>
+      </section>
       <CollapsibleSection title="General Information" defaultOpen>
         <div className={styles.formGrid}>
-          <EventAutocomplete
-            onSelect={(item) => {
-              console.log(item);
-              setValues({
-                event: {
-                name: item.name,
-                  city: item.city,
-                  country: item.country.toUpperCase(),
-                  date: item.date,
-                  website: item.website,
-                  socialMedia: item.socialMedia || {},
-                  disciplines: item.disciplines || [],
-                  avatarUrl: item.avatarUrl,
-                  youtubeVideo: item.youtubeVideo
-                }
-              });
-            }}
-          />
+          <EventAutocomplete />
           <FormikTextField
             id="event.website"
             label="Website"
@@ -103,6 +99,7 @@ export default function EventForm() {
             required
           />
           <FormikCheckboxGroup
+            className={styles.disciplinesCheckboxGroup}
             direction="row"
             id="event.disciplines"
             label="Disciplines"

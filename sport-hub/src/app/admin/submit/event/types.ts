@@ -1,4 +1,5 @@
 import * as Yup from 'yup';
+import { extractYouTubeId } from './components/YouTubePreviewTextField';
 
 // Combined form values (parent level)
 export interface EventSubmissionFormValues {
@@ -12,7 +13,7 @@ export interface EventSubmissionFormValues {
 export interface EventFormValues {
   // Assets
   avatarUrl?: string;
-  youtubeVideo?: string;
+  thumbnailUrl?: string;
 
   // General Information
   name: string;
@@ -46,9 +47,19 @@ export const eventValidationSchema = Yup.object({
   avatarUrl: Yup.string()
     .url('Please enter a valid URL')
     .nullable(),
-  youtubeVideo: Yup.string()
-    .url('Please enter a valid YouTube URL')
-    .nullable(),
+  thumbnailUrl: Yup.string()
+    .nullable()
+    .test(
+      'is-youtube-url',
+      'Please enter a valid YouTube URL (e.g., youtube.com/watch?v=... or youtu.be/...)',
+      (value) => {
+        console.log("test", value);
+        // Return true for null/undefined/empty string (nullable field)
+        if (!value || value.trim() === '') return true;
+        const youtubeId = extractYouTubeId(value);
+        return youtubeId !== null;
+      }
+    ),
 
   // General Info
   name: Yup.string()
@@ -69,7 +80,7 @@ export const eventValidationSchema = Yup.object({
   disciplines: Yup.array()
     .of(Yup.string())
     .min(1, 'Please select at least one discipline')
-    .required('Please select at least one discipline'),
+    .required(),
   // Social Media
   socialMedia: Yup.object().shape({
     facebook: Yup.string()

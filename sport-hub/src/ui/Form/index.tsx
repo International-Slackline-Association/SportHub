@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from 'react';
-import { Field, ErrorMessage, useFormikContext, FieldInputProps, FieldMetaProps, FormikBag, FormikProps } from 'formik';
+import { Field, ErrorMessage, useFormikContext, FieldInputProps, FieldMetaProps } from 'formik';
 import styles from './styles.module.css';
 import Button from '@ui/Button';
 import Spinner from '@ui/Spinner';
@@ -25,16 +25,12 @@ export interface Option {
   label: string;
 }
 
-export interface BaseFormFieldProps {
-  className?: string;
-  disabled?: boolean;
-  id?: string;
+export interface BaseFormFieldProps<Element> extends React.InputHTMLAttributes<Element> {
   label?: string;
-  placeholder?: string;
 }
 
-interface FormikFieldProps <Value,>{ field: FieldInputProps<Value>; meta: FieldMetaProps<Value>; form: any }
-const FormikFormField = (props: PropsWithChildren<TextFieldProps | SelectFieldProps>) => {
+export interface FormikFieldProps <Value,>{ field: FieldInputProps<Value>; meta: FieldMetaProps<Value>; form: any }
+export const FormikFormField = (props: PropsWithChildren<TextFieldProps | SelectFieldProps>) => {
   const { id, label, className, children } = props;
   const displayLabel = label || pascalCaseToTitleCase(id || "");
   return (
@@ -43,12 +39,11 @@ const FormikFormField = (props: PropsWithChildren<TextFieldProps | SelectFieldPr
         {displayLabel}
       </label>
       {children}
-      <ErrorMessage name={id || props.name || ""} component="div" className={styles.errorMessage} />
     </div>
   );
 };
 
-interface TextFieldProps extends BaseFormFieldProps, React.InputHTMLAttributes<HTMLInputElement>{};
+interface TextFieldProps extends BaseFormFieldProps<HTMLInputElement>{};
 export const FormikTextField = ({
   className,
   id,
@@ -67,7 +62,9 @@ export const FormikTextField = ({
               id={id}
               name={id}
               type="text"
+              value={field.value || ""}
             />
+            <ErrorMessage name={id || ""} component="div" className={styles.errorMessage} />
           </div>
         )}
       </Field>
@@ -75,7 +72,7 @@ export const FormikTextField = ({
   );
 };
 
-interface SelectFieldProps extends BaseFormFieldProps, React.SelectHTMLAttributes<HTMLSelectElement>{
+interface SelectFieldProps extends BaseFormFieldProps<HTMLSelectElement> {
   options: Option[];
 };
 export const FormikSelectField = ({
@@ -104,6 +101,7 @@ export const FormikSelectField = ({
                 </option>
               ))}
             </select>
+            <ErrorMessage name={id || ""} component="div" className={styles.errorMessage} />
           </div>
         )}
       </Field>
@@ -115,22 +113,25 @@ export const FormikCheckboxField = ({
   className,
   id,
   label,
-}: PropsWithChildren<BaseFormFieldProps>) => (
+}: PropsWithChildren<BaseFormFieldProps<HTMLInputElement>>) => (
   <FormikFormField id={id} label={label} className={cn(styles.checkboxField, className)}>
     <Field name={id}>
       {({ field, form }: FormikFieldProps<boolean>) => (
-        <input
-          className={styles.checkbox}
-          checked={field.value}
-          onChange={() => form.setFieldValue(id, !field.value)}
-          type="checkbox"
-        />
+        <>
+          <input
+            className={styles.checkbox}
+            checked={field.value}
+            onChange={() => form.setFieldValue(id, !field.value)}
+            type="checkbox"
+          />
+          <ErrorMessage name={id || ""} component="div" className={styles.errorMessage} />
+        </>
       )}
     </Field>
   </FormikFormField>
 );
 
-interface FormikCheckboxGroupProps extends BaseFormFieldProps{
+interface FormikCheckboxGroupProps extends BaseFormFieldProps<HTMLElement>{
   direction?: 'row' | 'column';
   options: Option[];
 }
@@ -143,42 +144,50 @@ export const FormikCheckboxGroup = ({
 }: FormikCheckboxGroupProps) => (
   <FormikFormField id={id} label={label} className={cn(className)}>
     <Field name={id}>
-      {({ field, form }: FormikFieldProps<string[]>) => (
-        <div className={cn(direction === "column" ? styles.verticalGroup : styles.horizontalGroup)}>
-          {options.map((option) => {
-            const isSelected = field.value?.includes(option.value);
-            return (
-              <div className={styles.checkboxField} key={option.value}>
-                <label htmlFor={id} className={styles.label}>
-                  {option.label}
-                </label>
-                <input
-                  className={styles.checkbox}
-                  checked={isSelected}
-                  onChange={() => {
-                    const selections = [...field.value];
+      {({ field, form, meta }: FormikFieldProps<string[]>) => {
+        const currentValue = field.value || [];
+        return (
+          <>
+            <div className={cn(direction === "column" ? styles.verticalGroup : styles.horizontalGroup)}>
+              {options.map((option) => {
+                const isSelected = currentValue.includes(option.value);
+                return (
+                  <div className={styles.checkboxField} key={option.value}>
+                    <label htmlFor={`${id}-${option.value}`} className={styles.label}>
+                      {option.label}
+                    </label>
+                    <input
+                      id={`${id}-${option.value}`}
+                      className={styles.checkbox}
+                      checked={isSelected}
+                      onChange={async () => {
+                        const selections = [...currentValue];
 
-                    if (isSelected) {
-                      const index = selections.indexOf(option.value);
-                      selections.splice(index, 1);
-                    } else {
-                      selections.push(option.value);
-                    }
+                        if (isSelected) {
+                          const index = selections.indexOf(option.value);
+                          selections.splice(index, 1);
+                        } else {
+                          selections.push(option.value);
+                        }
 
-                    form.setFieldValue(id, selections);
-                  }}
-                  type="checkbox"
-                />
-              </div>
-            );
-          })}
-        </div>
-      )}
+                        await form.setFieldValue(id, selections);
+                        form.setFieldTouched(id, true);
+                      }}
+                      type="checkbox"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            <ErrorMessage name={id || ""} component="div" className={styles.errorMessage} />
+          </>
+        );
+      }}
     </Field>
   </FormikFormField>
 );
 
-interface RadioGroupProps extends BaseFormFieldProps{
+interface RadioGroupProps extends BaseFormFieldProps<HTMLElement>{
   direction?: 'row' | 'column';
   options: Option[];
 }
@@ -210,6 +219,7 @@ export const FormikRadioGroup = ({
               </div>
             );
           })}
+          <ErrorMessage name={id || ""} component="div" className={styles.errorMessage} />
         </div>
       )}
     </Field>
