@@ -251,8 +251,16 @@ export const countryCodeOptions: Option[] = [
 ];
 
 export const genderOptions: Option[] = [
-  { value: "male", label: "Male" },
-  { value: "female", label: "Female" },
-  { value: "non-binary", label: "Non-Binary" },
-  { value: "other", label: "Other" },
+  { value: "MALE", label: "Male" },
+  { value: "FEMALE", label: "Female" },
+  { value: "NON_BINARY", label: "Non-Binary" },
+  { value: "OTHER", label: "Other" },
+];
+
+export const disciplineOptions: Option[] = [
+  { value: "FREESTYLE_HIGHLINE", label: "Freestyle Highline" },
+  { value: "RIGGING", label: "Rigging" },
+  { value: "SPEED_HIGHLINE", label: "Speed Highline" },
+  { value: "SPEED_SHORT", label: "Speed Short" },
+  { value: "TRICKLINE", label: "Trickline" },
 ];

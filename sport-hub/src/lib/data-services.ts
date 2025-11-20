@@ -158,7 +158,9 @@ export async function getContestsData(): Promise<ContestData[]> {
 
     // Map events to contest data format
     const contests: ContestData[] = eventItems
-      .filter((event) => event.type === 'contest') // Only include contests
+      // To view test events uncomment below
+      .filter((event) => event.type === 'contest' || event.status ==='draft')
+      // .filter((event) => event.type === 'contest')
       .map(event => {
         const participants = (event.participants || [])
           .map((participant: { userId?: string; name?: string; place?: string; points?: number }) => ({

@@ -8,7 +8,8 @@ import { AgeCategory, Badge, ContestSize, Discipline, Gender, Role } from "@ui/B
 import PageLayout from "@ui/PageLayout";
 import Modal from "@ui/Modal";
 import { TabGroup } from "@ui/Tab";
-import { FormikSelectField, FormikSubmitButton, FormikTextField } from "@ui/Form";
+import { FormikCheckboxField, FormikCheckboxGroup, FormikRadioGroup, FormikSelectField, FormikSubmitButton, FormikTextField } from "@ui/Form";
+import FormikAutocomplete from "@ui/Form/FormikAutocomplete";
 
 export default function Page() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,7 +20,12 @@ export default function Page() {
     eventName: Yup.string().required("Event name is required"),
     city: Yup.string().required("City is required"),
     country: Yup.string().required("Please select a country"),
-    isa: Yup.string(),
+    verified: Yup.boolean(),
+    disciplines: Yup.array()
+      .min(1, "Please select at least one discipline")
+      .required("Please select at least one discipline"),
+    level: Yup.string(),
+    lineType: Yup.string(),
   });
 
   // Initial form values
@@ -27,7 +33,10 @@ export default function Page() {
     eventName: "",
     city: "",
     country: "",
-    isa: "",
+    verified: false,
+    disciplines: [],
+    level: "1",
+    lineType: "",
   };
 
   const handleFormSubmit = (values: typeof initialFormValues) => {
@@ -208,8 +217,45 @@ export default function Page() {
                       { value: "IT", label: "Italy" },
                     ]}
                   />
+                  <FormikAutocomplete
+                    id="lineType"
+                    label="Autocomplete Field"
+                    options={[
+                      { value: "slackline", label: "Slackline" },
+                      { value: "waterline", label: "Waterline" },
+                      { value: "highline", label: "Highline" },
+                      { value: "midline", label: "Midline" },
+                      { value: "fireline", label: "Fireline" },
+                      { value: "parkline", label: "Parkline" },
+                      { value: "longline", label: "Longline" },
+                    ]}
+                    placeholder="Types of slacklines"
+                  />
+                  <FormikCheckboxField id="verified" label="Single Checkbox" />
                 </div>
-
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormikCheckboxGroup
+                    direction="row"
+                    id="disciplines"
+                    label="Checkbox Group"
+                    options={[
+                      { label: "A", value: "a" },
+                      { label: "B", value: "b" },
+                      { label: "C", value: "c" },
+                      { label: "D", value: "d" }
+                    ]}
+                  />
+                  <FormikRadioGroup
+                    id="level"
+                    label="Level"
+                    options={[
+                      { label: "1", value: "1" },
+                      { label: "2", value: "2" },
+                      { label: "3", value: "3" },
+                      { label: "4", value: "4" }
+                    ]}
+                  />
+                </div>
                 <div className="flex gap-4">
                   <FormikSubmitButton />
                   <Button type="button" variant="secondary">

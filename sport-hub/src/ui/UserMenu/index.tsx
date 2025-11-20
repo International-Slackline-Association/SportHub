@@ -5,7 +5,7 @@ import { useState, useRef, useEffect } from "react"
 import styles from "./styles.module.css"
 import Button from "@ui/Button"
 import Image from "next/image"
-import { cn } from "@utils/cn"
+import { ChevronIcon } from "@ui/Icons/ChevronIcon"
 
 export default function UserMenu() {
   const { data: session, status } = useSession()
@@ -75,14 +75,7 @@ export default function UserMenu() {
             {session.user.email}
           </div>
         </div>
-        <svg
-          className={cn(styles.chevron, isOpen && styles.chevronOpen)}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <ChevronIcon direction={isOpen ? "up" : "down"} />
       </Button>
 
       {isOpen && (
