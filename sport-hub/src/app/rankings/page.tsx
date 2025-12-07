@@ -25,6 +25,7 @@ export default async function Page() {
         alt: "Highline World Championship",
         caption: "Laax Highline World Championship, 2024"
       }}
+      overlayText
     >
       <FeaturedGrid title="Featured Athletes">
         {featuredAthletes.map(athlete => (

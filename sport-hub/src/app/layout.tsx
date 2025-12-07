@@ -3,6 +3,7 @@ import "@ui/globals.css";
 import Footer from "@ui/Footer";
 import Navigation from "@ui/Navigation"
 import SessionProvider from "./SessionProvider"
+import ReactQueryProvider from "./ReactQueryProvider";
 
 export const metadata: Metadata = {
   title: "SportHub",
@@ -17,13 +18,15 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className="min-h-screen flex flex-col">
-        <SessionProvider>
-          <Navigation />
-          <main className="flex-1">
-            {children}
-          </main>
-          <Footer />
-        </SessionProvider>
+        <ReactQueryProvider>
+          <SessionProvider>
+            <Navigation />
+            <main className="flex-1">
+              {children}
+            </main>
+            <Footer />
+          </SessionProvider>
+        </ReactQueryProvider>
       </body>
     </html>
   );
