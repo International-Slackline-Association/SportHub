@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from 'react';
-import { Field, ErrorMessage, useFormikContext, FieldInputProps, FieldMetaProps } from 'formik';
+import { Field, ErrorMessage, useFormikContext, FieldInputProps, FieldMetaProps, FormikHelpers } from 'formik';
 import styles from './styles.module.css';
 import Button from '@ui/Button';
 import Spinner from '@ui/Spinner';
@@ -29,7 +29,7 @@ export interface BaseFormFieldProps<Element> extends React.InputHTMLAttributes<E
   label?: string;
 }
 
-export interface FormikFieldProps <Value,>{ field: FieldInputProps<Value>; meta: FieldMetaProps<Value>; form: any }
+export interface FormikFieldProps <Value,>{ field: FieldInputProps<Value>; meta: FieldMetaProps<Value>; form: FormikHelpers<unknown> }
 export const FormikFormField = (props: PropsWithChildren<TextFieldProps | SelectFieldProps>) => {
   const { id, label, className, children } = props;
   const displayLabel = label || pascalCaseToTitleCase(id || "");
@@ -43,7 +43,7 @@ export const FormikFormField = (props: PropsWithChildren<TextFieldProps | Select
   );
 };
 
-interface TextFieldProps extends BaseFormFieldProps<HTMLInputElement>{};
+type TextFieldProps = BaseFormFieldProps<HTMLInputElement>;
 export const FormikTextField = ({
   className,
   id,
@@ -121,7 +121,7 @@ export const FormikCheckboxField = ({
           <input
             className={styles.checkbox}
             checked={field.value}
-            onChange={() => form.setFieldValue(id, !field.value)}
+            onChange={() => form.setFieldValue(id || '', !field.value)}
             type="checkbox"
           />
           <ErrorMessage name={id || ""} component="div" className={styles.errorMessage} />
@@ -144,7 +144,7 @@ export const FormikCheckboxGroup = ({
 }: FormikCheckboxGroupProps) => (
   <FormikFormField id={id} label={label} className={cn(className)}>
     <Field name={id}>
-      {({ field, form, meta }: FormikFieldProps<string[]>) => {
+      {({ field, form }: FormikFieldProps<string[]>) => {
         const currentValue = field.value || [];
         return (
           <>
@@ -170,8 +170,8 @@ export const FormikCheckboxGroup = ({
                           selections.push(option.value);
                         }
 
-                        await form.setFieldValue(id, selections);
-                        form.setFieldTouched(id, true);
+                        await form.setFieldValue(id || '', selections);
+                        form.setFieldTouched(id || '', true);
                       }}
                       type="checkbox"
                     />
@@ -212,7 +212,7 @@ export const FormikRadioGroup = ({
                 <input
                   className={styles.checkbox}
                   checked={isSelected}
-                  onChange={() => form.setFieldValue(id, option.value)}
+                  onChange={() => form.setFieldValue(id || '', option.value)}
                   value={option.value}
                   type="radio"
                 />
