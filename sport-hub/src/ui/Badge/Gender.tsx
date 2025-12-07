@@ -10,7 +10,9 @@ interface GenderProps {
 
 const genderLabels: Record<Gender, string> = {
   FEMALE: "FEMALE",
-  MALE: "MALE"
+  MALE: "MALE",
+  NON_BINARY: "NON_BINARY",
+  OTHER: "OTHER"
 };
 
 const Gender = ({ variant, className = "" }: GenderProps) => {
@@ -25,9 +27,10 @@ const Gender = ({ variant, className = "" }: GenderProps) => {
         className
       ].filter(Boolean).join(" ")}
     >
-      {variant === "FEMALE" ? (
+      {variant === "FEMALE" && (
         <Image src="/static/images/icons/gender-female.svg" alt="Female" width={24} height={24} />
-      ) : (
+      )}
+      {variant === "MALE" && (
         <Image src="/static/images/icons/gender-male.svg" alt="Male" width={24} height={24} />
       )}
       {genderLabels[variant]}

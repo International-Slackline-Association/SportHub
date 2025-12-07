@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useFormikContext } from 'formik';
+import Image from 'next/image';
 import { EventSubmissionFormValues } from '../types';
 import { FormikTextField } from '@ui/Form';
 import styles from './styles.module.css'
@@ -46,9 +47,11 @@ export default function YouTubePreviewTextField() {
     <div className="stack">
       {thumbnailUrl && (
         <div style={{ marginBottom: '16px' }}>
-          <img
+          <Image
             alt="YouTube video thumbnail"
             className={styles.youtubeThumbnail}
+            width={1280}
+            height={720}
             onError={(e) => {
               // Fallback to standard quality thumbnail if maxres fails
               const videoId = extractYouTubeId(youtubeVideo || '');
