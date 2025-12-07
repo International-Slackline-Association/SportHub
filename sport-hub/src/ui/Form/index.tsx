@@ -72,6 +72,37 @@ export const FormikTextField = ({
   );
 };
 
+
+type TextNumberProps = BaseFormFieldProps<HTMLInputElement>;
+export const FormikNumberField = ({
+  className,
+  id,
+  label,
+  required,
+  ...inputProps
+}: TextNumberProps) => {
+  return (
+    <FormikFormField id={id} label={label} className={className} required={required}>
+      <Field name={id}>
+        {({ field, meta }: FormikFieldProps<string>) => (
+          <div className={styles.inputContainer}>
+            <input
+              {...field}
+              {...inputProps}
+              className={`${styles.input} ${meta.touched && meta.error ? styles.error : ''}`}
+              id={id}
+              name={id}
+              type="number"
+              value={field.value || ""}
+            />
+            <ErrorMessage name={id || ""} component="div" className={styles.errorMessage} />
+          </div>
+        )}
+      </Field>
+    </FormikFormField>
+  );
+};
+
 interface SelectFieldProps extends BaseFormFieldProps<HTMLSelectElement> {
   options: Option[];
 };

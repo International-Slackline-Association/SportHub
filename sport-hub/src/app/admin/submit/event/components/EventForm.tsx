@@ -16,6 +16,7 @@ import { ChevronIcon } from '@ui/Icons';
 import EventAutocomplete from './EventAutocomplete';
 import YouTubePreviewTextField from './YouTubePreviewTextField';
 import AvatarUploadImageField from './AvatarUploadImageField';
+import CountryAutocomplete from './UserAutocomplete';
 
 interface CollapsibleSectionProps {
   title: string;

@@ -59,6 +59,7 @@ export default function FormikAutocomplete<FormValues>({
             const filteredOptions = options.filter(({ label }) =>
               label.toLowerCase().includes((field.value || "").toLowerCase())
             );
+            const selection = options.find(({ value }) => value === field.value);
             return (
               <div className={styles.inputContainer}>
                 <input
@@ -68,7 +69,7 @@ export default function FormikAutocomplete<FormValues>({
                   id={id}
                   name={id}
                   type="text"
-                  value={field.value || ""}
+                  value={selection ? selection.label : field.value || ""}
                   onFocus={() => setIsOpen(true)}
                 />
                 {isOpen && filteredOptions.length > 0 && (

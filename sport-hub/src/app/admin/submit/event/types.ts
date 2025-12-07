@@ -117,3 +117,66 @@ export const initialEventValues: EventFormValues = {
   disciplines: [],
   socialMedia: {}
 };
+
+/*******************************************************************************
+ * Contest Form Types and Validation
+ ******************************************************************************/
+export interface ContestResultEntry {
+  rank: number;
+  athleteId: string;
+  athleteName?: string;
+  isaPoints: number;
+  stats: string;
+}
+
+export interface ContestFormValues {
+  discipline: Discipline;
+  gender: Gender;
+  ageCategory: AgeCategory;
+  judgingSystem: JudgingSystem;
+  contestSize: ContestSize;
+  totalPrizeValue?: number;
+  judges?: string[];
+  results?: ContestResultEntry[];
+}
+
+export const contestValidationSchema = Yup.object({
+  gender: Yup.string()
+    .required('Gender category is required'),
+  discipline: Yup.string()
+    .required('Discipline is required'),
+  judgingSystem: Yup.string()
+    .required('Judging system is required'),
+  ageCategory: Yup.string()
+    .required('Age category is required'),
+  totalPrizeValue: Yup.number()
+    .min(0, 'Prize value must be positive')
+    .nullable(),
+  contestSize: Yup.string()
+    .required('Contest size is required'),
+  judges: Yup.array()
+    .of(
+      Yup.string()
+        .trim()
+        .min(1, 'Please enter a judge name')
+    )
+    .required(),
+});
+
+export const initialContestValues: ContestFormValues = {
+  gender: '' as Gender,
+  discipline: '' as Discipline,
+  judgingSystem: '' as JudgingSystem,
+  ageCategory: '' as AgeCategory,
+  totalPrizeValue: undefined,
+  contestSize: '' as ContestSize,
+};
+
+/*******************************************************************************
+ * Combined Validation Schema
+ ******************************************************************************/
+export const eventSubmissionValidationSchema = Yup.object({
+  event: eventValidationSchema,
+  contests: Yup.array()
+    .of(contestValidationSchema),
+});
