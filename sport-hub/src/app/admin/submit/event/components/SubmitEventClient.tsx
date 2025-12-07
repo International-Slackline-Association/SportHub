@@ -7,15 +7,15 @@ import Button from '@ui/Button';
 import EventForm from './/EventForm';
 import {
   initialEventValues,
-  eventValidationSchema,
+  eventSubmissionValidationSchema,
   EventSubmissionFormValues,
+  ContestFormValues,
 } from '../types';
 import styles from '../styles.module.css';
 import { saveEvent } from '../actions';
-
-const eventSubmissionValidationSchema = Yup.object({
-  event: eventValidationSchema,
-});
+import { cn } from '@utils/cn';
+import { FormikSubmitButton } from '@ui/Form';
+import TabbedContestForms from './TabbedContestForms';
 
 export default function SubmitEventClient() {
   const [activeTab, setActiveTab] = useState('event');
@@ -37,6 +37,7 @@ export default function SubmitEventClient() {
     <Formik
       initialValues={{
         event: initialEventValues,
+        contests: [] as unknown as ContestFormValues[],
       }}
       validationSchema={eventSubmissionValidationSchema}
       onSubmit={handleSubmit}
@@ -50,18 +51,22 @@ export default function SubmitEventClient() {
             className={styles.borderBottom}
             onTabChange={setActiveTab}
             tabs={[
-              { id: 'event', label: 'Event' },
-              { id: 'contests', label: 'Contests' },
+              { id: 'event', label: 'Step 1: Event Details' },
+              { id: 'contests', label: 'Step 2: Add Contests' },
             ]}
             variant="primary"
           />
 
           {activeTab === 'event' && <EventForm />}
-          {activeTab === 'contests' && (
-            <i>Coming soon...</i>
+          {activeTab === 'contests' && <TabbedContestForms />}
+
+          {dirty && !isValid && (
+            <div className={cn(styles.error, styles.borderTop, "text-right", )}>
+              Form has errors: {Object.keys(errors).join(', ')}
+            </div>
           )}
 
-          <div className={styles.formActions}>
+          <div className={cn(styles.formActions)}>
             <Button
               type="button"
               variant="ghost"
@@ -88,6 +93,17 @@ export default function SubmitEventClient() {
                       disciplines: ['RIGGING'],
                       socialMedia: {}
                     },
+                    contests: [
+                      {
+                        discipline: 'RIGGING' as Discipline,
+                        gender: 'MALE' as Gender,
+                        ageCategory: 'PROFESSIONAL' as AgeCategory,
+                        judgingSystem: 'ISA_FREESTYLE' as JudgingSystem,
+                        contestSize: 'INTERNATIONAL' as ContestSize,
+                        totalPrizeValue: 1000,
+                        judges: [""],
+                      }
+                    ],
                   });
                 }}
               >
