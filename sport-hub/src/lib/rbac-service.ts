@@ -87,9 +87,13 @@ export async function getUserPermissions(userId: string): Promise<Permission[]> 
 /**
  * Update user role in database
  *
+ * SECURITY: Verifies that assignedBy user has admin role before allowing update.
+ * Throws error if assignedBy is not an admin.
+ *
  * @param userId - User ID to update
  * @param newRole - New role to assign
- * @param assignedBy - User ID of admin assigning the role
+ * @param assignedBy - User ID of admin assigning the role (must have admin role)
+ * @throws Error if assignedBy is not an admin or if user not found
  */
 export async function updateUserRole(
   userId: string,
@@ -97,6 +101,12 @@ export async function updateUserRole(
   assignedBy: string
 ): Promise<void> {
   try {
+    // Verify assignedBy user has admin role
+    const assignerRole = await getUserRole(assignedBy);
+    if (assignerRole !== 'admin') {
+      throw new Error('Only admins can update user roles');
+    }
+
     // Get existing user
     const user = await dynamodb.getItem(USERS_TABLE, { userId }) as UserRecord | null;
     if (!user) {
