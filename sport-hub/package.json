@@ -23,7 +23,8 @@
     "revalidate:rankings": "./scripts/revalidate-pages.sh rankings",
     "revalidate:events": "./scripts/revalidate-pages.sh events",
     "test:local": "NODE_ENV=development DYNAMODB_LOCAL=true pnpm run dev",
-    "migrate:rbac": "tsx src/lib/migrations/add-rbac-fields.ts"
+    "migrate:rbac": "tsx src/lib/migrations/add-rbac-fields.ts",
+    "migrate:subtypes": "tsx src/lib/migrations/convert-type-to-subtypes.ts"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.821.0",

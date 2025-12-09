@@ -1,5 +1,5 @@
 import { DefaultSession } from "next-auth"
-import { Role, Permission } from './rbac'
+import { Role, Permission, UserSubType } from './rbac'
 
 declare module "next-auth" {
   /**
@@ -10,6 +10,7 @@ declare module "next-auth" {
       id: string
       role: Role                    // User's role: 'user' | 'admin'
       permissions?: Permission[]     // Granular permissions based on role
+      subTypes?: UserSubType[]       // User sub-types: 'organizer', 'judge', 'athlete'
     } & DefaultSession["user"]
     accessToken?: string
     idToken?: string
@@ -22,5 +23,6 @@ declare module "next-auth" {
     id: string
     role: Role
     permissions?: Permission[]
+    subTypes?: UserSubType[]
   }
 }

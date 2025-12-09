@@ -1,8 +1,8 @@
 import NextAuth from "next-auth"
 import Cognito from "next-auth/providers/cognito"
-import { getUserRole, getUserPermissions } from './rbac-service'
+import { getUserRole, getUserPermissions, getUserSubTypes } from './rbac-service'
 import { ensureUserExists } from './onboarding'
-import type { Role, Permission } from '../types/rbac'
+import type { Role, Permission, UserSubType } from '../types/rbac'
 
 // Validate required environment variables at runtime (not during build)
 // During build, secrets may not be available yet - they're only needed when server actually runs
@@ -70,18 +70,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           );
         }
 
-        // Load user role and permissions from database
+        // Load user role, permissions, and sub-types from database
         if (token.sub) {
           try {
             const role = await getUserRole(token.sub)
             const permissions = await getUserPermissions(token.sub)
+            const subTypes = await getUserSubTypes(token.sub)
             token.role = role
             token.permissions = permissions
+            token.subTypes = subTypes
           } catch (error) {
             console.error('Error loading user role:', error)
             // Fail-safe: default to user role
             token.role = 'user'
             token.permissions = []
+            token.subTypes = []
           }
         }
       }
@@ -97,9 +100,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.accessToken = token.accessToken as string
         session.idToken = token.idToken as string
 
-        // Pass role and permissions to session
+        // Pass role, permissions, and sub-types to session
         session.user.role = (token.role as Role) || 'user'
         session.user.permissions = (token.permissions as Permission[]) || []
+        session.user.subTypes = (token.subTypes as UserSubType[]) || []
       }
       return session
     }

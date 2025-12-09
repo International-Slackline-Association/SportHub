@@ -1,9 +1,9 @@
 'use server';
 
 import { auth } from '@lib/auth';
-import { updateUserRole as updateUserRoleService } from '@lib/rbac-service';
+import { updateUserRole as updateUserRoleService, setUserSubTypes as setUserSubTypesService } from '@lib/rbac-service';
 import { revalidatePath } from 'next/cache';
-import type { Role } from '../../types/rbac';
+import type { Role, UserSubType } from '../../types/rbac';
 
 /**
  * Update user role (development only OR admin in production)
@@ -51,6 +51,52 @@ export async function updateUserRole(userId: string, newRole: Role) {
     return {
       success: false,
       error: `Failed to update role: ${errorMessage}`,
+    };
+  }
+}
+
+/**
+ * Update user sub-types (development only OR admin in production)
+ * Wrapper around rbac-service function with additional authorization checks
+ */
+export async function updateUserSubTypes(userId: string, subTypes: UserSubType[]) {
+  // Check access (dev mode OR admin in production)
+  const session = await auth();
+
+  if (!session) {
+    return {
+      success: false,
+      error: 'Authentication required',
+    };
+  }
+
+  if (process.env.NODE_ENV === 'production' && session.user.role !== 'admin') {
+    return {
+      success: false,
+      error: 'Admin access required in production',
+    };
+  }
+
+  try {
+    // Call centralized rbac-service function
+    // This will verify the assigner has admin role
+    await setUserSubTypesService(userId, subTypes, session.user.id);
+
+    // Revalidate test page to show updated data
+    revalidatePath('/test-rbac');
+
+    console.log(`[TEST-RBAC] Updated user ${userId} sub-types to: ${JSON.stringify(subTypes)} by ${session.user.id}`);
+
+    return {
+      success: true,
+      message: `Sub-types updated to ${subTypes.length > 0 ? subTypes.join(', ') : 'none'}.`,
+    };
+  } catch (error) {
+    console.error('[TEST-RBAC] Error updating user sub-types:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return {
+      success: false,
+      error: `Failed to update sub-types: ${errorMessage}`,
     };
   }
 }

@@ -6,7 +6,8 @@
  */
 
 import { auth } from './auth';
-import type { Role, Permission, AuthorizationResult } from '../types/rbac';
+import type { Role, Permission, AuthorizationResult, UserSubType } from '../types/rbac';
+import { ROLE_PERMISSIONS, SUBTYPE_PERMISSIONS } from '../types/rbac';
 import { redirect } from 'next/navigation';
 
 /**
@@ -65,14 +66,38 @@ export async function hasAnyRole(roles: Role[]): Promise<boolean> {
 /**
  * Check if user has a specific permission
  *
+ * Checks both role-based permissions and sub-type permissions.
+ * Permissions are additive - users get permissions from both their role and sub-types.
+ *
  * @param permission - Permission to check for
  * @returns True if user has the permission
  */
 export async function hasPermission(permission: Permission): Promise<boolean> {
   const session = await auth();
-  if (!session?.user?.permissions) return false;
+  if (!session?.user) return false;
 
-  return session.user.permissions.includes(permission);
+  // Check role permissions
+  const rolePermissions = ROLE_PERMISSIONS[session.user.role] || [];
+  if (rolePermissions.includes(permission)) {
+    return true;
+  }
+
+  // Check sub-type permissions
+  if (session.user.subTypes && session.user.subTypes.length > 0) {
+    for (const subType of session.user.subTypes) {
+      const subTypePermissions = SUBTYPE_PERMISSIONS[subType] || [];
+      if (subTypePermissions.includes(permission)) {
+        return true;
+      }
+    }
+  }
+
+  // Fallback to session.user.permissions array (if populated)
+  if (session.user.permissions) {
+    return session.user.permissions.includes(permission);
+  }
+
+  return false;
 }
 
 /**
@@ -201,4 +226,111 @@ export async function isAdmin(): Promise<boolean> {
 export async function isAuthenticated(): Promise<boolean> {
   const session = await auth();
   return !!session;
+}
+
+// ============================================================================
+// Sub-Type Authorization Functions
+// ============================================================================
+
+/**
+ * Check if user has a specific sub-type
+ *
+ * @param subType - Sub-type to check for
+ * @returns True if user has the sub-type
+ */
+export async function hasSubType(subType: UserSubType): Promise<boolean> {
+  const session = await auth();
+  if (!session?.user?.subTypes) return false;
+
+  return session.user.subTypes.includes(subType);
+}
+
+/**
+ * Check if user has ANY of the specified sub-types
+ *
+ * @param subTypes - Array of sub-types to check
+ * @returns True if user has any of the sub-types
+ */
+export async function hasAnySubType(subTypes: UserSubType[]): Promise<boolean> {
+  const session = await auth();
+  if (!session?.user?.subTypes) return false;
+
+  return subTypes.some(st => session.user.subTypes!.includes(st));
+}
+
+/**
+ * Check if user can submit events
+ *
+ * Users can submit events if they are:
+ * - Admin (role)
+ * - Have 'organizer' sub-type
+ *
+ * @returns True if user can submit events
+ */
+export async function canSubmitEvents(): Promise<boolean> {
+  const session = await auth();
+  if (!session?.user) return false;
+
+  // Admins can always submit events
+  if (session.user.role === 'admin') return true;
+
+  // Organizers can submit events
+  if (session.user.subTypes?.includes('organizer')) return true;
+
+  return false;
+}
+
+/**
+ * Check if user can edit a specific event
+ *
+ * Users can edit an event if they are:
+ * - Admin (can edit any event)
+ * - Organizer who submitted the event (ownership-based)
+ *
+ * @param eventSubmittedBy - User ID who submitted the event
+ * @returns Authorization result with details
+ */
+export async function canEditEvent(eventSubmittedBy: string): Promise<AuthorizationResult> {
+  const session = await auth();
+
+  if (!session?.user) {
+    return {
+      authorized: false,
+      reason: 'Not authenticated',
+    };
+  }
+
+  // Admins can edit any event
+  if (session.user.role === 'admin') {
+    return {
+      authorized: true,
+      userId: session.user.id,
+      role: session.user.role,
+    };
+  }
+
+  // Organizers can edit their own events
+  if (session.user.subTypes?.includes('organizer')) {
+    if (session.user.id === eventSubmittedBy) {
+      return {
+        authorized: true,
+        userId: session.user.id,
+        role: session.user.role,
+      };
+    }
+
+    return {
+      authorized: false,
+      reason: 'You can only edit events you submitted',
+      userId: session.user.id,
+      role: session.user.role,
+    };
+  }
+
+  return {
+    authorized: false,
+    reason: 'Insufficient permissions - only admins and organizers can edit events',
+    userId: session.user.id,
+    role: session.user.role,
+  };
 }

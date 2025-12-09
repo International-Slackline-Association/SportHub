@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import type { UserRecord } from '@lib/relational-types';
-import { updateUserRole } from '../actions';
+import type { UserSubType } from '../../../types/rbac';
+import { updateUserRole, updateUserSubTypes } from '../actions';
 
 interface RoleManagerProps {
   users: UserRecord[];
@@ -47,6 +48,45 @@ export default function RoleManager({ users, currentUserId }: RoleManagerProps) 
     }
   };
 
+  const handleSubTypeToggle = async (userId: string, subType: UserSubType, currentSubTypes: UserSubType[]) => {
+    setIsUpdating(userId);
+    setMessage(null);
+
+    try {
+      // Toggle the sub-type
+      const newSubTypes = currentSubTypes.includes(subType)
+        ? currentSubTypes.filter(st => st !== subType)
+        : [...currentSubTypes, subType];
+
+      const result = await updateUserSubTypes(userId, newSubTypes);
+
+      if (result.success) {
+        setMessage({
+          type: 'success',
+          text: result.message || 'Sub-types updated successfully',
+        });
+
+        // Refresh the page to show updated data
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        setMessage({
+          type: 'error',
+          text: result.error || 'Failed to update sub-types',
+        });
+      }
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: 'An unexpected error occurred',
+      });
+      console.error(error);
+    } finally {
+      setIsUpdating(null);
+    }
+  };
+
   return (
     <div>
       {message && (
@@ -72,7 +112,10 @@ export default function RoleManager({ users, currentUserId }: RoleManagerProps) 
                 Email
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Current Role
+                Role
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Sub-Types
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
@@ -104,6 +147,29 @@ export default function RoleManager({ users, currentUserId }: RoleManagerProps) 
                   >
                     {user.role}
                   </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex flex-col gap-2">
+                    {(['organizer', 'judge', 'athlete'] as UserSubType[]).map((subType) => {
+                      const currentSubTypes = user.userSubTypes || [];
+                      const isChecked = currentSubTypes.includes(subType);
+                      return (
+                        <label
+                          key={subType}
+                          className="flex items-center gap-2 text-sm cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => handleSubTypeToggle(user.userId, subType, currentSubTypes)}
+                            disabled={isUpdating === user.userId}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                          />
+                          <span className="text-gray-700 capitalize">{subType}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <div className="flex gap-2">

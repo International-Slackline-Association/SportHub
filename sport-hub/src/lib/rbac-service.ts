@@ -6,7 +6,7 @@
  */
 
 import { dynamodb } from './dynamodb';
-import type { Role, Permission } from '../types/rbac';
+import type { Role, Permission, UserSubType } from '../types/rbac';
 import { ROLE_PERMISSIONS } from '../types/rbac';
 import type { UserRecord } from './relational-types';
 
@@ -167,4 +167,127 @@ export function getCacheStats() {
       age: Date.now() - entry.timestamp,
     })),
   };
+}
+
+// ============================================================================
+// Sub-Type Management Functions
+// ============================================================================
+
+/**
+ * Get user's sub-types from database
+ *
+ * @param userId - User ID to get sub-types for
+ * @returns Array of user's sub-types
+ */
+export async function getUserSubTypes(userId: string): Promise<UserSubType[]> {
+  try {
+    const user = await dynamodb.getItem(USERS_TABLE, { userId }) as UserRecord | null;
+
+    if (!user) {
+      return [];
+    }
+
+    return user.userSubTypes || [];
+  } catch (error) {
+    console.error('Error fetching user sub-types:', error);
+    return [];
+  }
+}
+
+/**
+ * Set user's sub-types in database
+ *
+ * SECURITY: Verifies that assignedBy user has admin role before allowing update.
+ * Throws error if assignedBy is not an admin.
+ *
+ * @param userId - User ID to update
+ * @param subTypes - Array of sub-types to assign
+ * @param assignedBy - User ID of admin assigning the sub-types (must have admin role)
+ * @throws Error if assignedBy is not an admin or if user not found
+ */
+export async function setUserSubTypes(
+  userId: string,
+  subTypes: UserSubType[],
+  assignedBy: string
+): Promise<void> {
+  try {
+    // Verify assignedBy user has admin role
+    const assignerRole = await getUserRole(assignedBy);
+    if (assignerRole !== 'admin') {
+      throw new Error('Only admins can update user sub-types');
+    }
+
+    // Get existing user
+    const user = await dynamodb.getItem(USERS_TABLE, { userId }) as UserRecord | null;
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Update with new sub-types
+    const updatedUser: UserRecord = {
+      ...user,
+      userSubTypes: subTypes,
+      subTypesAssignedAt: new Date().toISOString(),
+      subTypesAssignedBy: assignedBy,
+    };
+
+    await dynamodb.putItem(USERS_TABLE, updatedUser);
+
+    // Clear cache to force refresh
+    clearRoleCache(userId);
+
+    console.log(`Sub-types updated for user ${userId}: ${JSON.stringify(subTypes)} (assigned by ${assignedBy})`);
+  } catch (error) {
+    console.error('Error updating user sub-types:', error);
+    throw error;
+  }
+}
+
+/**
+ * Add a sub-type to a user
+ *
+ * SECURITY: Verifies that assignedBy user has admin role before allowing update.
+ *
+ * @param userId - User ID to update
+ * @param subType - Sub-type to add
+ * @param assignedBy - User ID of admin adding the sub-type
+ * @throws Error if assignedBy is not an admin or if user not found
+ */
+export async function addUserSubType(
+  userId: string,
+  subType: UserSubType,
+  assignedBy: string
+): Promise<void> {
+  const currentSubTypes = await getUserSubTypes(userId);
+
+  // Don't add if already exists
+  if (currentSubTypes.includes(subType)) {
+    return;
+  }
+
+  const newSubTypes = [...currentSubTypes, subType];
+  await setUserSubTypes(userId, newSubTypes, assignedBy);
+}
+
+/**
+ * Remove a sub-type from a user
+ *
+ * SECURITY: Verifies that removedBy user has admin role before allowing update.
+ *
+ * @param userId - User ID to update
+ * @param subType - Sub-type to remove
+ * @param removedBy - User ID of admin removing the sub-type
+ * @throws Error if removedBy is not an admin or if user not found
+ */
+export async function removeUserSubType(
+  userId: string,
+  subType: UserSubType,
+  removedBy: string
+): Promise<void> {
+  const currentSubTypes = await getUserSubTypes(userId);
+
+  // Filter out the sub-type to remove
+  const newSubTypes = currentSubTypes.filter(st => st !== subType);
+
+  await setUserSubTypes(userId, newSubTypes, removedBy);
 }

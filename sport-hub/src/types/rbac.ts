@@ -13,8 +13,14 @@
 export type Role = 'user' | 'admin';
 
 /**
- * User sub-types for additional classification (future use)
- * These are NOT used for authorization, only for display/filtering
+ * User sub-types for additional role-based permissions
+ *
+ * Sub-types provide granular permissions beyond the base user/admin roles:
+ * - organizer: Can create events and edit their own submitted events
+ * - judge: Reserved for future judging capabilities
+ * - athlete: Used for filtering (e.g., rankings display)
+ *
+ * Users can have multiple sub-types simultaneously.
  */
 export type UserSubType = 'judge' | 'organizer' | 'athlete';
 
@@ -29,6 +35,7 @@ export type Permission =
   // Event permissions (write operations only - read is public)
   | 'events:create'
   | 'events:edit'
+  | 'events:edit_own'  // Edit only events submitted by the user
   | 'events:delete'
 
   // User management (admin only)
@@ -57,6 +64,22 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'rankings:edit',
     'admin:access',
   ],
+} as const;
+
+/**
+ * Permission groups mapped to each user sub-type
+ *
+ * Sub-type permissions are additive to the base role permissions.
+ * For example, a 'user' with 'organizer' sub-type gets both user permissions
+ * and organizer permissions.
+ */
+export const SUBTYPE_PERMISSIONS: Record<UserSubType, Permission[]> = {
+  organizer: [
+    'events:create',      // Can create new events
+    'events:edit_own',    // Can edit only their own submitted events
+  ],
+  judge: [],              // Reserved for future judging capabilities
+  athlete: [],            // Used for filtering/display only, no special permissions
 } as const;
 
 /**

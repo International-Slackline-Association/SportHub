@@ -17,7 +17,12 @@ export interface UserRecord {
   userId: string;
 
   // User type and data
-  type: 'athlete' | 'official' | 'admin';
+  /**
+   * @deprecated Use userSubTypes instead. This field is maintained for backward compatibility
+   * during migration. Will be removed in future version.
+   * Legacy display classification: 'athlete' | 'official' | 'admin'
+   */
+  type?: 'athlete' | 'official' | 'admin';
   name: string;
   email: string;
   country?: string;
@@ -28,7 +33,17 @@ export interface UserRecord {
   permissions?: string[];           // Granular permissions (future use)
   roleAssignedAt?: string;         // When the role was assigned
   roleAssignedBy?: string;         // Who assigned the role
-  userSubTypes?: UserSubType[];    // Sub-classifications: judge, organizer, athlete
+
+  /**
+   * User sub-types for granular permissions and classification.
+   * - organizer: Can create and edit their own events
+   * - judge: Reserved for future judging capabilities
+   * - athlete: Used for filtering in rankings and displays
+   * Users can have multiple sub-types simultaneously.
+   */
+  userSubTypes?: UserSubType[];
+  subTypesAssignedAt?: string;     // When sub-types were last modified
+  subTypesAssignedBy?: string;     // Who last modified sub-types
 
   // Profile metadata
   lastProfileUpdate?: string;      // When profile was last updated

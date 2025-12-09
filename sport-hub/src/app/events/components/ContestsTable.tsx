@@ -80,11 +80,12 @@ const columns = [
 const SubmitButton = () => {
   const { data: session } = useSession();
 
-  // Only show submit button to admins
-  // TODO: In the future, also check for 'organizer' sub-type for regular users
-  const canSubmitEvents = session?.user?.role === 'admin';
+  // Show submit button to admins and organizers
+  const canSubmit =
+    session?.user?.role === 'admin' ||
+    session?.user?.subTypes?.includes('organizer');
 
-  if (!canSubmitEvents) {
+  if (!canSubmit) {
     return null;
   }
 

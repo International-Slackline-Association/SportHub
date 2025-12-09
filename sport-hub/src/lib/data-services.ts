@@ -79,7 +79,7 @@ export async function getRankingsData(): Promise<AthleteRanking[]> {
     }
 
     const rankings = items
-      .filter((item) => item.type === 'athlete') // Only include athletes
+      .filter((item) => item.userSubTypes?.includes('athlete')) // Only include athletes
       .map((item): AthleteRanking => ({
         userId: item.userId || '',
         name: item.name || '',
