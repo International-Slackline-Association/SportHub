@@ -68,10 +68,13 @@ export async function updateProfile(userId: string, data: ProfileUpdateData) {
       };
     }
 
-    // Update existing user with new data
+    // Update existing user with ONLY allowed fields (prevent role escalation)
     const updatedUser: UserRecord = {
       ...currentUser,
-      ...data,
+      // Explicitly copy only allowed fields - DO NOT use spread operator
+      name: data.name ?? currentUser.name,
+      email: data.email ?? currentUser.email,
+      country: data.country ?? currentUser.country,
       lastProfileUpdate: new Date().toISOString(),
       profileCompleted: true,
     };
