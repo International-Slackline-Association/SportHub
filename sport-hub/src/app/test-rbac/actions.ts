@@ -1,57 +1,41 @@
 'use server';
 
-import { dynamodb } from '@lib/dynamodb';
+import { auth } from '@lib/auth';
+import { updateUserRole as updateUserRoleService } from '@lib/rbac-service';
 import { revalidatePath } from 'next/cache';
-import type { UserRecord } from '@lib/relational-types';
 import type { Role } from '../../types/rbac';
-
-const USERS_TABLE = 'users';
 
 /**
  * Update user role (development only OR admin in production)
- * Test functions are accessible in dev mode OR by admins in production
+ * Wrapper around rbac-service function with additional authorization checks
  */
 export async function updateUserRole(userId: string, newRole: Role) {
-  // Check access (dev mode OR admin)
-  if (process.env.NODE_ENV === 'production') {
-    const { auth } = await import('@lib/auth');
-    const session = await auth();
+  // Check access (dev mode OR admin in production)
+  const session = await auth();
 
-    if (!session || session.user.role !== 'admin') {
-      return {
-        success: false,
-        error: 'Admin access required',
-      };
-    }
+  if (!session) {
+    return {
+      success: false,
+      error: 'Authentication required',
+    };
+  }
+
+  if (process.env.NODE_ENV === 'production' && session.user.role !== 'admin') {
+    return {
+      success: false,
+      error: 'Admin access required in production',
+    };
   }
 
   try {
-    // Get current user data
-    const currentUser = (await dynamodb.getItem(USERS_TABLE, { userId })) as
-      | UserRecord
-      | undefined;
-
-    if (!currentUser) {
-      return {
-        success: false,
-        error: 'User not found in database',
-      };
-    }
-
-    // Update user with new role
-    const updatedUser: UserRecord = {
-      ...currentUser,
-      role: newRole,
-      roleAssignedAt: new Date().toISOString(),
-      roleAssignedBy: 'test-rbac-page',
-    };
-
-    await dynamodb.putItem(USERS_TABLE, updatedUser);
+    // Call centralized rbac-service function
+    // This will verify the assigner has admin role
+    await updateUserRoleService(userId, newRole, session.user.id);
 
     // Revalidate test page to show updated data
     revalidatePath('/test-rbac');
 
-    console.log(`[TEST-RBAC] Updated user ${userId} role to: ${newRole}`);
+    console.log(`[TEST-RBAC] Updated user ${userId} role to: ${newRole} by ${session.user.id}`);
 
     return {
       success: true,
@@ -63,9 +47,10 @@ export async function updateUserRole(userId: string, newRole: Role) {
     };
   } catch (error) {
     console.error('[TEST-RBAC] Error updating user role:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return {
       success: false,
-      error: 'Failed to update role. Check server logs for details.',
+      error: `Failed to update role: ${errorMessage}`,
     };
   }
 }
