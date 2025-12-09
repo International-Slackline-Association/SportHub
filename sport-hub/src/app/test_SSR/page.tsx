@@ -4,6 +4,7 @@ import { deleteUser } from './actions';
 import UserManagementClient from './UserManagementClient';
 import UserForm from './UserForm';
 import Button from '@ui/Button';
+import { requireTestPageAccess } from '@lib/test-page-access';
 
 export const metadata: Metadata = {
   title: 'SportHub - About',
@@ -41,6 +42,8 @@ async function getUsers(): Promise<User[]> {
 }
 
 export default async function AboutPage() {
+  await requireTestPageAccess();
+
   const users = await getUsers();
 
   return (

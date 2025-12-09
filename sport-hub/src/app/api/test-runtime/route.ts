@@ -1,7 +1,16 @@
-import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server';
+import { canAccessTestAPI } from '@lib/test-page-access';
 
 // Simple test endpoint to verify server-side rendering is working
 export async function GET() {
+  const accessCheck = await canAccessTestAPI();
+  if (!accessCheck.allowed) {
+    return NextResponse.json(
+      { error: accessCheck.reason },
+      { status: accessCheck.status }
+    );
+  }
+
   const timestamp = new Date().toISOString()
 
   return NextResponse.json({

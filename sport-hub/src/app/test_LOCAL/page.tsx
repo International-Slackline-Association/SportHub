@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { testHelpers } from '@lib/test-helpers';
 import { getDataStats } from '@lib/seed-data';
 import LocalTestInterface from './LocalTestInterface';
+import { requireTestPageAccess } from '@lib/test-page-access';
 
 export const metadata: Metadata = {
   title: 'SportHub - Local Database Testing',
@@ -11,6 +12,8 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function LocalTestPage() {
+  await requireTestPageAccess();
+
   // Check if test environment is ready
   const envStatus = await testHelpers.isTestEnvironmentReady();
 

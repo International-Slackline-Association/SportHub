@@ -96,6 +96,12 @@ http://localhost:3000/test_LOCAL
 ## Project Structure
 
 ```
+docs/              # Documentation
+├── STATIC-PAGES.md
+├── SYNC-DATABASE.md
+├── SYNC-TOOL.md
+├── CLAUDE.md
+└── etc...
 sport-hub/
 ├── src/
 │   ├── app/           # Next.js App Router pages & API routes
@@ -105,11 +111,6 @@ sport-hub/
 │   ├── types/         # TypeScript type definitions
 │   └── mocks/         # Mock data for development
 ├── scripts/           # Utility scripts (sync, revalidation)
-├── docs/              # Documentation
-│   ├── STATIC-PAGES.md
-│   ├── SYNC-DATABASE.md
-│   ├── SYNC-TOOL.md
-│   └── CLAUDE.md
 └── public/            # Static assets
 ```
 
