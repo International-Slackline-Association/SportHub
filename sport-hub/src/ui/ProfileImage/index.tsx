@@ -24,8 +24,6 @@ export const ProfileImage = ({ src, alt, name }: ProfileImageProps) => {
       <Image
         src={src}
         alt={alt || 'Profile image'}
-        width={225}
-        height={225}
         className={styles.avatarImage}
         onError={(e) => {
           // If image fails to load, hide it and show placeholder
