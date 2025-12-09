@@ -1,10 +1,8 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand, GetCommand, ScanCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
-import { fromEnv } from "@aws-sdk/credential-providers";
 
 // Environment detection for local development
 const isLocal = process.env.DYNAMODB_LOCAL === 'true';
-const isDevelopment = process.env.NODE_ENV === 'development';
 
 // DEBUG: Log environment variables (uncomment when debugging)
 // console.log('🐛 DynamoDB Environment Debug:');
@@ -13,7 +11,6 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 // console.log('  NODE_ENV:', process.env.NODE_ENV);
 // console.log('  AWS_REGION:', process.env.AWS_REGION);
 // console.log('  isLocal:', isLocal);
-// console.log('  isDevelopment:', isDevelopment);
 
 // TODO: Set up AWS Cognito authentication(?)
 // TODO: Set up Amplify role for all server-side AWS actions (like dynamodb access)
@@ -36,9 +33,8 @@ const clientConfig = {
       accessKeyId: "dummy",
       secretAccessKey: "dummy",
     },
-  } : isDevelopment ? {
-    credentials: fromEnv()
   } : {})
+  // AWS SDK will automatically use credentials from environment variables in production
   // logger: console, // TODO: DEBUG ONLY
 };
 
@@ -82,6 +78,7 @@ export const dynamodb = {
     const command = new ScanCommand({
       TableName: getTableName(tableName),
     });
+
     const response = await ddb.send(command);
     return response.Items;
   },

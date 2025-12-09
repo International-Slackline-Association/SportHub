@@ -1,5 +1,7 @@
 // Improved data structure for SportHub with embedded participations
 
+import type { Role, UserSubType } from '../types/rbac';
+
 export interface EventParticipation {
   eventId: string;
   eventName: string;
@@ -21,6 +23,17 @@ export interface UserRecord {
   country?: string;
   createdAt: string;
 
+  // RBAC fields
+  role: Role;                      // Primary role for authorization ('user' | 'admin')
+  permissions?: string[];           // Granular permissions (future use)
+  roleAssignedAt?: string;         // When the role was assigned
+  roleAssignedBy?: string;         // Who assigned the role
+  userSubTypes?: UserSubType[];    // Sub-classifications: judge, organizer, athlete
+
+  // Profile metadata
+  lastProfileUpdate?: string;      // When profile was last updated
+  profileCompleted?: boolean;      // Whether user has completed their profile
+
   // Aggregated statistics
   totalPoints: number;
   contestsParticipated: number;
@@ -29,6 +42,9 @@ export interface UserRecord {
 
   // Embedded event participations (denormalized for read performance)
   eventParticipations: EventParticipation[];
+
+  // Index signature for DynamoDB compatibility
+  [key: string]: unknown;
 }
 
 export interface EventParticipant {

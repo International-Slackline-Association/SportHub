@@ -1,5 +1,8 @@
 import NextAuth from "next-auth"
 import Cognito from "next-auth/providers/cognito"
+import { getUserRole, getUserPermissions } from './rbac-service'
+import { ensureUserExists } from './onboarding'
+import type { Role, Permission } from '../types/rbac'
 
 // Validate required environment variables at runtime (not during build)
 // During build, secrets may not be available yet - they're only needed when server actually runs
@@ -57,6 +60,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.picture = profile.picture ?? undefined
         token.accessToken = account.access_token
         token.idToken = account.id_token
+
+        // Ensure user exists in database (onboarding for new users)
+        if (token.sub && token.email && token.name) {
+          await ensureUserExists(
+            token.sub,
+            token.email as string,
+            token.name as string
+          );
+        }
+
+        // Load user role and permissions from database
+        if (token.sub) {
+          try {
+            const role = await getUserRole(token.sub)
+            const permissions = await getUserPermissions(token.sub)
+            token.role = role
+            token.permissions = permissions
+          } catch (error) {
+            console.error('Error loading user role:', error)
+            // Fail-safe: default to user role
+            token.role = 'user'
+            token.permissions = []
+          }
+        }
       }
       return token
     },
@@ -69,6 +96,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.image = token.picture as string
         session.accessToken = token.accessToken as string
         session.idToken = token.idToken as string
+
+        // Pass role and permissions to session
+        session.user.role = (token.role as Role) || 'user'
+        session.user.permissions = (token.permissions as Permission[]) || []
       }
       return session
     }
@@ -80,6 +111,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  cookies: {
+    sessionToken: {
+      name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
   trustHost: true,
 })
