@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useFormikContext } from 'formik';
 import Image from 'next/image';
-import { EventSubmissionFormValues } from '../types';
+import { EventSubmissionFormValues } from '../../types';
 import { FormikTextField } from '@ui/Form';
 import styles from './styles.module.css'
 
@@ -34,6 +34,7 @@ export default function YouTubePreviewTextField() {
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const videoId = extractYouTubeId(youtubeVideo || '');
+
     if (videoId) {
       // Try high quality thumbnail first, falls back to default if not available
       setThumbnailUrl(`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`);

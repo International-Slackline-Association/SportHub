@@ -20,3 +20,27 @@ export const disciplineOptions: Option[] = [
   { value: "SPEED_SHORT", label: "Speed Short" },
   { value: "TRICKLINE", label: "Trickline" },
 ];
+
+export const ageCategoryOptions: Option[] = [
+  { value: "PROFESSIONAL", label: "Professional" },
+  { value: "AMATEUR", label: "Amateur" },
+  { value: "SENIOR", label: "Senior" },
+  { value: "YOUTH_U16", label: "Youth (U16)" },
+  { value: "YOUTH_U14", label: "Youth (U14)" },
+];
+
+export const judgingSystemOptions: Option[] = [
+  { value: "BCS_SPEEDLINE_SYSTEM", label: "BCS Speedline System" },
+  { value: "LAAX_SYSTEM", label: "Laax System" },
+  { value: "TRANSALP_SPEEDLINE_SYSTEM", label: "Transalp Speedline System" },
+  { value: "RIGGING_MASTERS", label: "Rigging Masters" },
+];
+
+export const contestSizeOptions: Option[] = [
+  { value: "CHALLENGE", label: "Challenge" },
+  { value: "OPEN", label: "Open" },
+  { value: "GRAND_SLAM", label: "Grand Slam" },
+  { value: "MASTERS", label: "Masters" },
+  { value: "WORLD_CUP", label: "World Cup" },
+  { value: "WORLD_CHAMPIONSHIP", label: "World Championship" },
+];
