@@ -9,14 +9,15 @@ import {
   countryCodeOptions,
   disciplineOptions
 } from '@ui/Form';
-import { EventSubmissionFormValues } from '../types';
+import { EventSubmissionFormValues } from '../../types';
 import { cn } from '@utils/cn';
-import styles from './styles.module.css'
+import sharedStyles from '../styles.module.css';
+import styles from '../styles.module.css'
 import { ChevronIcon } from '@ui/Icons';
 import EventAutocomplete from './EventAutocomplete';
-import YouTubePreviewTextField from './YouTubePreviewTextField';
+import YouTubePreviewTextField from './YouTubePreviewTextField'
 import AvatarUploadImageField from './AvatarUploadImageField';
-import CountryAutocomplete from './UserAutocomplete';
+import { ErrorMessage } from '../ErrorMessage';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -35,7 +36,7 @@ const CollapsibleSection = ({
     <section>
       <button
         aria-expanded={isOpen}
-        className={cn(styles.sectionHeader, "cluster", "align-center")}
+        className={cn(sharedStyles.sectionHeader, "cluster", "align-center")}
         onClick={() => setIsOpen(!isOpen)}
         type="button"
       >
@@ -44,7 +45,7 @@ const CollapsibleSection = ({
       </button>
       <div
         className={cn(
-          styles.sectionContent,
+          sharedStyles.sectionContent,
           isOpen ? styles.accordionOpen : styles.accordionClose
         )}
       >
@@ -55,23 +56,25 @@ const CollapsibleSection = ({
 };
 
 export default function EventForm() {
-  const { dirty, errors, isValid, values, } = useFormikContext<EventSubmissionFormValues>();
+  const { errors, values, } = useFormikContext<EventSubmissionFormValues>();
+
+  const isError = Object.keys(errors.event || {}).length > 0;
 
   return (
     <div className={styles.eventForm}>
-      {dirty && !isValid && (
-        <div className={cn(styles.validationHint, styles.error)}>
-          Please fix errors before submitting
-        </div>
+      {isError && (
+        <ErrorMessage>
+          Event form has errors, please review.
+        </ErrorMessage>
       )}
       <section>
-        <div className={cn(styles.formGrid, styles.sectionContent)}>
+        <div className={cn(sharedStyles.formGrid, sharedStyles.sectionContent)}>
           <AvatarUploadImageField />
           <YouTubePreviewTextField />
         </div>
       </section>
       <CollapsibleSection title="General Information" defaultOpen>
-        <div className={styles.formGrid}>
+        <div className={sharedStyles.formGrid}>
           <EventAutocomplete />
           <FormikTextField
             id="event.website"
@@ -100,7 +103,7 @@ export default function EventForm() {
             required
           />
           <FormikCheckboxGroup
-            className={styles.disciplinesCheckboxGroup}
+            className={sharedStyles.formBox}
             direction="row"
             id="event.disciplines"
             label="Disciplines"
@@ -110,7 +113,7 @@ export default function EventForm() {
       </CollapsibleSection>
 
       <CollapsibleSection title="Social Media" defaultOpen>
-        <div className={styles.formGrid}>
+        <div className={sharedStyles.formGrid}>
           <FormikTextField
             id="event.socialMedia.instagram"
             label="Instagram"
@@ -145,7 +148,7 @@ export default function EventForm() {
       {/* Debug info - remove in production */}
       {process.env.NODE_ENV === 'development' && (
         <>
-          <details className={styles.debugInfo}>
+          <details className={sharedStyles.debugInfo}>
             <summary>Form State (Debug)</summary>
             <pre>values.event = {JSON.stringify(values.event, null, 2)}</pre>
             <pre>errors.event = {JSON.stringify(errors.event, null, 2)}</pre>

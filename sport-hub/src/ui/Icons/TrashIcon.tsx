@@ -1,12 +1,7 @@
 import { cn } from "@utils/cn";
 import styles from "./styles.module.css";
 
-type TrashIconProps = {
-  color?: "dark" | "light";
-  size?: "small" | "medium" | "large";
-}
-
-export const TrashIcon = ({ color = "light", size = "medium" }: TrashIconProps) => (
+export const TrashIcon = () => (
   <svg
     className={cn(
       styles.icon,

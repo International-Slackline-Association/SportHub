@@ -3,15 +3,23 @@
 import { useState, useEffect, useRef } from 'react';
 import { FormikFieldProps, FormikFormField, Option } from ".";
 import { BaseFormFieldProps } from '@ui/Form';
-import { ErrorMessage, Field, useFormikContext } from 'formik';
+import { Field } from 'formik';
 import styles from './styles.module.css';
 import React from 'react';
 
 interface FormikAutocompleteProps extends BaseFormFieldProps<HTMLInputElement> {
+  hideErrorMessage?: boolean;
   isError?: boolean;
   isLoading?: boolean;
-  onSelectOption?: (value: string) => void;
   options: Option[];
+  onSelectOption?: (option: Option) => void;
+  // If true (default), the field value is updated on select using mapOptionToValue
+  setFieldOnSelect?: boolean;
+  // Maps an Option to the value stored in the form field. Defaults to option.value
+  mapOptionToValue?: (option: Option) => unknown;
+  // Computes the input display string from the current field value
+  // Defaults to: match option by value -> label; else if string, use it; otherwise empty
+  getDisplayValue?: (value: unknown, options: Option[]) => string;
 }
 
 const highlightMatch = (text: string, query: string) => {
@@ -26,17 +34,25 @@ const highlightMatch = (text: string, query: string) => {
   );
 };
 
-export default function FormikAutocomplete<FormValues>({
+/**
+ * Autocomplete connected to Formik form state.
+ * Capable of handling string or complex field value types.
+ */
+export default function FormikAutocomplete({
   className,
+  hideErrorMessage = false,
   id,
   isError = false,
   isLoading = false,
   label,
-  onSelectOption,
   options,
+  onSelectOption,
+  setFieldOnSelect = true,
+  mapOptionToValue,
+  getDisplayValue,
+  required,
   ...inputProps
 }: FormikAutocompleteProps) {
-  const { setFieldValue } = useFormikContext<FormValues>();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -55,28 +71,48 @@ export default function FormikAutocomplete<FormValues>({
     <div className={styles.autocompleteContainer} ref={containerRef}>
       <FormikFormField className={className} id={id} label={label}>
         <Field name={id}>
-          {({ field, meta }: FormikFieldProps<string>) => {
+          {({ field, meta, form }: FormikFieldProps<unknown>) => {
+            const toFormValue = mapOptionToValue || ((opt: Option) => opt.value);
+            const toDisplay =
+              getDisplayValue ||
+              ((value: unknown, opts: Option[]) => {
+                const match = opts.find((o) => o.value === value);
+                if (match) return match.label;
+                return typeof value === 'string' ? value : '';
+              });
+
+            const inputText = toDisplay(field.value, options);
             const filteredOptions = options.filter(({ label }) =>
-              label.toLowerCase().includes((field.value || "").toLowerCase())
+              label.toLowerCase().includes((inputText || "").toLowerCase())
             );
-            const selection = options.find(({ value }) => value === field.value);
+            const hasError = isError || (meta.touched && Boolean(meta.error));
+            const errorText = typeof meta.error === 'string' ? meta.error : undefined;
+
             return (
               <div className={styles.inputContainer}>
                 <input
-                  {...field}
-                  {...inputProps}
-                  className={`${styles.input} ${meta.touched && meta.error ? styles.error : ''}`}
-                  id={id}
+                  // Keep Formik wiring for name/id, but control value via computed display
                   name={id}
+                  {...inputProps}
+                  className={`
+                    ${styles.input}
+                    ${meta.touched && meta.error && !hideErrorMessage ? styles.error : ''}
+                  `}
+                  id={id}
                   type="text"
-                  value={selection ? selection.label : field.value || ""}
+                  value={inputText}
+                  onChange={(e) => {
+                    // Let users type to filter; store the raw text in the field for simple string flows
+                    form.setFieldValue(id, e.target.value);
+                    form.setFieldTouched(id, true, false);
+                  }}
                   onFocus={() => setIsOpen(true)}
                 />
                 {isOpen && filteredOptions.length > 0 && (
                   <div className={styles.dropdown}>
                     <ul className={styles.dropdownList}>
                       {isLoading && <div className={styles.dropdownMessage}>Loading…</div>}
-                      {isError && <div className={styles.dropdownMessage}>Error loading options</div>}
+                      {hasError && <div className={styles.dropdownMessage}>Error loading options</div>}
                       {!isLoading && !isError && (
                         filteredOptions.map(({ label, value }: Option) => (
                           <React.Fragment key={value}>
@@ -84,13 +120,18 @@ export default function FormikAutocomplete<FormValues>({
                               <button
                                 className={styles.dropdownButton}
                                 onClick={() => {
-                                  setFieldValue(id || "", value);
+                                  const option = { label, value };
+                                  if (setFieldOnSelect) {
+                                    const newValue = toFormValue(option);
+                                    form.setFieldValue(id, newValue, true);
+                                    form.setFieldTouched(id, true, false);
+                                  }
+                                  onSelectOption?.(option);
                                   setIsOpen(false);
-                                  onSelectOption?.(value);
                                 }}
                                 type="button"
                               >
-                                {highlightMatch(label, field.value)}
+                                {highlightMatch(label, inputText)}
                               </button>
                             </li>
                           </React.Fragment>
@@ -99,7 +140,11 @@ export default function FormikAutocomplete<FormValues>({
                     </ul>
                   </div>
                 )}
-                <ErrorMessage name={id || ""} component="div" className={styles.errorMessage} />
+                {!hideErrorMessage && hasError && errorText && (
+                  <div className={styles.errorMessage}>
+                    {errorText}
+                  </div>
+                )}
               </div>
             );
           }}
