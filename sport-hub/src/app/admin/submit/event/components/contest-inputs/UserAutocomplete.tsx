@@ -8,12 +8,6 @@ import FormikAutocomplete from '@ui/Form/FormikAutocomplete';
 import { UserRecord } from '@lib/relational-types';
 import { Option } from '@ui/Form';
 import { ErrorMessage } from '../ErrorMessage';
-import Spinner from '@ui/Spinner';
-
-type UserField = {
-  id: string;
-  name?: string;
-}
 
 type Props = { id: string; onSelectOption?: (option: Option) => void };
 
@@ -32,7 +26,7 @@ export default function UserAutocomplete<TFormValues>({
     return () => clearTimeout(t);
   }, [current]);
 
-  const { data: users, isLoading, isError, error } = useQuery({
+  const { data: users, isLoading, isError } = useQuery({
     queryKey: ['users'],
     queryFn: async () => (await fetch('/api/users')).json(),
     // Enable only when user has typed at least 3 chars

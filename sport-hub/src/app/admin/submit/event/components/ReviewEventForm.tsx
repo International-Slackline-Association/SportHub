@@ -1,12 +1,12 @@
 import { useFormikContext } from "formik";
-import { EventSubmissionFormValues } from "../types";
+import { ContestFormValues, EventSubmissionFormValues } from "../types";
 import { EventDetailsCard } from "@ui/EventCard";
 
 export const ReviewEventForm = () => {
   const { values } = useFormikContext<EventSubmissionFormValues>();
 
-  const totalPrize = (values.contests || []).reduce((sum, c: any) => sum + (Number(c?.totalPrizeValue) || 0), 0);
-  const participants = (values.contests || []).reduce((sum, c: any) => sum + ((c?.results?.length) || 0), 0);
+  const totalPrize = (values.contests || []).reduce((sum, c: ContestFormValues) => sum + (Number(c?.totalPrizeValue) || 0), 0);
+  const participants = (values.contests || []).reduce((sum, c: ContestFormValues) => sum + ((c?.results?.length) || 0), 0);
   const discipline = Array.isArray(values.event?.disciplines)
     ? values.event.disciplines
     : values.event?.disciplines ?? [];
@@ -17,13 +17,13 @@ export const ReviewEventForm = () => {
       <EventDetailsCard
         title="Event Details"
         event={{
-          date: values.event?.date as any,
+          date: values.event?.date,
           city: values.event?.city,
           country: values.event?.country,
-          disciplines: discipline as any,
+          disciplines: discipline,
           prize: totalPrize || undefined,
           // synthesize a list for count-only case
-          athletes: Array.from({ length: participants || 0 }) as any[],
+          athletes: Array.from({ length: participants || 0 }),
           verified: false,
         }}
       />
