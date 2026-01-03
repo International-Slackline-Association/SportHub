@@ -6,23 +6,29 @@
 
 import { dynamodb } from './dynamodb';
 import type { UserRecord } from './relational-types';
+import { updateReferenceUser } from './reference-db-service';
 
 const USERS_TABLE = 'users';
 
 /**
  * User profile update data (allowed fields only)
+ * These fields are stored in the reference DB (isa-users table)
  */
 export interface UserProfileUpdate {
   name?: string;
-  email?: string;
+  surname?: string;
+  phoneNumber?: string;
+  gender?: string;
   country?: string;
-  // Add other editable fields as needed
+  city?: string;
+  birthDate?: string;
+  email?: string;
 }
 
 /**
  * Get user by ID
  *
- * @param userId - Cognito user ID
+ * @param userId - Custom user ID from reference DB (e.g., "ISA_FBE8B254")
  * @returns User record or null if not found
  */
 export async function getUser(userId: string): Promise<UserRecord | null> {
@@ -37,32 +43,32 @@ export async function getUser(userId: string): Promise<UserRecord | null> {
 
 /**
  * Update user profile (only allowed fields)
+ * Updates identity data in reference DB (isa-users table)
  *
- * @param userId - User ID to update
+ * @param userId - Custom user ID (e.g., "ISA_FBE8B254")
  * @param updates - Fields to update
- * @returns Updated user record
+ * @returns Updated user record from app DB
  */
 export async function updateUserProfile(
   userId: string,
   updates: UserProfileUpdate
 ): Promise<UserRecord> {
   try {
-    // Get existing user
+    // Get existing user from app DB
     const existingUser = await getUser(userId);
     if (!existingUser) {
       throw new Error('User not found');
     }
 
-    // Merge updates (only allow specific fields)
+    // Update identity data in reference DB
+    await updateReferenceUser(userId, updates);
+
+    // Update app DB metadata
     const updatedUser: UserRecord = {
       ...existingUser,
-      ...(updates.name && { name: updates.name }),
-      ...(updates.email && { email: updates.email }),
-      ...(updates.country && { country: updates.country }),
       lastProfileUpdate: new Date().toISOString(),
     };
 
-    // Save to database
     await dynamodb.putItem(USERS_TABLE, updatedUser);
 
     return updatedUser;
@@ -74,34 +80,30 @@ export async function updateUserProfile(
 
 /**
  * Create new user (for onboarding)
+ * Only stores app-specific data. Identity data is in reference DB.
  *
- * @param cognitoUserId - Cognito user ID (sub claim)
- * @param email - User email
- * @param name - User name
+ * @param customUserId - Custom user ID from reference DB (e.g., "ISA_FBE8B254")
  * @returns Newly created user record
  */
 export async function createUser(
-  cognitoUserId: string,
-  email: string,
-  name: string
+  customUserId: string
 ): Promise<UserRecord> {
   const newUser: UserRecord = {
-    userId: cognitoUserId,
-    type: 'athlete',      // Default type
-    role: 'user',         // Default role
-    name,
-    email,
+    userId: customUserId,  // Custom ID from reference DB
+    role: 'user',          // Default role
+    userSubTypes: [],      // Sub-types (athlete, judge, organizer) - can be assigned later
+    primarySubType: 'athlete',  // Default primary type for GSI
     createdAt: new Date().toISOString(),
     totalPoints: 0,
     contestsParticipated: 0,
-    eventParticipations: [],
+    contestParticipations: [],  // RENAMED from eventParticipations
     profileCompleted: false,
     roleAssignedAt: new Date().toISOString(),
     roleAssignedBy: 'system',
   };
 
   await dynamodb.putItem(USERS_TABLE, newUser);
-  console.log(`Created new user: ${cognitoUserId}`);
+  console.log(`Created new user: ${customUserId}`);
   return newUser;
 }
 
