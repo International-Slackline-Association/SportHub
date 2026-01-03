@@ -1,5 +1,5 @@
 import React, { PropsWithChildren, ReactNode } from 'react';
-import { Field, ErrorMessage, useFormikContext, FieldInputProps, FieldMetaProps, FormikHelpers } from 'formik';
+import { Field, useFormikContext, FieldInputProps, FieldMetaProps, FormikHelpers } from 'formik';
 import styles from './styles.module.css';
 import Button from '@ui/Button';
 import Spinner from '@ui/Spinner';
@@ -63,6 +63,7 @@ export const FormikTextField = ({
   className,
   id,
   label,
+  required,
   ...inputProps
 }: TextFieldProps) => {
   return (
@@ -145,6 +146,7 @@ export const FormikSelectField = ({
   label,
   options,
   placeholder = "Select an option",
+  required,
   ...selectProps
 }: SelectFieldProps) => {
   return (
@@ -186,6 +188,7 @@ export const FormikCheckboxField = ({
   className,
   id,
   label,
+  required,
 }: PropsWithChildren<BaseFormFieldProps<HTMLInputElement>>) => (
   <FormikFormField
     caption={caption}
@@ -223,6 +226,7 @@ export const FormikCheckboxGroup = ({
   id,
   label,
   options,
+  required,
 }: FormikCheckboxGroupProps) => (
   <FormikFormField
     caption={caption}
@@ -288,6 +292,7 @@ export const FormikRadioGroup = ({
   id,
   label,
   options,
+  required
 }: RadioGroupProps) => (
   <FormikFormField
     caption={caption}

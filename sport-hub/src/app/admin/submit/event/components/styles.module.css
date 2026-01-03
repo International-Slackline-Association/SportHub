@@ -1,9 +1,3 @@
-.formWrapper {
-  display: flex;
-  flex-direction: column;
-  /* gap: 32px; */
-  padding: 24px 16px;
-}
 
 .borderBottom {
   border-bottom: 2px solid #ECEEF3; /* Neutral/100 */
@@ -17,6 +11,16 @@
   display: flex;
   justify-content: flex-end;
   gap: 16px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.formWrapper {
+  padding: 16px;
 }
 
 .sectionHeader {
@@ -39,19 +43,6 @@
   background: var(--color-neutral-50);
   border-radius: 8px;
   padding: 24px 20px;
-}
-
-.formGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-}
-
-.disciplinesCheckboxGroup {
-  border-radius: 8px;
-  border: 1px solid var(--color-neutral-300);
-  background: #FFF;
-  padding: 16px;
 }
 
 .errorSmall {
@@ -124,6 +115,10 @@
     gap: 20px;
   }
 
+  .formWrapper {
+    width: 600px;
+  }
+
   .sectionContent {
     padding: 24px;
   }
@@ -134,22 +129,8 @@
   .eventForm {
     gap: 32px;
   }
-}
 
-/* Contest form styles */
-
-/* Desktop breakpoint - 40rem (640px) */
-@media (min-width: 40rem) {
   .formWrapper {
-    padding: 32px 24px;
-  }
-
-}
-
-/* Large desktop - 64rem (1024px) */
-@media (min-width: 64rem) {
-  .formWrapper {
-    padding: 48px 32px;
-    gap: 40px;
+    width: 800px;
   }
 }

@@ -2,14 +2,15 @@
 
 import { FieldArray, getIn, useFormikContext } from 'formik';
 import { EventSubmissionFormValues, initialContestValues } from '../../types';
-import styles from '../styles.module.css';
+import sharedStyles from '../styles.module.css';
 import Button from '@ui/Button';
 import { TabGroup } from '@ui/Tab';
 import { useState } from 'react';
 import ContestForm from './ContestForm';
+import { cn } from '@utils/cn';
 
 export default function TabbedContestForms() {
-  const { errors, touched, values: { contests }, validateField, setErrors } = useFormikContext<EventSubmissionFormValues>();
+  const { errors, touched, values: { contests }, validateField } = useFormikContext<EventSubmissionFormValues>();
   const [activeContestIdx, setActiveContestIdx] = useState((contests?.length || 0) - 1);
 
   const tabs = contests.map((_, idx) => ({
@@ -22,7 +23,7 @@ export default function TabbedContestForms() {
   const isCurrentContestTouched = getIn(touched, `contests[${activeContestIdx}]`);
 
   return (
-    <div className={styles.eventForm}>
+    <div>
       <FieldArray name="contests" validateOnChange={false}>
         {({ push, remove }) => {
           const contestKey = `contests[${activeContestIdx}]`;
@@ -49,8 +50,12 @@ export default function TabbedContestForms() {
 
           return (
             <>
-              <div className="cluster justify-between items-center">
-                {tabs.length === 0 && ( <div className="pr-4">No contests. Click "Add Contest" to create one.</div> )}
+              <div className={cn(tabs.length === 0 && sharedStyles.sectionContent, "cluster", "justify-between", "items-center")}>
+                {tabs.length === 0 && (
+                  <div>
+                    No contests. Click &quot;Add Contest&quot; to create one.
+                  </div>
+                )}
                 <TabGroup
                   activeTab={String(activeContestIdx)}
                   onTabChange={(newTabId) => setActiveContestIdx(Number(newTabId))}
@@ -82,7 +87,7 @@ export default function TabbedContestForms() {
 
       {/* Debug info - remove in production */}
       {process.env.NODE_ENV === 'development' && (
-        <details className={styles.debugInfo}>
+        <details className={sharedStyles.debugInfo}>
           <summary>Contest Form State (Debug)</summary>
           <pre>contests = {JSON.stringify(contests, null, 2)}</pre>
           <pre>errors = {JSON.stringify(errors.contests, null, 2)}</pre>

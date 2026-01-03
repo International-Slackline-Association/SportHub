@@ -82,12 +82,7 @@ console.log("debounced", debounced);
 
         return "";
       }}
-      label={
-        <div>
-          {isLoading && <Spinner size="small" className="inline-block mr-2" />}
-          Name*
-        </div>
-      }
+      label="Name"
       mapOptionToValue={(o) => o.label}
       options={userOptions}
       onSelectOption={onSelectOption}

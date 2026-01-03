@@ -8,6 +8,7 @@ import React from 'react';
 import FormikAutocomplete from '@ui/Form/FormikAutocomplete';
 import { EventRecord } from '@lib/relational-types';
 import { Option } from '@ui/Form';
+import { extractYouTubeId } from './YouTubePreviewTextField';
 
 export default function EventAutocomplete() {
   const { values, setTouched, setValues, setErrors } = useFormikContext<EventSubmissionFormValues>();
@@ -31,7 +32,8 @@ export default function EventAutocomplete() {
 
   const updateFormWithSelectedEvent = ({ value }: Option) => {
     const event = events.find(({ eventId }: EventRecord) => eventId === value);
-    setTouched({
+
+    const nextTouchState = {
       event: {
         name: true,
         city: true,
@@ -46,12 +48,13 @@ export default function EventAutocomplete() {
           youtube: true,
         },
         disciplines: true,
-        avatarUrl: true,
+        profileUrl: true,
         thumbnailUrl: true,
       },
       contests: [...values.contests.map(() => ({}))],
-    }, false);
-    setValues({
+    };
+
+    const nextFormState = {
       event: {
         name: event.name,
         city: event.city,
@@ -60,11 +63,14 @@ export default function EventAutocomplete() {
         website: event.website,
         socialMedia: event.socialMedia || {},
         disciplines: event.disciplines || [],
-        avatarUrl: event.avatarUrl,
-        thumbnailUrl: event.thumbnailUrl
+        profileUrl: event.profileUrl,
+        thumbnailUrl: event.thumbnailUrl,
       },
       contests: values.contests,
-    }, false);
+    };
+
+    setTouched(nextTouchState, false);
+    setValues(nextFormState, false);
     setErrors({});
   };
 

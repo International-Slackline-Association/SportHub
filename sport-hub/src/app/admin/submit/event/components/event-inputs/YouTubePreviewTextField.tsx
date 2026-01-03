@@ -28,18 +28,24 @@ export function extractYouTubeId(url: string): string | null {
 }
 
 export default function YouTubePreviewTextField() {
-  const { values, handleBlur: formikHandleBlur } = useFormikContext<EventSubmissionFormValues>();
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(values.event.thumbnailUrl || "");
-  const youtubeVideo = values.event.thumbnailUrl;
+  const {
+    values: {
+      event: {
+        thumbnailUrl
+      },
+    },
+    handleBlur: formikHandleBlur,
+  } = useFormikContext<EventSubmissionFormValues>();
+
+  const [displayUrl, setDisplayUrl] = useState(thumbnailUrl || "");
+  const youtubeId = extractYouTubeId(displayUrl || '');
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const videoId = extractYouTubeId(youtubeVideo || '');
-
-    if (videoId) {
+    if (youtubeId) {
       // Try high quality thumbnail first, falls back to default if not available
-      setThumbnailUrl(`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`);
+      setDisplayUrl(`https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`);
     } else {
-      setThumbnailUrl(null);
+      setDisplayUrl("");
     }
     formikHandleBlur(e);
   };
@@ -55,9 +61,8 @@ export default function YouTubePreviewTextField() {
             height={720}
             onError={(e) => {
               // Fallback to standard quality thumbnail if maxres fails
-              const videoId = extractYouTubeId(youtubeVideo || '');
-              if (videoId && e.currentTarget.src.includes('maxresdefault')) {
-                e.currentTarget.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+              if (youtubeId && e.currentTarget.src.includes('maxresdefault')) {
+                e.currentTarget.src = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
               }
             }}
             src={thumbnailUrl}

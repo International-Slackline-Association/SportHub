@@ -55,6 +55,10 @@ type Discipline = "RIGGING" | "TRICKLINE" | "FREESTYLE_HIGHLINE" | "SPEED_SHORT"
 
 type Role = "ATHLETE" | "JUDGE" | "ISA_VERIFIED" | "ORGANIZER";
 
-type Gender = "FEMALE" | "MALE" | "NON_BINARY" | "OTHER";
+type Gender = "FEMALE" | "MALE" | "MIXED" | "NON_BINARY" | "OTHER";
 
 type AgeCategory = "PROFESSIONAL" | "AMATEUR" | "SENIOR" | "YOUTH_U16" | "YOUTH_U14";
+
+type JudgingSystem = "ISA_FREESTYLE" | "ISA_SPEED" | "OTHER";
+
+type ContestSize = "LOCAL" | "NATIONAL" | "INTERNATIONAL" | "WORLD_CHAMPIONSHIP";

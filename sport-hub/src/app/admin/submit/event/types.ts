@@ -5,7 +5,7 @@ import { Option } from '@ui/Form';
 // Combined form values (parent level)
 export interface EventSubmissionFormValues {
   event: EventFormValues;
-  // TODO: Add contests: ContestFormValues[];
+  contests: ContestFormValues[];
 }
 
 /*******************************************************************************
@@ -13,7 +13,7 @@ export interface EventSubmissionFormValues {
  ******************************************************************************/
 export interface EventFormValues {
   // Assets
-  avatarUrl?: string;
+  profileUrl?: string;
   thumbnailUrl?: string;
 
   // General Information
@@ -43,24 +43,15 @@ const dateTransform = (value: unknown, originalValue: unknown) => {
   return new Date(originalValue + 'T00:00:00')
 }
 
+const URL_REGEX = /((https?):\/\/)?(www.)?[a-z0-9]+(\.[a-z]{2,}){1,3}(#?\/?[a-zA-Z0-9#]+)*\/?(\?[a-zA-Z0-9-_]+=[a-zA-Z0-9-%]+&?)?$/;
+const SOCIAL_MEDIA_REGEX = /^@?[\w](?!.*?\.{2})[\w.]{0,28}[\w]$/;
+
 export const eventValidationSchema = Yup.object({
   // Assets
-  avatarUrl: Yup.string()
-    .url('Please enter a valid URL')
+  profileUrl: Yup.string()
     .nullable(),
   thumbnailUrl: Yup.string()
-    .nullable()
-    .test(
-      'is-youtube-url',
-      'Please enter a valid YouTube URL (e.g., youtube.com/watch?v=... or youtu.be/...)',
-      (value) => {
-        console.log("test", value);
-        // Return true for null/undefined/empty string (nullable field)
-        if (!value || value.trim() === '') return true;
-        const youtubeId = extractYouTubeId(value);
-        return youtubeId !== null;
-      }
-    ),
+    .nullable(),
 
   // General Info
   name: Yup.string()
@@ -85,25 +76,19 @@ export const eventValidationSchema = Yup.object({
   // Social Media
   socialMedia: Yup.object().shape({
     facebook: Yup.string()
-      .url('Please enter a valid Facebook URL')
+      .matches(URL_REGEX, 'Please enter a valid URL')
       .nullable(),
     instagram: Yup.string()
-      .matches(
-        /^@?[\w](?!.*?\.{2})[\w.]{0,28}[\w]$/,
-        'Please enter a valid Instagram handle'
-      )
+      .matches(SOCIAL_MEDIA_REGEX, 'Please enter a valid Instagram handle')
       .nullable(),
     tiktok: Yup.string()
-      .matches(
-        /^@?[\w](?!.*?\.{2})[\w.]{0,28}[\w]$/,
-        'Please enter a valid TikTok handle'
-      )
+      .matches(SOCIAL_MEDIA_REGEX, 'Please enter a valid TikTok handle')
       .nullable(),
     twitch: Yup.string()
-      .url('Please enter a valid Twitch URL')
+      .matches(URL_REGEX, 'Please enter a valid URL')
       .nullable(),
     youtube: Yup.string()
-      .url('Please enter a valid YouTube URL')
+      .matches(URL_REGEX, 'Please enter a valid URL')
       .nullable(),
   }),
 });
@@ -173,6 +158,7 @@ export const contestValidationSchema = Yup.object({
         return allIds.length === uniqueIds.size;
       }
     )
+    .min(1, 'Please add at least one judge')
     .required("Contest is missing judges"),
   results: Yup.array()
     .of(
@@ -180,10 +166,9 @@ export const contestValidationSchema = Yup.object({
         rank: Yup.number()
           .min(1, 'Rank must be at least 1')
           .required('Rank is required'),
+        // Not required because we may have unregistered participants
         id: Yup.string()
-          .trim()
-          .min(1, 'Please enter an athlete ID')
-          .required('ID is required'),
+          .trim(),
         name: Yup.string()
           .trim()
           .min(1, 'Please enter a name')
@@ -196,6 +181,7 @@ export const contestValidationSchema = Yup.object({
           .nullable(),
       })
     )
+    .min(1, 'Please add at least one result entry')
     .required("Contest is missing results"),
 });
 
