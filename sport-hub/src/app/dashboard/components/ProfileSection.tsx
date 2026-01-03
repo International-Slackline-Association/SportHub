@@ -103,7 +103,7 @@ export default function ProfileSection({
             </dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-gray-500">User ID</dt>
+            <dt className="text-sm font-medium text-gray-500">Cognito User ID</dt>
             <dd className="mt-1 text-xs text-gray-900 font-mono break-all">{userId}</dd>
           </div>
         </dl>
