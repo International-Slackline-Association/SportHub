@@ -50,7 +50,7 @@ export default async function UnauthorizedPage({
           {session && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <p className="text-sm text-blue-800">
-                You are currently signed in as: <strong>{session.user.name}</strong>
+                You are currently signed in as: <strong>{session.user.email}</strong>
               </p>
               <p className="text-sm text-blue-600">
                 Role: <code className="bg-blue-100 px-2 py-1 rounded">{session.user.role}</code>
