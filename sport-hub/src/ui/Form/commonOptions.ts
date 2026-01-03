@@ -1,16 +1,21 @@
 import { Option } from "@ui/Form";
-import { COUNTRIES } from "@utils/countries";
+import { COUNTRIES } from "@utils/countries"
 
 export const countryCodeOptions: Option[] = COUNTRIES.map(({ name, code }) => ({
   label: name,
   value: code,
 }));
 
-export const genderOptions: Option[] = [
+export const userGenderOptions: Option[] = [
   { value: "MALE", label: "Male" },
   { value: "FEMALE", label: "Female" },
   { value: "NON_BINARY", label: "Non-Binary" },
   { value: "OTHER", label: "Other" },
+];
+
+export const eventGenderOptions: Option[] = [
+  { value: "MALE", label: "Male" },
+  { value: "FEMALE", label: "Female" },
 ];
 
 export const disciplineOptions: Option[] = [

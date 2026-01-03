@@ -6,6 +6,7 @@ import { BaseFormFieldProps } from '@ui/Form';
 import { Field } from 'formik';
 import styles from './styles.module.css';
 import React from 'react';
+import Spinner from '@ui/Spinner';
 
 interface FormikAutocompleteProps extends BaseFormFieldProps<HTMLInputElement> {
   hideErrorMessage?: boolean;
@@ -69,7 +70,17 @@ export default function FormikAutocomplete({
 
   return (
     <div className={styles.autocompleteContainer} ref={containerRef}>
-      <FormikFormField className={className} id={id} label={label}>
+      <FormikFormField
+        className={className}
+        id={id}
+        label={
+          <div>
+            {isLoading && <Spinner size="small" className="inline-block mr-2" />}
+            {label}
+          </div>
+        }
+        required={required}
+      >
         <Field name={id}>
           {({ field, meta, form }: FormikFieldProps<unknown>) => {
             const toFormValue = mapOptionToValue || ((opt: Option) => opt.value);
@@ -112,7 +123,7 @@ export default function FormikAutocomplete({
                   <div className={styles.dropdown}>
                     <ul className={styles.dropdownList}>
                       {isLoading && <div className={styles.dropdownMessage}>Loading…</div>}
-                      {hasError && <div className={styles.dropdownMessage}>Error loading options</div>}
+                      {isError && <div className={styles.dropdownMessage}>Error loading options</div>}
                       {!isLoading && !isError && (
                         filteredOptions.map(({ label, value }: Option) => (
                           <React.Fragment key={value}>

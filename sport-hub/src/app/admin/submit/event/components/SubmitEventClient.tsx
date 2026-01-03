@@ -1,5 +1,4 @@
 'use client';
-import * as Yup from 'yup';
 import { useState } from 'react';
 import { Formik, Form, getIn } from 'formik';
 import { TabGroup } from '@ui/Tab';
@@ -11,7 +10,7 @@ import {
   EventSubmissionFormValues,
   ContestFormValues,
 } from '../types';
-import styles from '../styles.module.css';
+import styles from './styles.module.css';
 import { saveEvent } from '../actions';
 import { cn } from '@utils/cn';
 import { FormikSubmitButton } from '@ui/Form';
@@ -52,6 +51,7 @@ export default function SubmitEventClient() {
       validationSchema={eventSubmissionValidationSchema}
       validateOnChange
       validateOnBlur={false}
+      onSubmit={handleSubmit}
     >
       {({ errors, isValid, setFieldTouched, validateForm, values }) => {
         const isErrorEvent = Object.keys(errors?.event || {}).length > 0;
@@ -64,11 +64,11 @@ export default function SubmitEventClient() {
         ];
 
         return (
-          <Form className={styles.formWrapper}>
+          <Form className={cn(styles.formWrapper, "stack")}>
             {/* Form Header */}
             <TabGroup
               activeTab={activeTab}
-              className={styles.borderBottom}
+              className={cn(styles.borderBottom, "mb-2")}
               onTabChange={(tabId) => {
                 const newStep = stepOrder.indexOf(tabId as Step);
                 setCurrentStep(newStep);

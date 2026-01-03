@@ -16,7 +16,7 @@ import styles from '../styles.module.css'
 import { ChevronIcon } from '@ui/Icons';
 import EventAutocomplete from './EventAutocomplete';
 import YouTubePreviewTextField from './YouTubePreviewTextField'
-import AvatarUploadImageField from './AvatarUploadImageField';
+import FileInputField from './FileInputField';
 import { ErrorMessage } from '../ErrorMessage';
 
 interface CollapsibleSectionProps {
@@ -69,7 +69,7 @@ export default function EventForm() {
       )}
       <section>
         <div className={cn(sharedStyles.formGrid, sharedStyles.sectionContent)}>
-          <AvatarUploadImageField />
+          <FileInputField />
           <YouTubePreviewTextField />
         </div>
       </section>

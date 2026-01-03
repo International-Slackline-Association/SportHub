@@ -11,7 +11,6 @@ import SortableList from '@ui/SortableList';
 import { Option } from '@ui/Form';
 
 const initialAthleteValues = {
-  rank: 0,
   athleteId: "",
   athleteName: "",
   isaPoints: 0,
@@ -32,10 +31,10 @@ const AthleteListItem = ({ athleteFormKey, onDelete }: AthleteListItemProps) => 
   const { setFieldTouched, setFieldValue, values } = useFormikContext<EventSubmissionFormValues>();
 
   return (
-    <div className={cn("cluster", "items-baseline", "gap-4")}>
+    <div className={cn("cluster", "items-end", "gap-4")}>
       <FormikNumberField id={`${athleteFormKey}.rank`} label="Rank" min={1} />
       <UserAutocomplete
-        id={`${athleteFormKey}.athleteName`}
+        id={`${athleteFormKey}.name`}
         onSelectOption={(option: Option) => {
           const athlete = getIn(values, athleteFormKey) || {};
           setFieldValue(athleteFormKey, {
@@ -93,7 +92,10 @@ export const Results = ({ contestKey, results }: Props) => {
             <Button
               className="w-fit"
               onClick={() => {
-                push(initialAthleteValues);
+                push({
+                  ...initialAthleteValues,
+                  rank: results.length + 1
+                });
                 setFieldTouched(`${contestKey}.results`, true, false);
               }}
               type="button"
