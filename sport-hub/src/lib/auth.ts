@@ -1,7 +1,8 @@
 import NextAuth from "next-auth"
 import Cognito from "next-auth/providers/cognito"
-import { getUserRole, getUserPermissions } from './rbac-service'
+import { getUserRole, getUserPermissions, getUserSubTypes } from './rbac-service'
 import { ensureUserExists } from './onboarding'
+import { getReferenceUserById } from './reference-db-service'
 import type { Role, Permission } from '../types/rbac'
 
 // Validate required environment variables at runtime (not during build)
@@ -56,17 +57,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (account && profile) {
         token.sub = profile.sub ?? undefined
         token.email = profile.email ?? undefined
-        token.name = profile.name ?? undefined
-        token.picture = profile.picture ?? undefined
         token.accessToken = account.access_token
         token.idToken = account.id_token
 
         // Ensure user exists in database (onboarding for new users)
-        if (token.sub && token.email && token.name) {
+        // Note: Using email as name since profile scope is not available from Cognito
+        if (token.sub && token.email) {
           await ensureUserExists(
             token.sub,
             token.email as string,
-            token.name as string
+            token.email as string  // Use email as name fallback
           );
         }
 
@@ -92,8 +92,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token) {
         session.user.id = token.sub as string
         session.user.email = token.email as string
-        session.user.name = token.name as string
-        session.user.image = token.picture as string
+        // Note: name and image not available without profile scope from Cognito
         session.accessToken = token.accessToken as string
         session.idToken = token.idToken as string
 
