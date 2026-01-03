@@ -1,6 +1,44 @@
-import contestsData from '@mocks/contests_with_athletes.json';
+/**
+ * Seed Data Transformer - ISA-Rankings to SportHub Schema
+ *
+ * Transforms athlete_details.json and contests_with_real_userids.json
+ * into the new hierarchical schema with composite sort keys.
+ */
 
-export interface Contest {
+import athleteDetailsData from '@mocks/athlete_details.json';
+import contestsData from '@mocks/contests_with_real_userids.json';
+import type {
+  UserProfileRecord,
+  AthleteRankingRecord,
+  AthleteParticipationRecord,
+  EventMetadataRecord,
+  ContestRecord,
+  ContestParticipant
+} from './relational-types';
+
+// ============================================================================
+// TYPE DEFINITIONS FOR SEED DATA
+// ============================================================================
+
+interface AthleteDetails {
+  userId: string;
+  isaUsersId?: string;
+  athleteSlug: string;
+  profileUrl?: string;
+  thumbnailUrl?: string;
+  infoUrl?: string;
+  rankings: Array<{
+    type: string;
+    year: string;
+    discipline: string;
+    gender: string;
+    ageCategory: string;
+    points: string;
+    lastUpdatedAt?: number;
+  }>;
+}
+
+interface ContestSeed {
   contestId: string;
   discipline: string;
   date: string;
@@ -14,181 +52,319 @@ export interface Contest {
   category: number;
   normalizedName: string;
   thumbnailUrl?: string;
-  athletes: Athlete[];
+  infoUrl?: string;
+  athletes: Array<{
+    userId: string;
+    isaUsersId?: string;
+    name: string;
+    place: string;
+    points: string;
+    thumbnailUrl?: string;
+  }>;
 }
 
-export interface Athlete {
-  athleteId: string;
-  name: string;
-  place: string;
-  points: number;
+// ============================================================================
+// TRANSFORMATION FUNCTIONS
+// ============================================================================
+
+/**
+ * Pad points for consistent sorting in GSI
+ * Converts "585" -> "00000585", "$ 1000" -> "00001000"
+ */
+function padPoints(points: string): string {
+  // Extract numeric value from points string
+  const numericValue = parseFloat(points.replace(/[^0-9.-]/g, '')) || 0;
+  // Pad to 8 digits for consistent sorting
+  return Math.abs(Math.round(numericValue)).toString().padStart(8, '0');
 }
 
-export interface EventParticipation {
-  eventId: string;
-  eventName: string;
-  place: string;
-  points: number;
-  date: string;
-  discipline: string;
-  country: string;
-  category: number;
-}
-
-export interface UserRecord {
-  userId: string;
-  type: 'athlete' | 'official' | 'admin';
-  name: string;
-  email: string;
-  createdAt: string;
-  totalPoints: number;
-  contestsParticipated: number;
-  eventParticipations: EventParticipation[];
-}
-
-export interface EventParticipant {
-  userId: string;
-  name: string;
-  place: string;
-  points: number;
-}
-
-export interface EventRecord {
-  eventId: string;
-  type: 'contest' | 'clinic' | 'meetup';
-  discipline: string;
-  date: string;
-  name: string;
-  normalizedName: string;
-  prize: number;
-  country: string;
-  gender: number;
-  city: string;
-  category: number;
-  createdAt: string;
-  profileUrl?: string;
-  thumbnailUrl?: string;
-  participants: EventParticipant[];
-}
-
-// Transform mock data into DynamoDB format
-export function transformContestsData(): {
-  users: UserRecord[];
-  events: EventRecord[];
+/**
+ * Process athlete details to create Profile and Ranking records
+ */
+function processAthleteDetails(): {
+  profiles: Map<string, UserProfileRecord>;
+  rankings: AthleteRankingRecord[];
 } {
-  const users = new Map<string, UserRecord>();
-  const events: EventRecord[] = [];
+  console.log('📥 Processing athlete details...');
 
-  // Cast the imported data to Contest array
-  const contestsTyped = contestsData as Contest[];
+  const profiles = new Map<string, UserProfileRecord>();
+  const rankings: AthleteRankingRecord[] = [];
 
-  contestsTyped.forEach((contest) => {
-    // Transform event participants
-    const participants: EventParticipant[] = contest.athletes.map((athlete) => ({
-      userId: athlete.athleteId,
-      name: athlete.name,
-      place: athlete.place,
-      points: athlete.points,
-    }));
+  const athletes = athleteDetailsData as AthleteDetails[];
 
-    // Transform event record
-    const eventRecord: EventRecord = {
-      eventId: contest.contestId,
-      type: 'contest',
-      discipline: contest.discipline,
-      date: contest.date,
-      name: contest.name,
-      normalizedName: contest.normalizedName,
-      prize: contest.prize,
-      country: contest.country,
-      gender: contest.gender,
-      city: contest.city,
-      category: contest.category,
-      createdAt: contest.createdAt,
-      profileUrl: contest.profileUrl,
-      thumbnailUrl: contest.thumbnailUrl,
-      participants,
+  for (const athlete of athletes) {
+    // Calculate total points from rankings (use first ranking's points as representative)
+    let totalPoints = 0;
+    if (athlete.rankings && athlete.rankings.length > 0) {
+      const firstRanking = athlete.rankings[0];
+      totalPoints = parseFloat(firstRanking.points.replace(/[^0-9.-]/g, '')) || 0;
+    }
+
+    // Create Profile record
+    const profile: UserProfileRecord = {
+      userId: athlete.userId,
+      sortKey: 'Profile',
+      isaUsersId: athlete.isaUsersId,
+      athleteSlug: athlete.athleteSlug,
+      profileUrl: athlete.profileUrl,
+      thumbnailUrl: athlete.thumbnailUrl,
+      infoUrl: athlete.infoUrl,
+      role: 'user',
+      userSubTypes: ['athlete'],
+      primarySubType: 'athlete',
+      totalPoints: Math.round(totalPoints),
+      contestCount: 0,  // Will be updated from participations
+      createdAt: Date.now(),
     };
-    events.push(eventRecord);
 
-    // Aggregate user data with embedded event participations
-    contest.athletes.forEach((athlete) => {
-      const participation: EventParticipation = {
-        eventId: contest.contestId,
-        eventName: contest.name,
-        place: athlete.place,
-        points: athlete.points,
-        date: contest.date,
-        discipline: contest.discipline,
-        country: contest.country,
-        category: contest.category,
+    profiles.set(athlete.userId, profile);
+
+    // Create Ranking records
+    for (const ranking of athlete.rankings) {
+      const sortKey = `Ranking:${ranking.type}:${ranking.year}:${ranking.discipline}:${ranking.gender}:${ranking.ageCategory}`;
+
+      // Create GSI sort key for discipline-rankings-index: paddedPoints#userId
+      const paddedPoints = padPoints(ranking.points);
+      const gsiSortKey = `${paddedPoints}#${athlete.userId}`;
+
+      const rankingRecord: AthleteRankingRecord = {
+        userId: athlete.userId,
+        sortKey,
+        discipline: ranking.discipline,
+        points: ranking.points,
+        rankingType: ranking.type,
+        year: ranking.year,
+        gender: ranking.gender,
+        ageCategory: ranking.ageCategory,
+        gsiSortKey,
+        lastUpdatedAt: ranking.lastUpdatedAt,
       };
 
-      if (users.has(athlete.athleteId)) {
-        const existingUser = users.get(athlete.athleteId)!;
-        existingUser.totalPoints += athlete.points;
-        existingUser.contestsParticipated += 1;
-        existingUser.eventParticipations.push(participation);
-      } else {
-        const userRecord: UserRecord = {
-          userId: athlete.athleteId,
-          type: 'athlete',
-          name: athlete.name,
-          email: `${athlete.athleteId.replace('-', '.')}@sporthub.local`,
-          createdAt: new Date().toISOString(),
-          totalPoints: athlete.points,
-          contestsParticipated: 1,
-          eventParticipations: [participation],
+      rankings.push(rankingRecord);
+    }
+  }
+
+  console.log(`✅ Processed ${profiles.size} athlete profiles`);
+  console.log(`✅ Created ${rankings.length} ranking records`);
+
+  return { profiles, rankings };
+}
+
+/**
+ * Process contests to create Event Metadata, Contest, and Participation records
+ */
+function processContests(
+  profiles: Map<string, UserProfileRecord>
+): {
+  eventMetadata: EventMetadataRecord[];
+  contests: ContestRecord[];
+  participations: AthleteParticipationRecord[];
+} {
+  console.log('📥 Processing contests...');
+
+  const eventMetadata: EventMetadataRecord[] = [];
+  const contests: ContestRecord[] = [];
+  const participations: AthleteParticipationRecord[] = [];
+
+  const contestsTyped = contestsData as ContestSeed[];
+
+  // Group contests by eventId (we'll use date as eventId grouping)
+  const contestsByEvent = new Map<string, ContestSeed[]>();
+
+  for (const contest of contestsTyped) {
+    // Use date as event grouping (all contests on same date = same event)
+    const eventId = `Event:${contest.date}`;
+
+    if (!contestsByEvent.has(eventId)) {
+      contestsByEvent.set(eventId, []);
+    }
+    contestsByEvent.get(eventId)!.push(contest);
+  }
+
+  // Process each event group
+  for (const [eventId, eventContests] of contestsByEvent.entries()) {
+    const firstContest = eventContests[0];
+
+    // Create Event Metadata record
+    const metadata: EventMetadataRecord = {
+      eventId,
+      sortKey: 'Metadata',
+      eventName: `${firstContest.country} - ${firstContest.date}`,
+      startDate: firstContest.date,
+      endDate: firstContest.date,
+      location: firstContest.country,
+      country: firstContest.country,
+      contestCount: eventContests.length,
+      type: 'competition',
+      createdAt: Date.now(),
+    };
+
+    eventMetadata.push(metadata);
+
+    // Process each contest in the event
+    for (const contest of eventContests) {
+      // Prepare participants for denormalization
+      const athletes: ContestParticipant[] = contest.athletes.map(athlete => ({
+        userId: athlete.userId,
+        isaUsersId: athlete.isaUsersId,
+        name: athlete.name,
+        place: athlete.place,
+        points: athlete.points,
+        thumbnailUrl: athlete.thumbnailUrl,
+      }));
+
+      // Sort athletes by place
+      athletes.sort((a, b) => Number(a.place) - Number(b.place));
+
+      // Create Contest record with hierarchical sort key
+      const sortKey = `Contest:${contest.discipline}:${contest.contestId}`;
+
+      // Create GSI sort key for date-discipline-index: contestDate#eventId
+      const dateSortKey = `${contest.date}#${eventId}`;
+
+      const contestRecord: ContestRecord = {
+        eventId,
+        sortKey,
+        contestId: contest.contestId,
+        discipline: contest.discipline,
+        contestName: contest.name,
+        contestDate: contest.date,
+        dateSortKey,
+        country: contest.country,
+        city: contest.city,
+        category: contest.category,
+        gender: contest.gender,
+        prize: contest.prize,
+        profileUrl: contest.profileUrl,
+        thumbnailUrl: contest.thumbnailUrl,
+        infoUrl: contest.infoUrl,
+        athletes,
+        createdAt: Date.now(),
+      };
+
+      contests.push(contestRecord);
+
+      // Create Participation records for each athlete
+      for (const athlete of contest.athletes) {
+        const participation: AthleteParticipationRecord = {
+          userId: athlete.userId,
+          sortKey: `Participation:${contest.contestId}`,
+          eventId,
+          contestId: contest.contestId,
+          discipline: contest.discipline,
+          place: Number(athlete.place),
+          points: athlete.points,
+          contestDate: contest.date,
+          contestName: contest.name,
         };
-        users.set(athlete.athleteId, userRecord);
+
+        participations.push(participation);
+
+        // Update profile aggregations
+        const profile = profiles.get(athlete.userId);
+        if (profile) {
+          profile.contestCount += 1;
+
+          // Update date range
+          if (!profile.firstCompetition || contest.date < profile.firstCompetition) {
+            profile.firstCompetition = contest.date;
+          }
+          if (!profile.lastCompetition || contest.date > profile.lastCompetition) {
+            profile.lastCompetition = contest.date;
+          }
+
+          // Update total points (sum of participation points)
+          const participationPoints = parseFloat(athlete.points.replace(/[^0-9.-]/g, '')) || 0;
+          profile.totalPoints += Math.round(participationPoints);
+        }
       }
-    });
-  });
+    }
+  }
+
+  console.log(`✅ Created ${eventMetadata.length} event metadata records`);
+  console.log(`✅ Created ${contests.length} contest records`);
+  console.log(`✅ Created ${participations.length} participation records`);
+
+  return { eventMetadata, contests, participations };
+}
+
+/**
+ * Main transformation function
+ */
+export function transformSeedData(): {
+  userProfiles: UserProfileRecord[];
+  athleteRankings: AthleteRankingRecord[];
+  athleteParticipations: AthleteParticipationRecord[];
+  eventMetadata: EventMetadataRecord[];
+  contests: ContestRecord[];
+} {
+  console.log('🚀 Starting seed data transformation...\n');
+
+  // Step 1: Process athletes -> Profiles + Rankings
+  const { profiles, rankings } = processAthleteDetails();
+  console.log();
+
+  // Step 2: Process contests -> Events + Contests + Participations
+  const { eventMetadata, contests, participations } = processContests(profiles);
+  console.log();
+
+  // Step 3: Convert profiles map to array
+  const userProfiles = Array.from(profiles.values());
+
+  console.log('✅ Transformation complete!');
+  console.log(`\nSummary:`);
+  console.log(`  👥 User Profiles: ${userProfiles.length}`);
+  console.log(`  🏆 Athlete Rankings: ${rankings.length}`);
+  console.log(`  📋 Athlete Participations: ${participations.length}`);
+  console.log(`  📅 Event Metadata: ${eventMetadata.length}`);
+  console.log(`  🎯 Contests: ${contests.length}`);
+  console.log();
 
   return {
-    users: Array.from(users.values()),
-    events,
+    userProfiles,
+    athleteRankings: rankings,
+    athleteParticipations: participations,
+    eventMetadata,
+    contests,
   };
 }
 
-// Generate additional test users for variety
-export function generateTestUsers(count: number = 10): UserRecord[] {
-  const testUsers: UserRecord[] = [];
-  const names = [
-    'Alex Johnson', 'Sarah Davis', 'Mike Wilson', 'Emma Brown', 'Chris Garcia',
-    'Lisa Martinez', 'David Anderson', 'Jennifer Taylor', 'Robert Thomas', 'Amanda White'
-  ];
-
-  for (let i = 0; i < count; i++) {
-    const name = names[i % names.length];
-    const id = `test-user-${i + 1}`;
-    testUsers.push({
-      userId: id,
-      type: 'athlete',
-      name: `${name} ${i + 1}`,
-      email: `test.user.${i + 1}@sporthub.local`,
-      createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-      totalPoints: 0,
-      contestsParticipated: 0,
-      eventParticipations: [],
-    });
-  }
-
-  return testUsers;
-}
-
-// Data statistics for validation
+/**
+ * Get data statistics for validation
+ */
 export function getDataStats() {
-  const data = transformContestsData();
+  const data = transformSeedData();
+
+  const disciplines = [...new Set(data.contests.map(c => c.discipline))];
+  const countries = [...new Set(data.eventMetadata.map(e => e.country))];
+  const dateRange = {
+    earliest: data.contests.reduce((min, c) => c.contestDate < min ? c.contestDate : min, data.contests[0]?.contestDate || ''),
+    latest: data.contests.reduce((max, c) => c.contestDate > max ? c.contestDate : max, data.contests[0]?.contestDate || ''),
+  };
+
+  // Calculate total records that will be written to DynamoDB
+  const totalUserRecords = data.userProfiles.length + data.athleteRankings.length + data.athleteParticipations.length;
+  const totalEventRecords = data.eventMetadata.length + data.contests.length;
+
   return {
-    totalUsers: data.users.length,
-    totalEvents: data.events.length,
-    totalParticipations: data.users.reduce((sum, u) => sum + u.eventParticipations.length, 0),
-    disciplines: [...new Set(data.events.map(e => e.discipline))],
-    countries: [...new Set(data.events.map(e => e.country))],
-    dateRange: {
-      earliest: data.events.reduce((min, e) => e.date < min ? e.date : min, data.events[0]?.date),
-      latest: data.events.reduce((max, e) => e.date > max ? e.date : max, data.events[0]?.date),
-    }
+    // User table records
+    userProfiles: data.userProfiles.length,
+    athleteRankings: data.athleteRankings.length,
+    athleteParticipations: data.athleteParticipations.length,
+    totalUserRecords,
+
+    // Event table records
+    eventMetadata: data.eventMetadata.length,
+    contests: data.contests.length,
+    totalEventRecords,
+
+    // Metadata
+    disciplines,
+    countries,
+    dateRange,
+
+    // Validation
+    athletesWithRankings: data.athleteRankings.length > 0 ? new Set(data.athleteRankings.map(r => r.userId)).size : 0,
+    athletesWithParticipations: data.athleteParticipations.length > 0 ? new Set(data.athleteParticipations.map(p => p.userId)).size : 0,
   };
 }

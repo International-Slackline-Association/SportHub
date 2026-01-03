@@ -1,5 +1,5 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand, GetCommand, ScanCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, GetCommand, ScanCommand, DeleteCommand, UpdateCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 
 // Environment detection for local development
 const isLocal = process.env.DYNAMODB_LOCAL === 'true';
@@ -42,7 +42,12 @@ const clientConfig = {
 
 const client = new DynamoDBClient(clientConfig);
 
-const ddb = DynamoDBDocumentClient.from(client);
+const ddb = DynamoDBDocumentClient.from(client, {
+  marshallOptions: {
+    removeUndefinedValues: true, // Remove undefined values instead of throwing errors
+    convertClassInstanceToMap: true,
+  },
+});
 
 // Table name helpers for different environments
 export const getTableName = (baseName: string) => {
@@ -52,6 +57,15 @@ export const getTableName = (baseName: string) => {
   // This ensures we never touch production tables
   return `${baseName}-dev`;
 };
+
+// Update options interface for atomic updates
+export interface UpdateOptions {
+  updateExpression: string;
+  expressionAttributeNames?: Record<string, string>;
+  expressionAttributeValues?: Record<string, unknown>;
+  conditionExpression?: string;
+  returnValues?: 'NONE' | 'ALL_OLD' | 'UPDATED_OLD' | 'ALL_NEW' | 'UPDATED_NEW';
+}
 
 export const dynamodb = {
   // Create/Update item
@@ -90,6 +104,50 @@ export const dynamodb = {
       Key: key,
     });
     return await ddb.send(command);
+  },
+
+  // Atomic update with UpdateExpression
+  async updateItem(
+    tableName: string,
+    key: Record<string, unknown>,
+    options: UpdateOptions
+  ) {
+    const command = new UpdateCommand({
+      TableName: getTableName(tableName),
+      Key: key,
+      UpdateExpression: options.updateExpression,
+      ExpressionAttributeNames: options.expressionAttributeNames,
+      ExpressionAttributeValues: options.expressionAttributeValues,
+      ConditionExpression: options.conditionExpression,
+      ReturnValues: options.returnValues || 'ALL_NEW',
+    });
+
+    const response = await ddb.send(command);
+    return response.Attributes;
+  },
+
+  // Query with composite key support
+  async queryItems(
+    tableName: string,
+    keyConditionExpression: string,
+    expressionAttributeValues: Record<string, unknown>,
+    options?: {
+      indexName?: string;
+      scanIndexForward?: boolean;
+      limit?: number;
+    }
+  ) {
+    const command = new QueryCommand({
+      TableName: getTableName(tableName),
+      KeyConditionExpression: keyConditionExpression,
+      ExpressionAttributeValues: expressionAttributeValues,
+      IndexName: options?.indexName,
+      ScanIndexForward: options?.scanIndexForward,
+      Limit: options?.limit,
+    });
+
+    const response = await ddb.send(command);
+    return response.Items || [];
   },
 };
 

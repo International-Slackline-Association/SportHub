@@ -11,27 +11,86 @@ export interface TableSchema {
     AttributeName: string;
     AttributeType: 'S' | 'N' | 'B';
   }>;
+  globalSecondaryIndexes?: Array<{
+    IndexName: string;
+    KeySchema: Array<{
+      AttributeName: string;
+      KeyType: 'HASH' | 'RANGE';
+    }>;
+    Projection: {
+      ProjectionType: 'ALL' | 'KEYS_ONLY' | 'INCLUDE';
+      NonKeyAttributes?: string[];
+    };
+  }>;
 }
 
 // Table schemas for the application
 export const TABLE_SCHEMAS: TableSchema[] = [
+  // Users table with composite sort key and GSI for rankings
   {
     tableName: 'users',
     keySchema: [
-      { AttributeName: 'userId', KeyType: 'HASH' }
+      { AttributeName: 'userId', KeyType: 'HASH' },
+      { AttributeName: 'sortKey', KeyType: 'RANGE' }  // Profile, Ranking:*, Participation:*
     ],
     attributeDefinitions: [
-      { AttributeName: 'userId', AttributeType: 'S' }
-    ]
+      { AttributeName: 'userId', AttributeType: 'S' },
+      { AttributeName: 'sortKey', AttributeType: 'S' },
+      { AttributeName: 'primarySubType', AttributeType: 'S' },
+      { AttributeName: 'totalPoints', AttributeType: 'N' },
+      { AttributeName: 'discipline', AttributeType: 'S' },    // For discipline-rankings-index
+      { AttributeName: 'gsiSortKey', AttributeType: 'S' },     // For sorting: points#userId
+    ],
+    globalSecondaryIndexes: [
+      {
+        IndexName: 'userSubType-index',
+        KeySchema: [
+          { AttributeName: 'primarySubType', KeyType: 'HASH' },
+          { AttributeName: 'totalPoints', KeyType: 'RANGE' },
+        ],
+        Projection: { ProjectionType: 'ALL' },
+      },
+      {
+        IndexName: 'discipline-rankings-index',
+        KeySchema: [
+          { AttributeName: 'discipline', KeyType: 'HASH' },
+          { AttributeName: 'gsiSortKey', KeyType: 'RANGE' },  // Format: points#userId
+        ],
+        Projection: { ProjectionType: 'ALL' },
+      },
+    ],
   },
+  // Events table with composite key for Event → Contest hierarchy
   {
     tableName: 'events',
     keySchema: [
-      { AttributeName: 'eventId', KeyType: 'HASH' }
+      { AttributeName: 'eventId', KeyType: 'HASH' },  // PK
+      { AttributeName: 'sortKey', KeyType: 'RANGE' }, // SK: "Metadata" or "Contest:{discipline}:{contestId}"
     ],
     attributeDefinitions: [
-      { AttributeName: 'eventId', AttributeType: 'S' }
-    ]
+      { AttributeName: 'eventId', AttributeType: 'S' },
+      { AttributeName: 'sortKey', AttributeType: 'S' },
+      { AttributeName: 'contestId', AttributeType: 'S' },     // For contestId-index
+      { AttributeName: 'discipline', AttributeType: 'S' },    // For date-discipline-index
+      { AttributeName: 'dateSortKey', AttributeType: 'S' },   // For sorting: contestDate#eventId
+    ],
+    globalSecondaryIndexes: [
+      {
+        IndexName: 'contestId-index',
+        KeySchema: [
+          { AttributeName: 'contestId', KeyType: 'HASH' },
+        ],
+        Projection: { ProjectionType: 'ALL' },
+      },
+      {
+        IndexName: 'date-discipline-index',
+        KeySchema: [
+          { AttributeName: 'discipline', KeyType: 'HASH' },
+          { AttributeName: 'dateSortKey', KeyType: 'RANGE' },  // Format: contestDate#eventId
+        ],
+        Projection: { ProjectionType: 'ALL' },
+      },
+    ],
   }
 ];
 
@@ -46,6 +105,14 @@ export class DatabaseSetup {
         KeySchema: schema.keySchema,
         AttributeDefinitions: schema.attributeDefinitions,
         BillingMode: 'PAY_PER_REQUEST', // On-demand pricing
+        // Add GSI support
+        ...(schema.globalSecondaryIndexes && {
+          GlobalSecondaryIndexes: schema.globalSecondaryIndexes.map(gsi => ({
+            IndexName: gsi.IndexName,
+            KeySchema: gsi.KeySchema,
+            Projection: gsi.Projection,
+          })),
+        }),
       });
 
       await dynamoClient.send(command);

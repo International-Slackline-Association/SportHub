@@ -2,87 +2,127 @@
 
 import { dynamodb } from './dynamodb';
 import { DatabaseSetup } from './db-setup';
-import { transformContestsData, generateTestUsers, getDataStats, type UserRecord, type EventRecord } from './seed-data';
+import { transformSeedData, getDataStats } from './seed-data';
+import type {
+  UserProfileRecord,
+  AthleteRankingRecord,
+  AthleteParticipationRecord,
+  EventMetadataRecord,
+  ContestRecord
+} from './relational-types';
 
 export class DatabaseSeeder {
   private dbSetup = new DatabaseSetup();
 
-  async seedUsers(users: UserRecord[], tableName: string = 'users'): Promise<{ success: number; failed: number }> {
-    console.log(`🌱 Seeding ${users.length} users into ${tableName}...`);
+  /**
+   * Seed user table records (Profiles, Rankings, Participations)
+   */
+  async seedUserRecords(
+    profiles: UserProfileRecord[],
+    rankings: AthleteRankingRecord[],
+    participations: AthleteParticipationRecord[],
+    tableName: string = 'users'
+  ): Promise<{ success: number; failed: number }> {
+    // Combine all user table records
+    const allRecords = [
+      ...profiles,
+      ...rankings,
+      ...participations
+    ];
+
+    console.log(`🌱 Seeding ${allRecords.length} records into ${tableName}...`);
+    console.log(`   👥 Profiles: ${profiles.length}`);
+    console.log(`   🏆 Rankings: ${rankings.length}`);
+    console.log(`   📋 Participations: ${participations.length}`);
 
     let success = 0;
     let failed = 0;
 
-    for (const user of users) {
+    for (const record of allRecords) {
       try {
-        await dynamodb.putItem(tableName, user as unknown as Record<string, unknown>);
+        await dynamodb.putItem(tableName, record as unknown as Record<string, unknown>);
+        success++;
+        if (success % 500 === 0) {
+          console.log(`   📝 Seeded ${success}/${allRecords.length} records...`);
+        }
+      } catch (error) {
+        console.error(`❌ Failed to seed record ${record.userId}:${record.sortKey}:`, error);
+        failed++;
+      }
+    }
+
+    console.log(`✅ User records seeded: ${success} success, ${failed} failed`);
+    return { success, failed };
+  }
+
+  /**
+   * Seed events table records (Event Metadata, Contests)
+   */
+  async seedEventRecords(
+    eventMetadata: EventMetadataRecord[],
+    contests: ContestRecord[],
+    tableName: string = 'events'
+  ): Promise<{ success: number; failed: number }> {
+    const allRecords = [...eventMetadata, ...contests];
+
+    console.log(`🏆 Seeding ${allRecords.length} records into ${tableName}...`);
+    console.log(`   📅 Event Metadata: ${eventMetadata.length}`);
+    console.log(`   🎯 Contests: ${contests.length}`);
+
+    let success = 0;
+    let failed = 0;
+
+    for (const record of allRecords) {
+      try {
+        await dynamodb.putItem(tableName, record as unknown as Record<string, unknown>);
         success++;
         if (success % 100 === 0) {
-          console.log(`   📝 Seeded ${success} users...`);
+          console.log(`   🏆 Seeded ${success}/${allRecords.length} records...`);
         }
       } catch (error) {
-        console.error(`❌ Failed to seed user ${user.userId}:`, error);
+        console.error(`❌ Failed to seed record ${record.eventId}:${record.sortKey}:`, error);
         failed++;
       }
     }
 
-    console.log(`✅ Users seeded: ${success} success, ${failed} failed`);
+    console.log(`✅ Event records seeded: ${success} success, ${failed} failed`);
     return { success, failed };
   }
 
-  async seedEvents(events: EventRecord[], tableName: string = 'events'): Promise<{ success: number; failed: number }> {
-    console.log(`🏆 Seeding ${events.length} events into ${tableName}...`);
-
-    let success = 0;
-    let failed = 0;
-
-    for (const event of events) {
-      try {
-        await dynamodb.putItem(tableName, event as unknown as Record<string, unknown>);
-        success++;
-        if (success % 50 === 0) {
-          console.log(`   🏆 Seeded ${success} events...`);
-        }
-      } catch (error) {
-        console.error(`❌ Failed to seed event ${event.eventId}:`, error);
-        failed++;
-      }
-    }
-
-    console.log(`✅ Events seeded: ${success} success, ${failed} failed`);
-    return { success, failed };
-  }
-
+  /**
+   * Clear all items from a table
+   */
   async clearTable(tableName: string): Promise<number> {
     console.log(`🧹 Clearing table ${tableName}...`);
 
     try {
       const items = await dynamodb.scanItems(tableName);
       if (!items || items.length === 0) {
-        console.log(`ℹ️ Table ${tableName} is already empty`);
+        console.log(`ℹ️  Table ${tableName} is already empty`);
         return 0;
       }
 
       let deleted = 0;
       for (const item of items) {
         try {
-          // Determine the key field based on table name
-          let keyField: string;
+          // Determine the key based on table name
+          let key: Record<string, unknown>;
           if (tableName.includes('users')) {
-            keyField = 'userId';
+            // Users table now has composite key (userId + sortKey)
+            key = { userId: item.userId, sortKey: item.sortKey };
           } else if (tableName.includes('events')) {
-            keyField = 'eventId';
+            // Events table has composite key (eventId + sortKey)
+            key = { eventId: item.eventId, sortKey: item.sortKey };
           } else {
             // Default to id field
-            keyField = 'id';
+            key = { id: item.id };
           }
 
-          const key = { [keyField]: item[keyField] };
           await dynamodb.deleteItem(tableName, key);
           deleted++;
 
-          if (deleted % 100 === 0) {
-            console.log(`   🗑️ Deleted ${deleted} items...`);
+          if (deleted % 500 === 0) {
+            console.log(`   🗑️  Deleted ${deleted}/${items.length} items...`);
           }
         } catch (error) {
           console.error(`❌ Failed to delete item:`, error);
@@ -97,71 +137,123 @@ export class DatabaseSeeder {
     }
   }
 
-  async fullSeed(includeTestUsers: boolean = true): Promise<void> {
-    console.log('🚀 Starting full database seed...');
+  /**
+   * Full database seed with transformed data
+   */
+  async fullSeed(): Promise<void> {
+    console.log('🚀 Starting full database seed...\n');
 
-    // Get transformed data
-    const data = transformContestsData();
-    const testUsers = includeTestUsers ? generateTestUsers(10) : [];
+    // Transform seed data
+    const data = transformSeedData();
+    console.log();
 
     // Show statistics
     const stats = getDataStats();
     console.log('📊 Data Statistics:');
-    console.log(`   Users from events: ${data.users.length}`);
-    console.log(`   Additional test users: ${testUsers.length}`);
-    console.log(`   Total events: ${data.events.length}`);
-    console.log(`   Total participations: ${stats.totalParticipations}`);
-    console.log(`   Disciplines: ${stats.disciplines.join(', ')}`);
-    console.log(`   Countries: ${stats.countries.join(', ')}`);
-    console.log(`   Date range: ${stats.dateRange.earliest} to ${stats.dateRange.latest}`);
+    console.log(`   Users table:`);
+    console.log(`     - Profiles: ${stats.userProfiles}`);
+    console.log(`     - Rankings: ${stats.athleteRankings}`);
+    console.log(`     - Participations: ${stats.athleteParticipations}`);
+    console.log(`     - Total records: ${stats.totalUserRecords}`);
+    console.log(`   Events table:`);
+    console.log(`     - Event Metadata: ${stats.eventMetadata}`);
+    console.log(`     - Contests: ${stats.contests}`);
+    console.log(`     - Total records: ${stats.totalEventRecords}`);
+    console.log(`   Metadata:`);
+    console.log(`     - Disciplines: ${stats.disciplines.join(', ')}`);
+    console.log(`     - Countries: ${stats.countries.join(', ')}`);
+    console.log(`     - Date range: ${stats.dateRange.earliest} to ${stats.dateRange.latest}`);
+    console.log(`   Athletes:`);
+    console.log(`     - With rankings: ${stats.athletesWithRankings}`);
+    console.log(`     - With participations: ${stats.athletesWithParticipations}`);
     console.log();
 
     // Ensure tables exist
+    console.log('📋 Ensuring tables exist...');
     const createResults = await this.dbSetup.createAllTables();
     if (createResults.failed.length > 0) {
       console.error('❌ Failed to create some tables:', createResults.failed);
       return;
     }
+    console.log();
 
     // Seed data
-    const allUsers = [...data.users, ...testUsers];
-    await this.seedUsers(allUsers, 'users');
-    await this.seedEvents(data.events, 'events');
+    await this.seedUserRecords(
+      data.userProfiles,
+      data.athleteRankings,
+      data.athleteParticipations,
+      'users'
+    );
+    console.log();
+
+    await this.seedEventRecords(
+      data.eventMetadata,
+      data.contests,
+      'events'
+    );
+    console.log();
 
     console.log('🎉 Full database seed completed!');
   }
 
+  /**
+   * Reset and seed database
+   */
   async resetAndSeed(): Promise<void> {
-    console.log('🔄 Resetting and seeding database...');
+    console.log('🔄 Resetting and seeding database...\n');
 
     // Clear all tables
     await this.clearTable('users');
+    console.log();
     await this.clearTable('events');
+    console.log();
 
     // Seed fresh data
-    await this.fullSeed(true);
+    await this.fullSeed();
 
     console.log('🎉 Database reset and seed completed!');
   }
 
+  /**
+   * Get current data counts from database
+   */
   async getSeededDataCount(): Promise<Record<string, number>> {
     const counts: Record<string, number> = {};
 
-    // Check each table individually
+    // Check users table with breakdown by sortKey pattern
     try {
       const users = await dynamodb.scanItems('users');
-      counts['users'] = users?.length || 0;
-    } catch {
-      counts['users'] = 0;
-      console.warn('Users table not found');
+      counts['users-total'] = users?.length || 0;
+
+      if (users && users.length > 0) {
+        const profiles = users.filter(u => u.sortKey === 'Profile');
+        const rankings = users.filter(u => typeof u.sortKey === 'string' && u.sortKey.startsWith('Ranking:'));
+        const participations = users.filter(u => typeof u.sortKey === 'string' && u.sortKey.startsWith('Participation:'));
+
+        counts['users-profiles'] = profiles.length;
+        counts['users-rankings'] = rankings.length;
+        counts['users-participations'] = participations.length;
+      }
+    } catch (error) {
+      counts['users-total'] = 0;
+      console.warn('Users table not found or error:', error);
     }
 
+    // Check events table with breakdown by sortKey pattern
     try {
       const events = await dynamodb.scanItems('events');
-      counts['events'] = events?.length || 0;
-    } catch {
-      counts['events'] = 0;
-      console.warn('Events table not found');
+      counts['events-total'] = events?.length || 0;
+
+      if (events && events.length > 0) {
+        const metadata = events.filter(e => e.sortKey === 'Metadata');
+        const contests = events.filter(e => typeof e.sortKey === 'string' && e.sortKey.startsWith('Contest:'));
+
+        counts['events-metadata'] = metadata.length;
+        counts['events-contests'] = contests.length;
+      }
+    } catch (error) {
+      counts['events-total'] = 0;
+      console.warn('Events table not found or error:', error);
     }
 
     return counts;
@@ -189,13 +281,25 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     case 'count':
       seeder.getSeededDataCount().then(counts => {
         console.log('📊 Current data counts:');
-        Object.entries(counts).forEach(([table, count]) => {
-          console.log(`   ${table}: ${count} items`);
-        });
+        console.log('\nUsers table:');
+        console.log(`  Total: ${counts['users-total'] || 0} items`);
+        console.log(`    - Profiles: ${counts['users-profiles'] || 0}`);
+        console.log(`    - Rankings: ${counts['users-rankings'] || 0}`);
+        console.log(`    - Participations: ${counts['users-participations'] || 0}`);
+        console.log('\nEvents table:');
+        console.log(`  Total: ${counts['events-total'] || 0} items`);
+        console.log(`    - Metadata: ${counts['events-metadata'] || 0}`);
+        console.log(`    - Contests: ${counts['events-contests'] || 0}`);
       }).catch(console.error);
       break;
     default:
-      console.log('Usage: node seed-local-db.js [seed|reset|clear|count]');
+      console.log('Usage: pnpm tsx src/lib/seed-local-db.ts [seed|reset|clear|count]');
+      console.log('');
+      console.log('Commands:');
+      console.log('  seed   - Seed database with transformed data (default)');
+      console.log('  reset  - Clear and reseed all tables');
+      console.log('  clear  - Clear all tables without reseeding');
+      console.log('  count  - Show current data counts');
       break;
   }
 }
