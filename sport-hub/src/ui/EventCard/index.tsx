@@ -44,14 +44,16 @@ const formatPrizeEUR = (value: unknown): string => {
 };
 
 export function EventDetailsCard({ event, className, title }: EventDetailsCardProps) {
-	const date = event?.date ?? null;
-	const city = event?.city ?? '';
-	const country = event?.country ?? '';
-	const name = (event as any)?.name as string | undefined;
-	const discipline = (event as any)?.disciplines ?? event?.discipline ?? '';
-	const prize = (event as any)?.prize ?? '';
-	const participantsCount = (event?.participants?.length ?? (event as any)?.athletes?.length) as number | undefined;
-	const verified = (event as any)?.verified as boolean | undefined;
+	const {
+		date,
+		city,
+		country,
+		name,
+		discipline,
+		prize,
+		// contestsParticipated,
+		verified,
+	} = event;
 
 	const disciplineList = Array.isArray(discipline) ? (discipline as string[]) : (discipline ? [discipline as string] : []);
 	const knownDisciplineVariants = new Set([
@@ -80,7 +82,7 @@ export function EventDetailsCard({ event, className, title }: EventDetailsCardPr
 			) : null}
 			{hasMeta && (
 				<div className={styles.metaRow}>
-					{formatDate(date as any) && <span>{formatDate(date as any)}</span>}
+					<span>{formatDate(date)}</span>
 					{[city, country].filter(Boolean).length > 0 && (
 						<span>{[city, country].filter(Boolean).join(', ')}</span>
 					)}
@@ -92,7 +94,7 @@ export function EventDetailsCard({ event, className, title }: EventDetailsCardPr
 					<>
 						<div className={styles.item}>
 							<h3 className={styles.label}>Date</h3>
-							<p className={styles.value}>{formatDate(date as any) || '-'}</p>
+							<p className={styles.value}>{formatDate(date) || '-'}</p>
 						</div>
 						<div className={styles.item}>
 							<h3 className={styles.label}>Location</h3>
@@ -105,20 +107,20 @@ export function EventDetailsCard({ event, className, title }: EventDetailsCardPr
 					{allKnown ? (
 						<div className={styles.badgesRow}>
 							{disciplineList.map((d, i) => (
-								<DisciplineBadge key={`${d}-${i}`} variant={d as any} />
+								<DisciplineBadge key={`${d}-${i}`} variant={d as Discipline} />
 							))}
 						</div>
 					) : (
-						<p className={styles.value}>{formatDiscipline(discipline as any) || '-'}</p>
+						<p className={styles.value}>{formatDiscipline(discipline) || '-'}</p>
 					)}
 				</div>
 				<div className={styles.item}>
 					<h3 className={styles.label}>Prize Value</h3>
-					<p className={styles.value}>{(prize as any) !== '' && prize != null ? (formatPrizeEUR(prize) || '-') : '-'}</p>
+					<p className={styles.value}>{(formatPrizeEUR(prize || 0))}</p>
 				</div>
 				<div className={styles.item}>
 					<h3 className={styles.label}>Participants</h3>
-					<p className={styles.value}>{participantsCount != null ? participantsCount : '-'}</p>
+					{/* <p className={styles.value}>{contestsParticipated != null ? contestsParticipated : '-'}</p> */}
 				</div>
 				<div className={styles.item}>
 					<h3 className={styles.label}>Status</h3>

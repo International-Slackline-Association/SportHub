@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getUsers } from '@lib/data-services';
-import { UserSubType } from '@types/rbac';
+// import { UserSubType } from '@types/rbac';
 
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const subtype = (url.searchParams.get('subtype') || '').trim();
-    const users = await getUsers({ subtype: subtype as UserSubType });
+    const users = await getUsers({ subtype });
     return NextResponse.json(users);
   } catch (error) {
     console.error('Error fetching users:', error);

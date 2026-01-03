@@ -5,21 +5,21 @@ import { cn } from '@utils/cn';
 import Button from '@ui/Button';
 import { TrashIcon } from '@ui/Icons';
 import UserAutocomplete from './UserAutocomplete';
-import { EventSubmissionFormValues } from '../../types';
+import { ContestResultEntry, EventSubmissionFormValues } from '../../types';
 import { FormikNumberField, FormikTextField } from '@ui/Form';
 import SortableList from '@ui/SortableList';
 import { Option } from '@ui/Form';
 
-const initialAthleteValues = {
-  athleteId: "",
-  athleteName: "",
+const initialAthleteValues: Partial<ContestResultEntry> = {
+  id: "",
+  name: "",
   isaPoints: 0,
-  stats: ""
+  stats: "",
 };
 
 type Props = {
   contestKey: string;
-  results: any[];
+  results: ContestResultEntry[];
 }
 
 type AthleteListItemProps = {
@@ -72,8 +72,8 @@ export const Results = ({ contestKey, results }: Props) => {
               <div>No results added yet.</div>
             )}
             <SortableList
-              items={results.map((r, idx) => ({ ...r, __key: r?.athleteId || `row-${idx}` }))}
-              getKey={(r: any) => r.__key as string}
+              items={results}
+              getKey={({ id }: ContestResultEntry) => id}
               renderItem={(_, idx: number) =>
                 <AthleteListItem
                   athleteFormKey={`${contestKey}.results[${idx}]`}
@@ -83,8 +83,8 @@ export const Results = ({ contestKey, results }: Props) => {
                   }}
                 />
               }
-              onReorder={(next: any[]) => {
-                const cleaned = next.map(({ __key, ...rest }, i) => ({ ...rest, rank: i + 1 }));
+              onReorder={(next: ContestResultEntry[]) => {
+                const cleaned = next.map((contestResultEntry, i) => ({ ...contestResultEntry, rank: i + 1 }));
                 setFieldValue(`${contestKey}.results`, cleaned, true);
                 setFieldTouched(`${contestKey}.results`, true, false);
               }}
