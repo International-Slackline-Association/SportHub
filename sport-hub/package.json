@@ -16,6 +16,7 @@
     "db:count": "DYNAMODB_LOCAL=true tsx src/lib/seed-local-db.ts count",
     "db:stop": "docker-compose stop dynamodb-local",
     "db:clean": "docker-compose down -v",
+    "db:gui": "npx dynamodb-admin -p 8001",
     "sync:compare": "tsx scripts/sync-dynamodb.ts --compare",
     "sync:all": "tsx scripts/sync-dynamodb.ts",
     "sync:recreate": "tsx scripts/sync-dynamodb.ts --recreate",
