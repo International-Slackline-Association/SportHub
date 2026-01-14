@@ -12,7 +12,8 @@ const genderLabels: Record<Gender, string> = {
   FEMALE: "FEMALE",
   MALE: "MALE",
   NON_BINARY: "NON_BINARY",
-  OTHER: "OTHER"
+  OTHER: "OTHER",
+  MIXED: "MIXED",
 };
 
 const Gender = ({ variant, className = "" }: GenderProps) => {
