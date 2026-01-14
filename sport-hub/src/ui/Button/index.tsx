@@ -18,9 +18,9 @@ const Button = ({
   return (
     <button
       className={[
+        className,
         styles.button,
         styles[variant],
-        className
       ].filter(Boolean).join(" ")}
       {...props}
     >

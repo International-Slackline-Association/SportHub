@@ -3,7 +3,7 @@
 import { Formik, Form, FormikHelpers, type FormikProps } from 'formik';
 import * as Yup from 'yup';
 import { createUser } from './actions';
-import { FormikSelectField, FormikSubmitButton, FormikTextField, countryCodeOptions, genderOptions } from '@ui/Form';
+import { FormikSelectField, FormikSubmitButton, FormikTextField, countryCodeOptions, userGenderOptions } from '@ui/Form';
 import { useState } from 'react';
 
 interface Form {
@@ -108,7 +108,7 @@ export default function UserForm({
             />
             <FormikSelectField
               id="gender"
-              options={genderOptions}
+              options={userGenderOptions}
               placeholder="Select gender"
             />
             <FormikSelectField

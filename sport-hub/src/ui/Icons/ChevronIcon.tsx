@@ -8,7 +8,7 @@ type ChevronIconProps = {
 
 export const ChevronIcon = ({ color = "light", direction }: ChevronIconProps) => (
   <svg
-    className={cn(styles.chevron, direction === "up" && styles.chevronOpen, color === "light" ? styles.chevronLight : styles.chevronDark)}
+    className={cn(styles.icon, direction === "up" && styles.chevronOpen, color === "light" ? styles.chevronLight : styles.chevronDark)}
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"

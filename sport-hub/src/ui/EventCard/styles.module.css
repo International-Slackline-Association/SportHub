@@ -1,0 +1,73 @@
+/* Card chrome comes from global .card in ui/globals.css */
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  padding: 24px; /* match card inner spacing */
+}
+
+@media (min-width: 48rem) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.item {}
+
+.label {
+  color: #667085; /* neutral-600 */
+  font-size: 0.875rem; /* 14px */
+  font-weight: 600;
+  margin: 0 0 4px 0;
+}
+
+.value {
+  font-size: 1.125rem; /* 18px */
+  color: #101828; /* neutral-900 */
+  margin: 0;
+}
+
+.badgesRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px 0 24px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-metropolis);
+  font-weight: 700;
+  color: var(--color-neutral-700);
+  font-size: clamp(1rem, 1.5vw + 0.5rem, 1.25rem);
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-neutral-600);
+  font-size: 0.875rem;
+  padding: 8px 24px 0 24px;
+}
+
+.divider {
+  height: 1px;
+  background: var(--color-neutral-200);
+  margin: 12px 24px 0 24px;
+}
+
+.verified {
+  color: #039855; /* green-600 */
+}
+
+.unverified {
+  color: #667085; /* neutral-600 */
+}

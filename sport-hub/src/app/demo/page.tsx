@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Formik, Form } from "formik";
+import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import Button from "@ui/Button";
 import { AgeCategory, Badge, ContestSize, Discipline, Gender, Role } from "@ui/Badge";
@@ -10,6 +10,7 @@ import Modal from "@ui/Modal";
 import { TabGroup } from "@ui/Tab";
 import { FormikCheckboxField, FormikCheckboxGroup, FormikRadioGroup, FormikSelectField, FormikSubmitButton, FormikTextField } from "@ui/Form";
 import FormikAutocomplete from "@ui/Form/FormikAutocomplete";
+import { Option } from '@ui/Form';
 
 export default function Page() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -193,7 +194,7 @@ export default function Page() {
             validationSchema={formValidationSchema}
             onSubmit={handleFormSubmit}
           >
-            {() => (
+            {({ setFieldValue }: FormikHelpers<typeof initialFormValues>) => (
               <Form className="stack gap-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormikTextField
@@ -229,6 +230,9 @@ export default function Page() {
                       { value: "parkline", label: "Parkline" },
                       { value: "longline", label: "Longline" },
                     ]}
+                    onSelectOption={(option: Option) => {
+                      setFieldValue("lineType", option.value)
+                    }}
                     placeholder="Types of slacklines"
                   />
                   <FormikCheckboxField id="verified" label="Single Checkbox" />

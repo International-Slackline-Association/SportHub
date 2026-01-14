@@ -1,0 +1,45 @@
+.eventForm {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+.youtubeThumbnail {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: auto;
+  width: 100%;
+}
+
+.uploadPlaceholder {
+  margin-top: 16px;
+  padding: 32px;
+  border: 2px dashed #B0B1C9; /* Neutral/400 */
+  border-radius: 8px;
+  text-align: center;
+  background-color: #F8F9FB; /* Neutral/50 */
+}
+
+.uploadText {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  color: #8784A7; /* Neutral/600 */
+  margin: 0;
+}
+
+/* Accordion animations for mobile */
+.accordionOpen {
+  max-height: 2000px;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+.accordionClose {
+  max-height: 0;
+  opacity: 0;
+  padding: 0 20px;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, padding 0.3s ease-in-out;
+}
