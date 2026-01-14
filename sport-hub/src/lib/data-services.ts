@@ -1,4 +1,6 @@
+import { UserSubType } from '@types/rbac';
 import { dynamodb } from './dynamodb';
+import { UserRecord } from './relational-types';
 
 // Table names
 const USERS_TABLE = 'users';
@@ -42,6 +44,36 @@ class SimpleCache {
 }
 
 const cache = new SimpleCache();
+
+// ===========================================
+// USER DATA SERVICES
+// ===========================================
+export async function getUsers({ subtype }: { subtype: UserSubType }): Promise<Partial<UserRecord>[]> {
+  const cacheKey = `users-data-${subtype}`;
+  const cached = cache.get<UserRecord[]>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const items = await dynamodb.scanItems(USERS_TABLE);
+    if (!items || items.length === 0) {
+      return [];
+    }
+
+    // TODO: Filter by subtype
+    const users = items.map(userRecord => ({
+      name: userRecord.name || '',
+      userId: userRecord.userId || '',
+    }));
+
+    // Cache the results
+    cache.set(cacheKey, users, 120000); // Cache for 2 minutes
+
+    return users;
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    return [];
+  }
+}
 
 // ===========================================
 // RANKINGS AND ATHLETES DATA SERVICES
