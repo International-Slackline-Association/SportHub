@@ -1,4 +1,4 @@
-import { UserSubType } from '@types/rbac';
+// import { UserSubType } from '@types/rbac';
 import { dynamodb } from './dynamodb';
 import { UserRecord } from './relational-types';
 
@@ -48,7 +48,7 @@ const cache = new SimpleCache();
 // ===========================================
 // USER DATA SERVICES
 // ===========================================
-export async function getUsers({ subtype }: { subtype: UserSubType }): Promise<Partial<UserRecord>[]> {
+export async function getUsers({ subtype }: { subtype: string }): Promise<Partial<UserRecord>[]> {
   const cacheKey = `users-data-${subtype}`;
   const cached = cache.get<UserRecord[]>(cacheKey);
   if (cached) return cached;

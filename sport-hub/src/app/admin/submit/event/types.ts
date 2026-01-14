@@ -1,5 +1,4 @@
 import * as Yup from 'yup';
-import { extractYouTubeId } from './components/event-inputs/YouTubePreviewTextField';
 import { Option } from '@ui/Form';
 
 // Combined form values (parent level)
