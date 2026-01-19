@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@lib/auth';
 import { dynamodb } from '@lib/dynamodb';
 import { clearRoleCache, getCacheStats } from '@lib/rbac-service';
-import type { UserRecord } from '@lib/relational-types';
+import type { UserProfileRecord } from '@lib/relational-types';
 
 const USERS_TABLE = 'users';
 
@@ -22,10 +22,11 @@ export async function GET() {
       );
     }
 
-    // Fetch user from database (fresh, no cache)
+    // Fetch user profile from database (fresh, no cache)
     const user = await dynamodb.getItem(USERS_TABLE, {
-      userId: session.user.id
-    }) as UserRecord | null;
+      userId: session.user.id,
+      sortKey: 'Profile'
+    }) as UserProfileRecord | null;
 
     if (!user) {
       return NextResponse.json({
@@ -113,8 +114,9 @@ export async function POST() {
 
     // Fetch user from database
     const user = await dynamodb.getItem(USERS_TABLE, {
-      userId: session.user.id
-    }) as UserRecord | null;
+      userId: session.user.id,
+      sortKey: 'Profile'
+    }) as UserProfileRecord | null;
 
     if (!user) {
       return NextResponse.json({

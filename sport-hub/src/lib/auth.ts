@@ -1,8 +1,7 @@
 import NextAuth from "next-auth"
 import Cognito from "next-auth/providers/cognito"
-import { getUserRole, getUserPermissions, getUserSubTypes } from './rbac-service'
+import { getUserRole, getUserPermissions } from './rbac-service'
 import { ensureUserExists } from './onboarding'
-import { getReferenceUserById } from './reference-db-service'
 import type { Role, Permission } from '../types/rbac'
 
 // Validate required environment variables at runtime (not during build)

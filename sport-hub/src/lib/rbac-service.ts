@@ -8,7 +8,7 @@
 import { dynamodb } from './dynamodb';
 import type { Role, Permission } from '../types/rbac';
 import { ROLE_PERMISSIONS } from '../types/rbac';
-import type { UserRecord } from './relational-types';
+import type { UserProfileRecord } from './relational-types';
 
 const USERS_TABLE = 'users';
 
@@ -39,8 +39,8 @@ export async function getUserRole(userId: string): Promise<Role> {
   }
 
   try {
-    // Fetch from database
-    const user = await dynamodb.getItem(USERS_TABLE, { userId }) as UserRecord | null;
+    // Fetch from database (use composite key)
+    const user = await dynamodb.getItem(USERS_TABLE, { userId, sortKey: 'Profile' }) as UserProfileRecord | null;
 
     if (!user) {
       // New user - return default role
@@ -107,21 +107,22 @@ export async function updateUserRole(
       throw new Error('Only admins can update user roles');
     }
 
-    // Get existing user
-    const user = await dynamodb.getItem(USERS_TABLE, { userId }) as UserRecord | null;
+    // Get existing user (use composite key)
+    const user = await dynamodb.getItem(USERS_TABLE, { userId, sortKey: 'Profile' }) as UserProfileRecord | null;
     if (!user) {
       throw new Error('User not found');
     }
 
     // Update with new role
-    const updatedUser: UserRecord = {
+    const updatedUser: UserProfileRecord = {
       ...user,
+      sortKey: 'Profile',
       role: newRole,
       roleAssignedAt: new Date().toISOString(),
       roleAssignedBy: assignedBy,
     };
 
-    await dynamodb.putItem(USERS_TABLE, updatedUser);
+    await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
 
     // Clear cache to force refresh
     clearRoleCache(userId);

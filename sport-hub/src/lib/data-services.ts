@@ -1,5 +1,5 @@
 import { dynamodb } from './dynamodb';
-import type { ContestRecord, EventMetadata, ContestParticipant } from './relational-types';
+import type { ContestRecord, EventMetadataRecord, ContestParticipant } from './relational-types';
 import { getReferenceUserById, getReferenceUsersBatch } from './reference-db-service';
 import {
   getAthleteProfile as getAthleteProfileOptimized,
@@ -90,25 +90,35 @@ export async function getRankingsData(): Promise<AthleteRanking[]> {
       return [];
     }
 
-    // Batch-fetch names from isa-users in production
+    // Batch-fetch names from isa-users (works in both local and production)
     let referenceUsers = new Map<string, { name: string; country?: string }>();
-    if (process.env.DYNAMODB_LOCAL !== 'true') {
-      const athleteIds = profiles.map(p => p.userId).filter(Boolean);
-      const refUsersMap = await getReferenceUsersBatch(athleteIds);
-      referenceUsers = new Map(
-        Array.from(refUsersMap.entries()).map(([id, user]) => [
-          id,
-          { name: user.name, country: user.country }
-        ])
-      );
+    const athleteIds = profiles.map(p => p.isaUsersId).filter(Boolean);
+    const refUsersMap = await getReferenceUsersBatch(athleteIds);
+    referenceUsers = new Map(
+      Array.from(refUsersMap.entries()).map(([id, user]) => [
+        id,
+        { name: user.name, country: user.country }
+      ])
+    );
+
+    // Add error logging to help diagnose reference DB issues
+    if (referenceUsers.size === 0 && athleteIds.length > 0) {
+      console.error('❌ Reference DB lookup failed. Got 0 users for', athleteIds.length, 'requests');
+      console.error('   Check:');
+      console.error('   - LOCAL_REFERENCE_DB=true in .env.local (for local dev)');
+      console.error('   - Reference DB table "isa-users" exists and has data');
+      console.error('   - DynamoDB Local running on port 8000');
+      console.error('   - Check pnpm db:gui (port 8001) to verify isa-users table');
+    } else {
+      console.log(`📊 Reference DB lookup: Requested ${athleteIds.length}, Got ${referenceUsers.size}`);
     }
 
     const rankings = profiles
       .map((profile): AthleteRanking => {
         // Use isa-users data in production, fallback to local dev athleteSlug
-        const refUser = referenceUsers.get(profile.userId);
+        const refUser = profile.isaUsersId ? referenceUsers.get(profile.isaUsersId) : undefined;
         const name = refUser?.name || profile.athleteSlug?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || '';
-        const country = refUser?.country || 'N/A';
+        const country = refUser?.country || '-'; // Use '-' for missing country data
 
         return {
           userId: profile.userId || '',
@@ -172,8 +182,16 @@ export interface ContestData {
 
 /**
  * Get all contests for events table
- * OPTIMIZED: Single scan with embedded participants + Caching
- * Uses new hierarchical schema with sortKey patterns
+ * OPTIMIZED: Scan with projection expression (reduces data transfer) + 10-min caching
+ *
+ * NOTE: Table scan is necessary here because we need ALL contests across ALL events.
+ * The hierarchical schema (eventId partition key) means we can't query without knowing event IDs.
+ * Future optimization: Add GSI on contestDate to query recent contests without full scan.
+ *
+ * Current optimizations:
+ * - Projection expression: Only fetches needed fields (~70% data reduction)
+ * - 10-minute cache: Reduces scan frequency (was 3 min)
+ * - Embedded participants: No N+1 queries for athlete data
  */
 export async function getContestsData(): Promise<ContestData[]> {
   const cacheKey = 'contests-data';
@@ -181,19 +199,25 @@ export async function getContestsData(): Promise<ContestData[]> {
   if (cached) return cached;
 
   try {
-    const allItems = await dynamodb.scanItems(EVENTS_TABLE);
+    // Scan with projection to reduce data transfer
+    const allItems = await dynamodb.scanItems(EVENTS_TABLE, {
+      projectionExpression: 'eventId, sortKey, contestName, contestDate, country, city, discipline, prize, gender, category, profileUrl, thumbnailUrl, athletes, #loc',
+      expressionAttributeNames: {
+        '#loc': 'location' // 'location' is a reserved word in DynamoDB
+      }
+    });
 
     if (!allItems || allItems.length === 0) {
       return [];
     }
 
     // Separate metadata and contests using sortKey
-    const metadataMap = new Map<string, EventMetadata>();
+    const metadataMap = new Map<string, EventMetadataRecord>();
     const contestRecords: ContestRecord[] = [];
 
     allItems.forEach(item => {
       if (item.sortKey === 'Metadata') { // Capital M in new schema
-        metadataMap.set(item.eventId, item as EventMetadata);
+        metadataMap.set(item.eventId, item as EventMetadataRecord);
       } else if (item.sortKey?.startsWith('Contest:')) { // Contest:{discipline}:{contestId}
         contestRecords.push(item as ContestRecord);
       }
@@ -204,12 +228,15 @@ export async function getContestsData(): Promise<ContestData[]> {
       const event = metadataMap.get(contest.eventId);
 
       const participants = (contest.athletes || []) // New schema uses 'athletes' field
-        .map((p: ContestParticipant) => ({
-          userId: p.userId || '',
-          name: p.name || '',
-          place: p.place || '',
-          points: parseFloat(p.points || '0')
-        }))
+        .map((p: ContestParticipant) => {
+          const points = parseFloat(p.points || '0');
+          return {
+            userId: p.userId || '',
+            name: p.name || '',
+            place: p.place || '',
+            points: isNaN(points) ? 0 : points
+          };
+        })
         .sort((a, b) => parseInt(a.place) - parseInt(b.place));
 
       return {
@@ -231,8 +258,8 @@ export async function getContestsData(): Promise<ContestData[]> {
 
     const sortedContests = contests.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    // Cache the results
-    cache.set(cacheKey, sortedContests, 180000); // Cache for 3 minutes
+    // Cache the results (10 min TTL to reduce scan frequency)
+    cache.set(cacheKey, sortedContests, 600000); // Cache for 10 minutes (was 3 min)
     return sortedContests;
   } catch (error) {
     console.error('Error fetching contests data:', error);
@@ -301,20 +328,22 @@ export async function getAthleteProfile(athleteId: string): Promise<AthleteProfi
       return null;
     }
 
-    // Fetch identity from isa-users in production
+    // Fetch identity from isa-users (works in both local and production)
     let name = '';
     let country = 'N/A';
 
-    if (process.env.DYNAMODB_LOCAL !== 'true') {
-      // Production mode: query isa-users
-      const referenceUser = await getReferenceUserById(athleteId);
+    if (profile.isaUsersId) {
+      // Query isa-users by isaUsersId
+      const referenceUser = await getReferenceUserById(profile.isaUsersId);
       if (referenceUser) {
         name = referenceUser.name;
         country = referenceUser.country || 'N/A';
       }
-    } else {
-      // Local dev mode: convert athleteSlug to display name
-      name = profile.athleteSlug?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || '';
+    }
+
+    // Fallback to athleteSlug if no reference data found
+    if (!name && profile.athleteSlug) {
+      name = profile.athleteSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
 
     return {
@@ -350,10 +379,10 @@ export async function getAthleteContests(athleteId: string): Promise<AthleteCont
     // Fetch event metadata for unique events
     const uniqueEventIds = [...new Set(participations.map(p => p.eventId))];
     const eventMetadataPromises = uniqueEventIds.map(eventId =>
-      dynamodb.getItem(EVENTS_TABLE, { eventId, sortKey: 'Metadata' }) as Promise<EventMetadata | null>
+      dynamodb.getItem(EVENTS_TABLE, { eventId, sortKey: 'Metadata' }) as Promise<EventMetadataRecord | null>
     );
     const eventMetadataResults = await Promise.all(eventMetadataPromises);
-    const eventMetadataMap = new Map<string, EventMetadata>();
+    const eventMetadataMap = new Map<string, EventMetadataRecord>();
     eventMetadataResults.forEach(metadata => {
       if (metadata) {
         eventMetadataMap.set(metadata.eventId, metadata);

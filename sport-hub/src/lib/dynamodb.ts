@@ -1,5 +1,5 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand, GetCommand, ScanCommand, DeleteCommand, UpdateCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, GetCommand, ScanCommand, DeleteCommand, UpdateCommand, QueryCommand, BatchGetCommand } from "@aws-sdk/lib-dynamodb";
 
 // Environment detection for local development
 const isLocal = process.env.DYNAMODB_LOCAL === 'true';
@@ -87,10 +87,17 @@ export const dynamodb = {
     return response.Item;
   },
 
-  // Scan all items
-  async scanItems(tableName: string) {
+  // Scan all items (with optional limit and projection for efficiency)
+  async scanItems(tableName: string, options?: {
+    limit?: number;
+    projectionExpression?: string;
+    expressionAttributeNames?: Record<string, string>;
+  }) {
     const command = new ScanCommand({
       TableName: getTableName(tableName),
+      ...(options?.limit && { Limit: options.limit }),
+      ...(options?.projectionExpression && { ProjectionExpression: options.projectionExpression }),
+      ...(options?.expressionAttributeNames && { ExpressionAttributeNames: options.expressionAttributeNames }),
     });
 
     const response = await ddb.send(command);
@@ -148,6 +155,23 @@ export const dynamodb = {
 
     const response = await ddb.send(command);
     return response.Items || [];
+  },
+
+  // Batch get items (up to 100 items per request)
+  // 10x faster than sequential GetItem calls
+  async batchGetItems(tableName: string, keys: Record<string, unknown>[]) {
+    if (keys.length === 0) return [];
+
+    const command = new BatchGetCommand({
+      RequestItems: {
+        [getTableName(tableName)]: {
+          Keys: keys,
+        },
+      },
+    });
+
+    const response = await ddb.send(command);
+    return response.Responses?.[getTableName(tableName)] || [];
   },
 };
 

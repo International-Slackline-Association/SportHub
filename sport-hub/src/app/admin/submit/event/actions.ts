@@ -8,6 +8,15 @@ import { EventSubmissionFormValues } from './types';
 
 const EVENTS_TABLE = 'events';
 
+// Simple in-memory cache for getAllEvents (5-minute TTL)
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
+let eventsCache: CacheEntry<unknown[]> | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 // Generate unique event ID
 function generateEventId(): string {
   return `event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -91,13 +100,33 @@ export async function getEvent(eventId: string) {
 /**
  * Get all events
  * PUBLIC: No authentication required (read-only)
+ * OPTIMIZED: 5-minute cache to prevent excessive table scans
+ *
+ * NOTE: Uses table scan because we need ALL events. Future optimization: implement pagination.
  */
 export async function getAllEvents() {
   try {
+    // Check cache first
+    if (eventsCache && (Date.now() - eventsCache.timestamp) < CACHE_TTL) {
+      return {
+        success: true,
+        events: eventsCache.data,
+      };
+    }
+
+    // Cache miss - scan table
     const events = await dynamodb.scanItems(EVENTS_TABLE);
+    const eventList = events || [];
+
+    // Update cache
+    eventsCache = {
+      data: eventList,
+      timestamp: Date.now(),
+    };
+
     return {
       success: true,
-      events: events || [],
+      events: eventList,
     };
   } catch (error) {
     console.error('Error fetching events:', error);

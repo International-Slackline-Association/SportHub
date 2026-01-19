@@ -9,9 +9,10 @@ interface AthleteProfilePageProps {
 
 export default async function AthleteProfilePage({ params }: AthleteProfilePageProps) {
   const { athleteId } = await params;
+  const decodedAthleteId = decodeURIComponent(athleteId);
 
   // Fetch only profile data server-side for immediate display
-  const profile = await getAthleteProfile(athleteId);
+  const profile = await getAthleteProfile(decodedAthleteId);
 
   if (!profile) {
     notFound();
@@ -21,7 +22,7 @@ export default async function AthleteProfilePage({ params }: AthleteProfilePageP
     <div className="stack gap-4">
       <ProfileCard profile={profile} />
       <section className="p-4 sm:p-0">
-        <AthleteDataTabs athleteId={athleteId} />
+        <AthleteDataTabs athleteId={decodedAthleteId} />
       </section>
     </div>
   );

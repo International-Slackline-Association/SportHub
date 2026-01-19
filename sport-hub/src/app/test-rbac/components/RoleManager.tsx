@@ -1,11 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import type { UserRecord } from '@lib/relational-types';
 import { updateUserRole } from '../actions';
 
+// Display type for user management (combines profile + identity data)
+interface UserDisplayData {
+  userId: string;
+  name: string;
+  email: string;
+  role: 'user' | 'admin';
+}
+
 interface RoleManagerProps {
-  users: UserRecord[];
+  users: UserDisplayData[];
   currentUserId: string;
 }
 

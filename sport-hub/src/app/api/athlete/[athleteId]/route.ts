@@ -7,15 +7,16 @@ export async function GET(
 ) {
   try {
     const { athleteId } = await params;
+    const decodedAthleteId = decodeURIComponent(athleteId);
 
-    if (!athleteId) {
+    if (!decodedAthleteId) {
       return NextResponse.json({ error: 'Athlete ID is required' }, { status: 400 });
     }
 
     // Fetch all data in parallel
     const [profile, contests, worldRecords, worldFirsts] = await Promise.all([
-      getAthleteProfile(athleteId),
-      getAthleteContests(athleteId),
+      getAthleteProfile(decodedAthleteId),
+      getAthleteContests(decodedAthleteId),
       getWorldRecords(),
       getWorldFirsts()
     ]);

@@ -6,7 +6,7 @@
  */
 
 import { dynamodb } from './dynamodb';
-import type { EventMetadata, ContestRecord, EventOrganizer } from './relational-types';
+import type { EventMetadataRecord, ContestRecord, EventOrganizer } from './relational-types';
 
 const EVENTS_TABLE = 'events';
 
@@ -15,37 +15,41 @@ const EVENTS_TABLE = 'events';
  */
 export async function createEvent(params: {
   eventId: string;
-  name: string;
+  eventName: string;
   type: 'competition' | 'clinic' | 'meetup';
-  date: string;
+  startDate: string;
+  endDate?: string;
   location: string;
+  country: string;
   organizers?: EventOrganizer[];
-}): Promise<EventMetadata> {
-  const event: EventMetadata = {
+}): Promise<EventMetadataRecord> {
+  const event: EventMetadataRecord = {
     eventId: params.eventId,
-    sortKey: 'metadata',
+    sortKey: 'Metadata',
     type: params.type,
-    name: params.name,
-    date: params.date,
+    eventName: params.eventName,
+    startDate: params.startDate,
+    endDate: params.endDate || params.startDate,
     location: params.location,
+    country: params.country,
     organizers: params.organizers || [],
-    totalContests: 0,
-    createdAt: new Date().toISOString(),
+    contestCount: 0,
+    createdAt: Date.now(),
   };
 
-  await dynamodb.putItem(EVENTS_TABLE, event);
+  await dynamodb.putItem(EVENTS_TABLE, event as unknown as Record<string, unknown>);
   return event;
 }
 
 /**
  * Get event metadata
  */
-export async function getEvent(eventId: string): Promise<EventMetadata | null> {
+export async function getEvent(eventId: string): Promise<EventMetadataRecord | null> {
   const item = await dynamodb.getItem(EVENTS_TABLE, {
     eventId,
-    sortKey: 'metadata',
+    sortKey: 'Metadata',
   });
-  return item as EventMetadata | null;
+  return item as EventMetadataRecord | null;
 }
 
 /**
@@ -55,17 +59,19 @@ export async function createContest(params: {
   eventId: string;
   contestName: string;
   discipline: string;
-  date: string;
-  category?: string;
-  gender?: string;
+  contestDate: string;
+  country: string;
+  category?: number;
+  gender?: number;
 }): Promise<ContestRecord> {
   // Get event to determine next contest number
   const event = await getEvent(params.eventId);
   if (!event) throw new Error(`Event not found: ${params.eventId}`);
 
-  const contestNumber = event.totalContests + 1;
-  const sortKey = `Contest${contestNumber}`;
-  const contestId = `${params.eventId}#${sortKey}`;
+  const contestNumber = event.contestCount + 1;
+  const sortKey = `Contest:${params.discipline}:${params.eventId}-${contestNumber}`;
+  const contestId = `${params.eventId}#${contestNumber}`;
+  const dateSortKey = `${params.contestDate}#${params.eventId}`;
 
   const contest: ContestRecord = {
     eventId: params.eventId,
@@ -73,22 +79,23 @@ export async function createContest(params: {
     contestId,
     contestName: params.contestName,
     discipline: params.discipline,
-    date: params.date,
+    contestDate: params.contestDate,
+    dateSortKey,
+    country: params.country,
     category: params.category,
     gender: params.gender,
-    participants: [],
+    athletes: [],
     judges: [],
     organizers: [],
-    createdAt: new Date().toISOString(),
   };
 
-  // Atomic: Create contest and increment event's totalContests
-  await dynamodb.putItem(EVENTS_TABLE, contest);
+  // Atomic: Create contest and increment event's contestCount
+  await dynamodb.putItem(EVENTS_TABLE, contest as unknown as Record<string, unknown>);
   await dynamodb.updateItem(
     EVENTS_TABLE,
-    { eventId: params.eventId, sortKey: 'metadata' },
+    { eventId: params.eventId, sortKey: 'Metadata' },
     {
-      updateExpression: 'SET totalContests = totalContests + :one',
+      updateExpression: 'SET contestCount = contestCount + :one',
       expressionAttributeValues: { ':one': 1 },
     }
   );
@@ -140,29 +147,41 @@ export async function getContest(
  */
 export async function updateEvent(
   eventId: string,
-  updates: Partial<Omit<EventMetadata, 'eventId' | 'sortKey' | 'totalContests'>>
-): Promise<EventMetadata | null> {
+  updates: Partial<Omit<EventMetadataRecord, 'eventId' | 'sortKey' | 'contestCount'>>
+): Promise<EventMetadataRecord | null> {
   const updateExpressions: string[] = [];
   const expressionAttributeNames: Record<string, string> = {};
   const expressionAttributeValues: Record<string, unknown> = {};
 
   // Build update expression dynamically
-  if (updates.name !== undefined) {
-    updateExpressions.push('#name = :name');
-    expressionAttributeNames['#name'] = 'name';
-    expressionAttributeValues[':name'] = updates.name;
+  if (updates.eventName !== undefined) {
+    updateExpressions.push('#eventName = :eventName');
+    expressionAttributeNames['#eventName'] = 'eventName';
+    expressionAttributeValues[':eventName'] = updates.eventName;
   }
 
-  if (updates.date !== undefined) {
-    updateExpressions.push('#date = :date');
-    expressionAttributeNames['#date'] = 'date';
-    expressionAttributeValues[':date'] = updates.date;
+  if (updates.startDate !== undefined) {
+    updateExpressions.push('#startDate = :startDate');
+    expressionAttributeNames['#startDate'] = 'startDate';
+    expressionAttributeValues[':startDate'] = updates.startDate;
+  }
+
+  if (updates.endDate !== undefined) {
+    updateExpressions.push('#endDate = :endDate');
+    expressionAttributeNames['#endDate'] = 'endDate';
+    expressionAttributeValues[':endDate'] = updates.endDate;
   }
 
   if (updates.location !== undefined) {
     updateExpressions.push('#location = :location');
     expressionAttributeNames['#location'] = 'location';
     expressionAttributeValues[':location'] = updates.location;
+  }
+
+  if (updates.country !== undefined) {
+    updateExpressions.push('#country = :country');
+    expressionAttributeNames['#country'] = 'country';
+    expressionAttributeValues[':country'] = updates.country;
   }
 
   if (updates.type !== undefined) {
@@ -183,7 +202,7 @@ export async function updateEvent(
 
   const result = await dynamodb.updateItem(
     EVENTS_TABLE,
-    { eventId, sortKey: 'metadata' },
+    { eventId, sortKey: 'Metadata' },
     {
       updateExpression: `SET ${updateExpressions.join(', ')}`,
       expressionAttributeNames,
@@ -191,7 +210,7 @@ export async function updateEvent(
     }
   );
 
-  return result as EventMetadata;
+  return result as EventMetadataRecord;
 }
 
 /**

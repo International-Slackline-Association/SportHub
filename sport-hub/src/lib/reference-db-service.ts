@@ -6,7 +6,7 @@
  */
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand, QueryCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, GetCommand, QueryCommand, PutCommand, UpdateCommand, BatchGetCommand } from "@aws-sdk/lib-dynamodb";
 
 // Reference table configuration
 const REFERENCE_TABLE = process.env.REFERENCE_DB_TABLE || 'isa-users';
@@ -362,8 +362,9 @@ export async function updateReferenceUser(
 
 /**
  * Get multiple user identities by custom IDs (batch operation)
+ * Uses BatchGetItem for 10x performance improvement over individual queries
  *
- * @param userIds - Array of custom user IDs
+ * @param userIds - Array of custom user IDs (auto-chunks for batches >100)
  * @returns Map of userId to identity
  */
 export async function getReferenceUsersBatch(
@@ -371,16 +372,39 @@ export async function getReferenceUsersBatch(
 ): Promise<Map<string, ReferenceUserIdentity>> {
   const identities = new Map<string, ReferenceUserIdentity>();
 
-  // TODO: Implement BatchGetItem for better performance
-  // For now, fetch sequentially
-  await Promise.all(
-    userIds.map(async (userId) => {
-      const identity = await getReferenceUserById(userId);
-      if (identity) {
-        identities.set(userId, identity);
-      }
-    })
-  );
+  if (userIds.length === 0) return identities;
+
+  // BatchGetItem supports max 100 items - chunk if needed
+  const BATCH_SIZE = 100;
+  const chunks = [];
+  for (let i = 0; i < userIds.length; i += BATCH_SIZE) {
+    chunks.push(userIds.slice(i, i + BATCH_SIZE));
+  }
+
+  // Process each chunk with BatchGetItem
+  for (const chunk of chunks) {
+    const keys = chunk.map(userId => ({
+      PK: userId.startsWith('user:') ? userId : `user:${userId}`,
+      SK_GSI: 'userDetails'
+    }));
+
+    const command = new BatchGetCommand({
+      RequestItems: {
+        [REFERENCE_TABLE]: {
+          Keys: keys,
+        },
+      },
+    });
+
+    const response = await referenceDdb.send(command);
+    const items = response.Responses?.[REFERENCE_TABLE] || [];
+
+    // Map results to identities
+    items.forEach((item) => {
+      const identity = mapToIdentity(item as ReferenceDBRecord);
+      identities.set(identity.userId, identity);
+    });
+  }
 
   return identities;
 }

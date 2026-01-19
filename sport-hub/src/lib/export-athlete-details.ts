@@ -7,7 +7,7 @@
  */
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, ScanCommand, ScanCommandInput } from "@aws-sdk/lib-dynamodb";
 import { readFileSync, writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -28,6 +28,16 @@ const localClient = new DynamoDBClient({
 const localDdb = DynamoDBDocumentClient.from(localClient);
 const ISA_RANKINGS_TABLE = 'ISA-Rankings';
 
+interface AthleteRanking {
+  type: string;              // Parsed from SK_GSI
+  year: string;              // Parsed from SK_GSI
+  discipline: string;        // Parsed from SK_GSI
+  gender: string;            // Parsed from SK_GSI
+  ageCategory: string;       // Parsed from SK_GSI
+  points: string;            // From GSI_SK (as string)
+  lastUpdatedAt?: number;    // Timestamp
+}
+
 interface AthleteDetails {
   userId: string;              // SportHubID
   isaUsersId?: string;         // Link to isa-users if matched
@@ -35,15 +45,7 @@ interface AthleteDetails {
   profileUrl?: string;         // ISA-Rankings specific
   thumbnailUrl?: string;       // ISA-Rankings specific
   infoUrl?: string;            // ISA-Rankings specific
-  rankings: Array<{
-    type: string;              // Parsed from SK_GSI
-    year: string;              // Parsed from SK_GSI
-    discipline: string;        // Parsed from SK_GSI
-    gender: string;            // Parsed from SK_GSI
-    ageCategory: string;       // Parsed from SK_GSI
-    points: string;            // From GSI_SK (as string)
-    lastUpdatedAt?: number;    // Timestamp
-  }>;
+  rankings: AthleteRanking[];
 }
 
 /**
@@ -66,14 +68,14 @@ async function buildSlugToUserIdMap(): Promise<Map<string, { userId: string; isa
 
   const slugMap = new Map<string, { userId: string; isaUsersId?: string }>();
   let scannedCount = 0;
-  let lastEvaluatedKey: Record<string, unknown> | undefined = undefined;
+  let lastEvaluatedKey: ScanCommandInput['ExclusiveStartKey'] = undefined;
 
   // Load contests file to get existing userIds
   const contestsPath = join(__dirname, '../mocks/contests_with_real_userids.json');
   const contests = JSON.parse(readFileSync(contestsPath, 'utf-8'));
 
   // Build contestKey -> athletes map
-  const contestAthletes = new Map<string, Array<any>>();
+  const contestAthletes = new Map<string, Array<Record<string, unknown>>>();
   for (const contest of contests) {
     const contestKey = `Contest:${contest.discipline}:${contest.contestId}`;
     contestAthletes.set(contestKey, contest.athletes);
@@ -81,7 +83,7 @@ async function buildSlugToUserIdMap(): Promise<Map<string, { userId: string; isa
 
   // Scan participations to match slug with userId
   do {
-    const command = new ScanCommand({
+    const commandInput: ScanCommandInput = {
       TableName: ISA_RANKINGS_TABLE,
       FilterExpression: 'begins_with(PK, :athlete) AND begins_with(SK_GSI, :contest)',
       ExpressionAttributeValues: {
@@ -89,7 +91,8 @@ async function buildSlugToUserIdMap(): Promise<Map<string, { userId: string; isa
         ':contest': 'Contest:'
       },
       ExclusiveStartKey: lastEvaluatedKey
-    });
+    };
+    const command = new ScanCommand(commandInput);
 
     const response = await localDdb.send(command);
 
@@ -115,8 +118,8 @@ async function buildSlugToUserIdMap(): Promise<Map<string, { userId: string; isa
 
         if (matchedAthlete && matchedAthlete.userId) {
           slugMap.set(athleteSlug, {
-            userId: matchedAthlete.userId,
-            isaUsersId: matchedAthlete.isaUsersId,
+            userId: matchedAthlete.userId as string,
+            isaUsersId: matchedAthlete.isaUsersId as string | undefined,
           });
         }
       }
@@ -142,17 +145,18 @@ async function scanAthleteDetails(): Promise<Map<string, Partial<AthleteDetails>
 
   const athletes = new Map<string, Partial<AthleteDetails>>();
   let scannedCount = 0;
-  let lastEvaluatedKey: Record<string, unknown> | undefined = undefined;
+  let lastEvaluatedKey: ScanCommandInput['ExclusiveStartKey'] = undefined;
 
   do {
-    const command = new ScanCommand({
+    const commandInput: ScanCommandInput = {
       TableName: ISA_RANKINGS_TABLE,
       FilterExpression: 'SK_GSI = :athleteDetails',
       ExpressionAttributeValues: {
         ':athleteDetails': 'AthleteDetails'
       },
       ExclusiveStartKey: lastEvaluatedKey
-    });
+    };
+    const command = new ScanCommand(commandInput);
 
     const response = await localDdb.send(command);
 
@@ -188,23 +192,24 @@ async function scanAthleteDetails(): Promise<Map<string, Partial<AthleteDetails>
 /**
  * Scan ISA-Rankings for Rankings records
  */
-async function scanRankings(): Promise<Map<string, Array<any>>> {
+async function scanRankings(): Promise<Map<string, AthleteRanking[]>> {
   console.log('📥 Scanning ISA-Rankings for Rankings...');
 
-  const rankingsByAthlete = new Map<string, Array<any>>();
+  const rankingsByAthlete = new Map<string, AthleteRanking[]>();
   let scannedCount = 0;
-  let lastEvaluatedKey: Record<string, unknown> | undefined = undefined;
+  let lastEvaluatedKey2: ScanCommandInput['ExclusiveStartKey'] = undefined;
 
   do {
-    const command = new ScanCommand({
+    const commandInput: ScanCommandInput = {
       TableName: ISA_RANKINGS_TABLE,
       FilterExpression: 'begins_with(PK, :athlete) AND begins_with(SK_GSI, :rankings)',
       ExpressionAttributeValues: {
         ':athlete': 'Athlete:',
         ':rankings': 'Rankings:'
       },
-      ExclusiveStartKey: lastEvaluatedKey
-    });
+      ExclusiveStartKey: lastEvaluatedKey2
+    };
+    const command = new ScanCommand(commandInput);
 
     const response = await localDdb.send(command);
 
@@ -232,7 +237,7 @@ async function scanRankings(): Promise<Map<string, Array<any>>> {
         points = pointsStr; // Keep as string
       }
 
-      const ranking = {
+      const ranking: AthleteRanking = {
         type: parts[1],
         year: parts[2],
         discipline: parts[3],
@@ -254,8 +259,8 @@ async function scanRankings(): Promise<Map<string, Array<any>>> {
       }
     }
 
-    lastEvaluatedKey = response.LastEvaluatedKey;
-  } while (lastEvaluatedKey);
+    lastEvaluatedKey2 = response.LastEvaluatedKey;
+  } while (lastEvaluatedKey2);
 
   console.log(`✅ Found ${scannedCount} total rankings for ${rankingsByAthlete.size} athletes`);
   return rankingsByAthlete;

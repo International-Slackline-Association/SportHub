@@ -68,6 +68,16 @@ interface ContestSeed {
 // ============================================================================
 
 /**
+ * Strip prefix from points string
+ * Converts "$ 900", "# 59", "\" 1" -> "900", "59", "1"
+ */
+function stripPointsPrefix(points: string): string {
+  // Extract numeric value from points string (removes $, #, ", etc.)
+  const numericValue = parseFloat(points.replace(/[^0-9.-]/g, '')) || 0;
+  return numericValue.toString();
+}
+
+/**
  * Pad points for consistent sorting in GSI
  * Converts "585" -> "00000585", "$ 1000" -> "00001000"
  */
@@ -209,7 +219,7 @@ function processContests(
         isaUsersId: athlete.isaUsersId,
         name: athlete.name,
         place: athlete.place,
-        points: athlete.points,
+        points: stripPointsPrefix(athlete.points), // Strip prefix ($ 900 -> 900)
         thumbnailUrl: athlete.thumbnailUrl,
       }));
 
@@ -253,7 +263,7 @@ function processContests(
           contestId: contest.contestId,
           discipline: contest.discipline,
           place: Number(athlete.place),
-          points: athlete.points,
+          points: stripPointsPrefix(athlete.points), // Strip prefix ($ 900 -> 900)
           contestDate: contest.date,
           contestName: contest.name,
         };
@@ -264,6 +274,11 @@ function processContests(
         const profile = profiles.get(athlete.userId);
         if (profile) {
           profile.contestCount += 1;
+
+          // Populate isaUsersId from contest data (since athlete_details.json doesn't have it)
+          if (athlete.isaUsersId && !profile.isaUsersId) {
+            profile.isaUsersId = athlete.isaUsersId;
+          }
 
           // Update date range
           if (!profile.firstCompetition || contest.date < profile.firstCompetition) {

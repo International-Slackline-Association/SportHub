@@ -223,46 +223,6 @@ export interface EventOrganizer {
 }
 
 // ============================================================================
-// LEGACY TYPES (for backward compatibility during migration)
-// ============================================================================
-
-/**
- * @deprecated Use UserProfileRecord instead
- * Legacy user record structure
- */
-export interface LegacyUserRecord {
-  userId: string;
-  name?: string;
-  email?: string;
-  createdAt: string;
-  role: Role;
-  userSubTypes?: UserSubType[];
-  primarySubType?: UserSubType;
-  totalPoints: number;
-  contestsParticipated: number;
-  contestParticipations: Array<{
-    contestId: string;
-    eventId: string;
-    place: string;
-    points: number;
-  }>;
-}
-
-/**
- * @deprecated Use ContestRecord instead
- * Legacy contest/event record structure
- */
-export interface LegacyEventRecord {
-  eventId: string;
-  type: 'contest' | 'clinic' | 'meetup';
-  name: string;
-  discipline: string;
-  date: string;
-  country: string;
-  participants: ContestParticipant[];
-}
-
-// ============================================================================
 // UTILITY TYPES
 // ============================================================================
 

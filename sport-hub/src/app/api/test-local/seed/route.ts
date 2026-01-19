@@ -13,7 +13,7 @@ export async function POST() {
 
   try {
     const seeder = new DatabaseSeeder();
-    await seeder.fullSeed(true);
+    await seeder.fullSeed();
 
     return NextResponse.json({
       success: true,

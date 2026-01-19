@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import PageLayout from "@ui/PageLayout"
 import ProfileSection from "./components/ProfileSection"
 import { getUserProfile } from "./actions"
+import { getReferenceUserById } from "@lib/reference-db-service"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -11,14 +12,16 @@ export default async function DashboardPage() {
     redirect("/auth/signin")
   }
 
-  // Fetch full user profile from database
+  // Fetch full user profile from database (contains role, stats)
   const profileResult = await getUserProfile(session.user.id);
-  const userProfile = profileResult.success ? profileResult.user : null;
 
-  // Fallback to session data if user not in database yet
-  const displayName = userProfile?.name || session.user.name || '';
-  const displayEmail = userProfile?.email || session.user.email || '';
-  const displayCountry = userProfile?.country;
+  // Fetch identity data from reference DB (name, email, country)
+  const referenceUser = await getReferenceUserById(session.user.id);
+
+  // Fallback to session data if user not in reference DB yet
+  const displayName = referenceUser?.name || session.user.name || '';
+  const displayEmail = referenceUser?.email || session.user.email || '';
+  const displayCountry = referenceUser?.country;
 
   return (
     <PageLayout

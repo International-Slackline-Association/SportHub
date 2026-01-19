@@ -22,10 +22,7 @@
     "sync:recreate": "tsx scripts/sync-dynamodb.ts --recreate",
     "revalidate:all": "./scripts/revalidate-pages.sh",
     "revalidate:rankings": "./scripts/revalidate-pages.sh rankings",
-    "revalidate:events": "./scripts/revalidate-pages.sh events",
-    "migrate:rbac": "tsx src/lib/migrations/add-rbac-fields.ts",
-    "migrate:hierarchy": "tsx src/lib/migrations/migrate-to-event-contest-hierarchy.ts",
-    "db:export": "tsx src/lib/export-from-isa-rankings.ts"
+    "revalidate:events": "./scripts/revalidate-pages.sh events"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.821.0",

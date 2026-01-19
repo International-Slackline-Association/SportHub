@@ -8,7 +8,6 @@
 import { dynamodb } from './dynamodb';
 import { getReferenceUserById } from './reference-db-service';
 import { getEvent, getContest } from './event-contest-service';
-import type { ContestRecord } from './relational-types';
 
 const USERS_TABLE = 'users';
 const EVENTS_TABLE = 'events';
@@ -53,12 +52,12 @@ export async function addAthleteToContest(params: {
           contestId,
           eventId: params.eventId,
           contestName: contest.contestName,
-          eventName: event.name,
+          eventName: event.eventName,
           place: params.place,
           points: params.points,
-          date: contest.date,
+          date: contest.contestDate,
           discipline: contest.discipline,
-          country: event.location,
+          country: event.country,
         }],
         ':empty': [],
         ':zero': 0,
@@ -131,11 +130,11 @@ export async function addJudgeToContest(params: {
           contestId,
           eventId: params.eventId,
           contestName: contest.contestName,
-          eventName: event.name,
-          date: contest.date,
+          eventName: event.eventName,
+          date: contest.contestDate,
           role,
           discipline: contest.discipline,
-          country: event.location,
+          country: event.country,
         }],
         ':empty': [],
         ':zero': 0,
@@ -198,11 +197,12 @@ export async function addOrganizerToEvent(params: {
       expressionAttributeValues: {
         ':newEvent': [{
           eventId: params.eventId,
-          eventName: event.name,
-          date: event.date,
+          eventName: event.eventName,
+          date: event.startDate,
           role,
           location: event.location,
-          totalContests: event.totalContests,
+          country: event.country,
+          contestCount: event.contestCount,
         }],
         ':empty': [],
         ':zero': 0,
@@ -214,7 +214,7 @@ export async function addOrganizerToEvent(params: {
   // 2. Update event metadata record
   await dynamodb.updateItem(
     EVENTS_TABLE,
-    { eventId: params.eventId, sortKey: 'metadata' },
+    { eventId: params.eventId, sortKey: 'Metadata' },
     {
       updateExpression: `
         SET organizers = list_append(if_not_exists(organizers, :empty), :newOrganizer)

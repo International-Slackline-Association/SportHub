@@ -6,7 +6,7 @@ import { useFormikContext } from 'formik';
 import { EventSubmissionFormValues } from '../types';
 import React from 'react';
 import FormikAutocomplete from '@ui/Form/FormikAutocomplete';
-import { EventRecord } from '@lib/relational-types';
+import { EventMetadataRecord } from '@lib/relational-types';
 
 export default function EventAutocomplete() {
   const { values, setValues } = useFormikContext<EventSubmissionFormValues>();
@@ -23,8 +23,8 @@ export default function EventAutocomplete() {
     queryKey: ['events'],
     queryFn: async () => (await fetch('/api/events')).json(),
     enabled: debounced.length >= 3,
-    select: (data) => data.filter((ev: { name: string }) =>
-      ev.name.toLowerCase().includes(debounced.toLowerCase())
+    select: (data) => data.filter((ev: { eventName: string }) =>
+      ev.eventName.toLowerCase().includes(debounced.toLowerCase())
     ),
   });
 
@@ -34,20 +34,21 @@ export default function EventAutocomplete() {
       isLoading={isLoading}
       isError={isError}
       label="Event Name"
-      options={events?.map(({ eventId, name }: EventRecord) => ({ label: name, value: eventId })) || []}
+      options={events?.map(({ eventId, eventName }: EventMetadataRecord) => ({ label: eventName, value: eventId })) || []}
       onSelectOption={(optionValue: string) => {
-        const event = events.find(({ eventId }: EventRecord) => eventId === optionValue);
+        const event = events.find(({ eventId }: EventMetadataRecord) => eventId === optionValue);
+        if (!event) return;
         setValues({
           event: {
-          name: event.name,
-            city: event.city,
+            name: event.eventName,
+            city: event.location || '',
             country: event.country.toUpperCase(),
-            date: event.date,
-            website: event.website,
-            socialMedia: event.socialMedia || {},
-            disciplines: event.disciplines || [],
-            avatarUrl: event.avatarUrl,
-            thumbnailUrl: event.thumbnailUrl
+            date: event.startDate,
+            website: '',
+            socialMedia: {},
+            disciplines: [],
+            avatarUrl: '',
+            thumbnailUrl: event.thumbnailUrl || ''
           }
         });
       }}

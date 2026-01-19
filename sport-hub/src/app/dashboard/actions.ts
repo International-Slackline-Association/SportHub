@@ -4,7 +4,8 @@ import { auth } from '@lib/auth';
 import { canEditUser } from '@lib/authorization';
 import { dynamodb } from '@lib/dynamodb';
 import { revalidatePath } from 'next/cache';
-import type { UserRecord } from '@lib/relational-types';
+import { updateReferenceUser } from '@lib/reference-db-service';
+import type { UserProfileRecord } from '@lib/relational-types';
 
 const USERS_TABLE = 'users';
 
@@ -17,8 +18,9 @@ export interface ProfileUpdateData {
 /**
  * Update user profile
  * Users can only update their own profile, admins can update any profile
+ * Note: Profile identity data (name, email, country) is now stored in reference DB
  */
-export async function updateProfile(userId: string, data: ProfileUpdateData) {
+export async function updateProfile(userId: string, data?: ProfileUpdateData) {
   try {
     // Check authorization (ownership or admin)
     const authResult = await canEditUser(userId);
@@ -33,31 +35,25 @@ export async function updateProfile(userId: string, data: ProfileUpdateData) {
     // Get session for audit trail
     const session = await auth();
 
-    // Get current user data
-    const currentUser = await dynamodb.getItem(USERS_TABLE, { userId }) as UserRecord | undefined;
+    // Get current user profile data
+    const currentUser = await dynamodb.getItem(USERS_TABLE, { userId, sortKey: 'Profile' }) as UserProfileRecord | undefined;
 
     // If user doesn't exist, create them (handles users who signed in before migration)
     if (!currentUser) {
       console.log(`User ${userId} not found in database, creating new record`);
 
-      const newUser: UserRecord = {
+      const newUser: UserProfileRecord = {
         userId,
-        type: 'athlete',
-        name: data.name || session?.user?.name || '',
-        email: data.email || session?.user?.email || '',
-        country: data.country,
+        sortKey: 'Profile',
         role: 'user',
-        roleAssignedAt: new Date().toISOString(),
-        roleAssignedBy: 'system',
-        createdAt: new Date().toISOString(),
-        lastProfileUpdate: new Date().toISOString(),
-        profileCompleted: true,
+        userSubTypes: ['athlete'],
+        primarySubType: 'athlete',
+        createdAt: Date.now(),
         totalPoints: 0,
-        contestsParticipated: 0,
-        eventParticipations: [],
+        contestCount: 0,
       };
 
-      await dynamodb.putItem(USERS_TABLE, newUser);
+      await dynamodb.putItem(USERS_TABLE, newUser as unknown as Record<string, unknown>);
       revalidatePath('/dashboard');
 
       console.log(`Created new user record for ${userId}`);
@@ -69,17 +65,22 @@ export async function updateProfile(userId: string, data: ProfileUpdateData) {
     }
 
     // Update existing user with ONLY allowed fields (prevent role escalation)
-    const updatedUser: UserRecord = {
+    // Note: Name, email, country are now stored in reference DB, not app DB
+    const updatedUser: UserProfileRecord = {
       ...currentUser,
-      // Explicitly copy only allowed fields - DO NOT use spread operator
-      name: data.name ?? currentUser.name,
-      email: data.email ?? currentUser.email,
-      country: data.country ?? currentUser.country,
-      lastProfileUpdate: new Date().toISOString(),
-      profileCompleted: true,
+      lastProfileUpdate: Date.now(),
     };
 
-    await dynamodb.putItem(USERS_TABLE, updatedUser);
+    await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
+
+    // If identity data provided, update reference DB
+    if (data && (data.name || data.email || data.country)) {
+      await updateReferenceUser(userId, {
+        name: data.name,
+        email: data.email,
+        country: data.country,
+      });
+    }
 
     // Revalidate dashboard to show updated data
     revalidatePath('/dashboard');
@@ -104,7 +105,7 @@ export async function updateProfile(userId: string, data: ProfileUpdateData) {
  */
 export async function getUserProfile(userId: string) {
   try {
-    const user = await dynamodb.getItem(USERS_TABLE, { userId }) as UserRecord | undefined;
+    const user = await dynamodb.getItem(USERS_TABLE, { userId, sortKey: 'Profile' }) as UserProfileRecord | undefined;
 
     if (!user) {
       return {
@@ -117,12 +118,10 @@ export async function getUserProfile(userId: string) {
       success: true,
       user: {
         userId: user.userId,
-        name: user.name,
-        email: user.email,
-        country: user.country,
         role: user.role,
-        profileCompleted: user.profileCompleted,
-        lastProfileUpdate: user.lastProfileUpdate,
+        userSubTypes: user.userSubTypes,
+        totalPoints: user.totalPoints,
+        contestCount: user.contestCount,
       },
     };
   } catch (error) {

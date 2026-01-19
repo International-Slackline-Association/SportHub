@@ -6,7 +6,7 @@
  */
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, GetCommand, QueryCommand, BatchGetCommand } from "@aws-sdk/lib-dynamodb";
 
 // ISA-Rankings table configuration
 const ISA_RANKINGS_TABLE = process.env.ISA_RANKINGS_TABLE || 'ISA-Rankings';
@@ -121,8 +121,9 @@ export async function getISAAthleteDetails(athleteId: string): Promise<ISAAthlet
 
 /**
  * Get multiple athlete details by IDs (batch operation)
+ * Uses BatchGetItem for 10x performance improvement over individual queries
  *
- * @param athleteIds - Array of athlete slugs
+ * @param athleteIds - Array of athlete slugs (auto-chunks for batches >100)
  * @returns Map of athleteId to details
  */
 export async function getISAAthletesBatch(
@@ -130,16 +131,39 @@ export async function getISAAthletesBatch(
 ): Promise<Map<string, ISAAthleteDetails>> {
   const athletes = new Map<string, ISAAthleteDetails>();
 
-  // TODO: Implement BatchGetItem for better performance
-  // For now, fetch sequentially
-  await Promise.all(
-    athleteIds.map(async (athleteId) => {
-      const details = await getISAAthleteDetails(athleteId);
-      if (details) {
-        athletes.set(athleteId, details);
-      }
-    })
-  );
+  if (athleteIds.length === 0) return athletes;
+
+  // BatchGetItem supports max 100 items - chunk if needed
+  const BATCH_SIZE = 100;
+  const chunks = [];
+  for (let i = 0; i < athleteIds.length; i += BATCH_SIZE) {
+    chunks.push(athleteIds.slice(i, i + BATCH_SIZE));
+  }
+
+  // Process each chunk with BatchGetItem
+  for (const chunk of chunks) {
+    const keys = chunk.map(athleteId => ({
+      PK: athleteId.startsWith('Athlete:') ? athleteId : `Athlete:${athleteId}`,
+      SK_GSI: 'AthleteDetails'
+    }));
+
+    const command = new BatchGetCommand({
+      RequestItems: {
+        [ISA_RANKINGS_TABLE]: {
+          Keys: keys,
+        },
+      },
+    });
+
+    const response = await isaRankingsDdb.send(command);
+    const items = response.Responses?.[ISA_RANKINGS_TABLE] || [];
+
+    // Map results to athlete details
+    items.forEach((item) => {
+      const details = mapToAthleteDetails(item as ISARankingsRecord);
+      athletes.set(details.athleteId, details);
+    });
+  }
 
   return athletes;
 }

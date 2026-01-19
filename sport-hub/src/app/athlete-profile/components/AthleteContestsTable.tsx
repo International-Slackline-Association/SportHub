@@ -28,6 +28,11 @@ const columns = [
       filterVariant: "text",
     },
     filterFn: "includesString",
+    cell: (info) => (
+      <Link href={`/events/${info.row.original.eventId}`} className="text-blue-600 hover:underline">
+        {info.getValue()}
+      </Link>
+    ),
   }),
   columnHelper.accessor("discipline", {
     enableColumnFilter: true,

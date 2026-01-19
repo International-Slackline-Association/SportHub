@@ -5,7 +5,7 @@
  */
 
 import { dynamodb } from './dynamodb';
-import type { UserRecord } from './relational-types';
+import type { UserProfileRecord } from './relational-types';
 import { updateReferenceUser } from './reference-db-service';
 
 const USERS_TABLE = 'users';
@@ -31,9 +31,9 @@ export interface UserProfileUpdate {
  * @param userId - Custom user ID from reference DB (e.g., "ISA_FBE8B254")
  * @returns User record or null if not found
  */
-export async function getUser(userId: string): Promise<UserRecord | null> {
+export async function getUser(userId: string): Promise<UserProfileRecord | null> {
   try {
-    const user = await dynamodb.getItem(USERS_TABLE, { userId }) as UserRecord | null;
+    const user = await dynamodb.getItem(USERS_TABLE, { userId, sortKey: 'Profile' }) as UserProfileRecord | null;
     return user;
   } catch (error) {
     console.error('Error fetching user:', error);
@@ -52,7 +52,7 @@ export async function getUser(userId: string): Promise<UserRecord | null> {
 export async function updateUserProfile(
   userId: string,
   updates: UserProfileUpdate
-): Promise<UserRecord> {
+): Promise<UserProfileRecord> {
   try {
     // Get existing user from app DB
     const existingUser = await getUser(userId);
@@ -64,12 +64,13 @@ export async function updateUserProfile(
     await updateReferenceUser(userId, updates);
 
     // Update app DB metadata
-    const updatedUser: UserRecord = {
+    const updatedUser: UserProfileRecord = {
       ...existingUser,
-      lastProfileUpdate: new Date().toISOString(),
+      sortKey: 'Profile',
+      lastProfileUpdate: Date.now(),
     };
 
-    await dynamodb.putItem(USERS_TABLE, updatedUser);
+    await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
 
     return updatedUser;
   } catch (error) {
@@ -87,22 +88,22 @@ export async function updateUserProfile(
  */
 export async function createUser(
   customUserId: string
-): Promise<UserRecord> {
-  const newUser: UserRecord = {
-    userId: customUserId,  // Custom ID from reference DB
-    role: 'user',          // Default role
-    userSubTypes: [],      // Sub-types (athlete, judge, organizer) - can be assigned later
+): Promise<UserProfileRecord> {
+  const newUser: UserProfileRecord = {
+    userId: customUserId,       // Custom ID from reference DB
+    sortKey: 'Profile',         // Composite key
+    role: 'user',               // Default role
+    userSubTypes: ['athlete'],  // Default sub-types
     primarySubType: 'athlete',  // Default primary type for GSI
-    createdAt: new Date().toISOString(),
+    createdAt: Date.now(),      // Timestamp
     totalPoints: 0,
-    contestsParticipated: 0,
-    contestParticipations: [],  // RENAMED from eventParticipations
+    contestCount: 0,
     profileCompleted: false,
     roleAssignedAt: new Date().toISOString(),
     roleAssignedBy: 'system',
   };
 
-  await dynamodb.putItem(USERS_TABLE, newUser);
+  await dynamodb.putItem(USERS_TABLE, newUser as unknown as Record<string, unknown>);
   console.log(`Created new user: ${customUserId}`);
   return newUser;
 }

@@ -1,7 +1,8 @@
 import { auth } from '@lib/auth';
 import { redirect } from 'next/navigation';
 import { dynamodb } from '@lib/dynamodb';
-import type { UserRecord } from '@lib/relational-types';
+import type { UserProfileRecord } from '@lib/relational-types';
+import { getReferenceUsersBatch } from '@lib/reference-db-service';
 import RoleManager from './components/RoleManager';
 import { requireTestPageAccess } from '@lib/test-page-access';
 
@@ -15,10 +16,25 @@ export default async function TestRBACPage() {
     redirect('/auth/signin');
   }
 
-  // Get all users from database
-  const users = (await dynamodb.scanItems('users')) as UserRecord[];
+  // Get all user Profile records from database (filter by sortKey)
+  const allItems = await dynamodb.scanItems('users');
+  const userProfiles = (allItems || []).filter(
+    (item): item is UserProfileRecord => item.sortKey === 'Profile'
+  );
 
-  // Get current user's full record
+  // Fetch identity data from reference DB for all users
+  const userIds = userProfiles.map(u => u.userId);
+  const identityMap = await getReferenceUsersBatch(userIds);
+
+  // Combine profile data with identity data for display
+  const users = userProfiles.map(profile => ({
+    userId: profile.userId,
+    name: identityMap.get(profile.userId)?.name || 'Unknown',
+    email: identityMap.get(profile.userId)?.email || 'No email',
+    role: profile.role,
+  }));
+
+  // Get current user's combined data
   const currentUser = users.find(u => u.userId === session.user.id);
 
   return (
