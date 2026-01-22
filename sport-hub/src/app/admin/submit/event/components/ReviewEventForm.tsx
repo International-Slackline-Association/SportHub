@@ -1,6 +1,6 @@
 import { useFormikContext } from "formik";
 import { ContestFormValues, EventSubmissionFormValues } from "../types";
-import { EventDetailsCard } from "@ui/EventCard";
+import { EventDetailsCard } from "@ui/EventDetailsCard";
 
 export const ReviewEventForm = () => {
   const { values } = useFormikContext<EventSubmissionFormValues>();
@@ -13,9 +13,7 @@ export const ReviewEventForm = () => {
 
   return (
     <>
-      ...Review Event Form WIP...
       <EventDetailsCard
-        title="Event Details"
         event={{
           date: values.event?.date,
           city: values.event?.city,

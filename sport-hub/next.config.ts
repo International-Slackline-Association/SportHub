@@ -18,7 +18,15 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'images.isa-rankings.org',
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.figma.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'img.youtube.com',
+      },
     ],
   },
 };

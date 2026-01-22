@@ -116,7 +116,7 @@
   background-color: white;
   color: var(--color-primary);
   border: 1px solid var(--color-primary);
-  width: auto;
+  width: fit-content;
 }
 
 .roleIsaVerified .icon {

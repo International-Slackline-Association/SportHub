@@ -3,9 +3,18 @@ import styles from "./styles.module.css";
 import { pascalCaseToTitleCase } from ".";
 
 interface DisciplineProps {
-  variant: Discipline;
+  variant: string;
   className?: string;
 }
+
+const disciplineNumberToName: Record<number, Discipline> = {
+  2: "TRICKLINE",
+  // 3: "JIBLINE", // deprecated
+  5: "FREESTYLE_HIGHLINE",
+  7: "SPEED_SHORT",
+  8: "SPEED_HIGHLINE",
+  11: "RIGGING",
+};
 
 const disciplineLabels: Record<Discipline, string> = {
   FREESTYLE_HIGHLINE: "FREESTYLE HIGHLINE",
@@ -16,7 +25,13 @@ const disciplineLabels: Record<Discipline, string> = {
 };
 
 const Discipline = ({ variant, className = "" }: DisciplineProps) => {
-  const variantClass = `discipline${pascalCaseToTitleCase(variant)}`;
+  let modifiedVariant = variant;
+
+  if (Number.isInteger(Number(variant))) {
+    modifiedVariant = disciplineNumberToName[Number(variant)] || variant;
+  }
+
+  const variantClass = `discipline${pascalCaseToTitleCase(modifiedVariant)}`;
 
   return (
     <div
@@ -26,7 +41,7 @@ const Discipline = ({ variant, className = "" }: DisciplineProps) => {
         className
       ].filter(Boolean).join(" ")}
     >
-      {disciplineLabels[variant]}
+      {disciplineLabels[modifiedVariant as Discipline]}
     </div>
   );
 };

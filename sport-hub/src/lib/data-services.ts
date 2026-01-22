@@ -141,7 +141,7 @@ export async function getRankingsData(): Promise<AthleteRanking[]> {
 /**
  * Get featured athletes (top athletes)
  */
-export async function getFeaturedAthletes(limit: number = 4): Promise<AthleteRanking[]> {
+export async function getFeaturedAthletes(limit: number = 3): Promise<AthleteRanking[]> {
   const rankings = await getRankingsData();
   return rankings.slice(0, limit);
 }
@@ -160,6 +160,7 @@ export interface ContestData {
   prize: number;
   gender: number;
   category: number;
+  status?: 'upcoming' | 'recent' | 'live'; // TODO: Check with Dylan on adding this attribute
   verified: boolean;
   profileUrl?: string;
   thumbnailUrl?: string;
@@ -237,6 +238,7 @@ export async function getContestsData(): Promise<ContestData[]> {
 
 export interface AthleteProfile {
   name: string;
+  surname?: string;
   age?: number;
   country: string;
   website?: string;

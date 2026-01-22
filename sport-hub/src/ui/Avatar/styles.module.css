@@ -1,0 +1,37 @@
+/* Featured Athelete Card  Styles */
+.avatarWrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+
+  @media (min-width: 40rem) {
+    width: 200px;
+    height: 200px;
+  }
+}
+
+.avatar {
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: var(--color-primary);
+  color: white;
+  font-weight: 600;
+  font-size: 1.5rem;
+  border-radius: 50%;
+
+  @media (min-width: 40rem) {
+    width: 200px;
+    height: 200px;
+    font-size: 2rem;
+  }
+}

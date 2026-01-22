@@ -8,7 +8,6 @@ import React from 'react';
 import FormikAutocomplete from '@ui/Form/FormikAutocomplete';
 import { EventRecord } from '@lib/relational-types';
 import { Option } from '@ui/Form';
-import { extractYouTubeId } from './YouTubePreviewTextField';
 
 export default function EventAutocomplete() {
   const { values, setTouched, setValues, setErrors } = useFormikContext<EventSubmissionFormValues>();
