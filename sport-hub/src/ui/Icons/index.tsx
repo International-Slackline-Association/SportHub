@@ -1,3 +1,15 @@
+export { ArrowRightIcon } from './ArrowRightIcon';
+export { CalendarIcon } from './CalendarIcon';
 export { ChevronIcon } from './ChevronIcon';
+export { CopyIcon } from './CopyIcon';
+export { FreestyleHighlineIcon } from './FreestyleHighlineIcon';
+export { LocationIcon } from './LocationIcon';
+export { RiggingIcon } from './RiggingIcon';
+export { SlacklineSportHubIcon } from './SlacklineSportHubIcon';
+export { SpeedHighlineIcon } from './SpeedHighlineIcon';
+export { SpeedShortIcon } from './SpeedShortIcon';
 export { TrashIcon } from './TrashIcon';
+export { FreestyleTricklineIcon } from './FreestyleTricklineIcon';
+export { TrophyIcon } from './TrophyIcon';
+export { UsersIcon } from './UsersIcon';
 export { WarningTriangleIcon } from './WarningTriangleIcon';

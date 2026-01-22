@@ -6,7 +6,7 @@ import 'react-social-icons/twitch';
 import 'react-social-icons/whatsapp';
 import 'react-social-icons/facebook';
 
-type SocialMedia = {
+export type SocialMedia = {
   instagram?: string;
   youtube?: string;
   facebook?: string;

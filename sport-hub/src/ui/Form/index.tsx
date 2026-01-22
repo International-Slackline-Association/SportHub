@@ -6,7 +6,7 @@ import Spinner from '@ui/Spinner';
 import { cn } from '@utils/cn';
 export * from './commonOptions';
 
-const pascalCaseToTitleCase = (text: string) =>
+export const pascalCaseToTitleCase = (text: string) =>
   text[0].toUpperCase() + text.slice(1).replace(/([A-Z])/g, ' $1');
 
 export const FormikSubmitButton = ({ children }: PropsWithChildren<Record<string, never>>) => {
