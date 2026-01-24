@@ -5,11 +5,15 @@ import Button from '@ui/Button';
 import Spinner from '@ui/Spinner';
 import { Tooltip } from '@ui/Tooltip';
 import { cn } from '@utils/cn';
+import { pascalCaseToTitleCase } from '@utils/strings';
 export * from './commonOptions';
 
+<<<<<<< HEAD
 export const pascalCaseToTitleCase = (text: string) =>
   text[0].toUpperCase() + text.slice(1).replace(/([A-Z])/g, ' $1');
 
+=======
+>>>>>>> 1e20102 (feat: event and contests forms support date range)
 export const FormikSubmitButton = ({ children }: PropsWithChildren<Record<string, never>>) => {
   const { isSubmitting, isValid, dirty } = useFormikContext();
 

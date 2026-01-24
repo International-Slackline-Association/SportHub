@@ -96,8 +96,15 @@ export default function EventForm() {
             required
           />
           <FormikTextField
-            id="event.date"
-            label="Date"
+            id="event.startDate"
+            label="Start Date"
+            placeholder="YYYY-MM-DD"
+            type="date"
+            required
+          />
+          <FormikTextField
+            id="event.endDate"
+            label="End Date"
             placeholder="YYYY-MM-DD"
             type="date"
             required

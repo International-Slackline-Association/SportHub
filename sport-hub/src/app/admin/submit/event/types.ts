@@ -19,7 +19,8 @@ export interface EventFormValues {
   name: string;
   city: string;
   country: string;
-  date: string;
+  startDate: string;
+  endDate: string;
   website: string;
 
   // Disciplines (checkboxes)
@@ -61,7 +62,11 @@ export const eventValidationSchema = Yup.object({
     .min(2, 'City must be at least 2 characters'),
   country: Yup.string()
     .required("Country is required"),
-  date: Yup.date()
+  startDate: Yup.date()
+    .transform(dateTransform)
+    .typeError('Invalid date (expected YYYY-MM-DD)')
+    .required("Date is required"),
+  endDate: Yup.date()
     .transform(dateTransform)
     .typeError('Invalid date (expected YYYY-MM-DD)')
     .required("Date is required"),
@@ -97,7 +102,8 @@ export const initialEventValues: EventFormValues = {
   name: '',
   city: '',
   country: '',
-  date: '',
+  startDate: '',
+  endDate: '',
   website: '',
   disciplines: [],
   socialMedia: {}
@@ -115,6 +121,8 @@ export interface ContestResultEntry {
 }
 
 export interface ContestFormValues {
+  startDate?: string;
+  endDate?: string;
   discipline: Discipline;
   gender: Gender;
   ageCategory: AgeCategory;
@@ -129,12 +137,17 @@ export interface ContestFormValues {
 }
 
 export const contestValidationSchema = Yup.object({
+  startDate: Yup.date()
+    .transform(dateTransform)
+    .typeError('Invalid date (expected YYYY-MM-DD)'),
+  endDate: Yup.date()
+    .transform(dateTransform)
+    .typeError('Invalid date (expected YYYY-MM-DD)'),
   gender: Yup.string()
     .required('Gender category is required'),
   discipline: Yup.string()
     .required('Discipline is required'),
-  judgingSystem: Yup.string()
-    .required('Judging system is required'),
+  judgingSystem: Yup.string(),
   ageCategory: Yup.string()
     .required('Age category is required'),
   totalPrizeValue: Yup.number()
@@ -157,8 +170,7 @@ export const contestValidationSchema = Yup.object({
         return allIds.length === uniqueIds.size;
       }
     )
-    .min(1, 'Please add at least one judge')
-    .required("Contest is missing judges"),
+    .min(1, 'Please add at least one judge'),
   results: Yup.array()
     .of(
       Yup.object().shape({
@@ -180,8 +192,7 @@ export const contestValidationSchema = Yup.object({
           .nullable(),
       })
     )
-    .min(1, 'Please add at least one result entry')
-    .required("Contest is missing results"),
+    .min(1, 'Please add at least one result entry'),
 });
 
 export const initialContestValues: ContestFormValues = {

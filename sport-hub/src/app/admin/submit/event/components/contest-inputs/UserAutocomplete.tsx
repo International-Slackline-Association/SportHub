@@ -48,7 +48,6 @@ export default function UserAutocomplete<TFormValues>({
       return ev.name.toLowerCase().includes(inputName);
     }),
   });
-console.log("debounced", debounced);
 
   const userOptions = users?.map(({ name, userId }: UserRecord) => ({
     label: name,

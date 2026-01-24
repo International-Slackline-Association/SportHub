@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useFormikContext } from 'formik';
-import { EventSubmissionFormValues } from '../../types';
+import { EventFormValues, EventSubmissionFormValues } from '../../types';
 import React from 'react';
 import FormikAutocomplete from '@ui/Form/FormikAutocomplete';
 import { EventRecord } from '@lib/relational-types';
@@ -32,12 +32,15 @@ export default function EventAutocomplete() {
   const updateFormWithSelectedEvent = ({ value }: Option) => {
     const event = events.find(({ eventId }: EventRecord) => eventId === value);
 
+    
+
     const nextTouchState = {
       event: {
         name: true,
         city: true,
         country: true,
-        date: true,
+        startDate: true,
+        endDate: true,
         website: true,
         socialMedia: {
           facebook: true,
@@ -58,7 +61,9 @@ export default function EventAutocomplete() {
         name: event.name,
         city: event.city,
         country: event.country.toLowerCase(),
-        date: event.date,
+        // Guard against older event data without date range
+        startDate: event?.startDate || event?.date || '',
+        endDate: event?.endDate || event?.date || '',
         website: event.website,
         socialMedia: event.socialMedia || {},
         disciplines: event.disciplines || [],
