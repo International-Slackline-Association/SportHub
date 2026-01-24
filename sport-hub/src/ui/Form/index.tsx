@@ -1,8 +1,9 @@
 import React, { PropsWithChildren, ReactNode } from 'react';
-import { Field, useFormikContext, FieldInputProps, FieldMetaProps, FormikHelpers } from 'formik';
+import { Field, useFormikContext, type FieldInputProps, type FieldMetaProps, type FormikHelpers } from 'formik';
 import styles from './styles.module.css';
 import Button from '@ui/Button';
 import Spinner from '@ui/Spinner';
+import { Tooltip } from '@ui/Tooltip';
 import { cn } from '@utils/cn';
 export * from './commonOptions';
 
@@ -29,11 +30,12 @@ export interface BaseFormFieldProps<Element> extends React.InputHTMLAttributes<E
   id: string;
   caption?: string;
   label?: string | ReactNode;
+  tooltip?: string;
 }
 
 export interface FormikFieldProps <Value,>{ field: FieldInputProps<Value>; meta: FieldMetaProps<Value>; form: FormikHelpers<unknown> }
 export const FormikFormField = (props: PropsWithChildren<TextFieldProps | SelectFieldProps>) => {
-  const { caption, id, label, className, children, required } = props;
+  const { caption, id, label, className, children, required, tooltip } = props;
 
   let displayLabel: string | ReactNode = "";
   if (typeof label !== 'string') {
@@ -47,9 +49,12 @@ export const FormikFormField = (props: PropsWithChildren<TextFieldProps | Select
       className={`${styles.fieldContainer} ${className || ''}`}
     >
       <div className="stack">
-        <label htmlFor={id} className={styles.label}>
+        <div className={styles.labelContainer}>
+          <label htmlFor={id} className={styles.label}>
           {displayLabel}
         </label>
+        {tooltip && <Tooltip content={tooltip} />}
+        </div>
         {caption && (<small className={styles.caption}>{caption}</small>)}
       </div>
       {children}
@@ -64,6 +69,7 @@ export const FormikTextField = ({
   id,
   label,
   required,
+  tooltip,
   ...inputProps
 }: TextFieldProps) => {
   return (
@@ -73,6 +79,7 @@ export const FormikTextField = ({
       id={id}
       label={label}
       required={required}
+      tooltip={tooltip}
     >
       <Field name={id}>
         {({ field, meta }: FormikFieldProps<string>) => (
@@ -96,7 +103,6 @@ export const FormikTextField = ({
   );
 };
 
-
 type TextNumberProps = BaseFormFieldProps<HTMLInputElement>;
 export const FormikNumberField = ({
   className,
@@ -104,6 +110,7 @@ export const FormikNumberField = ({
   id,
   label,
   required,
+  tooltip,
   ...inputProps
 }: TextNumberProps) => {
   return (
@@ -113,6 +120,7 @@ export const FormikNumberField = ({
       id={id}
       label={label}
       required={required}
+      tooltip={tooltip}
     >
       <Field name={id}>
         {({ field, meta }: FormikFieldProps<string>) => (
@@ -147,6 +155,7 @@ export const FormikSelectField = ({
   options,
   placeholder = "Select an option",
   required,
+  tooltip,
   ...selectProps
 }: SelectFieldProps) => {
   return (
@@ -156,6 +165,7 @@ export const FormikSelectField = ({
       id={id}
       label={label}
       required={required}
+      tooltip={tooltip}
     >
       <Field name={id}>
         {({ field, meta }: FormikFieldProps<string>) => (
@@ -189,12 +199,14 @@ export const FormikCheckboxField = ({
   id,
   label,
   required,
+  tooltip,
 }: PropsWithChildren<BaseFormFieldProps<HTMLInputElement>>) => (
   <FormikFormField
     caption={caption}
     className={cn(styles.checkboxField, className)}
     id={id}
     label={label}
+    tooltip={tooltip}
     required={required}
   >
     <Field name={id}>
@@ -218,6 +230,7 @@ export const FormikCheckboxField = ({
 interface FormikCheckboxGroupProps extends BaseFormFieldProps<HTMLElement>{
   direction?: 'row' | 'column';
   options: Option[];
+  tooltip?: string;
 }
 export const FormikCheckboxGroup = ({
   caption,
@@ -227,6 +240,7 @@ export const FormikCheckboxGroup = ({
   label,
   options,
   required,
+  tooltip,
 }: FormikCheckboxGroupProps) => (
   <FormikFormField
     caption={caption}
@@ -234,6 +248,7 @@ export const FormikCheckboxGroup = ({
     id={id}
     label={label}
     required={required}
+    tooltip={tooltip}
   >
     <Field name={id}>
       {({ field, form, meta }: FormikFieldProps<string[]>) => {
@@ -292,7 +307,8 @@ export const FormikRadioGroup = ({
   id,
   label,
   options,
-  required
+  required,
+  tooltip
 }: RadioGroupProps) => (
   <FormikFormField
     caption={caption}
@@ -300,6 +316,7 @@ export const FormikRadioGroup = ({
     id={id}
     label={label}
     required={required}
+    tooltip={tooltip}
   >
     <Field name={id}>
       {({ field, form, meta }: FormikFieldProps<string>) => (

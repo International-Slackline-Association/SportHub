@@ -5,6 +5,12 @@
   width: 100%;
 }
 
+.labelContainer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .label {
   font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-weight: 500;
