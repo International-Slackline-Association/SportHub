@@ -32,8 +32,6 @@ export default function EventAutocomplete() {
   const updateFormWithSelectedEvent = ({ value }: Option) => {
     const event = events.find(({ eventId }: EventRecord) => eventId === value);
 
-    
-
     const nextTouchState = {
       event: {
         name: true,

@@ -51,7 +51,7 @@ interface User {
   contestsParticipated?: number;
 }
 
-type Discipline = "RIGGING" | "TRICKLINE" | "FREESTYLE_HIGHLINE" | "SPEED_SHORT" | "SPEED_HIGHLINE";
+type Discipline = "RIGGING" | "TRICKLINE" | "FREESTYLE_HIGHLINE" | "SPEED_SHORT" | "SPEED_HIGHLINE" | "FREESTYLE_JIB_STATIC";
 
 type Role = "ATHLETE" | "JUDGE" | "ISA_VERIFIED" | "ORGANIZER";
 

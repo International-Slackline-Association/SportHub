@@ -33,13 +33,14 @@ export interface Option {
 export interface BaseFormFieldProps<Element> extends React.InputHTMLAttributes<Element> {
   id: string;
   caption?: string;
+  captionPlacement?: 'top' | 'bottom';
   label?: string | ReactNode;
   tooltip?: string;
 }
 
 export interface FormikFieldProps <Value,>{ field: FieldInputProps<Value>; meta: FieldMetaProps<Value>; form: FormikHelpers<unknown> }
 export const FormikFormField = (props: PropsWithChildren<TextFieldProps | SelectFieldProps>) => {
-  const { caption, id, label, className, children, required, tooltip } = props;
+  const { caption, captionPlacement="top", id, label, className, children, required, tooltip } = props;
 
   let displayLabel: string | ReactNode = "";
   if (typeof label !== 'string') {
@@ -59,9 +60,10 @@ export const FormikFormField = (props: PropsWithChildren<TextFieldProps | Select
         </label>
         {tooltip && <Tooltip content={tooltip} />}
         </div>
-        {caption && (<small className={styles.caption}>{caption}</small>)}
+        {caption && captionPlacement === "top" && (<small className={styles.caption}>{caption}</small>)}
       </div>
       {children}
+      {caption && captionPlacement === "bottom" && (<small className={styles.caption}>{caption}</small>)}
     </div>
   );
 };

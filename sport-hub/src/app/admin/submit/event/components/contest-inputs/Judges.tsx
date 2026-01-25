@@ -1,11 +1,12 @@
 'use client';
 
-import { FieldArray, useFormikContext } from 'formik';
+import { FieldArray, getIn, useFormikContext } from 'formik';
 import { cn } from '@utils/cn';
 import Button from '@ui/Button';
 import { TrashIcon } from '@ui/Icons';
 import UserAutocomplete from './UserAutocomplete';
 import { EventSubmissionFormValues } from '../../types';
+import { Option } from '@ui/Form';
 
 type Props = {
   contestKey: string;
@@ -28,15 +29,7 @@ export const Judges = ({ contestKey, judges }: Props) => {
               {judges.map((_, idx) => (
                 <li key={idx} className="pb-4">
                   <div className={cn("cluster", "items-end", "gap-4")}>
-                    <UserAutocomplete
-                      id={`${contestKey}.judges[${idx}]`}
-                      onSelectOption={({ label, value }) => {
-                        setFieldValue(`${contestKey}.judges[${idx}]`, {
-                          value: value,
-                          name: label,
-                        });
-                      }}
-                    />
+                    <UserAutocomplete formKey={`${contestKey}.judges[${idx}]`} />
                     <Button
                       onClick={() => remove(idx)}
                       variant='destructive-secondary'

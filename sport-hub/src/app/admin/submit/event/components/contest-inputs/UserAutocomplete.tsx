@@ -9,28 +9,32 @@ import { UserRecord } from '@lib/relational-types';
 import { Option } from '@ui/Form';
 import { ErrorMessage } from '../ErrorMessage';
 
-type Props = { id: string; onSelectOption?: (option: Option) => void };
+const createUserLabel = (user: UserRecord) => `${user.name} | ${user.userId}`.toLocaleLowerCase();
+
+type Props = { formKey: string; onSelectOption?: (option: Option) => void };
 
 export default function UserAutocomplete<TFormValues>({
-  id,
+  formKey,
   onSelectOption,
   ...autocompleteProps
 }: Props) {
-  const { values } = useFormikContext<TFormValues>();
-  const current = getIn(values, id); // safe access
-  const [debounced, setDebounced] = useState(current);
+  const { setFieldTouched, setFieldValue, values } = useFormikContext<TFormValues>();
+  const formKeyUserName = `${formKey}.name`;
+  const formikUserIdValue = getIn(values, `${formKey}.id`);
+  const currentFormValueUserName = getIn(values, formKeyUserName); // safe access
+  const [debouncedUserName, setDebouncedUserName] = useState(currentFormValueUserName);
 
   // simple debounce
   useEffect(() => {
-    const t = setTimeout(() => setDebounced(current), 300);
+    const t = setTimeout(() => setDebouncedUserName(currentFormValueUserName), 300);
     return () => clearTimeout(t);
-  }, [current]);
+  }, [currentFormValueUserName]);
 
   const { data: users, isLoading, isError } = useQuery({
     queryKey: ['users'],
     queryFn: async () => (await fetch('/api/users')).json(),
     // Enable only when user has typed at least 3 chars
-    enabled: typeof debounced === 'string' && debounced.length >= 3,
+    enabled: debouncedUserName.length >= 3,
     // Cache for 1 hour, consider data fresh for 10 minutes
     gcTime: 60 * 60 * 1000,
     staleTime: 10 * 60 * 1000,
@@ -38,48 +42,52 @@ export default function UserAutocomplete<TFormValues>({
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchOnMount: false,
-    select: (data) => data.filter((ev: { name: string }) => {
-      let inputName;
-      if (typeof debounced == 'string') {
-        inputName = debounced.toLowerCase();
-      } else {
-        inputName = debounced?.name?.toLowerCase() || '';
-      }
-      return ev.name.toLowerCase().includes(inputName);
-    }),
+    select: data => data.filter((user: UserRecord) =>
+      createUserLabel(user).includes(debouncedUserName.toLowerCase()),
+    ),
   });
 
   const userOptions = users?.map(({ name, userId }: UserRecord) => ({
-    label: name,
-    value: userId
+    label: `${name} | ${userId}`,
+    value: name,
   })) || [];
+
+  const currentUser = users?.find((user: UserRecord) => user.userId === formikUserIdValue);
 
   if (isError) {
     return <ErrorMessage>Error loading users for autocomplete.</ErrorMessage>;
   }
-
+console.log(debouncedUserName, "UserAutocomplete userOptions", users, userOptions);
   return (
     <FormikAutocomplete
-      id={id}
+      caption={formikUserIdValue && `UserID: ${formikUserIdValue}`}
+      id={formKeyUserName}
       isLoading={isLoading}
       hideErrorMessage
-      getDisplayValue={(fieldValue: unknown, options: Option[]) => {
-        if (typeof fieldValue === "string") {
-          return fieldValue;
+      getDisplayValue={(value: unknown) => {
+        if (currentUser) {
+          return createUserLabel(currentUser);
         }
-
-        const match = options.find((o) => o.value === (fieldValue as Option)?.value);
-        if (match) {
-          return match.label;
-        }
-
-        return "";
+        return value as string;
       }}
       label="Name"
       mapOptionToValue={(o) => o.label}
       options={userOptions}
-      onSelectOption={onSelectOption}
-      placeholder="Enter user name (min 3 chars)"
+      onSelectOption={(option: Option) => {
+        const formValue = getIn(values, formKey) || {};
+        const [name, id] = option.label.split('|');
+
+        let athletePayload = {};
+        if (typeof formValue === "string") {
+          athletePayload = { id, name };
+        } else {
+          athletePayload = { ...formValue, id, name };
+        }
+
+        setFieldValue(formKey, athletePayload);
+        setFieldTouched(formKey, true, false);
+      }}
+      placeholder="Search by name or user ID (min 3 chars)"
       required
       {...autocompleteProps}
     />

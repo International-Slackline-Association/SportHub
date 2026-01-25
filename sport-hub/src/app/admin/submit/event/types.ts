@@ -156,6 +156,15 @@ export const contestValidationSchema = Yup.object({
   contestSize: Yup.string()
     .required('Contest size is required'),
   judges: Yup.array()
+    .of(Yup.object().shape({
+      // Not required because we may have unregistered participants
+      id: Yup.string()
+        .trim(),
+      name: Yup.string()
+        .trim()
+        .min(1, 'Please enter a name')
+        .nullable(),
+    }))
     .test(
       'is-unique-judges',
       (context) => {
@@ -165,7 +174,7 @@ export const contestValidationSchema = Yup.object({
       },
       (value) => {
         if (!value || value.length === 0) return true;
-        const allIds = value.map(judge => judge.value?.trim().toLowerCase());
+        const allIds = value?.map(judge => judge.value?.trim().toLowerCase());
         const uniqueIds = new Set(allIds);
         return allIds.length === uniqueIds.size;
       }

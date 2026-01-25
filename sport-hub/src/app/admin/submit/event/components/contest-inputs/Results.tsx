@@ -28,25 +28,17 @@ type AthleteListItemProps = {
 };
 
 const AthleteListItem = ({ athleteFormKey, onDelete }: AthleteListItemProps) => {
-  const { setFieldTouched, setFieldValue, values } = useFormikContext<EventSubmissionFormValues>();
-
   return (
-    <div className={cn("cluster", "items-end", "gap-4")}>
-      <FormikNumberField id={`${athleteFormKey}.rank`} label="Rank" min={1} />
-      <UserAutocomplete
-        id={`${athleteFormKey}.name`}
-        onSelectOption={(option: Option) => {
-          const athlete = getIn(values, athleteFormKey) || {};
-          setFieldValue(athleteFormKey, {
-            ...athlete,
-            id: option.value,
-            name: option.label
-          });
-          setFieldTouched(athleteFormKey, true, false);
-        }}
+    <div className="flex flex-row cluster items-end gap-4">
+      <FormikNumberField
+        className="shrink"
+        id={`${athleteFormKey}.rank`}
+        label="Rank"
+        min={1}
       />
-      <FormikNumberField id={`${athleteFormKey}.isaPoints`} label="ISA Points" min={0} />
-      <FormikTextField id={`${athleteFormKey}.stats`} label="Stats" />
+      <UserAutocomplete formKey={athleteFormKey} />
+      <FormikNumberField className="shrink" id={`${athleteFormKey}.isaPoints`} label="ISA Points" min={0} />
+      <FormikTextField className="shrink" id={`${athleteFormKey}.stats`} label="Stats" tooltip="Data relevant to placement, varies by discipline e.g. length, time, etc." />
       <Button
         className="self-end"
         onClick={onDelete}

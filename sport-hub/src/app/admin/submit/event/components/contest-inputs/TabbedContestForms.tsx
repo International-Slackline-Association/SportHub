@@ -1,20 +1,31 @@
 'use client';
 
 import { FieldArray, getIn, useFormikContext } from 'formik';
-import { EventSubmissionFormValues, initialContestValues } from '../../types';
+import { ContestFormValues, EventFormValues, EventSubmissionFormValues, initialContestValues } from '../../types';
 import sharedStyles from '../styles.module.css';
 import Button from '@ui/Button';
 import { TabGroup } from '@ui/Tab';
 import { useState } from 'react';
 import ContestForm from './ContestForm';
 import { cn } from '@utils/cn';
+import { snakeCaseToTitleCase } from '@utils/strings';
+
+export const getContestNameFromForm = (formValues: EventSubmissionFormValues, contestIdx: number) => {
+  const contestKey = `contests[${contestIdx}]`;
+  const displayDiscipline = snakeCaseToTitleCase(getIn(formValues, `${contestKey}.discipline`));
+  const displayContestSize = snakeCaseToTitleCase(getIn(formValues, `${contestKey}.contestSize`));
+  const displayGender = snakeCaseToTitleCase(getIn(formValues, `${contestKey}.gender`));
+  const displayName = formValues.event.name || `Contest ${contestIdx + 1}`;
+  return `${displayName} ${displayGender} ${displayDiscipline} ${displayContestSize}`.trim();
+};
 
 export default function TabbedContestForms() {
-  const { errors, touched, values: { contests }, validateField } = useFormikContext<EventSubmissionFormValues>();
+  const { errors, touched, values, validateField } = useFormikContext<EventSubmissionFormValues>();
+  const { contests } = values;
   const [activeContestIdx, setActiveContestIdx] = useState((contests?.length || 0) - 1);
 
   const tabs = contests.map((_, idx) => ({
-    id: String(idx), label: `Contest ${idx + 1}`
+    id: String(idx), label: getContestNameFromForm(values, idx),
   }));
 
   const contestErrors = getIn(errors, "contests") || {};

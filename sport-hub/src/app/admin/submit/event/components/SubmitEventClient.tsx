@@ -59,7 +59,7 @@ export default function SubmitEventClient() {
 
         const tabState = [
           { id: 'EVENT', label: 'Step 1: Event Details' },
-          { id: 'CONTESTS', label: 'Step 2: Add Contests', disabled: isErrorEvent },
+          { id: 'CONTESTS', label: 'Step 2: Contests', disabled: isErrorEvent },
           { id: 'REVIEW', label: 'Step 3: Review', disabled: isErrorEvent || isErrorContest },
         ];
 

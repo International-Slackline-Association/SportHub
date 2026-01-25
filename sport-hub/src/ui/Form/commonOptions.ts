@@ -16,6 +16,7 @@ export const userGenderOptions: Option[] = [
 export const eventGenderOptions: Option[] = [
   { value: "MALE", label: "Male" },
   { value: "FEMALE", label: "Female" },
+  { value: "MIXED", label: "Mixed" },
 ];
 
 export const disciplineOptions: Option[] = [
@@ -24,6 +25,7 @@ export const disciplineOptions: Option[] = [
   { value: "SPEED_HIGHLINE", label: "Speed Highline" },
   { value: "SPEED_SHORT", label: "Speed Short" },
   { value: "TRICKLINE", label: "Trickline" },
+  { value: "FREESTYLE_JIB_STATIC", label: "Freestyle Jib Static" },
 ];
 
 export const ageCategoryOptions: Option[] = [
