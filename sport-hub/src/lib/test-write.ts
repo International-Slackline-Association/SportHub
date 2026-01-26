@@ -26,8 +26,8 @@ async function testWrite() {
       Item: testItem
     }));
     console.log('✅ Successfully wrote test item!');
-  } catch (error: any) {
-    console.error('❌ Error:', error.message);
+  } catch (error) {
+    console.error('❌ Error:', error instanceof Error ? error.message : String(error));
   }
 }
 

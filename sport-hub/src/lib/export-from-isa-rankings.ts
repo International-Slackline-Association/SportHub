@@ -12,13 +12,14 @@
  */
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, ScanCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, ScanCommand, QueryCommand, ScanCommandInput, QueryCommandInput } from "@aws-sdk/lib-dynamodb";
 import { getReferenceUserByEmail } from './reference-db-service';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
 
 // ISA-Rankings table (temporary - will be deleted)
 const ISA_RANKINGS_TABLE = process.env.ISA_RANKINGS_TABLE || 'ISA-Rankings';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const ISA_RANKINGS_REGION = process.env.ISA_RANKINGS_REGION || 'eu-central-1';
 
 const isaRankingsClient = new DynamoDBClient({
@@ -34,6 +35,7 @@ const isaRankingsDdb = DynamoDBDocumentClient.from(isaRankingsClient);
 
 // Also need reference DB client for name matching
 const REFERENCE_TABLE = process.env.REFERENCE_DB_TABLE || 'isa-users';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const REFERENCE_REGION = process.env.REFERENCE_DB_REGION || 'eu-central-1';
 
 const referenceClient = new DynamoDBClient({
@@ -155,15 +157,15 @@ async function buildNameLookupMap(): Promise<Map<string, string>> {
 
   const nameLookup = new Map<string, string>();
 
-  const command = new ScanCommand({
+  const scanParams: ScanCommandInput = {
     TableName: REFERENCE_TABLE,
     FilterExpression: 'SK_GSI = :details',
     ExpressionAttributeValues: {
       ':details': 'userDetails'
     }
-  });
+  };
 
-  const response = await referenceDdb.send(command);
+  const response = await referenceDdb.send(new ScanCommand(scanParams));
 
   if (!response.Items) {
     console.log('⚠️  No users found in isa-users table');
@@ -198,16 +200,16 @@ async function scanAthletes(): Promise<Map<string, ISAAthleteDetails>> {
 
   // Paginate through all athlete records
   do {
-    const command = new ScanCommand({
+    const scanParams: ScanCommandInput = {
       TableName: ISA_RANKINGS_TABLE,
       FilterExpression: 'SK_GSI = :athleteDetails',
       ExpressionAttributeValues: {
         ':athleteDetails': 'AthleteDetails'
       },
       ExclusiveStartKey: lastEvaluatedKey
-    });
+    };
 
-    const response = await isaRankingsDdb.send(command);
+    const response = await isaRankingsDdb.send(new ScanCommand(scanParams));
 
     if (!response.Items || response.Items.length === 0) {
       break;
@@ -328,16 +330,16 @@ async function scanContests(): Promise<Map<string, ISAContest>> {
   let lastEvaluatedKey: Record<string, unknown> | undefined = undefined;
 
   do {
-    const command = new QueryCommand({
+    const queryParams: QueryCommandInput = {
       TableName: ISA_RANKINGS_TABLE,
       KeyConditionExpression: 'PK = :pk',
       ExpressionAttributeValues: {
         ':pk': 'Contests'
       },
       ExclusiveStartKey: lastEvaluatedKey
-    });
+    };
 
-    const response = await isaRankingsDdb.send(command);
+    const response = await isaRankingsDdb.send(new QueryCommand(queryParams));
 
     if (!response.Items || response.Items.length === 0) {
       break;
@@ -403,7 +405,7 @@ async function scanParticipations(): Promise<ISAParticipation[]> {
 
   // Paginate through all participation records
   do {
-    const command = new ScanCommand({
+    const scanParams: ScanCommandInput = {
       TableName: ISA_RANKINGS_TABLE,
       FilterExpression: 'begins_with(PK, :athlete) AND begins_with(SK_GSI, :contest)',
       ExpressionAttributeValues: {
@@ -411,9 +413,9 @@ async function scanParticipations(): Promise<ISAParticipation[]> {
         ':contest': 'Contest:'
       },
       ExclusiveStartKey: lastEvaluatedKey
-    });
+    };
 
-    const response = await isaRankingsDdb.send(command);
+    const response = await isaRankingsDdb.send(new ScanCommand(scanParams));
 
     if (!response.Items || response.Items.length === 0) {
       break;

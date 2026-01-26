@@ -5,15 +5,18 @@
  * This is a one-time script to avoid AWS connectivity issues during export
  */
 
-import { DynamoDBClient, CreateTableCommand, DeleteTableCommand, DescribeTableCommand } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, ScanCommand, BatchWriteCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBClient, CreateTableCommand, DeleteTableCommand, DescribeTableCommand, TableDescription, GlobalSecondaryIndexDescription, LocalSecondaryIndexDescription } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, ScanCommand, BatchWriteCommand, ScanCommandInput } from "@aws-sdk/lib-dynamodb";
 
-// AWS configuration
-// const AWS_REGION = process.env.AWS_REGION || 'eu-central-1';
-// const awsClient = new DynamoDBClient({
-//   region: AWS_REGION,
-//   maxAttempts: 3,
-// });
+// Type for DynamoDB items
+type DynamoDBItem = Record<string, unknown>;
+
+// AWS configuration - uncomment and configure for actual AWS copy
+const AWS_REGION = process.env.AWS_REGION || 'eu-central-1';
+const awsClient = new DynamoDBClient({
+  region: AWS_REGION,
+  maxAttempts: 3,
+});
 
 // Local DynamoDB configuration
 const localClient = new DynamoDBClient({
@@ -25,12 +28,12 @@ const localClient = new DynamoDBClient({
   },
 });
 const localDdb = DynamoDBDocumentClient.from(localClient);
-const awsDdb = DynamoDBDocumentClient.from(localClient);
+const awsDdb = DynamoDBDocumentClient.from(awsClient);
 
 /**
  * Get table schema from AWS
  */
-async function getTableSchema(tableName: string) {
+async function getTableSchema(tableName: string): Promise<TableDescription | undefined> {
   console.log(`📋 Getting schema for ${tableName}...`);
 
   const command = new DescribeTableCommand({ TableName: tableName });
@@ -42,7 +45,7 @@ async function getTableSchema(tableName: string) {
 /**
  * Create table in local DynamoDB with same schema as AWS
  */
-async function createLocalTable(tableName: string, schema: any) {
+async function createLocalTable(tableName: string, schema: TableDescription) {
   console.log(`🔨 Creating local table ${tableName}...`);
 
   try {
@@ -51,8 +54,8 @@ async function createLocalTable(tableName: string, schema: any) {
     console.log(`   🗑️  Deleted existing table`);
     // Wait a bit for deletion to complete
     await new Promise(resolve => setTimeout(resolve, 1000));
-  } catch (error: any) {
-    if (error.name !== 'ResourceNotFoundException') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name !== 'ResourceNotFoundException') {
       throw error;
     }
   }
@@ -62,12 +65,12 @@ async function createLocalTable(tableName: string, schema: any) {
     KeySchema: schema.KeySchema,
     AttributeDefinitions: schema.AttributeDefinitions,
     BillingMode: 'PAY_PER_REQUEST',
-    GlobalSecondaryIndexes: schema.GlobalSecondaryIndexes?.map((gsi: any) => ({
+    GlobalSecondaryIndexes: schema.GlobalSecondaryIndexes?.map((gsi: GlobalSecondaryIndexDescription) => ({
       IndexName: gsi.IndexName,
       KeySchema: gsi.KeySchema,
       Projection: gsi.Projection,
     })),
-    LocalSecondaryIndexes: schema.LocalSecondaryIndexes?.map((lsi: any) => ({
+    LocalSecondaryIndexes: schema.LocalSecondaryIndexes?.map((lsi: LocalSecondaryIndexDescription) => ({
       IndexName: lsi.IndexName,
       KeySchema: lsi.KeySchema,
       Projection: lsi.Projection,
@@ -84,20 +87,19 @@ async function createLocalTable(tableName: string, schema: any) {
 /**
  * Scan all items from AWS table
  */
-async function scanAWSTable(tableName: string): Promise<any[]> {
+async function scanAWSTable(tableName: string): Promise<DynamoDBItem[]> {
   console.log(`📥 Scanning AWS table ${tableName}...`);
 
-  const items: any[] = [];
-  let lastEvaluatedKey: Record<string, any> | undefined = undefined;
+  const items: DynamoDBItem[] = [];
+  let lastEvaluatedKey: Record<string, unknown> | undefined = undefined;
   let scannedCount = 0;
 
   do {
-    const command = new ScanCommand({
+    const scanParams: ScanCommandInput = {
       TableName: tableName,
       ExclusiveStartKey: lastEvaluatedKey,
-    });
-
-    const response = await awsDdb.send(command);
+    };
+    const response = await awsDdb.send(new ScanCommand(scanParams));
 
     if (response.Items) {
       items.push(...response.Items);
@@ -118,7 +120,7 @@ async function scanAWSTable(tableName: string): Promise<any[]> {
 /**
  * Batch write items to local DynamoDB
  */
-async function batchWriteToLocal(tableName: string, items: any[]) {
+async function batchWriteToLocal(tableName: string, items: DynamoDBItem[]) {
   console.log(`📤 Writing ${items.length} items to local ${tableName}...`);
 
   const BATCH_SIZE = 25; // DynamoDB batch write limit
@@ -156,6 +158,9 @@ async function copyTable(tableName: string) {
 
   // Get schema from AWS
   const schema = await getTableSchema(tableName);
+  if (!schema) {
+    throw new Error(`Could not get schema for table ${tableName}`);
+  }
 
   // Create table locally with same schema
   await createLocalTable(tableName, schema);

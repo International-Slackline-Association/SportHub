@@ -6,13 +6,13 @@ async function recreateTables() {
   console.log('🗑️  Deleting tables...');
   try {
     await db.deleteTable('local-users');
-  } catch (e) {
+  } catch {
     console.log('   (local-users not found, ok)');
   }
-  
+
   try {
     await db.deleteTable('local-events');
-  } catch (e) {
+  } catch {
     console.log('   (local-events not found, ok)');
   }
   

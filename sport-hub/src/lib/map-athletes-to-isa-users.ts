@@ -23,20 +23,6 @@ const ddbClient = DynamoDBDocumentClient.from(client, {
   marshallOptions: { removeUndefinedValues: true }
 });
 
-interface IsaUser {
-  userId: string; // e.g., "ISA_48B4AFF8"
-  name: string;
-  surname?: string;
-  country?: string;
-}
-
-interface ISAAthleteDetails {
-  athleteSlug: string;
-  normalizedFullname?: string; // Pre-normalized name from ISA-Rankings
-  name: string;
-  surname?: string;
-}
-
 interface AthleteProfile {
   userId: string; // SportHubID
   sortKey: string; // "Profile"

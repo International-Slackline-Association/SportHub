@@ -1,3 +1,5 @@
+"use client";
+
 import { AthleteProfile } from '@lib/data-services';
 import { cn } from '@utils/cn';
 import { JSX } from 'react';

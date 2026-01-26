@@ -92,7 +92,7 @@ export async function getRankingsData(): Promise<AthleteRanking[]> {
 
     // Batch-fetch names from isa-users (works in both local and production)
     let referenceUsers = new Map<string, { name: string; country?: string }>();
-    const athleteIds = profiles.map(p => p.isaUsersId).filter(Boolean);
+    const athleteIds = profiles.map(p => p.isaUsersId).filter((id): id is string => Boolean(id));
     const refUsersMap = await getReferenceUsersBatch(athleteIds);
     referenceUsers = new Map(
       Array.from(refUsersMap.entries()).map(([id, user]) => [

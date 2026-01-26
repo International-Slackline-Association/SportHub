@@ -7,14 +7,14 @@ async function rebuildTables() {
   try {
     await db.deleteTable('users');
     console.log('   ✓ Deleted users table');
-  } catch (e: any) {
+  } catch {
     console.log('   ℹ️  users table does not exist');
   }
-  
+
   try {
     await db.deleteTable('events');
     console.log('   ✓ Deleted events table');
-  } catch (e: any) {
+  } catch {
     console.log('   ℹ️  events table does not exist');
   }
   

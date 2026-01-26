@@ -34,7 +34,8 @@ import {
   ScanCommand,
   QueryCommand,
   BatchWriteCommand,
-  PutCommand
+  ScanCommandInput,
+  QueryCommandInput,
 } from "@aws-sdk/lib-dynamodb";
 
 // Configuration
@@ -60,7 +61,12 @@ if (!DRY_RUN && !EXECUTE) {
 }
 
 // DynamoDB clients
-const clientConfig: any = {
+const clientConfig: {
+  region: string;
+  maxAttempts: number;
+  endpoint?: string;
+  credentials?: { accessKeyId: string; secretAccessKey: string };
+} = {
   region: AWS_REGION,
   maxAttempts: 3,
 };
@@ -215,20 +221,19 @@ async function buildIsaUsersNameLookup(): Promise<Map<string, string>> {
   console.log('📚 Building name lookup map from isa-users table...');
 
   const nameLookup = new Map<string, string>(); // normalizedName -> isaUsersId
-  let scannedCount = 0;
   let lastEvaluatedKey: Record<string, unknown> | undefined = undefined;
 
   do {
-    const command = new ScanCommand({
+    const scanParams: ScanCommandInput = {
       TableName: ISA_USERS_TABLE,
       FilterExpression: 'SK_GSI = :details',
       ExpressionAttributeValues: {
         ':details': 'userDetails'
       },
       ExclusiveStartKey: lastEvaluatedKey
-    });
+    };
 
-    const response = await sourceDdb.send(command);
+    const response = await sourceDdb.send(new ScanCommand(scanParams));
 
     if (!response.Items || response.Items.length === 0) {
       break;
@@ -245,7 +250,6 @@ async function buildIsaUsersNameLookup(): Promise<Map<string, string>> {
         // Normalize: "Claire Irad" → "claire irad" (lowercase, keep spaces)
         const normalizedName = `${name} ${surname}`.toLowerCase();
         nameLookup.set(normalizedName, isaUsersId);
-        scannedCount++;
       }
     }
 
@@ -268,7 +272,7 @@ async function scanExistingAthletes(): Promise<Map<string, string>> {
   let lastEvaluatedKey: Record<string, unknown> | undefined = undefined;
 
   do {
-    const command = new ScanCommand({
+    const scanParams: ScanCommandInput = {
       TableName: SPORTHUB_USERS_TABLE,
       FilterExpression: 'sortKey = :profile AND attribute_exists(isaRankingsPK)',
       ExpressionAttributeValues: {
@@ -276,10 +280,10 @@ async function scanExistingAthletes(): Promise<Map<string, string>> {
       },
       ProjectionExpression: 'userId, isaRankingsPK',
       ExclusiveStartKey: lastEvaluatedKey
-    });
+    };
 
     try {
-      const response = await destDdb.send(command);
+      const response = await destDdb.send(new ScanCommand(scanParams));
 
       if (response.Items && response.Items.length > 0) {
         for (const item of response.Items) {
@@ -294,9 +298,9 @@ async function scanExistingAthletes(): Promise<Map<string, string>> {
       }
 
       lastEvaluatedKey = response.LastEvaluatedKey;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Table might not exist yet on first run
-      if (error.name === 'ResourceNotFoundException') {
+      if (error instanceof Error && error.name === 'ResourceNotFoundException') {
         console.log('   ℹ️  SportHub users table not found - first run');
         break;
       }
@@ -336,16 +340,16 @@ async function scanAthleteDetails(
   let lastEvaluatedKey: Record<string, unknown> | undefined = undefined;
 
   do {
-    const command = new ScanCommand({
+    const scanParams: ScanCommandInput = {
       TableName: ISA_RANKINGS_TABLE,
       FilterExpression: 'SK_GSI = :athleteDetails',
       ExpressionAttributeValues: {
         ':athleteDetails': 'AthleteDetails'
       },
       ExclusiveStartKey: lastEvaluatedKey
-    });
+    };
 
-    const response = await sourceDdb.send(command);
+    const response = await sourceDdb.send(new ScanCommand(scanParams));
 
     if (!response.Items || response.Items.length === 0) {
       break;
@@ -454,7 +458,7 @@ async function scanRankings(
   let lastEvaluatedKey: Record<string, unknown> | undefined = undefined;
 
   do {
-    const command = new ScanCommand({
+    const scanParams: ScanCommandInput = {
       TableName: ISA_RANKINGS_TABLE,
       FilterExpression: 'begins_with(PK, :athlete) AND begins_with(SK_GSI, :rankings)',
       ExpressionAttributeValues: {
@@ -462,9 +466,9 @@ async function scanRankings(
         ':rankings': 'Rankings:'
       },
       ExclusiveStartKey: lastEvaluatedKey
-    });
+    };
 
-    const response = await sourceDdb.send(command);
+    const response = await sourceDdb.send(new ScanCommand(scanParams));
 
     if (!response.Items || response.Items.length === 0) {
       break;
@@ -559,16 +563,16 @@ async function scanContests(): Promise<Map<string, ContestRecord>> {
   let lastEvaluatedKey: Record<string, unknown> | undefined = undefined;
 
   do {
-    const command = new QueryCommand({
+    const queryParams: QueryCommandInput = {
       TableName: ISA_RANKINGS_TABLE,
       KeyConditionExpression: 'PK = :pk',
       ExpressionAttributeValues: {
         ':pk': 'Contests'
       },
       ExclusiveStartKey: lastEvaluatedKey
-    });
+    };
 
-    const response = await sourceDdb.send(command);
+    const response = await sourceDdb.send(new QueryCommand(queryParams));
 
     if (!response.Items || response.Items.length === 0) {
       break;
@@ -646,7 +650,7 @@ async function scanParticipations(
   let lastEvaluatedKey: Record<string, unknown> | undefined = undefined;
 
   do {
-    const command = new ScanCommand({
+    const scanParams: ScanCommandInput = {
       TableName: ISA_RANKINGS_TABLE,
       FilterExpression: 'begins_with(PK, :athlete) AND begins_with(SK_GSI, :contest)',
       ExpressionAttributeValues: {
@@ -654,9 +658,9 @@ async function scanParticipations(
         ':contest': 'Contest:'
       },
       ExclusiveStartKey: lastEvaluatedKey
-    });
+    };
 
-    const response = await sourceDdb.send(command);
+    const response = await sourceDdb.send(new ScanCommand(scanParams));
 
     if (!response.Items || response.Items.length === 0) {
       break;
@@ -841,7 +845,7 @@ async function writeRecords(
   console.log('💾 Writing records to SportHub tables...');
 
   const BATCH_SIZE = 25; // DynamoDB batch write limit
-  const userRecords: any[] = [];
+  const userRecords: Record<string, unknown>[] = [];
 
   // Collect all user records
   for (const [userId, athlete] of athletes.entries()) {
@@ -855,27 +859,27 @@ async function writeRecords(
     // 2. Ranking records
     const athleteRankings = rankings.get(userId) || [];
     for (const ranking of athleteRankings) {
-      userRecords.push(ranking);
+      userRecords.push({ ...ranking });
     }
 
     // 3. Participation records
     const athleteParticipations = participations.get(userId) || [];
     for (const participation of athleteParticipations) {
-      userRecords.push(participation);
+      userRecords.push({ ...participation });
     }
   }
 
   // Collect all event records
-  const eventRecords: any[] = [];
+  const eventRecords: Record<string, unknown>[] = [];
 
   for (const event of events.values()) {
-    eventRecords.push(event);
+    eventRecords.push({ ...event });
   }
 
   for (const contest of contests.values()) {
     // Sort athletes by place before writing
     contest.athletes.sort((a, b) => Number(a.place) - Number(b.place));
-    eventRecords.push(contest);
+    eventRecords.push({ ...contest });
   }
 
   // Check for duplicate keys before writing
