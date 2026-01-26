@@ -126,9 +126,9 @@ export async function getRankingsData(): Promise<AthleteRanking[]> {
           surname: '', // Extract from name if needed
           fullName: name,
           country,
-          gender: 'male', // Default, should be stored in DB
-          ageCategory: 'Open', // Default, should be stored in DB
-          disciplines: ['FREESTYLE_HIGHLINE'], // Default, should be stored in DB
+          gender: 'male', // TODO: Default, should be stored in DB
+          ageCategory: 'Open', // TODO: Default, should be stored in DB
+          disciplines: ['FREESTYLE_HIGHLINE'], // TODO: Default, should be stored in DB
           points: profile.totalPoints || 0,
           profileImage: profile.thumbnailUrl || `/static/images/profiles/${name.toLowerCase().replace(/\s+/g, '-')}.jpg`,
           contestsParticipated: profile.contestCount || 0,
@@ -342,10 +342,13 @@ export async function getAthleteProfile(athleteId: string): Promise<AthleteProfi
     }
 
     // Fallback to athleteSlug if no reference data found
+    // Happens for A LOT of athletes (most do not have isa profiles)
     if (!name && profile.athleteSlug) {
       name = profile.athleteSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
 
+    // TODO: return diciplines from UserRecord
+    // TODO: return social media links from profile, not a fake link...
     return {
       name,
       country,
@@ -413,6 +416,7 @@ export async function getAthleteContests(athleteId: string): Promise<AthleteCont
 }
 
 /**
+ * TODO
  * Get world records (placeholder - should be stored in separate table)
  */
 export async function getWorldRecords(): Promise<WorldRecord[]> {

@@ -8,6 +8,22 @@ import { cn } from '@utils/cn';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
+import { CircleFlag } from 'react-circle-flags';
+
+const CountryFlagWithName = ({ countryCode, defaultValue="N/A" }: { countryCode: string, defaultValue?: string }) => {
+  if (countryCode === 'N/A' || !countryCode) {
+    return <span className="text-gray-500">{defaultValue}</span>;
+  }
+
+  const countryName = countryCode.toUpperCase();
+
+  return (
+    <div className="flex items-center gap-2" title={countryName}>
+      <CircleFlag countryCode={countryCode.toLowerCase()} height={22} width={22} />
+      <span className="text-sm text-gray-600">{countryName}</span>
+    </div>
+  );
+};
 
 const columnHelper = createColumnHelper<ContestData>();
 const columns = [
@@ -39,6 +55,10 @@ const columns = [
   columnHelper.accessor("country", {
     enableColumnFilter: true,
     header: "Country",
+    cell: info => (
+      <CountryFlagWithName countryCode={info.getValue()} />
+    ),
+    meta: { filterVariant: 'select' },
   }),
   columnHelper.accessor("discipline", {
     enableColumnFilter: true,
