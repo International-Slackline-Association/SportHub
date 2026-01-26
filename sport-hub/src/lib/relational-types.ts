@@ -17,6 +17,8 @@ export interface UserRecord {
   // User type and data
   type: 'athlete' | 'official' | 'admin';
   name: string;
+  // TODO: Ensure DB schema reflects support for surname
+  // revisit after migration to ensure dates are stored correctly.
   email: string;
   country?: string;
   createdAt: string;

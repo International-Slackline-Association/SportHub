@@ -38,7 +38,7 @@ export interface EventFormValues {
 
 // Helper: transform "YYYY-MM-DD" into a stable Date (treat as local/UTC as needed)
 const dateTransform = (value: unknown, originalValue: unknown) => {
-  if (typeof originalValue === 'string' && originalValue.trim() === '') return null
+  if (typeof originalValue === 'string' && originalValue?.trim() === '') return null
   // Append T00:00:00 to avoid timezone parsing surprises; adjust if you want UTC
   return new Date(originalValue + 'T00:00:00')
 }

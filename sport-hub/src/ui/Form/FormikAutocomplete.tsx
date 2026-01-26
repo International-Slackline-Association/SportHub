@@ -68,7 +68,6 @@ export default function FormikAutocomplete({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-  console.log("FormikAutocomplete options", options);
 
   return (
     <div className={styles.autocompleteContainer} ref={containerRef}>

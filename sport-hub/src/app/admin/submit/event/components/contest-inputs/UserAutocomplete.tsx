@@ -8,6 +8,7 @@ import FormikAutocomplete from '@ui/Form/FormikAutocomplete';
 import { UserRecord } from '@lib/relational-types';
 import { Option } from '@ui/Form';
 import { ErrorMessage } from '../ErrorMessage';
+import Button from '@ui/Button';
 
 const createUserLabel = (user: UserRecord) => `${user.name} | ${user.userId}`.toLocaleLowerCase();
 
@@ -19,9 +20,9 @@ export default function UserAutocomplete<TFormValues>({
   ...autocompleteProps
 }: Props) {
   const { setFieldTouched, setFieldValue, values } = useFormikContext<TFormValues>();
-  const formKeyUserName = `${formKey}.name`;
-  const formikUserIdValue = getIn(values, `${formKey}.id`);
-  const currentFormValueUserName = getIn(values, formKeyUserName); // safe access
+  const formKeyName = `${formKey}.name`;
+  const formikValueUserId = getIn(values, `${formKey}.id`);
+  const currentFormValueUserName = getIn(values, formKeyName); // safe access
   const [debouncedUserName, setDebouncedUserName] = useState(currentFormValueUserName);
 
   // simple debounce
@@ -52,16 +53,24 @@ export default function UserAutocomplete<TFormValues>({
     value: name,
   })) || [];
 
-  const currentUser = users?.find((user: UserRecord) => user.userId === formikUserIdValue);
+  const currentUser = users?.find((user: UserRecord) => user.userId === formikValueUserId);
+  const isUnknownUser = formikValueUserId == "" && currentFormValueUserName != "";
+
+  let caption = "";
+  if (isUnknownUser) {
+    caption = "Unknown user";
+  } else if (formikValueUserId) {
+    caption = `UserID: ${formikValueUserId}`;
+  }
 
   if (isError) {
     return <ErrorMessage>Error loading users for autocomplete.</ErrorMessage>;
   }
-console.log(debouncedUserName, "UserAutocomplete userOptions", users, userOptions);
+
   return (
     <FormikAutocomplete
-      caption={formikUserIdValue && `UserID: ${formikUserIdValue}`}
-      id={formKeyUserName}
+      caption={caption}
+      id={formKeyName}
       isLoading={isLoading}
       hideErrorMessage
       getDisplayValue={(value: unknown) => {

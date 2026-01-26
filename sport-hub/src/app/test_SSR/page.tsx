@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import { dynamodb } from '@lib/dynamodb';
 import { deleteUser } from './actions';
-import UserManagementClient from './UserManagementClient';
-import UserForm from './UserForm';
+import UserManagementModal from '@ui/UserForm/UserManagementModal';
 import Button from '@ui/Button';
+import CreateUserForm from '@ui/UserForm/CreateUserForm';
 
 export const metadata: Metadata = {
   title: 'SportHub - About',
@@ -50,7 +50,7 @@ export default async function AboutPage() {
       {/* Add User Form */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
         <h2 className="text-xl font-semibold mb-4">Add New User</h2>
-        <UserForm />
+        <CreateUserForm />
       </div>
 
       {/* Users List */}
@@ -83,7 +83,7 @@ export default async function AboutPage() {
                   )}
                 </div>
                 <div className="flex gap-2 ml-4">
-                  <UserManagementClient user={user} />
+                  <UserManagementModal user={user} variant="UPDATE" />
                   <form action={deleteUser} style={{ display: 'inline' }}>
                     <input type="hidden" name="id" value={user.id} />
                     <Button
