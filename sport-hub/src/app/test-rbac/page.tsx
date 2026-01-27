@@ -23,19 +23,30 @@ export default async function TestRBACPage() {
   );
 
   // Fetch identity data from reference DB for all users
-  const userIds = userProfiles.map(u => u.userId);
-  const identityMap = await getReferenceUsersBatch(userIds);
+  // Note: getReferenceUsersBatch expects isaUsersId (ISA_XXXXXXXX), not userId (SportHubID)
+  const isaUserIds = userProfiles
+    .map(u => u.isaUsersId)
+    .filter((id): id is string => Boolean(id));
+  const identityMap = await getReferenceUsersBatch(isaUserIds);
 
   // Combine profile data with identity data for display
-  const users = userProfiles.map(profile => ({
-    userId: profile.userId,
-    name: identityMap.get(profile.userId)?.name || 'Unknown',
-    email: identityMap.get(profile.userId)?.email || 'No email',
-    role: profile.role,
-  }));
+  const users = userProfiles.map(profile => {
+    const identity = profile.isaUsersId
+      ? identityMap.get(profile.isaUsersId)
+      : undefined;
+
+    return {
+      userId: profile.userId,
+      name: identity?.name || profile.athleteSlug?.replace(/-/g, ' ') || 'Unknown',
+      email: identity?.email || 'No email',
+      role: profile.role,
+    };
+  });
 
   // Get current user's combined data
-  const currentUser = users.find(u => u.userId === session.user.id);
+  // Note: session.user.id is Cognito UUID, but userId in DB is custom ID (ISA_XXXXXXXX)
+  // So we match by email instead
+  const currentUser = users.find(u => u.email === session.user.email);
 
   return (
     <div className="min-h-screen bg-gray-100 py-8">

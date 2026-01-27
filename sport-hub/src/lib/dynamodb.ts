@@ -88,20 +88,37 @@ export const dynamodb = {
   },
 
   // Scan all items (with optional limit and projection for efficiency)
+  // Handles pagination automatically - DynamoDB returns max 1MB per request
   async scanItems(tableName: string, options?: {
     limit?: number;
     projectionExpression?: string;
     expressionAttributeNames?: Record<string, string>;
   }) {
-    const command = new ScanCommand({
-      TableName: getTableName(tableName),
-      ...(options?.limit && { Limit: options.limit }),
-      ...(options?.projectionExpression && { ProjectionExpression: options.projectionExpression }),
-      ...(options?.expressionAttributeNames && { ExpressionAttributeNames: options.expressionAttributeNames }),
-    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allItems: any[] = [];
+    let lastEvaluatedKey: Record<string, unknown> | undefined;
 
-    const response = await ddb.send(command);
-    return response.Items;
+    do {
+      const command = new ScanCommand({
+        TableName: getTableName(tableName),
+        ExclusiveStartKey: lastEvaluatedKey,
+        ...(options?.projectionExpression && { ProjectionExpression: options.projectionExpression }),
+        ...(options?.expressionAttributeNames && { ExpressionAttributeNames: options.expressionAttributeNames }),
+      });
+
+      const response = await ddb.send(command);
+      if (response.Items) {
+        allItems.push(...response.Items);
+      }
+      lastEvaluatedKey = response.LastEvaluatedKey;
+
+      // If user specified a limit, stop once we have enough items
+      if (options?.limit && allItems.length >= options.limit) {
+        return allItems.slice(0, options.limit);
+      }
+    } while (lastEvaluatedKey);
+
+    return allItems;
   },
 
   // Delete item
