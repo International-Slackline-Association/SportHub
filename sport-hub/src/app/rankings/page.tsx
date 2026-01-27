@@ -20,12 +20,6 @@ export default async function Page() {
     <PageLayout
       title="Rankings"
       description="View the latest athlete rankings across all disciplines."
-      heroImage={{
-        src: "/static/images/hero-freestyle.png",
-        alt: "Highline World Championship",
-        caption: "Laax Highline World Championship, 2024"
-      }}
-      overlayText
     >
       <FeaturedAthleteSection athletes={featuredAthletes.slice(0, 3)} />
       <section className="p-4 sm:p-0">
