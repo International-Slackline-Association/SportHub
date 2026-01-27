@@ -30,8 +30,8 @@ export default async function Home() {
 
   return (
     <PageLayout
-      title="ISA Sport Hub"
-      description="Welcome to the ISA Sport Hub - your destination for athlete rankings, events, and world records."
+      title="Slackline Sport Hub"
+      description="Your destination for athlete rankings, events, and world records."
       heroImage={{
         src: FIGMA_IMAGES.hero,
         alt: 'Laax Highline World Championship',

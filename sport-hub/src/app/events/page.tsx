@@ -19,11 +19,6 @@ export default async function Page() {
     <PageLayout
       title="Events"
       description="View the latest events and competitions across all disciplines."
-      heroImage={{
-        src: "/static/images/hero-rigging.jpg",
-        alt: "Placeholder Event Image",
-        caption: "Placeholder Event Image"
-      }}
     >
       <FeaturedEventSection events={featuredEvents.slice(0,3)} />
       <section className="p-4 sm:p-0">

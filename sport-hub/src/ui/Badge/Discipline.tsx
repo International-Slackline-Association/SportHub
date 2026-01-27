@@ -1,35 +1,20 @@
 import React from "react";
 import styles from "./styles.module.css";
 import { pascalCaseToTitleCase } from ".";
+import { DISCIPLINE_DATA, MAP_DISCIPLINE_ENUM_TO_NAME } from "@utils/consts";
 
 interface DisciplineProps {
   variant: string;
   className?: string;
 }
 
-const disciplineNumberToName: Record<number, Discipline> = {
-  2: "TRICKLINE",
-  // 3: "JIBLINE", // deprecated
-  5: "FREESTYLE_HIGHLINE",
-  7: "SPEED_SHORT",
-  8: "SPEED_HIGHLINE",
-  11: "RIGGING",
-};
-
-const disciplineLabels: Record<Discipline, string> = {
-  FREESTYLE_HIGHLINE: "FREESTYLE HIGHLINE",
-  RIGGING: "RIGGING",
-  SPEED_HIGHLINE: "SPEED HIGHLINE",
-  SPEED_SHORT: "SPEED SHORT",
-  TRICKLINE: "FREESTYLE TRICKLINE",
-};
-
 const Discipline = ({ variant, className = "" }: DisciplineProps) => {
   let modifiedVariant = variant;
 
   if (Number.isInteger(Number(variant))) {
-    modifiedVariant = disciplineNumberToName[Number(variant)] || variant;
+    modifiedVariant = MAP_DISCIPLINE_ENUM_TO_NAME[Number(variant)] || variant;
   }
+
 
   const variantClass = `discipline${pascalCaseToTitleCase(modifiedVariant)}`;
 
@@ -41,7 +26,7 @@ const Discipline = ({ variant, className = "" }: DisciplineProps) => {
         className
       ].filter(Boolean).join(" ")}
     >
-      {disciplineLabels[modifiedVariant as Discipline]}
+      {DISCIPLINE_DATA[modifiedVariant as Discipline]?.name.toUpperCase()}
     </div>
   );
 };
