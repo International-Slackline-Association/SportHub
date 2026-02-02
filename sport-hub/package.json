@@ -22,7 +22,8 @@
     "sync:recreate": "tsx scripts/sync-dynamodb.ts --recreate",
     "revalidate:all": "./scripts/revalidate-pages.sh",
     "revalidate:rankings": "./scripts/revalidate-pages.sh rankings",
-    "revalidate:events": "./scripts/revalidate-pages.sh events"
+    "revalidate:events": "./scripts/revalidate-pages.sh events",
+    "test:local": "NODE_ENV=development DYNAMODB_LOCAL=true pnpm run dev"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.821.0",
