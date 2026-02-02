@@ -2,7 +2,6 @@
 
 import { cn } from "@utils/cn";
 import { useClientMediaQuery } from "@utils/useClientMediaQuery";
-import Image from "next/image"
 import Link from 'next/link';
 import { usePathname } from "next/navigation";
 import { PropsWithChildren, useState } from "react";
@@ -10,6 +9,7 @@ import type { HTMLAttributes } from "react";
 import styles from "./styles.module.css";
 import Drawer from "@ui/Drawer";
 import UserMenu from "@ui/UserMenu";
+import { SlacklineSportHubIcon } from "@ui/Icons";
 
 // TODO: Explore options for organizing shared types as site grows
 export type LinkType = { name: string; href: string };
@@ -71,15 +71,7 @@ const Navigation = () => {
 
   return (
     <div className={cn(styles.navbar, "cluster", "clearfix", "inter-500")}>
-      <div>
-        <Image
-          alt="logo"
-          className={styles.logo}
-          height={247}
-          src="/static/images/sport-hub-logo.png"
-          width={426}
-        />
-      </div>
+        <SlacklineSportHubIcon />
       {!isHydrated ? (
         // Show mobile layout during SSR to prevent hydration mismatch
         <button

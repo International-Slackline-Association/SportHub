@@ -2,7 +2,7 @@ import { getContestsData } from '@lib/data-services';
 import { PageLayout } from '@ui/PageLayout';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { EventDetailsCard } from '@ui/EventCard';
+import { EventDetailsCard } from '@ui/EventDetailsCard';
 
 interface EventPageProps {
   params: Promise<{
@@ -29,26 +29,9 @@ export default async function EventPage({ params }: EventPageProps) {
   });
 
   return (
-    <PageLayout
-      title={event.name}
-      description={`${event.discipline} - ${event.city}, ${event.country}`}
-    >
+    <PageLayout title="">
       <div className="space-y-6">
-        {/* Event Details Card */}
-        <EventDetailsCard
-          event={{
-            name: event.name,
-            date: event.date,
-            city: event.city,
-            country: event.country,
-            discipline: event.discipline,
-            prize: event.prize,
-            athletes: event.athletes,
-            verified: event.verified,
-          }}
-        />
-
-        {/* Results Table */}
+        <EventDetailsCard event={event} />
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-2xl font-bold mb-4">Results</h2>
           {sortedParticipants.length > 0 ? (

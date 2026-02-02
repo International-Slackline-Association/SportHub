@@ -1,11 +1,12 @@
 "use client";
 
+import { CopyIcon } from '@ui/Icons';
 import { PropsWithChildren, useState } from "react";
-import styles from './styles.module.css'
+import Button from "@ui/Button";
 
 export const ClipBoardButton = ({ children }: PropsWithChildren) => {
   const [copySuccess, setCopySuccess] = useState('');
-     
+
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -15,11 +16,11 @@ export const ClipBoardButton = ({ children }: PropsWithChildren) => {
       setCopySuccess('Failed to copy');
     }
   };
-  
+
   return (
-    <button onClick={copyToClipboard} className={styles.copyLink}>
-      <span>{copySuccess || children}</span>
-    </button>
+    <Button onClick={copyToClipboard} variant="secondary">
+      <CopyIcon />&nbsp;{copySuccess || children}
+    </Button>
   );
 };
 
