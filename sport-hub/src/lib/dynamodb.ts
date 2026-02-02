@@ -87,12 +87,14 @@ export const dynamodb = {
     return response.Item;
   },
 
-  // Scan all items (with optional limit and projection for efficiency)
+  // Scan all items (with optional limit, projection, and filtering for efficiency)
   // Handles pagination automatically - DynamoDB returns max 1MB per request
   async scanItems(tableName: string, options?: {
     limit?: number;
     projectionExpression?: string;
     expressionAttributeNames?: Record<string, string>;
+    filterExpression?: string;
+    expressionAttributeValues?: Record<string, unknown>;
   }) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const allItems: any[] = [];
@@ -104,6 +106,8 @@ export const dynamodb = {
         ExclusiveStartKey: lastEvaluatedKey,
         ...(options?.projectionExpression && { ProjectionExpression: options.projectionExpression }),
         ...(options?.expressionAttributeNames && { ExpressionAttributeNames: options.expressionAttributeNames }),
+        ...(options?.filterExpression && { FilterExpression: options.filterExpression }),
+        ...(options?.expressionAttributeValues && { ExpressionAttributeValues: options.expressionAttributeValues }),
       });
 
       const response = await ddb.send(command);

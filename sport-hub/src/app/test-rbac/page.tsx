@@ -37,16 +37,17 @@ export default async function TestRBACPage() {
 
     return {
       userId: profile.userId,
-      name: identity?.name || profile.athleteSlug?.replace(/-/g, ' ') || 'Unknown',
-      email: identity?.email || 'No email',
+      // Name: reference DB -> profile name -> slug -> fallback
+      name: identity?.name || profile.name || profile.athleteSlug?.replace(/-/g, ' ') || 'Unknown',
+      // Email: profile email (for migrated users) -> reference DB -> fallback
+      email: profile.email || identity?.email || 'No email',
       role: profile.role,
     };
   });
 
   // Get current user's combined data
-  // Note: session.user.id is Cognito UUID, but userId in DB is custom ID (ISA_XXXXXXXX)
-  // So we match by email instead
-  const currentUser = users.find(u => u.email === session.user.email);
+  // Note: session.user.id is now the custom ID (SportHubID:xxx or ISA_xxx) after auth.ts fix
+  const currentUser = users.find(u => u.userId === session.user.id);
 
   return (
     <div className="min-h-screen bg-gray-100 py-8">
@@ -63,25 +64,31 @@ export default async function TestRBACPage() {
           <h2 className="text-xl font-bold mb-4">Current Session</h2>
           <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <dt className="text-sm font-medium text-gray-500">Cognito User ID (from session)</dt>
+              <dt className="text-sm font-medium text-gray-500">User ID (custom, from session)</dt>
               <dd className="mt-1 text-sm text-gray-900 font-mono break-all">
                 {session.user.id}
               </dd>
             </div>
             <div>
+              <dt className="text-sm font-medium text-gray-500">Cognito Sub (for debugging)</dt>
+              <dd className="mt-1 text-sm text-gray-900 font-mono break-all">
+                {session.user.cognitoSub || 'N/A'}
+              </dd>
+            </div>
+            <div>
               <dt className="text-sm font-medium text-gray-500">Name (from database)</dt>
-              <dd className="mt-1 text-sm text-gray-900">{currentUser?.name}</dd>
+              <dd className="mt-1 text-sm text-gray-900">{currentUser?.name || 'Not found'}</dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">Email (from session)</dt>
               <dd className="mt-1 text-sm text-gray-900">{session.user.email}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500">Role (from database)</dt>
+              <dt className="text-sm font-medium text-gray-500">Role (from session)</dt>
               <dd className="mt-1">
                 <span
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    currentUser?.role === 'admin'
+                    session.user.role === 'admin'
                       ? 'bg-purple-100 text-purple-800'
                       : 'bg-gray-100 text-gray-800'
                   }`}
@@ -91,11 +98,11 @@ export default async function TestRBACPage() {
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500">Role (from session)</dt>
+              <dt className="text-sm font-medium text-gray-500">Role (from database)</dt>
               <dd className="mt-1">
                 <span
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    session.user.role === 'admin'
+                    currentUser?.role === 'admin'
                       ? 'bg-purple-100 text-purple-800'
                       : 'bg-gray-100 text-gray-800'
                   }`}

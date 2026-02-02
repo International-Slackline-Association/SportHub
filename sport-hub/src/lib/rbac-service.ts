@@ -28,7 +28,8 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
 /**
  * Get user's role from database with caching
  *
- * @param userId - Cognito user ID (sub claim)
+ * @param userId - Custom user ID (SportHubID:xxx or ISA_xxx format), NOT Cognito UUID.
+ *                 This must match the partition key in the users table.
  * @returns User's role ('user' or 'admin')
  */
 export async function getUserRole(userId: string): Promise<Role> {
@@ -69,7 +70,8 @@ export async function getUserRole(userId: string): Promise<Role> {
 /**
  * Get user's permissions based on role
  *
- * @param userId - Cognito user ID (sub claim)
+ * @param userId - Custom user ID (SportHubID:xxx or ISA_xxx format), NOT Cognito UUID.
+ *                 This must match the partition key in the users table.
  * @returns Array of permissions
  */
 export async function getUserPermissions(userId: string): Promise<Permission[]> {

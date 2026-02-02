@@ -7,8 +7,9 @@ declare module "next-auth" {
    */
   interface Session {
     user: {
-      id: string
-      role: Role                    // User's role: 'user' | 'admin'
+      id: string                     // Custom user ID (ISA_xxx format) - matches database partition key
+      cognitoSub?: string            // Cognito UUID (for debugging/reference)
+      role: Role                     // User's role: 'user' | 'admin'
       permissions?: Permission[]     // Granular permissions based on role
     } & DefaultSession["user"]
     accessToken?: string

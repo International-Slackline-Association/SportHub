@@ -118,3 +118,38 @@ export async function userExists(userId: string): Promise<boolean> {
   const user = await getUser(userId);
   return user !== null;
 }
+
+/**
+ * Get user by email
+ *
+ * Scans the users table for a Profile record with matching email.
+ * Used to link Cognito users to existing sporthub-users records.
+ *
+ * Note: This performs a scan with a filter. Consider adding a GSI on email
+ * for production performance if this becomes a hot path.
+ *
+ * @param email - User email address
+ * @returns User profile record or null if not found
+ */
+export async function getUserByEmail(email: string): Promise<UserProfileRecord | null> {
+  try {
+    // Scan for Profile records with matching email
+    const allItems = await dynamodb.scanItems(USERS_TABLE, {
+      filterExpression: 'sortKey = :profile AND email = :email',
+      expressionAttributeValues: {
+        ':profile': 'Profile',
+        ':email': email,
+      },
+    });
+
+    if (!allItems || allItems.length === 0) {
+      return null;
+    }
+
+    // Return first match (should only be one per email)
+    return allItems[0] as UserProfileRecord;
+  } catch (error) {
+    console.error('Error fetching user by email:', error);
+    return null;
+  }
+}
