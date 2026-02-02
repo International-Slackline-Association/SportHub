@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getAthleteProfile } from '@lib/data-services';
-import { ProfileCard } from '@ui/ProfileCard';
+import { AthleteProfileCard } from '../components/AthleteProfileCard';
 import AthleteDataTabs from '../components/AthleteDataTabs';
 
 interface AthleteProfilePageProps {
@@ -10,16 +10,16 @@ interface AthleteProfilePageProps {
 export default async function AthleteProfilePage({ params }: AthleteProfilePageProps) {
   const { athleteId } = await params;
 
-  // Fetch only profile data server-side for immediate display
-  const profile = await getAthleteProfile(athleteId);
+  // Fetch only athlete data server-side for immediate display
+  const athlete = await getAthleteProfile(athleteId);
 
-  if (!profile) {
+  if (!athlete) {
     notFound();
   }
 
   return (
     <div className="stack gap-4">
-      <ProfileCard profile={profile} />
+      <AthleteProfileCard athlete={athlete} />
       <section className="p-4 sm:p-0">
         <AthleteDataTabs athleteId={athleteId} />
       </section>

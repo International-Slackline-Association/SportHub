@@ -8,7 +8,24 @@ import { cn } from '@utils/cn';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
+import { DISCIPLINE_DATA, MAP_DISCIPLINE_ENUM_TO_NAME } from '@utils/consts';
+import { CircleFlag } from 'react-circle-flags';
+import { COUNTRIES } from '@utils/countries';
 
+const CountryFlagWithName = ({ countryCode, defaultValue="N/A" }: { countryCode: string, defaultValue?: string }) => {
+  if (countryCode === 'N/A' || !countryCode) {
+    return <span className="text-gray-500">{defaultValue}</span>;
+  }
+
+  const countryName = COUNTRIES.find(country => country.code === countryCode.toLowerCase())?.name;
+
+  return (
+    <div className="flex items-center gap-2" title={countryName}>
+      <CircleFlag countryCode={countryCode.toLowerCase()} height={22} width={22} />
+      <span className="text-sm text-gray-600">{countryName}</span>
+    </div>
+  );
+};
 const columnHelper = createColumnHelper<ContestData>();
 const columns = [
   columnHelper.accessor("name", {
@@ -39,10 +56,35 @@ const columns = [
   columnHelper.accessor("country", {
     enableColumnFilter: true,
     header: "Country",
+    cell: info => (
+      <CountryFlagWithName countryCode={info.getValue()} />
+    ),
+    meta: { filterVariant: 'select' },
   }),
   columnHelper.accessor("discipline", {
     enableColumnFilter: true,
-    header: "Disciplines",
+    header: "Discipline",
+    cell: info => {
+      let discipline = info.getValue();
+      if (Number.isInteger(Number(discipline))) {
+        discipline = MAP_DISCIPLINE_ENUM_TO_NAME[Number(discipline)];
+      }
+
+      const data = DISCIPLINE_DATA[discipline as keyof typeof DISCIPLINE_DATA];
+
+      if (!data) {
+        return discipline;
+      }
+
+      return (
+        <div className="flex flex-row items-center">
+          <div className="h-8 w-8">
+            <data.Icon height={32} width={32} />
+          </div>
+          <span className="ml-2">{data.name}</span>
+        </div>
+      );
+    },
   }),
   columnHelper.accessor("prize", {
     header: "Prize Value",
