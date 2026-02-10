@@ -1,12 +1,11 @@
 'use client';
 
-import { FieldArray, getIn, useFormikContext } from 'formik';
+import { FieldArray, useFormikContext } from 'formik';
 import { cn } from '@utils/cn';
 import Button from '@ui/Button';
 import { TrashIcon } from '@ui/Icons';
 import UserAutocomplete from './UserAutocomplete';
 import { EventSubmissionFormValues } from '../../types';
-import { Option } from '@ui/Form';
 
 type Props = {
   contestKey: string;
@@ -14,7 +13,7 @@ type Props = {
 }
 
 export const Judges = ({ contestKey, judges }: Props) => {
-  const { setFieldTouched, setFieldValue } = useFormikContext<EventSubmissionFormValues>();
+  const { setFieldTouched } = useFormikContext<EventSubmissionFormValues>();
 
   return (
     <div className={cn("stack", "gap-4")}>

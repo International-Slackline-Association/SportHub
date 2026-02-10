@@ -15,7 +15,7 @@ export const ReviewEventForm = () => {
     <>
       <EventDetailsCard
         event={{
-          date: values.event?.date,
+          date: values.event?.startDate,
           city: values.event?.city,
           country: values.event?.country,
           disciplines: discipline,

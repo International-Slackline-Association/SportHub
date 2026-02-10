@@ -1,7 +1,7 @@
 'use client';
 
 import { FieldArray, getIn, useFormikContext } from 'formik';
-import { ContestFormValues, EventFormValues, EventSubmissionFormValues, initialContestValues } from '../../types';
+import { EventSubmissionFormValues, initialContestValues } from '../../types';
 import sharedStyles from '../styles.module.css';
 import Button from '@ui/Button';
 import { TabGroup } from '@ui/Tab';

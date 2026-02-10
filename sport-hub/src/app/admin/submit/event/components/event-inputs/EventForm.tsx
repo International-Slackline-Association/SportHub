@@ -109,13 +109,14 @@ export default function EventForm() {
             type="date"
             required
           />
-          <FormikCheckboxGroup
-            className={sharedStyles.formBox}
-            direction="row"
-            id="event.disciplines"
-            label="Disciplines"
-            options={disciplineOptions}
-          />
+          <div className="col-span-2">
+            <FormikCheckboxGroup
+              direction="row"
+              id="event.disciplines"
+              label="Disciplines"
+              options={disciplineOptions}
+            />
+          </div>
         </div>
       </CollapsibleSection>
 

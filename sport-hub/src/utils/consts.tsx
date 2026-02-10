@@ -66,6 +66,14 @@ export const DISCIPLINE_DATA: Record<Discipline, DisciplineUIData> = {
     description: 'Technical setup mastery',
     Icon: (iconProps: IconProps) => <RiggingIcon {...iconProps} />
   },
+  FREESTYLE_JIB_STATIC: {
+    description: "Static tricks on jibline",
+    enumValue: 0,
+    Icon: () => {
+      throw new Error("Function not implemented.");
+    },
+    name: "Freestyle Jib Static"
+  }
 };
 
 export const MAP_DISCIPLINE_ENUM_TO_NAME: Record<number, Discipline> = {

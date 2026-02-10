@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useFormikContext } from 'formik';
-import { EventFormValues, EventSubmissionFormValues } from '../../types';
+import { EventSubmissionFormValues } from '../../types';
 import React from 'react';
 import FormikAutocomplete from '@ui/Form/FormikAutocomplete';
 import { EventRecord } from '@lib/relational-types';

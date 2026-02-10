@@ -65,8 +65,8 @@ export default async function AboutPage() {
               <p className="text-sm mt-2">If tables don&apos;t exist, visit <a href="/test_LOCAL" className="text-blue-600 hover:underline">/test_LOCAL</a> to create them.</p>
             </div>
           ) : (
-            users.map((user) => (
-              <div key={user.id} className="p-6 flex justify-between items-center hover:bg-gray-50">
+            users.map((user, idx) => (
+              <div key={`${user.id}-${idx}`} className="p-6 flex justify-between items-center hover:bg-gray-50">
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg">{user.name}</h3>
                   <p className="text-gray-600">{user.email}</p>
@@ -83,7 +83,7 @@ export default async function AboutPage() {
                   )}
                 </div>
                 <div className="flex gap-2 ml-4">
-                  <UserManagementModal user={user} variant="UPDATE" />
+                  <UserManagementModal user={user} action="UPDATE" />
                   <form action={deleteUser} style={{ display: 'inline' }}>
                     <input type="hidden" name="id" value={user.id} />
                     <Button

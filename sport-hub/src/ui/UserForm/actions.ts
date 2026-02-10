@@ -2,12 +2,12 @@
 
 import { dynamodb } from '@lib/dynamodb';
 import { revalidatePath } from 'next/cache';
+import { invalidateUsersCache } from '@lib/data-services';
 import { UserFormValues } from './types';
 
 const TABLE_NAME = 'users';
 
 export async function createUser(payload: UserFormValues, path: string) {
-
   // Generate ID if not provided
   const userId = payload?.id || `athlete-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -19,6 +19,10 @@ export async function createUser(payload: UserFormValues, path: string) {
   };
 
   await dynamodb.putItem(TABLE_NAME, user as unknown as Record<string, unknown>);
+
+  // Invalidate server-side cache so fresh data is returned
+  invalidateUsersCache();
+
   revalidatePath(path);
 }
 

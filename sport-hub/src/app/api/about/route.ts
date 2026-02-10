@@ -26,7 +26,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const { id, name, email, country } = await request.json();
-    
+
     if (!id || !name || !email) {
       return NextResponse.json(
         { error: 'Missing required fields' },

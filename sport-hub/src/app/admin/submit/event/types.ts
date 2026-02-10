@@ -168,13 +168,13 @@ export const contestValidationSchema = Yup.object({
     .test(
       'is-unique-judges',
       (context) => {
-        const allIds = context.value.map((judge: Option) => judge.value.trim().toLowerCase());
+        const allIds = context.value.map((judge: Option) => judge.value?.trim().toLowerCase());
         const duplicateIds = allIds.filter((id: string, index: number) => allIds.indexOf(id) !== index);
         return `Duplicate judges found in the list: ${duplicateIds.join(', ')}`;
       },
       (value) => {
         if (!value || value.length === 0) return true;
-        const allIds = value?.map(judge => judge.value?.trim().toLowerCase());
+        const allIds = value?.map(judge => judge.id?.trim().toLowerCase());
         const uniqueIds = new Set(allIds);
         return allIds.length === uniqueIds.size;
       }

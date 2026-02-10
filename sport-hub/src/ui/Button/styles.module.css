@@ -12,6 +12,10 @@
   white-space: nowrap;
 }
 
+.small {
+  padding: 0.25rem 1rem;
+}
+
 .primary {
   background: var(--color-primary);
   color: #fff;

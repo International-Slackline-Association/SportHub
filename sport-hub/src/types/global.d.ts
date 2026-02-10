@@ -38,6 +38,7 @@ interface Ranking {
 }
 
 interface User {
+  userId?: string;
   id: string;
   name: string;
   email: string;
@@ -61,4 +62,4 @@ type AgeCategory = "PROFESSIONAL" | "AMATEUR" | "SENIOR" | "YOUTH_U16" | "YOUTH_
 
 type JudgingSystem = "ISA_FREESTYLE" | "ISA_SPEED" | "OTHER";
 
-type ContestSize = "LOCAL" | "NATIONAL" | "INTERNATIONAL" | "WORLD_CHAMPIONSHIP";
+type ContestSize = "CHALLENGE" | "OPEN" | "GRAND_SLAM" | "MASTERS" | "WORLD_CUP" | "WORLD_CHAMPIONSHIP";

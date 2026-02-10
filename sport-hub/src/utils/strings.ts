@@ -4,6 +4,6 @@ export const pascalCaseToTitleCase = (text: string) =>
 
 // SAMPLE_WORD -> Sample Word
 export const snakeCaseToTitleCase = (text: string) =>
-  text.split('_')
+  text?.split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');

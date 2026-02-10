@@ -34,7 +34,10 @@ const parseErrorsForContest = (errors: FormikErrors<EventSubmissionFormValues>, 
   const errorMessages = [];
 
   if (contestHasGeneralErrors) {
-    errorMessages.push("Error in contest general info");
+    errorMessages.push("Missing contest general information.");
+    if (contestErrors.contestSize) {
+      errorMessages.push("Contest size is required to calculate points.");
+    }
   }
 
   if (contestHasJudgesError) {

@@ -30,7 +30,6 @@ export async function saveEvent({ event }: EventSubmissionFormValues) {
     };
 
     // Save to DynamoDB
-    console.log("Saving event ", eventId);
     await dynamodb.putItem(EVENTS_TABLE, eventData);
 
     // Revalidate events page to show new data

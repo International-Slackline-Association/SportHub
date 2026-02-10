@@ -30,8 +30,9 @@ export const CreateUserForm = ({
       setApiSuccess(true);
       onAfterSubmit?.();
     } catch (error: unknown) {
-      setSubmitting(false);
       setApiError(`Failed to create user: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setSubmitting(false);
     }
   };
 

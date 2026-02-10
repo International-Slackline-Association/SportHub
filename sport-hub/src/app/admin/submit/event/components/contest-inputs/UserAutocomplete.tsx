@@ -8,15 +8,13 @@ import FormikAutocomplete from '@ui/Form/FormikAutocomplete';
 import { UserRecord } from '@lib/relational-types';
 import { Option } from '@ui/Form';
 import { ErrorMessage } from '../ErrorMessage';
-import Button from '@ui/Button';
 
-const createUserLabel = (user: UserRecord) => `${user.name} | ${user.userId}`.toLocaleLowerCase();
+const createUserLabel = (user: UserRecord) => `${user.name} ${user.surname} | ${user.userId}`.toLocaleLowerCase();
 
 type Props = { formKey: string; onSelectOption?: (option: Option) => void };
 
 export default function UserAutocomplete<TFormValues>({
   formKey,
-  onSelectOption,
   ...autocompleteProps
 }: Props) {
   const { setFieldTouched, setFieldValue, values } = useFormikContext<TFormValues>();
@@ -48,8 +46,8 @@ export default function UserAutocomplete<TFormValues>({
     ),
   });
 
-  const userOptions = users?.map(({ name, userId }: UserRecord) => ({
-    label: `${name} | ${userId}`,
+  const userOptions = users?.map(({ name, surname, userId }: UserRecord) => ({
+    label: `${name} ${surname} | ${userId}`,
     value: name,
   })) || [];
 
