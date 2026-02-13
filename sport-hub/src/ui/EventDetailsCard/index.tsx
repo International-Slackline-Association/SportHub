@@ -29,6 +29,12 @@ export function extractYouTubeId(url: string): string | null {
 }
 
 type EventLike = Partial<EventRecord> & {
+  // Admin form shape uses different property names
+  date?: string | Date | null;
+  city?: string;
+  name?: string;
+  discipline?: string | string[];
+  prize?: string | number;
   // Admin form shape uses disciplines array and may not have participants yet
   disciplines?: string[];
   athletes?: Array<unknown>;

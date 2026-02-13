@@ -39,7 +39,7 @@ export default function AthleteDataTabs({ athleteId }: AthleteDataTabsProps) {
         setLoading(true);
 
         // Fetch only the tab data (contests, records, firsts)
-        const response = await fetch(`/api/athlete/${athleteId}/tabs`);
+        const response = await fetch(`/api/athlete/${athleteId}`);
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);

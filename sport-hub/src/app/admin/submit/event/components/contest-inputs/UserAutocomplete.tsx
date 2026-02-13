@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getIn, useFormikContext } from 'formik';
 import React from 'react';
 import FormikAutocomplete from '@ui/Form/FormikAutocomplete';
-import { UserRecord } from '@lib/relational-types';
+import { UserProfileRecord } from '@lib/relational-types';
 import { Option } from '@ui/Form';
 import { ErrorMessage } from '../ErrorMessage';
 
@@ -50,7 +50,7 @@ export default function UserAutocomplete<TFormValues>({
   });
 console.log("debounced", debounced);
 
-  const userOptions = users?.map(({ name, userId }: UserRecord) => ({
+  const userOptions = users?.map(({ name, userId }: UserProfileRecord) => ({
     label: name,
     value: userId
   })) || [];

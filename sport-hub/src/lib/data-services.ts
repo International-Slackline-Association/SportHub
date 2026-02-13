@@ -427,9 +427,27 @@ export async function getAthleteContests(athleteId: string): Promise<AthleteCont
       }
     });
 
+    // Fetch contest records to get athlete counts
+    // Contest sortKey format: "Contest:{discipline}:{contestId}"
+    const contestPromises = participations.map(p =>
+      dynamodb.getItem(EVENTS_TABLE, {
+        eventId: p.eventId,
+        sortKey: `Contest:${p.discipline}:${p.contestId}`
+      }) as Promise<ContestRecord | null>
+    );
+    const contestResults = await Promise.all(contestPromises);
+    const contestMap = new Map<string, ContestRecord>();
+    contestResults.forEach(contest => {
+      if (contest) {
+        contestMap.set(`${contest.eventId}:${contest.contestId}`, contest);
+      }
+    });
+
     // Map participations to contest format
     const contests: AthleteContest[] = participations.map(participation => {
       const eventMetadata = eventMetadataMap.get(participation.eventId);
+      const contest = contestMap.get(`${participation.eventId}:${participation.contestId}`);
+      const contestSize = contest?.athletes?.length;
 
       return {
         rank: participation.place,
@@ -438,7 +456,7 @@ export async function getAthleteContests(athleteId: string): Promise<AthleteCont
         contest: participation.contestName,
         discipline: participation.discipline,
         points: parseFloat(participation.points || '0'),
-        contestSize: 'Unknown', // Not stored in participation records
+        contestSize: contestSize ? String(contestSize) : 'Unknown',
         dates: formatDate(participation.contestDate)
       };
     });

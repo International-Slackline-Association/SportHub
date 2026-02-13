@@ -17,7 +17,8 @@ const CountryFlagWithName = ({ countryCode, defaultValue="N/A" }: { countryCode:
     return <span className="text-gray-500">{defaultValue}</span>;
   }
 
-  const countryName = countryCode.toUpperCase();
+  const country = COUNTRIES.find(c => c.code.toLowerCase() === countryCode.toLowerCase());
+  const countryName = country?.name || countryCode.toUpperCase();
 
   return (
     <div className="flex items-center gap-2" title={countryName}>
