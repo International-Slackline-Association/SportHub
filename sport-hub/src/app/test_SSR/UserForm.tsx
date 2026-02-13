@@ -41,13 +41,16 @@ interface UserFormProps {
   onSubmit?: (values: Form, helpers: FormikHelpers<Form>) => Promise<void>;
   showSubmitButton?: boolean;
   formRef?: React.RefObject<FormikProps<Form> | null>;
+  /** When true, prevents editing of the user ID field (for edit mode) */
+  isEditMode?: boolean;
 }
 
 export default function UserForm({
   initialValues,
   onSubmit,
   showSubmitButton = true,
-  formRef
+  formRef,
+  isEditMode = false
 }: UserFormProps) {
   const [apiSuccess, setApiSuccess] = useState(false);
   const [apiError, setApiError] = useState("");
@@ -87,7 +90,9 @@ export default function UserForm({
             <FormikTextField
               id="id"
               label="User ID"
-              placeholder="Auto-generated if empty"
+              placeholder={isEditMode ? undefined : "Auto-generated if empty"}
+              disabled={isEditMode}
+              title={isEditMode ? "User ID cannot be changed after creation" : undefined}
             />
             <FormikTextField
               id="isaId"

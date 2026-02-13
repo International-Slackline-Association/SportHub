@@ -94,6 +94,8 @@ interface AthleteProfile {
   userId: string;
   isaUsersId?: string;
   athleteSlug: string;
+  name?: string;         // First name from ISA-Rankings
+  surname?: string;      // Last name from ISA-Rankings
   isaRankingsPK?: string; // Original PK from ISA-Rankings for idempotency
   email?: string;        // Email for Cognito user matching
   profileUrl?: string;
@@ -238,11 +240,12 @@ function padPoints(points: string): string {
 }
 
 /**
- * ISA Users lookup result containing both name->id mapping and id->email mapping
+ * ISA Users lookup result containing name->id, id->email, and email->id mappings
  */
 interface IsaUsersLookup {
-  nameLookup: Map<string, string>;   // normalizedName -> isaUsersId
-  emailLookup: Map<string, string>;  // isaUsersId -> email
+  nameLookup: Map<string, string>;      // normalizedName -> isaUsersId
+  emailLookup: Map<string, string>;     // isaUsersId -> email
+  emailToIdLookup: Map<string, string>; // email (lowercase) -> isaUsersId
 }
 
 /**
@@ -252,8 +255,9 @@ interface IsaUsersLookup {
 async function buildIsaUsersLookup(): Promise<IsaUsersLookup> {
   console.log('📚 Building lookup maps from isa-users table...');
 
-  const nameLookup = new Map<string, string>();   // normalizedName -> isaUsersId
-  const emailLookup = new Map<string, string>();  // isaUsersId -> email
+  const nameLookup = new Map<string, string>();      // normalizedName -> isaUsersId
+  const emailLookup = new Map<string, string>();     // isaUsersId -> email
+  const emailToIdLookup = new Map<string, string>(); // email (lowercase) -> isaUsersId
   let lastEvaluatedKey: Record<string, unknown> | undefined = undefined;
 
   do {
@@ -288,10 +292,11 @@ async function buildIsaUsersLookup(): Promise<IsaUsersLookup> {
           nameLookup.set(normalizedName, isaUsersId);
         }
 
-        // Store isaUsersId -> email mapping
+        // Store isaUsersId -> email mapping and reverse lookup
         if (gsiSk && gsiSk.startsWith('email:')) {
           const email = gsiSk.replace(/^email:/, '');
           emailLookup.set(isaUsersId, email);
+          emailToIdLookup.set(email.toLowerCase(), isaUsersId); // Reverse lookup for matching
         }
       }
     }
@@ -299,8 +304,8 @@ async function buildIsaUsersLookup(): Promise<IsaUsersLookup> {
     lastEvaluatedKey = response.LastEvaluatedKey;
   } while (lastEvaluatedKey);
 
-  console.log(`✅ Built lookup maps: ${nameLookup.size} names, ${emailLookup.size} emails from isa-users table\n`);
-  return { nameLookup, emailLookup };
+  console.log(`✅ Built lookup maps: ${nameLookup.size} names, ${emailToIdLookup.size} emails from isa-users table\n`);
+  return { nameLookup, emailLookup, emailToIdLookup };
 }
 
 /**
@@ -402,13 +407,15 @@ async function scanAthleteDetails(
       const athletePK = item.PK as string; // e.g., "Athlete:daniel"
       const athleteSlug = athletePK.replace('Athlete:', '');
 
-      // Match athlete to isa-users by normalized name
+      // Extract name and surname from ISA-Rankings
+      const name = item.name as string | undefined;
+      const surname = item.surname as string | undefined;
+
+      // Match athlete to isa-users by normalized name, then by email
       let isaUsersId = item.isaUsersId as string | undefined;
       if (!isaUsersId) {
         // Try to match by normalized name
         const normalizedFullname = item.normalizedFullname as string | undefined;
-        const name = item.name as string | undefined;
-        const surname = item.surname as string | undefined;
 
         // Use normalizedFullname if available, otherwise construct from name + surname
         let normalized = normalizedFullname;
@@ -421,10 +428,17 @@ async function scanAthleteDetails(
         }
       }
 
+      // Get email from ISA-Rankings
+      const isaRankingsEmail = item.email as string | undefined;
+
+      // Fallback: try to match by email if name matching failed
+      if (!isaUsersId && isaRankingsEmail && isValidEmail(isaRankingsEmail)) {
+        isaUsersId = isaUsersLookup.emailToIdLookup.get(isaRankingsEmail.toLowerCase());
+      }
+
       // Get email: prefer isa-users (authoritative), fallback to ISA-Rankings
       // Skip test/invalid emails
       const isaUsersEmail = isaUsersId ? isaUsersLookup.emailLookup.get(isaUsersId) : undefined;
-      const isaRankingsEmail = item.email as string | undefined;
       const rawEmail = isaUsersEmail || isaRankingsEmail;
       const email = isValidEmail(rawEmail) ? rawEmail : undefined;
 
@@ -458,6 +472,8 @@ async function scanAthleteDetails(
         userId,
         isaUsersId,
         athleteSlug,
+        name,                     // First name from ISA-Rankings
+        surname,                  // Last name from ISA-Rankings
         isaRankingsPK: athletePK, // Store for idempotency on future runs
         email,                    // Email for Cognito user matching
         profileUrl: item.profileUrl as string | undefined,

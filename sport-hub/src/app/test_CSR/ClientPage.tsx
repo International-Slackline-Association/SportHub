@@ -597,6 +597,7 @@ export default function TestCSRPage() {
             onSubmit={handleEditFormSubmit}
             showSubmitButton={false}
             formRef={formRef}
+            isEditMode={true}
           />
         )}
       </Modal>

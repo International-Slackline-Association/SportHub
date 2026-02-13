@@ -62,11 +62,17 @@ export async function PUT(
       );
     }
 
-    // Update user with new data
+    // Update user with new data, but protect immutable fields
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { userId: _userId, sortKey: _sortKey, id: _id, ...safeUpdateData } = updateData;
+
     const updatedUser = {
       ...existingUser,
-      ...updateData,
-      id, // Ensure ID doesn't change
+      ...safeUpdateData,
+      // Ensure these immutable fields don't change
+      userId: existingUser.userId,
+      sortKey: existingUser.sortKey,
+      id: existingUser.userId,
       updatedAt: new Date().toISOString(),
     };
 

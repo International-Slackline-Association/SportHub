@@ -174,6 +174,7 @@ export default function UserManagementClient({ user, currentUserId }: UserManage
           onSubmit={handleFormSubmit}
           showSubmitButton={false}
           formRef={formRef}
+          isEditMode={true}
         />
       </Modal>
 
