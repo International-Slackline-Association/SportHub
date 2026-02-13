@@ -5,6 +5,7 @@ import styles from "./styles.module.css";
 export interface TabItem {
   id: string;
   label: string;
+  disabled?: boolean;
 }
 
 interface TabGroupProps {
@@ -44,10 +45,11 @@ const TabGroup = ({
     >
       {tabs.map((tab) => (
         <Tab
-          key={tab.id}
-          variant={variant}
+          disabled={tab.disabled}
           isActive={activeTab === tab.id}
+          key={tab.id}
           onClick={() => handleTabClick(tab.id)}
+          variant={variant}
         >
           {tab.label}
         </Tab>

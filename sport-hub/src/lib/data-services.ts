@@ -1,3 +1,4 @@
+// import { UserSubType } from '@types/rbac';
 import { dynamodb } from './dynamodb';
 import type { ContestRecord, EventMetadataRecord, ContestParticipant } from './relational-types';
 import { getReferenceUserById, getReferenceUsersBatch } from './reference-db-service';
@@ -6,9 +7,11 @@ import {
   getAthleteParticipations as getAthleteParticipationsOptimized,
   getAthleteLeaderboard
 } from './user-query-service';
+import { UserRecord } from './relational-types';
 
 // Table names
 const EVENTS_TABLE = 'events';
+const USERS_TABLE = 'users';
 
 // PERFORMANCE OPTIMIZATION: Simple in-memory cache with TTL
 interface CacheEntry<T> {
@@ -48,6 +51,36 @@ class SimpleCache {
 }
 
 const cache = new SimpleCache();
+
+// ===========================================
+// USER DATA SERVICES
+// ===========================================
+export async function getUsers({ subtype }: { subtype: string }): Promise<Partial<UserRecord>[]> {
+  const cacheKey = `users-data-${subtype}`;
+  const cached = cache.get<UserRecord[]>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const items = await dynamodb.scanItems(USERS_TABLE);
+    if (!items || items.length === 0) {
+      return [];
+    }
+
+    // TODO: Filter by subtype
+    const users = items.map(userRecord => ({
+      name: userRecord.name || '',
+      userId: userRecord.userId || '',
+    }));
+
+    // Cache the results
+    cache.set(cacheKey, users, 120000); // Cache for 2 minutes
+
+    return users;
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    return [];
+  }
+}
 
 // ===========================================
 // RANKINGS AND ATHLETES DATA SERVICES
@@ -150,7 +183,7 @@ export async function getRankingsData(): Promise<AthleteRanking[]> {
 /**
  * Get featured athletes (top athletes)
  */
-export async function getFeaturedAthletes(limit: number = 4): Promise<AthleteRanking[]> {
+export async function getFeaturedAthletes(limit: number = 3): Promise<AthleteRanking[]> {
   const rankings = await getRankingsData();
   return rankings.slice(0, limit);
 }
@@ -169,6 +202,7 @@ export interface ContestData {
   prize: number;
   gender: number;
   category: number;
+  status?: 'upcoming' | 'recent' | 'live'; // TODO: Check with Dylan on adding this attribute
   verified: boolean;
   profileUrl?: string;
   thumbnailUrl?: string;
@@ -273,6 +307,7 @@ export async function getContestsData(): Promise<ContestData[]> {
 
 export interface AthleteProfile {
   name: string;
+  surname?: string;
   age?: number;
   country: string;
   website?: string;

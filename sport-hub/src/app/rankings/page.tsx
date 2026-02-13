@@ -1,8 +1,8 @@
-import type { Metadata } from 'next'
+import { FeaturedAthleteSection } from '@ui/FeaturedAthleteCard'
 import { getFeaturedAthletes } from '@lib/data-services'
-import RankingsTable from './components/RankingsTable'
-import FeaturedGrid, { FeaturedCard } from '@ui/FeatureGrid'
 import PageLayout from '@ui/PageLayout'
+import RankingsTable from './components/RankingsTable'
+import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'SportHub - Rankings',
@@ -20,25 +20,8 @@ export default async function Page() {
     <PageLayout
       title="Rankings"
       description="View the latest athlete rankings across all disciplines."
-      heroImage={{
-        src: "/static/images/hero-freestyle.png",
-        alt: "Highline World Championship",
-        caption: "Laax Highline World Championship, 2024"
-      }}
-      overlayText
     >
-      <FeaturedGrid title="Featured Athletes">
-        {featuredAthletes.map(athlete => (
-          <FeaturedCard
-            key={athlete.userId}
-            id={athlete.userId}
-            name={athlete.fullName || athlete.name}
-            image={athlete.profileImage || '/static/images/profiles/default.jpg'}
-            country={athlete.country}
-            disciplines={athlete.disciplines as Discipline[]}
-          />
-        ))}
-      </FeaturedGrid>
+      <FeaturedAthleteSection athletes={featuredAthletes.slice(0, 3)} />
       <section className="p-4 sm:p-0">
         <RankingsTable />
       </section>

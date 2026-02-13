@@ -1,0 +1,89 @@
+/* Base card styles */
+.card {
+  background: white;
+  border-radius: 8px;
+  border: 1px solid var(--color-neutral-600);
+  display: flex;
+  flex: 1 0 0;
+  font-size: 1rem;
+  padding: 1.5rem;
+  min-width: fit-content;
+  text-align: left;
+
+  /* Remove button styling when used as button */
+  &:where(button) {
+    border: 1px solid var(--color-neutral-600);
+    background: white;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: inherit;
+  }
+}
+
+.mobile-vertical {
+  @media (max-width: 39rem) {
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
+.mobile-horizontal {
+  @media (max-width: 39rem) {
+    align-items: center;
+    flex-direction: row;
+    justify-content: left;
+  }
+}
+
+.desktop-vertical {
+  @media (min-width: 40rem) {
+    align-items: center;
+    flex-direction: column;
+    justify-content: end;
+  }
+}
+
+.desktop-horizonal {
+  @media (min-width: 40rem) {
+    align-items: center;
+    flex-direction: row;
+    justify-content: left;
+  }
+}
+/* Hoverable variant */
+.hoverable {
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    background-color: var(--color-green-50);
+    border: 1px solid var(--color-green-700);
+    color: var(--color-green-700);
+
+    .content {
+      color: var(--color-green-700);
+    }
+  }
+}
+
+/* Media section (left on mobile, top on desktop) */
+.media {
+  align-self: center;
+  margin-bottom: 0rem;
+  margin-right: 1rem;
+  flex-shrink: 0;
+
+  @media (min-width: 40rem) {
+    margin-bottom: 1rem;
+    margin-right: 0rem;
+  }
+}
+
+/* Content section (right on mobile, bottom on desktop) */
+.content {
+  @media (min-width: 40rem) {
+    text-align: center;
+    width: 100%;
+  }
+}

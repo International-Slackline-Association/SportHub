@@ -6,30 +6,33 @@ export type TabVariant = "primary" | "secondary" | "large";
 
 interface TabProps {
   children: React.ReactNode;
+  className?: string;
+  disabled?: boolean;
   isActive?: boolean;
   onClick?: () => void;
   variant?: TabVariant;
-  className?: string;
 }
 
-const Tab = ({ 
-  children, 
-  isActive = false, 
-  onClick, 
+const Tab = ({
+  children,
+  className = "",
+  disabled = false,
+  isActive = false,
+  onClick,
   variant = "primary",
-  className = "" 
 }: TabProps) => {
   return (
     <Button
-      variant="tab"
       className={[
         styles.tabItem,
         styles[variant],
         isActive ? styles.active : "",
         className
       ].filter(Boolean).join(" ")}
+      disabled={disabled}
       onClick={onClick}
       type="button"
+      variant="tab"
     >
       {children}
     </Button>

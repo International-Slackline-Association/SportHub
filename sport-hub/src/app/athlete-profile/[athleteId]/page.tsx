@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getAthleteProfile } from '@lib/data-services';
-import { ProfileCard } from '@ui/ProfileCard';
+import { AthleteProfileCard } from '../components/AthleteProfileCard';
 import AthleteDataTabs from '../components/AthleteDataTabs';
 
 interface AthleteProfilePageProps {
@@ -20,7 +20,7 @@ export default async function AthleteProfilePage({ params }: AthleteProfilePageP
 
   return (
     <div className="stack gap-4">
-      <ProfileCard profile={profile} />
+      <AthleteProfileCard athlete={profile} />
       <section className="p-4 sm:p-0">
         <AthleteDataTabs athleteId={decodedAthleteId} />
       </section>
