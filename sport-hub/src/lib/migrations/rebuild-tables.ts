@@ -1,4 +1,4 @@
-import { DatabaseSetup } from './db-setup';
+import { DatabaseSetup } from '../db-setup';
 
 async function rebuildTables() {
   const db = new DatabaseSetup();

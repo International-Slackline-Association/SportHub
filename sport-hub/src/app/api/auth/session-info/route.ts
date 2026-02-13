@@ -1,0 +1,57 @@
+import { NextResponse } from 'next/server';
+import { auth } from '@lib/auth';
+import { dynamodb } from '@lib/dynamodb';
+import { ROLE_PERMISSIONS } from 'src/types/rbac';
+import type { Role, UserSubType } from 'src/types/rbac';
+
+export async function GET() {
+  try {
+    const session = await auth();
+
+    if (!session) {
+      return NextResponse.json({ session: null, dbUser: null });
+    }
+
+    // Get user from database
+    let dbUser = null;
+    if (session.user.id) {
+      const user = await dynamodb.getItem('users', {
+        userId: session.user.id,
+        sortKey: 'Profile',
+      });
+
+      if (user) {
+        dbUser = {
+          id: user.userId as string,
+          name: (user.name ?? user.athleteSlug ?? '') as string,
+          email: (user.email ?? '') as string,
+          role: (user.role as Role) ?? 'user',
+          userSubTypes: (user.userSubTypes as UserSubType[]) ?? [],
+          primarySubType: user.primarySubType as UserSubType | undefined,
+        };
+      }
+    }
+
+    const sessionRole = session.user.role || 'user';
+    const permissions = ROLE_PERMISSIONS[sessionRole] || [];
+
+    return NextResponse.json({
+      session: {
+        user: {
+          id: session.user.id,
+          email: session.user.email,
+          role: sessionRole,
+          cognitoSub: session.user.cognitoSub,
+          permissions,
+        },
+      },
+      dbUser,
+    });
+  } catch (error) {
+    console.error('Error fetching session info:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

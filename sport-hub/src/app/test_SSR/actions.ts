@@ -1,8 +1,11 @@
 'use server'
 
 import { dynamodb } from '@lib/dynamodb';
+import { auth } from '@lib/auth';
+import { clearRoleCache } from '@lib/rbac-service';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import type { Role, UserSubType } from 'src/types/rbac';
 
 const TABLE_NAME = 'users';
 
@@ -24,14 +27,20 @@ export async function createUser(formData: FormData) {
 
   const user = {
     userId: userId,
+    sortKey: 'Profile',
     id: userId,
     name,
     surname,
     email,
     country: country || undefined,
-    createdAt: new Date().toISOString(),
+    createdAt: Date.now(),
     gender,
     isaId,
+    role: 'user' as Role,
+    userSubTypes: ['athlete'] as UserSubType[],
+    primarySubType: 'athlete' as UserSubType,
+    totalPoints: 0,
+    contestCount: 0,
   };
 
   await dynamodb.putItem(TABLE_NAME, user as unknown as Record<string, unknown>);
@@ -48,8 +57,8 @@ export async function updateUser(formData: FormData) {
     throw new Error('ID, name and email are required fields');
   }
 
-  // Get existing user first
-  const existingUser = await dynamodb.getItem(TABLE_NAME, { userId: id });
+  // Get existing user first (use composite key)
+  const existingUser = await dynamodb.getItem(TABLE_NAME, { userId: id, sortKey: 'Profile' });
   if (!existingUser) {
     throw new Error('User not found');
   }
@@ -74,6 +83,73 @@ export async function deleteUser(formData: FormData) {
     throw new Error('Missing user ID');
   }
 
-  await dynamodb.deleteItem(TABLE_NAME, { userId: id });
-  revalidatePath('/about_SSR');
+  // Use composite key for deletion
+  await dynamodb.deleteItem(TABLE_NAME, { userId: id, sortKey: 'Profile' });
+  revalidatePath('/test_SSR');
+}
+
+/**
+ * Update user role and sub-types
+ * Requires admin role in production, any user in development
+ */
+export async function updateUserRoleAndSubTypes(
+  userId: string,
+  role: Role,
+  userSubTypes: UserSubType[],
+  primarySubType?: UserSubType
+): Promise<{ success: boolean; message?: string; error?: string }> {
+  // Check authorization
+  const session = await auth();
+
+  if (!session) {
+    return { success: false, error: 'Authentication required' };
+  }
+
+  // In production, require admin role
+  if (process.env.NODE_ENV === 'production' && session.user.role !== 'admin') {
+    return { success: false, error: 'Admin access required' };
+  }
+
+  try {
+    // Get existing user (use composite key)
+    const existingUser = await dynamodb.getItem(TABLE_NAME, { userId, sortKey: 'Profile' });
+    if (!existingUser) {
+      return { success: false, error: 'User not found' };
+    }
+
+    // Ensure primarySubType is valid
+    const validPrimarySubType = primarySubType && userSubTypes.includes(primarySubType)
+      ? primarySubType
+      : userSubTypes[0];
+
+    const updatedUser = {
+      ...existingUser,
+      role,
+      userSubTypes,
+      primarySubType: validPrimarySubType,
+      roleAssignedAt: new Date().toISOString(),
+      roleAssignedBy: session.user.id,
+    };
+
+    await dynamodb.putItem(TABLE_NAME, updatedUser as unknown as Record<string, unknown>);
+
+    // Clear role cache for this user
+    clearRoleCache(userId);
+
+    revalidatePath('/test_SSR');
+
+    const isSelf = userId === session.user.id;
+    return {
+      success: true,
+      message: isSelf
+        ? `Updated to ${role}. Sign out and back in to refresh your session.`
+        : `User updated to ${role} role.`,
+    };
+  } catch (error) {
+    console.error('Error updating user role:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
 }

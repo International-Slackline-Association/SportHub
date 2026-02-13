@@ -14,7 +14,7 @@ import type {
   EventMetadataRecord,
   ContestRecord,
   ContestParticipant
-} from './relational-types';
+} from '../relational-types';
 
 // ============================================================================
 // TYPE DEFINITIONS FOR SEED DATA

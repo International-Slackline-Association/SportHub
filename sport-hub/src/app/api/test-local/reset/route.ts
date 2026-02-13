@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { DatabaseSeeder } from '@lib/seed-local-db';
+import { DatabaseSeeder } from '@lib/migrations/seed-local-db';
 import { canAccessTestAPI } from '@lib/test-page-access';
 
 export async function POST() {

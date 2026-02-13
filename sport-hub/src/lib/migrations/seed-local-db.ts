@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { dynamodb } from './dynamodb';
-import { DatabaseSetup } from './db-setup';
+import { dynamodb } from '../dynamodb';
+import { DatabaseSetup } from '../db-setup';
 import { transformSeedData, getDataStats } from './seed-data';
 import type {
   UserProfileRecord,
@@ -9,7 +9,7 @@ import type {
   AthleteParticipationRecord,
   EventMetadataRecord,
   ContestRecord
-} from './relational-types';
+} from '../relational-types';
 
 export class DatabaseSeeder {
   private dbSetup = new DatabaseSetup();

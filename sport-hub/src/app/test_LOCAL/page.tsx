@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { testHelpers } from '@lib/test-helpers';
-import { getDataStats } from '@lib/seed-data';
+import { getDataStats } from '@lib/migrations/seed-data';
 import LocalTestInterface from './LocalTestInterface';
 import { requireTestPageAccess } from '@lib/test-page-access';
 

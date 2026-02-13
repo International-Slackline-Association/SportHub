@@ -125,6 +125,60 @@ export const dynamodb = {
     return allItems;
   },
 
+  // Paginated scan - returns items and cursor for next page
+  // Use this instead of scanItems when you need pagination control
+  // Note: When using filterExpression, this keeps fetching until limit is reached
+  // because DynamoDB applies Limit BEFORE filtering
+  async scanItemsPaginated(tableName: string, options?: {
+    limit?: number;
+    exclusiveStartKey?: Record<string, unknown>;
+    projectionExpression?: string;
+    expressionAttributeNames?: Record<string, string>;
+    filterExpression?: string;
+    expressionAttributeValues?: Record<string, unknown>;
+  }): Promise<{
+    items: Record<string, unknown>[];
+    lastEvaluatedKey?: Record<string, unknown>;
+    hasMore: boolean;
+  }> {
+    const collectedItems: Record<string, unknown>[] = [];
+    let lastKey = options?.exclusiveStartKey;
+    const targetLimit = options?.limit || 100;
+
+    // Keep fetching until we have enough filtered items or no more data
+    do {
+      const command = new ScanCommand({
+        TableName: getTableName(tableName),
+        ExclusiveStartKey: lastKey,
+        ...(options?.projectionExpression && { ProjectionExpression: options.projectionExpression }),
+        ...(options?.expressionAttributeNames && { ExpressionAttributeNames: options.expressionAttributeNames }),
+        ...(options?.filterExpression && { FilterExpression: options.filterExpression }),
+        ...(options?.expressionAttributeValues && { ExpressionAttributeValues: options.expressionAttributeValues }),
+      });
+
+      const response = await ddb.send(command);
+      if (response.Items) {
+        collectedItems.push(...response.Items);
+      }
+      lastKey = response.LastEvaluatedKey;
+
+      // Stop if we have enough items or no more pages
+      if (collectedItems.length >= targetLimit || !lastKey) {
+        break;
+      }
+    } while (lastKey);
+
+    // Return exactly the requested limit
+    const items = collectedItems.slice(0, targetLimit);
+    const hasMore = collectedItems.length > targetLimit || !!lastKey;
+
+    return {
+      items,
+      lastEvaluatedKey: lastKey,
+      hasMore,
+    };
+  },
+
   // Delete item
   async deleteItem(tableName: string, key: Record<string, unknown>) {
     const command = new DeleteCommand({
@@ -193,6 +247,33 @@ export const dynamodb = {
 
     const response = await ddb.send(command);
     return response.Responses?.[getTableName(tableName)] || [];
+  },
+
+  // Count items with optional filter (efficient - doesn't fetch item data)
+  async countItems(tableName: string, options?: {
+    filterExpression?: string;
+    expressionAttributeNames?: Record<string, string>;
+    expressionAttributeValues?: Record<string, unknown>;
+  }): Promise<number> {
+    let totalCount = 0;
+    let lastEvaluatedKey: Record<string, unknown> | undefined;
+
+    do {
+      const command = new ScanCommand({
+        TableName: getTableName(tableName),
+        Select: 'COUNT',
+        ExclusiveStartKey: lastEvaluatedKey,
+        ...(options?.filterExpression && { FilterExpression: options.filterExpression }),
+        ...(options?.expressionAttributeNames && { ExpressionAttributeNames: options.expressionAttributeNames }),
+        ...(options?.expressionAttributeValues && { ExpressionAttributeValues: options.expressionAttributeValues }),
+      });
+
+      const response = await ddb.send(command);
+      totalCount += response.Count || 0;
+      lastEvaluatedKey = response.LastEvaluatedKey;
+    } while (lastEvaluatedKey);
+
+    return totalCount;
   },
 };
 

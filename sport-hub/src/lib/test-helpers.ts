@@ -1,6 +1,6 @@
 import { dynamodb } from './dynamodb';
 import { DatabaseSetup } from './db-setup';
-import { DatabaseSeeder } from './seed-local-db';
+import { DatabaseSeeder } from './migrations/seed-local-db';
 import type { UserProfileRecord, EventMetadataRecord } from './relational-types';
 
 // Backward compatibility type for old test code

@@ -9,7 +9,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const user = await dynamodb.getItem(TABLE_NAME, { userId: id });
+    const user = await dynamodb.getItem(TABLE_NAME, { userId: id, sortKey: 'Profile' });
 
     if (!user) {
       return NextResponse.json(
@@ -34,7 +34,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    await dynamodb.deleteItem(TABLE_NAME, { userId: id });
+    await dynamodb.deleteItem(TABLE_NAME, { userId: id, sortKey: 'Profile' });
     return NextResponse.json({ message: 'User deleted successfully' });
   } catch (error) {
     console.error('DynamoDB error:', error);
@@ -53,8 +53,8 @@ export async function PUT(
     const { id } = await params;
     const updateData = await request.json();
 
-    // Get existing user first
-    const existingUser = await dynamodb.getItem(TABLE_NAME, { userId: id });
+    // Get existing user first (use composite key)
+    const existingUser = await dynamodb.getItem(TABLE_NAME, { userId: id, sortKey: 'Profile' });
     if (!existingUser) {
       return NextResponse.json(
         { error: 'User not found' },

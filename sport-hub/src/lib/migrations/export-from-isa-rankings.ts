@@ -13,7 +13,7 @@
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, ScanCommand, QueryCommand, ScanCommandInput, QueryCommandInput } from "@aws-sdk/lib-dynamodb";
-import { getReferenceUserByEmail } from './reference-db-service';
+import { getReferenceUserByEmail } from '../reference-db-service';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
 
