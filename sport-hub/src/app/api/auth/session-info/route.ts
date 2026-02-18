@@ -24,6 +24,7 @@ export async function GET() {
         dbUser = {
           id: user.userId as string,
           name: (user.name ?? user.athleteSlug ?? '') as string,
+          surname: (user.surname ?? '') as string,
           email: (user.email ?? '') as string,
           role: (user.role as Role) ?? 'user',
           userSubTypes: (user.userSubTypes as UserSubType[]) ?? [],

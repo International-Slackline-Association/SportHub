@@ -28,8 +28,10 @@ export interface UserProfileRecord extends UserTableRecord {
 
   // Identity data
   // Note: email is used to link Cognito users to existing sporthub-users records
-  // Name may come from reference DB or be stored locally for migrated users
+  // Name/surname stored locally; reference DB (isa-users) is fallback for display.
+  // TODO: Sync SportHub DB name/surname with reference DB on edit (not yet implemented)
   name?: string;
+  surname?: string;
   email?: string;
 
   // RBAC fields
@@ -201,6 +203,7 @@ export interface ContestParticipant {
   userId: string;          // SportHubID
   isaUsersId?: string;     // ISA_XXXXXXXX (optional)
   name: string;
+  surname?: string;
   place: string;
   points: string;
   thumbnailUrl?: string;

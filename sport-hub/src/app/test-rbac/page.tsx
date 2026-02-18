@@ -30,16 +30,19 @@ export default async function TestRBACPage() {
   const identityMap = await getReferenceUsersBatch(isaUserIds);
 
   // Combine profile data with identity data for display
+  // Priority: SportHub DB -> reference DB (isa-users) -> athleteSlug -> fallback
+  // TODO: If SportHub DB name/email differs from reference DB, we currently prefer SportHub DB.
+  //       A sync mechanism should be implemented to keep both in sync on edits.
   const users = userProfiles.map(profile => {
     const identity = profile.isaUsersId
       ? identityMap.get(profile.isaUsersId)
       : undefined;
 
+    const name = profile.name || identity?.name || profile.athleteSlug?.replace(/-/g, ' ') || 'Unknown';
+    const surname = profile.surname || identity?.surname || '';
     return {
       userId: profile.userId,
-      // Name: reference DB -> profile name -> slug -> fallback
-      name: identity?.name || profile.name || profile.athleteSlug?.replace(/-/g, ' ') || 'Unknown',
-      // Email: profile email (for migrated users) -> reference DB -> fallback
+      name: `${name} ${surname}`.trim(),
       email: profile.email || identity?.email || 'No email',
       role: profile.role,
     };

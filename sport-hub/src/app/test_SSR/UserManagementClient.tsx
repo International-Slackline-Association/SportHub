@@ -12,6 +12,7 @@ interface User {
   createdAt: string;
   id: string;
   name: string;
+  surname?: string;
   email: string;
   country?: string;
   totalPoints?: number;
@@ -56,7 +57,7 @@ export default function UserManagementClient({ user, currentUserId }: UserManage
   const initialValues = {
     id: user.id,
     name: user.name,
-    surname: '',
+    surname: user.surname || '',
     gender: 'male',
     email: user.email,
     country: user.country || '',
@@ -68,6 +69,7 @@ export default function UserManagementClient({ user, currentUserId }: UserManage
       const formData = new FormData();
       formData.append('id', user.id);
       formData.append('name', values.name);
+      formData.append('surname', values.surname);
       formData.append('email', values.email);
       if (values.country) {
         formData.append('country', values.country);
@@ -198,7 +200,7 @@ export default function UserManagementClient({ user, currentUserId }: UserManage
 
           {/* User Info */}
           <div className="pb-4 border-b">
-            <p className="font-medium">{user.name}</p>
+            <p className="font-medium">{`${user.name} ${user.surname || ''}`.trim()}</p>
             <p className="text-sm text-gray-500">{user.email}</p>
             {isCurrentUser && (
               <p className="text-xs text-blue-600 mt-1">

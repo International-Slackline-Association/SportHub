@@ -7,6 +7,7 @@ import { ROLE_PERMISSIONS } from 'src/types/rbac';
 interface DbUser {
   id: string;
   name: string;
+  surname?: string;
   email: string;
   role?: Role;
   userSubTypes?: UserSubType[];
@@ -99,7 +100,7 @@ export default function CurrentUserPanel({ session, dbUser }: CurrentUserPanelPr
               <dl className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <dt className="text-gray-500">Name</dt>
-                  <dd className="text-gray-900">{dbUser.name}</dd>
+                  <dd className="text-gray-900">{`${dbUser.name} ${dbUser.surname || ''}`.trim()}</dd>
                 </div>
                 <div className="flex justify-between items-center">
                   <dt className="text-gray-500">Role</dt>

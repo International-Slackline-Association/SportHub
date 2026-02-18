@@ -62,6 +62,7 @@ export async function GET(request: NextRequest) {
     const users = result.items.map(item => ({
       id: item.userId ?? item.id ?? '',
       name: item.name ?? item.athleteSlug ?? '',
+      surname: item.surname ?? '',
       email: item.email ?? '',
       createdAt: item.createdAt ?? '',
       updatedAt: item.updatedAt,

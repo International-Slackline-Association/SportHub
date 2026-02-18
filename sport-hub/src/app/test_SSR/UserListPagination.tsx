@@ -10,6 +10,7 @@ import type { Role, UserSubType } from 'src/types/rbac';
 interface User {
   id: string;
   name: string;
+  surname?: string;
   email: string;
   createdAt: string;
   updatedAt?: string;
@@ -186,7 +187,7 @@ export default function UserListPagination({
           >
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-lg">{user.name}</h3>
+                <h3 className="font-semibold text-lg">{`${user.name} ${user.surname || ''}`.trim()}</h3>
                 {user.id === currentUserId && (
                   <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">You</span>
                 )}

@@ -8,6 +8,7 @@ import { CircleFlag } from 'react-circle-flags';
 interface ProfileSectionProps {
   userId: string;
   name: string;
+  surname?: string;
   email: string;
   country?: string;
   role: string;
@@ -16,6 +17,7 @@ interface ProfileSectionProps {
 export default function ProfileSection({
   userId,
   name,
+  surname,
   email,
   country,
   role,
@@ -39,7 +41,7 @@ export default function ProfileSection({
         <h2 className="text-2xl font-bold mb-4">Edit Profile</h2>
         <ProfileEditForm
           userId={userId}
-          initialData={{ name, email, country }}
+          initialData={{ name, surname, email, country }}
           onCancel={() => setIsEditing(false)}
           onSuccess={handleSuccess}
         />
@@ -69,7 +71,7 @@ export default function ProfileSection({
         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <dt className="text-sm font-medium text-gray-500">Name</dt>
-            <dd className="mt-1 text-sm text-gray-900">{name || 'Not provided'}</dd>
+            <dd className="mt-1 text-sm text-gray-900">{`${name} ${surname || ''}`.trim() || 'Not provided'}</dd>
           </div>
           <div>
             <dt className="text-sm font-medium text-gray-500">Email</dt>

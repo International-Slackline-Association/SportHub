@@ -105,12 +105,13 @@ const columns = [
       const winner = athletes.find(athlete => athlete.place === "1");
       if (!winner) return "No winner";
 
+      const displayName = `${winner.name} ${winner.surname || ''}`.trim();
       return (
         <Link
           href={`/athlete-profile/${winner.userId}`}
           className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
         >
-          {winner.name}
+          {displayName}
         </Link>
       );
     },

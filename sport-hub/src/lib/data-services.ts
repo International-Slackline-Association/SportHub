@@ -124,13 +124,13 @@ export async function getRankingsData(): Promise<AthleteRanking[]> {
     }
 
     // Batch-fetch names from isa-users (works in both local and production)
-    let referenceUsers = new Map<string, { name: string; country?: string }>();
+    let referenceUsers = new Map<string, { name: string; surname?: string; country?: string }>();
     const athleteIds = profiles.map(p => p.isaUsersId).filter((id): id is string => Boolean(id));
     const refUsersMap = await getReferenceUsersBatch(athleteIds);
     referenceUsers = new Map(
       Array.from(refUsersMap.entries()).map(([id, user]) => [
         id,
-        { name: user.name, country: user.country }
+        { name: user.name, surname: user.surname, country: user.country }
       ])
     );
 
@@ -148,16 +148,20 @@ export async function getRankingsData(): Promise<AthleteRanking[]> {
 
     const rankings = profiles
       .map((profile): AthleteRanking => {
-        // Use isa-users data in production, fallback to local dev athleteSlug
+        // Priority: SportHub DB name/surname -> reference DB (isa-users) -> athleteSlug fallback
+        // TODO: If SportHub DB name differs from reference DB, we currently prefer SportHub DB.
+        //       A sync mechanism should be implemented to keep both in sync on edits.
         const refUser = profile.isaUsersId ? referenceUsers.get(profile.isaUsersId) : undefined;
-        const name = refUser?.name || profile.athleteSlug?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || '';
+        const name = profile.name || refUser?.name || profile.athleteSlug?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || '';
+        const surname = profile.surname || refUser?.surname || '';
         const country = refUser?.country || '-'; // Use '-' for missing country data
+        const fullName = `${name} ${surname}`.trim();
 
         return {
           userId: profile.userId || '',
           name,
-          surname: '', // Extract from name if needed
-          fullName: name,
+          surname,
+          fullName,
           country,
           gender: 'male', // TODO: Default, should be stored in DB
           ageCategory: 'Open', // TODO: Default, should be stored in DB
@@ -209,6 +213,7 @@ export interface ContestData {
   athletes: Array<{
     userId: string;
     name: string;
+    surname?: string;
     place: string;
     points: number;
   }>;
@@ -267,6 +272,7 @@ export async function getContestsData(): Promise<ContestData[]> {
           return {
             userId: p.userId || '',
             name: p.name || '',
+            surname: p.surname || '',
             place: p.place || '',
             points: isNaN(points) ? 0 : points
           };
@@ -363,20 +369,28 @@ export async function getAthleteProfile(athleteId: string): Promise<AthleteProfi
       return null;
     }
 
-    // Fetch identity from isa-users (works in both local and production)
-    let name = '';
+    // Priority: SportHub DB name/surname -> reference DB (isa-users) -> athleteSlug fallback
+    // TODO: If SportHub DB name differs from reference DB, we currently prefer SportHub DB.
+    //       A sync mechanism should be implemented to keep both in sync on edits.
+    let refName = '';
+    let refSurname = '';
     let country = 'N/A';
 
     if (profile.isaUsersId) {
-      // Query isa-users by isaUsersId
+      // Query isa-users by isaUsersId for fallback identity data
       const referenceUser = await getReferenceUserById(profile.isaUsersId);
       if (referenceUser) {
-        name = referenceUser.name;
+        refName = referenceUser.name;
+        refSurname = referenceUser.surname || '';
         country = referenceUser.country || 'N/A';
       }
     }
 
-    // Fallback to athleteSlug if no reference data found
+    // SportHub DB fields take priority over reference DB
+    let name = profile.name || refName;
+    let surname = profile.surname || refSurname;
+
+    // Fallback to athleteSlug if no name found anywhere
     // Happens for A LOT of athletes (most do not have isa profiles)
     if (!name && profile.athleteSlug) {
       name = profile.athleteSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -386,6 +400,7 @@ export async function getAthleteProfile(athleteId: string): Promise<AthleteProfi
     // TODO: return social media links from profile, not a fake link...
     return {
       name,
+      surname,
       country,
       disciplines: ['FREESTYLE_HIGHLINE', 'SPEED_HIGHLINE'], // TODO: Store in UserRecord
       roles: profile.userSubTypes?.map((t: string) => t.toUpperCase()) || ['ATHLETE'],

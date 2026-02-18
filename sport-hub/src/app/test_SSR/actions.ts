@@ -50,6 +50,7 @@ export async function createUser(formData: FormData) {
 export async function updateUser(formData: FormData) {
   const id = formData.get('id') as string;
   const name = formData.get('name') as string;
+  const surname = formData.get('surname') as string;
   const email = formData.get('email') as string;
   const country = formData.get('country') as string;
 
@@ -66,6 +67,7 @@ export async function updateUser(formData: FormData) {
   const updatedUser = {
     ...existingUser,
     name,
+    surname: surname || existingUser.surname,
     email,
     country: country || existingUser.country,
     updatedAt: new Date().toISOString(),

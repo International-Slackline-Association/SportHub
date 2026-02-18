@@ -17,6 +17,7 @@ const PAGE_SIZE = 100;
 interface User {
   id: string;
   name: string;
+  surname?: string;
   email: string;
   createdAt: string;
   updatedAt?: string;
@@ -57,6 +58,7 @@ async function getUsers(): Promise<PaginatedUsersResult> {
     const users = result.items ? result.items.map(item => ({
       id: (item.userId ?? item.id ?? '') as string,
       name: (item.name ?? item.athleteSlug ?? '') as string,
+      surname: (item.surname ?? '') as string,
       email: (item.email ?? '') as string,
       createdAt: (item.createdAt ?? '') as string,
       updatedAt: item.updatedAt as string | undefined,
@@ -100,6 +102,7 @@ async function getCurrentUserFromDb(userId: string): Promise<User | null> {
     return {
       id: (item.userId ?? item.id ?? '') as string,
       name: (item.name ?? item.athleteSlug ?? '') as string,
+      surname: (item.surname ?? '') as string,
       email: (item.email ?? '') as string,
       createdAt: (item.createdAt ?? '') as string,
       updatedAt: item.updatedAt as string | undefined,

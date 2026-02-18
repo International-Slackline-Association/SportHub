@@ -28,6 +28,7 @@ interface User {
   createdAt: string;
   id: string;
   name: string;
+  surname?: string;
   email: string;
   country?: string;
   totalPoints?: number;
@@ -53,6 +54,7 @@ interface SessionInfo {
 interface DbUser {
   id: string;
   name: string;
+  surname?: string;
   email: string;
   role: Role;
   userSubTypes: UserSubType[];
@@ -235,6 +237,7 @@ export default function TestCSRPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: values.name,
+          surname: values.surname,
           email: values.email,
           country: values.country,
         }),
@@ -254,7 +257,7 @@ export default function TestCSRPage() {
   const getEditFormInitialValues = (user: User): FormValues => ({
     id: user.id,
     name: user.name,
-    surname: '',
+    surname: user.surname || '',
     gender: 'male',
     email: user.email,
     country: user.country || '',
@@ -450,7 +453,7 @@ export default function TestCSRPage() {
                     <dl className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <dt className="text-gray-500">Name</dt>
-                        <dd className="text-gray-900">{dbUser.name}</dd>
+                        <dd className="text-gray-900">{`${dbUser.name} ${dbUser.surname || ''}`.trim()}</dd>
                       </div>
                       <div className="flex justify-between items-center">
                         <dt className="text-gray-500">Role</dt>
@@ -623,7 +626,7 @@ export default function TestCSRPage() {
 
             {/* User Info */}
             <div className="pb-4 border-b">
-              <p className="font-medium">{editingRoleUser.name}</p>
+              <p className="font-medium">{`${editingRoleUser.name} ${editingRoleUser.surname || ''}`.trim()}</p>
               <p className="text-sm text-gray-500">{editingRoleUser.email}</p>
               {isCurrentUser(editingRoleUser.id) && (
                 <p className="text-xs text-blue-600 mt-1">
@@ -804,7 +807,7 @@ export default function TestCSRPage() {
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-lg">{user.name}</h3>
+                      <h3 className="font-semibold text-lg">{`${user.name} ${user.surname || ''}`.trim()}</h3>
                       {isCurrentUser(user.id) && (
                         <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">You</span>
                       )}

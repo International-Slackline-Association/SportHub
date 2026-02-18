@@ -4,13 +4,13 @@ import { auth } from '@lib/auth';
 import { canEditUser } from '@lib/authorization';
 import { dynamodb } from '@lib/dynamodb';
 import { revalidatePath } from 'next/cache';
-import { updateReferenceUser } from '@lib/reference-db-service';
 import type { UserProfileRecord } from '@lib/relational-types';
 
 const USERS_TABLE = 'users';
 
 export interface ProfileUpdateData {
   name?: string;
+  surname?: string;
   email?: string;
   country?: string;
 }
@@ -18,7 +18,8 @@ export interface ProfileUpdateData {
 /**
  * Update user profile
  * Users can only update their own profile, admins can update any profile
- * Note: Profile identity data (name, email, country) is now stored in reference DB
+ * Identity data (name, surname, email) is written to SportHub DB (users table).
+ * TODO: Also sync to reference DB (isa-users) - not yet implemented.
  */
 export async function updateProfile(userId: string, data?: ProfileUpdateData) {
   try {
@@ -65,22 +66,19 @@ export async function updateProfile(userId: string, data?: ProfileUpdateData) {
     }
 
     // Update existing user with ONLY allowed fields (prevent role escalation)
-    // Note: Name, email, country are now stored in reference DB, not app DB
+    // Identity data (name, surname, email) is stored in the SportHub DB (users table)
     const updatedUser: UserProfileRecord = {
       ...currentUser,
+      ...(data?.name !== undefined && { name: data.name }),
+      ...(data?.surname !== undefined && { surname: data.surname }),
+      ...(data?.email !== undefined && { email: data.email }),
       lastProfileUpdate: Date.now(),
     };
 
     await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
 
-    // If identity data provided, update reference DB
-    if (data && (data.name || data.email || data.country)) {
-      await updateReferenceUser(userId, {
-        name: data.name,
-        email: data.email,
-        country: data.country,
-      });
-    }
+    // TODO: Also sync identity changes to reference DB (isa-users table) once
+    //       a sync mechanism is implemented. For now, edits only go to SportHub DB.
 
     // Revalidate dashboard to show updated data
     revalidatePath('/dashboard');
@@ -101,7 +99,7 @@ export async function updateProfile(userId: string, data?: ProfileUpdateData) {
 }
 
 /**
- * Get user profile data
+ * Get user profile data (role, stats only)
  */
 export async function getUserProfile(userId: string) {
   try {
@@ -130,5 +128,25 @@ export async function getUserProfile(userId: string) {
       success: false,
       error: 'Failed to fetch profile',
     };
+  }
+}
+
+/**
+ * Get full user profile including identity fields from SportHub DB
+ * Returns name, surname, email stored in the app database (users table)
+ */
+export async function getFullUserProfile(userId: string) {
+  try {
+    const user = await dynamodb.getItem(USERS_TABLE, { userId, sortKey: 'Profile' }) as UserProfileRecord | undefined;
+    if (!user) return null;
+
+    return {
+      name: user.name || '',
+      surname: user.surname || '',
+      email: user.email || '',
+    };
+  } catch (error) {
+    console.error('Error fetching full user profile:', error);
+    return null;
   }
 }
