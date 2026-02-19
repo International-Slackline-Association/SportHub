@@ -140,7 +140,7 @@ NEXTAUTH_URL=http://localhost:3000
 - `/test_LOCAL` - Comprehensive local DynamoDB testing (setup, seed, query, clear)
 - `/test_SSR` - Server-side rendering tests with DynamoDB
 - `/test_CSR` - Client-side rendering tests
-- `/test-rbac` - RBAC system testing (role assignment, permission checks)
+- RBAC testing is integrated into `/test_SSR` and `/test_CSR` pages
 - `/demo` - UI component showcase
 
 **Access Control**: Test pages are restricted to development environments only via `canAccessTestAPI()` middleware.

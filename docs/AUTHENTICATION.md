@@ -39,7 +39,7 @@ SportHub uses **AWS Cognito** for authentication via **NextAuth v5 (Beta)** with
 
 ### Role Assignment
 - **Default**: New users automatically get `user` role
-- **Admin Assignment**: Only via test page (`/test-rbac`) in development or by existing admins in production
+- **Admin Assignment**: Only via test pages (`/test_SSR`, `/test_CSR`) in development or by existing admins in production
 - **Session Update**: Role changes require re-login to take effect in session
 
 ## Permissions
@@ -182,7 +182,7 @@ export async function updateProfile(userId: string, data: ProfileUpdateData) {
 
 ## Test Pages
 
-All test pages (`/test-rbac`, `/test_SSR`, `/test_CSR`, `/test_LOCAL`) and test API routes (`/api/test-local/*`, `/api/test-runtime`) are protected:
+All test pages (`/test_SSR`, `/test_CSR`, `/test_LOCAL`) and test API routes (`/api/test-local/*`, `/api/test-runtime`) are protected:
 
 - **Development**: Accessible by any authenticated user
 - **Production**: Only accessible by admin users
@@ -202,8 +202,8 @@ export async function requireTestPageAccess() {
 }
 ```
 
-### RBAC Test Page
-Visit `/test-rbac` to manage user roles:
+### RBAC Testing
+Role management is available via `/test_SSR` and `/test_CSR` test pages:
 - View current session role
 - See all users and their roles
 - Promote users to admin
@@ -325,11 +325,6 @@ src/
 │   │   └── components/
 │   │       ├── ProfileSection.tsx
 │   │       └── ProfileEditForm.tsx
-│   ├── test-rbac/
-│   │   ├── page.tsx              # RBAC test interface
-│   │   ├── actions.ts            # Role update actions
-│   │   └── components/
-│   │       └── RoleManager.tsx
 │   └── unauthorized/
 │       └── page.tsx              # Access denied page
 └── middleware.ts                 # Route protection
@@ -345,7 +340,7 @@ If upgrading from a system without RBAC:
    ```
 
 2. **Manually promote admins**:
-   - Visit `/test-rbac` in development
+   - Visit `/test_SSR` or `/test_CSR` in development
    - Promote specific users to admin role
    - Have them sign out and sign back in
 
@@ -364,7 +359,7 @@ If upgrading from a system without RBAC:
 ### Test pages not accessible in production
 **Expected behavior**: Only admins can access test pages in production
 
-**Solution**: Promote your user to admin via another admin's `/test-rbac` page
+**Solution**: Promote your user to admin via another admin's `/test_SSR` page
 
 ### Unauthorized error on dashboard
 **Problem**: Cannot edit own profile
