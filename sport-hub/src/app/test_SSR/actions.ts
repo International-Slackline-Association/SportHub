@@ -11,12 +11,12 @@ const TABLE_NAME = 'users';
 
 export async function createUser(formData: FormData) {
   const id = formData.get('id') as string;
-  const name = formData.get('name') as string;
-  const surname = formData.get('surname') as string;
-  const email = formData.get('email') as string;
-  const country = formData.get('country') as string;
-  const gender = formData.get('gender') as string;
-  const isaId = formData.get('isaId') as string;
+  const name = (formData.get('name') as string)?.trim();
+  const surname = (formData.get('surname') as string)?.trim() || undefined;
+  const email = (formData.get('email') as string)?.trim();
+  const country = (formData.get('country') as string) || undefined;
+  const gender = (formData.get('gender') as string) || undefined;
+  const isaId = (formData.get('isaId') as string) || undefined;
 
   if (!name || !email) {
     throw new Error('Name and email are required fields');
@@ -25,6 +25,8 @@ export async function createUser(formData: FormData) {
   // Generate ID if not provided
   const userId = id || `athlete-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+  const athleteSlug = `${name}--${surname || ''}`.toLowerCase().replace(/\s+/g, '-').replace(/-+$/, '');
+
   const user = {
     userId: userId,
     sortKey: 'Profile',
@@ -32,7 +34,8 @@ export async function createUser(formData: FormData) {
     name,
     surname,
     email,
-    country: country || undefined,
+    athleteSlug,
+    country,
     createdAt: Date.now(),
     gender,
     isaId,
@@ -49,10 +52,13 @@ export async function createUser(formData: FormData) {
 
 export async function updateUser(formData: FormData) {
   const id = formData.get('id') as string;
-  const name = formData.get('name') as string;
-  const surname = formData.get('surname') as string;
-  const email = formData.get('email') as string;
-  const country = formData.get('country') as string;
+  const name = (formData.get('name') as string)?.trim();
+  const surname = (formData.get('surname') as string)?.trim();
+  const email = (formData.get('email') as string)?.trim();
+  const country = (formData.get('country') as string) || undefined;
+  const city = (formData.get('city') as string)?.trim() || undefined;
+  const birthdate = (formData.get('birthdate') as string) || undefined;
+  const gender = (formData.get('gender') as string) || undefined;
 
   if (!id || !name || !email) {
     throw new Error('ID, name and email are required fields');
@@ -64,12 +70,19 @@ export async function updateUser(formData: FormData) {
     throw new Error('User not found');
   }
 
+  const finalSurname = surname || '';
+  const athleteSlug = `${name}--${finalSurname}`.toLowerCase().replace(/\s+/g, '-').replace(/-+$/, '');
+
   const updatedUser = {
     ...existingUser,
     name,
-    surname: surname || existingUser.surname,
+    surname: surname || undefined,
     email,
-    country: country || existingUser.country,
+    country,
+    city,
+    birthdate,
+    gender,
+    athleteSlug,
     updatedAt: new Date().toISOString(),
   };
 

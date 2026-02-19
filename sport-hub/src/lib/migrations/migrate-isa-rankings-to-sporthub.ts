@@ -98,9 +98,13 @@ interface AthleteProfile {
   surname?: string;      // Last name from ISA-Rankings
   isaRankingsPK?: string; // Original PK from ISA-Rankings for idempotency
   email?: string;        // Email for Cognito user matching
+  country?: string;      // Country from ISA-Rankings AthleteDetails
+  city?: string;         // City from ISA-Rankings AthleteDetails
+  birthdate?: string;    // Birthdate from ISA-Rankings AthleteDetails
+  gender?: string;       // Gender from ISA-Rankings AthleteDetails
   profileUrl?: string;
   thumbnailUrl?: string;
-  infoUrl?: string;
+  socialMedia?: Record<string, string>;
   role: string;
   userSubTypes: string[];
   primarySubType: string;
@@ -171,6 +175,41 @@ interface ContestRecord {
     place: string;
     points: string;
   }>;
+}
+
+/**
+ * Parse infoUrl field into structured social media links.
+ */
+function parseInfoUrlToSocialMedia(infoUrl: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  const entries = infoUrl.split(/[,\s]+/).filter(Boolean);
+
+  for (const entry of entries) {
+    const trimmed = entry.trim();
+    if (!trimmed) continue;
+
+    if (trimmed.includes('://') || trimmed.includes('.com') || trimmed.includes('.tv')) {
+      const lower = trimmed.toLowerCase();
+      if (lower.includes('instagram.com')) {
+        result.instagram = trimmed;
+      } else if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
+        result.youtube = trimmed;
+      } else if (lower.includes('facebook.com') || lower.includes('fb.com')) {
+        result.facebook = trimmed;
+      } else if (lower.includes('tiktok.com')) {
+        result.tiktok = trimmed;
+      } else if (lower.includes('twitch.tv')) {
+        result.twitch = trimmed;
+      }
+    } else {
+      const handle = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed;
+      if (handle && !result.instagram) {
+        result.instagram = `https://instagram.com/${handle}`;
+      }
+    }
+  }
+
+  return result;
 }
 
 // Statistics
@@ -407,9 +446,9 @@ async function scanAthleteDetails(
       const athletePK = item.PK as string; // e.g., "Athlete:daniel"
       const athleteSlug = athletePK.replace('Athlete:', '');
 
-      // Extract name and surname from ISA-Rankings
-      const name = item.name as string | undefined;
-      const surname = item.surname as string | undefined;
+      // Extract name and surname from ISA-Rankings (trimmed)
+      const name = (item.name as string | undefined)?.trim() || undefined;
+      const surname = (item.surname as string | undefined)?.trim() || undefined;
 
       // Match athlete to isa-users by normalized name, then by email
       let isaUsersId = item.isaUsersId as string | undefined;
@@ -467,6 +506,14 @@ async function scanAthleteDetails(
         continue; // Skip this duplicate
       }
 
+      // Extract additional profile fields from AthleteDetails
+      const country = item.country as string | undefined;
+      const city = item.city as string | undefined;
+      const birthdate = item.birthdate as string | undefined;
+      // Gender in ISA-Rankings is stored as number (0=all, 1=male, 2=female)
+      const genderNum = item.gender as number | undefined;
+      const gender = genderNum === 1 ? 'male' : genderNum === 2 ? 'female' : undefined;
+
       // Use userId as key (unique), not athleteSlug (can have duplicates)
       athletes.set(userId, {
         userId,
@@ -476,9 +523,13 @@ async function scanAthleteDetails(
         surname,                  // Last name from ISA-Rankings
         isaRankingsPK: athletePK, // Store for idempotency on future runs
         email,                    // Email for Cognito user matching
+        country,                  // Country from ISA-Rankings AthleteDetails
+        city,                     // City from ISA-Rankings AthleteDetails
+        birthdate,                // Birthdate from ISA-Rankings AthleteDetails
+        gender,                   // Gender from ISA-Rankings AthleteDetails (converted from number)
         profileUrl: item.profileUrl as string | undefined,
         thumbnailUrl: item.thumbnailUrl as string | undefined,
-        infoUrl: item.infoUrl as string | undefined,
+        socialMedia: item.infoUrl ? parseInfoUrlToSocialMedia(item.infoUrl as string) : undefined,
         role: 'user',
         userSubTypes: ['athlete'],
         primarySubType: 'athlete',
@@ -906,6 +957,7 @@ async function writeRecords(
     console.log(`\nWould write to ${SPORTHUB_EVENTS_TABLE}:`);
     console.log(`  - ${events.size} event metadata records`);
     console.log(`  - ${contests.size} contest records`);
+    stats.profilesCreated = athletes.size;
     return;
   }
 

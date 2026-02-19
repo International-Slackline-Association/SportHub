@@ -26,7 +26,12 @@ export default async function DashboardPage() {
   const surname = dbProfile?.surname || referenceUser?.surname || '';
   const displayName = `${firstName} ${surname}`.trim();
   const displayEmail = dbProfile?.email || referenceUser?.email || session.user.email || '';
-  const displayCountry = referenceUser?.country;
+  const displayCountry = dbProfile?.country || referenceUser?.country;
+  const displayGender = dbProfile?.gender || referenceUser?.gender;
+  const displayCity = dbProfile?.city || '';
+  const displayBirthdate = dbProfile?.birthdate || '';
+  const isaUsersId = dbProfile?.isaUsersId;
+  const displaySocialMedia = dbProfile?.socialMedia;
 
   return (
     <PageLayout
@@ -53,10 +58,15 @@ export default async function DashboardPage() {
         {/* Profile Section with Edit Button */}
         <ProfileSection
           userId={session.user.id}
+          isaUsersId={isaUsersId}
           name={firstName}
           surname={surname}
           email={displayEmail}
           country={displayCountry}
+          city={displayCity}
+          birthdate={displayBirthdate}
+          gender={displayGender}
+          socialMedia={displaySocialMedia}
           role={session.user.role}
         />
 

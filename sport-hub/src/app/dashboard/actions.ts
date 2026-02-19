@@ -8,11 +8,24 @@ import type { UserProfileRecord } from '@lib/relational-types';
 
 const USERS_TABLE = 'users';
 
+export interface SocialMediaData {
+  instagram?: string;
+  youtube?: string;
+  facebook?: string;
+  whatsapp?: string;
+  twitch?: string;
+  tiktok?: string;
+}
+
 export interface ProfileUpdateData {
   name?: string;
   surname?: string;
   email?: string;
   country?: string;
+  city?: string;
+  birthdate?: string;
+  gender?: string;
+  socialMedia?: SocialMediaData;
 }
 
 /**
@@ -67,11 +80,43 @@ export async function updateProfile(userId: string, data?: ProfileUpdateData) {
 
     // Update existing user with ONLY allowed fields (prevent role escalation)
     // Identity data (name, surname, email) is stored in the SportHub DB (users table)
+    // Convert empty strings to undefined so DynamoDB doesn't store them
+    const trimmed = {
+      name: data?.name?.trim() || undefined,
+      surname: data?.surname?.trim() || undefined,
+      email: data?.email?.trim() || undefined,
+      country: data?.country?.trim() || undefined,
+      city: data?.city?.trim() || undefined,
+      birthdate: data?.birthdate?.trim() || undefined,
+      gender: data?.gender?.trim() || undefined,
+    };
+
+    // Clean social media: trim values, remove empty strings
+    const socialMedia = data?.socialMedia ? Object.fromEntries(
+      Object.entries(data.socialMedia)
+        .map(([k, v]) => [k, v?.trim() || undefined])
+        .filter(([, v]) => v)
+    ) : undefined;
+
+    const newName = trimmed.name ?? currentUser.name;
+    const newSurname = trimmed.surname ?? currentUser.surname;
+
+    // Regenerate athleteSlug when name or surname changes
+    const athleteSlug = newName
+      ? `${newName}-${newSurname || ''}`.toLowerCase().replace(/\s+/g, '-').replace(/-+$/, '')
+      : currentUser.athleteSlug;
+
     const updatedUser: UserProfileRecord = {
       ...currentUser,
-      ...(data?.name !== undefined && { name: data.name }),
-      ...(data?.surname !== undefined && { surname: data.surname }),
-      ...(data?.email !== undefined && { email: data.email }),
+      ...(data?.name !== undefined && { name: trimmed.name }),
+      ...(data?.surname !== undefined && { surname: trimmed.surname }),
+      ...(data?.email !== undefined && { email: trimmed.email }),
+      ...(data?.country !== undefined && { country: trimmed.country }),
+      ...(data?.city !== undefined && { city: trimmed.city }),
+      ...(data?.birthdate !== undefined && { birthdate: trimmed.birthdate }),
+      ...(data?.gender !== undefined && { gender: trimmed.gender }),
+      ...(data?.socialMedia !== undefined && { socialMedia: Object.keys(socialMedia || {}).length > 0 ? socialMedia : undefined }),
+      ...(athleteSlug && { athleteSlug }),
       lastProfileUpdate: Date.now(),
     };
 
@@ -133,7 +178,7 @@ export async function getUserProfile(userId: string) {
 
 /**
  * Get full user profile including identity fields from SportHub DB
- * Returns name, surname, email stored in the app database (users table)
+ * Returns name, surname, email, isaUsersId stored in the app database (users table)
  */
 export async function getFullUserProfile(userId: string) {
   try {
@@ -144,6 +189,12 @@ export async function getFullUserProfile(userId: string) {
       name: user.name || '',
       surname: user.surname || '',
       email: user.email || '',
+      isaUsersId: user.isaUsersId || '',
+      country: user.country || '',
+      city: user.city || '',
+      birthdate: user.birthdate || '',
+      gender: user.gender || '',
+      socialMedia: user.socialMedia,
     };
   } catch (error) {
     console.error('Error fetching full user profile:', error);

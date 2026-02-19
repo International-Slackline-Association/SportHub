@@ -104,6 +104,15 @@ function CountryDropdown({ value, onChange, disabled }: CountryDropdownProps) {
   );
 }
 
+interface SocialMediaData {
+  instagram?: string;
+  youtube?: string;
+  facebook?: string;
+  whatsapp?: string;
+  twitch?: string;
+  tiktok?: string;
+}
+
 interface ProfileEditFormProps {
   userId: string;
   initialData: {
@@ -111,6 +120,10 @@ interface ProfileEditFormProps {
     surname?: string;
     email: string;
     country?: string;
+    city?: string;
+    birthdate?: string;
+    gender?: string;
+    socialMedia?: SocialMediaData;
   };
   onCancel: () => void;
   onSuccess: () => void;
@@ -132,6 +145,16 @@ export default function ProfileEditForm({
     surname: initialData.surname || '',
     email: initialData.email || '',
     countryCode: initialCountry?.code || '',
+    city: initialData.city || '',
+    birthdate: initialData.birthdate || '',
+    gender: initialData.gender || '',
+    socialMedia: {
+      instagram: initialData.socialMedia?.instagram || '',
+      youtube: initialData.socialMedia?.youtube || '',
+      facebook: initialData.socialMedia?.facebook || '',
+      tiktok: initialData.socialMedia?.tiktok || '',
+      twitch: initialData.socialMedia?.twitch || '',
+    },
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -146,10 +169,20 @@ export default function ProfileEditForm({
       const selectedCountry = COUNTRIES.find(c => c.code === formData.countryCode);
 
       const result = await updateProfile(userId, {
-        name: formData.name,
-        surname: formData.surname,
-        email: formData.email,
-        country: selectedCountry?.name || '',
+        name: formData.name.trim(),
+        surname: formData.surname.trim() || undefined,
+        email: formData.email.trim(),
+        country: selectedCountry?.name || undefined,
+        city: formData.city.trim() || undefined,
+        birthdate: formData.birthdate || undefined,
+        gender: formData.gender || undefined,
+        socialMedia: {
+          instagram: formData.socialMedia.instagram.trim() || undefined,
+          youtube: formData.socialMedia.youtube.trim() || undefined,
+          facebook: formData.socialMedia.facebook.trim() || undefined,
+          tiktok: formData.socialMedia.tiktok.trim() || undefined,
+          twitch: formData.socialMedia.twitch.trim() || undefined,
+        },
       });
 
       if (result.success) {
@@ -222,7 +255,7 @@ export default function ProfileEditForm({
 
       <div>
         <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
-          Country (Optional)
+          Country
         </label>
         <CountryDropdown
           value={formData.countryCode}
@@ -230,6 +263,131 @@ export default function ProfileEditForm({
           disabled={isSubmitting}
         />
       </div>
+
+      <div>
+        <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+          City
+        </label>
+        <input
+          type="text"
+          id="city"
+          value={formData.city}
+          onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          disabled={isSubmitting}
+        />
+      </div>
+
+      <div>
+        <label htmlFor="birthdate" className="block text-sm font-medium text-gray-700 mb-1">
+          Birthdate
+        </label>
+        <input
+          type="date"
+          id="birthdate"
+          value={formData.birthdate}
+          onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          disabled={isSubmitting}
+        />
+      </div>
+
+      <div>
+        <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
+          Gender
+        </label>
+        <select
+          id="gender"
+          value={formData.gender}
+          onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          disabled={isSubmitting}
+        >
+          <option value="">Select gender</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <fieldset className="border border-gray-200 rounded-md p-4 space-y-4">
+        <legend className="text-sm font-medium text-gray-700 px-1">Social Media</legend>
+
+        <div>
+          <label htmlFor="instagram" className="block text-sm font-medium text-gray-700 mb-1">
+            Instagram
+          </label>
+          <input
+            type="text"
+            id="instagram"
+            placeholder="https://instagram.com/username"
+            value={formData.socialMedia.instagram}
+            onChange={(e) => setFormData({ ...formData, socialMedia: { ...formData.socialMedia, instagram: e.target.value } })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={isSubmitting}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="youtube" className="block text-sm font-medium text-gray-700 mb-1">
+            YouTube
+          </label>
+          <input
+            type="text"
+            id="youtube"
+            placeholder="https://youtube.com/@channel"
+            value={formData.socialMedia.youtube}
+            onChange={(e) => setFormData({ ...formData, socialMedia: { ...formData.socialMedia, youtube: e.target.value } })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={isSubmitting}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="facebook" className="block text-sm font-medium text-gray-700 mb-1">
+            Facebook
+          </label>
+          <input
+            type="text"
+            id="facebook"
+            placeholder="https://facebook.com/profile"
+            value={formData.socialMedia.facebook}
+            onChange={(e) => setFormData({ ...formData, socialMedia: { ...formData.socialMedia, facebook: e.target.value } })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={isSubmitting}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="tiktok" className="block text-sm font-medium text-gray-700 mb-1">
+            TikTok
+          </label>
+          <input
+            type="text"
+            id="tiktok"
+            placeholder="https://tiktok.com/@username"
+            value={formData.socialMedia.tiktok}
+            onChange={(e) => setFormData({ ...formData, socialMedia: { ...formData.socialMedia, tiktok: e.target.value } })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={isSubmitting}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="twitch" className="block text-sm font-medium text-gray-700 mb-1">
+            Twitch
+          </label>
+          <input
+            type="text"
+            id="twitch"
+            placeholder="https://twitch.tv/username"
+            value={formData.socialMedia.twitch}
+            onChange={(e) => setFormData({ ...formData, socialMedia: { ...formData.socialMedia, twitch: e.target.value } })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={isSubmitting}
+          />
+        </div>
+      </fieldset>
 
       <div className="flex gap-3 pt-4">
         <button

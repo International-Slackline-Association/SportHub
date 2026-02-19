@@ -5,8 +5,10 @@ import { getReferenceUserById, getReferenceUsersBatch } from './reference-db-ser
 import {
   getAthleteProfile as getAthleteProfileOptimized,
   getAthleteParticipations as getAthleteParticipationsOptimized,
-  getAthleteLeaderboard
+  getAthleteLeaderboard,
+  getAthleteRankings
 } from './user-query-service';
+import { MAP_DISCIPLINE_ENUM_TO_NAME } from '@utils/consts';
 import { UserRecord } from './relational-types';
 
 // Table names
@@ -165,7 +167,7 @@ export async function getRankingsData(): Promise<AthleteRanking[]> {
           country,
           gender: 'male', // TODO: Default, should be stored in DB
           ageCategory: 'Open', // TODO: Default, should be stored in DB
-          disciplines: ['FREESTYLE_HIGHLINE'], // TODO: Default, should be stored in DB
+          disciplines: [],
           points: profile.totalPoints || 0,
           profileImage: profile.thumbnailUrl || `/static/images/profiles/${name.toLowerCase().replace(/\s+/g, '-')}.jpg`,
           contestsParticipated: profile.contestCount || 0,
@@ -316,13 +318,15 @@ export interface AthleteProfile {
   surname?: string;
   age?: number;
   country: string;
-  website?: string;
+  city?: string;
   sponsors?: string;
   disciplines: string[];
   roles: string[];
+  profileImage?: string;
   socialMedia?: {
     instagram?: string;
     youtube?: string;
+    facebook?: string;
     whatsapp?: string;
     twitch?: string;
     tiktok?: string;
@@ -362,22 +366,22 @@ export interface WorldFirst {
  */
 export async function getAthleteProfile(athleteId: string): Promise<AthleteProfile | null> {
   try {
-    // Use optimized profile query with composite key
-    const profile = await getAthleteProfileOptimized(athleteId);
+    // Fetch profile, reference user, and rankings in parallel
+    const [profile, rankingRecords] = await Promise.all([
+      getAthleteProfileOptimized(athleteId),
+      getAthleteRankings(athleteId),
+    ]);
 
     if (!profile) {
       return null;
     }
 
     // Priority: SportHub DB name/surname -> reference DB (isa-users) -> athleteSlug fallback
-    // TODO: If SportHub DB name differs from reference DB, we currently prefer SportHub DB.
-    //       A sync mechanism should be implemented to keep both in sync on edits.
     let refName = '';
     let refSurname = '';
     let country = 'N/A';
 
     if (profile.isaUsersId) {
-      // Query isa-users by isaUsersId for fallback identity data
       const referenceUser = await getReferenceUserById(profile.isaUsersId);
       if (referenceUser) {
         refName = referenceUser.name;
@@ -388,26 +392,63 @@ export async function getAthleteProfile(athleteId: string): Promise<AthleteProfi
 
     // SportHub DB fields take priority over reference DB
     let name = profile.name || refName;
-    let surname = profile.surname || refSurname;
+    const surname = profile.surname || refSurname;
 
     // Fallback to athleteSlug if no name found anywhere
-    // Happens for A LOT of athletes (most do not have isa profiles)
     if (!name && profile.athleteSlug) {
       name = profile.athleteSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
 
-    // TODO: return diciplines from UserRecord
-    // TODO: return social media links from profile, not a fake link...
+    // Extract unique disciplines from ranking records
+    const disciplineNumbers = new Set(
+      rankingRecords.map(r => Number.parseInt(r.discipline, 10))
+    );
+    // Filter out OVERALL (meta-category) and generic parent disciplines
+    // when a more specific variant is present
+    const allDisciplines: string[] = [];
+    for (const num of disciplineNumbers) {
+      const mapped = MAP_DISCIPLINE_ENUM_TO_NAME[num];
+      if (mapped && mapped !== 'OVERALL') {
+        allDisciplines.push(mapped);
+      }
+    }
+    // Remove generic FREESTYLE if FREESTYLE_HIGHLINE is present
+    // Remove generic TRICKLINE if any specific TRICKLINE_* variant is present
+    // Remove generic SPEED if SPEED_SHORT or SPEED_HIGHLINE is present
+    const hasSpecificTrickline = allDisciplines.some(d => d.startsWith('TRICKLINE_'));
+    const hasSpecificSpeed = allDisciplines.some(d => d === 'SPEED_SHORT' || d === 'SPEED_HIGHLINE');
+    const disciplines = allDisciplines.filter(d => {
+      if (d === 'FREESTYLE' && allDisciplines.includes('FREESTYLE_HIGHLINE')) return false;
+      if (d === 'TRICKLINE' && hasSpecificTrickline) return false;
+      if (d === 'SPEED' && hasSpecificSpeed) return false;
+      return true;
+    });
+
+    // Calculate age from birthdate
+    let age: number | undefined;
+    if (profile.birthdate) {
+      const birth = new Date(profile.birthdate);
+      const now = new Date();
+      age = now.getFullYear() - birth.getFullYear();
+      const monthDiff = now.getMonth() - birth.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
+        age--;
+      }
+    }
+
+    // Use pre-parsed socialMedia from profile
+    const socialMedia = profile.socialMedia || undefined;
+
     return {
       name,
       surname,
+      age,
       country,
-      disciplines: ['FREESTYLE_HIGHLINE', 'SPEED_HIGHLINE'], // TODO: Store in UserRecord
+      city: profile.city || undefined,
+      disciplines,
       roles: profile.userSubTypes?.map((t: string) => t.toUpperCase()) || ['ATHLETE'],
-      socialMedia: {
-        instagram: name ? `https://instagram.com/${name.toLowerCase().replace(/\s+/g, '')}` : undefined,
-        youtube: name ? `https://youtube.com/${name.toLowerCase().replace(/\s+/g, '')}` : undefined
-      }
+      profileImage: profile.profileUrl || profile.thumbnailUrl || undefined,
+      socialMedia,
     };
   } catch (error) {
     console.error('Error fetching athlete profile:', error);

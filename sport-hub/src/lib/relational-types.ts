@@ -33,6 +33,10 @@ export interface UserProfileRecord extends UserTableRecord {
   name?: string;
   surname?: string;
   email?: string;
+  country?: string;
+  city?: string;
+  birthdate?: string;
+  gender?: string;
 
   // RBAC fields
   role: Role;
@@ -45,7 +49,14 @@ export interface UserProfileRecord extends UserTableRecord {
   // Profile metadata
   profileUrl?: string;
   thumbnailUrl?: string;
-  infoUrl?: string;
+  socialMedia?: {
+    instagram?: string;
+    youtube?: string;
+    facebook?: string;
+    whatsapp?: string;
+    twitch?: string;
+    tiktok?: string;
+  };
   createdAt: number;
   lastProfileUpdate?: number;
   profileCompleted?: boolean;
@@ -236,7 +247,6 @@ export interface EventOrganizer {
  */
 export interface UserWithDetails extends UserProfileRecord {
   profileImage?: string;
-  gender?: 'male' | 'female' | 'other';
   ageCategory?: string;
   disciplines?: string[];
 }

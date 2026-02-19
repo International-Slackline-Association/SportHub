@@ -118,7 +118,6 @@ function processAthleteDetails(): {
       athleteSlug: athlete.athleteSlug,
       profileUrl: athlete.profileUrl,
       thumbnailUrl: athlete.thumbnailUrl,
-      infoUrl: athlete.infoUrl,
       role: 'user',
       userSubTypes: ['athlete'],
       primarySubType: 'athlete',

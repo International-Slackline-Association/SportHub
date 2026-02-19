@@ -9,6 +9,11 @@ interface DbUser {
   name: string;
   surname?: string;
   email: string;
+  isaUsersId?: string;
+  country?: string;
+  city?: string;
+  birthdate?: string;
+  gender?: string;
   role?: Role;
   userSubTypes?: UserSubType[];
   primarySubType?: UserSubType;
@@ -102,6 +107,36 @@ export default function CurrentUserPanel({ session, dbUser }: CurrentUserPanelPr
                   <dt className="text-gray-500">Name</dt>
                   <dd className="text-gray-900">{`${dbUser.name} ${dbUser.surname || ''}`.trim()}</dd>
                 </div>
+                {dbUser.isaUsersId && (
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">ISA User ID</dt>
+                    <dd className="font-mono text-gray-900 text-xs">{dbUser.isaUsersId}</dd>
+                  </div>
+                )}
+                {dbUser.country && (
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">Country</dt>
+                    <dd className="text-gray-900">{dbUser.country}</dd>
+                  </div>
+                )}
+                {dbUser.city && (
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">City</dt>
+                    <dd className="text-gray-900">{dbUser.city}</dd>
+                  </div>
+                )}
+                {dbUser.birthdate && (
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">Birthdate</dt>
+                    <dd className="text-gray-900">{dbUser.birthdate}</dd>
+                  </div>
+                )}
+                {dbUser.gender && (
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">Gender</dt>
+                    <dd className="text-gray-900 capitalize">{dbUser.gender}</dd>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <dt className="text-gray-500">Role</dt>
                   <dd>

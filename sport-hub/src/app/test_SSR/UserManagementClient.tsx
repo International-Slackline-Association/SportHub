@@ -14,7 +14,11 @@ interface User {
   name: string;
   surname?: string;
   email: string;
+  isaUsersId?: string;
   country?: string;
+  city?: string;
+  birthdate?: string;
+  gender?: string;
   totalPoints?: number;
   contestsParticipated?: number;
   role?: Role;
@@ -34,6 +38,8 @@ interface FormValues {
   gender: string;
   email: string;
   country?: string;
+  city?: string;
+  birthdate?: string;
   isaId?: string;
 }
 
@@ -58,22 +64,25 @@ export default function UserManagementClient({ user, currentUserId }: UserManage
     id: user.id,
     name: user.name,
     surname: user.surname || '',
-    gender: 'male',
+    gender: user.gender || '',
     email: user.email,
     country: user.country || '',
-    isaId: '',
+    city: user.city || '',
+    birthdate: user.birthdate || '',
+    isaId: user.isaUsersId || '',
   };
 
   const handleFormSubmit = async (values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
     try {
       const formData = new FormData();
       formData.append('id', user.id);
-      formData.append('name', values.name);
-      formData.append('surname', values.surname);
-      formData.append('email', values.email);
-      if (values.country) {
-        formData.append('country', values.country);
-      }
+      formData.append('name', values.name.trim());
+      formData.append('surname', values.surname.trim());
+      formData.append('email', values.email.trim());
+      if (values.gender) formData.append('gender', values.gender);
+      if (values.country) formData.append('country', values.country);
+      if (values.city) formData.append('city', values.city.trim());
+      if (values.birthdate) formData.append('birthdate', values.birthdate);
 
       await updateUser(formData);
 

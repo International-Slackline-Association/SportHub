@@ -15,7 +15,11 @@ interface User {
   createdAt: string;
   updatedAt?: string;
   userId?: string;
+  isaUsersId?: string;
   country?: string;
+  city?: string;
+  birthdate?: string;
+  gender?: string;
   firstCompetition?: string;
   lastCompetition?: string;
   totalPoints?: number;
@@ -201,7 +205,11 @@ export default function UserListPagination({
               </div>
               <p className="text-gray-600">{user.email}</p>
               <p className="text-sm text-gray-500 font-mono">{user.id}</p>
+              {user.isaUsersId && <p className="text-sm text-gray-500">ISA ID: <span className="font-mono">{user.isaUsersId}</span></p>}
               {user.country && <p className="text-sm text-gray-500">Country: {user.country}</p>}
+              {user.city && <p className="text-sm text-gray-500">City: {user.city}</p>}
+              {user.birthdate && <p className="text-sm text-gray-500">Birthdate: {user.birthdate}</p>}
+              {user.gender && <p className="text-sm text-gray-500 capitalize">Gender: {user.gender}</p>}
               <div className="flex gap-4 text-sm text-gray-500 mt-1">
                 <span>Points: {user.totalPoints || 0}</span>
                 <span>Contests: {user.contestsParticipated || 0}</span>

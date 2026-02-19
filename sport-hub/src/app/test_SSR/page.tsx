@@ -22,7 +22,11 @@ interface User {
   createdAt: string;
   updatedAt?: string;
   userId?: string;
+  isaUsersId?: string;
   country?: string;
+  city?: string;
+  birthdate?: string;
+  gender?: string;
   firstCompetition?: string;
   lastCompetition?: string;
   totalPoints?: number;
@@ -63,7 +67,11 @@ async function getUsers(): Promise<PaginatedUsersResult> {
       createdAt: (item.createdAt ?? '') as string,
       updatedAt: item.updatedAt as string | undefined,
       userId: item.userId as string | undefined,
+      isaUsersId: item.isaUsersId as string | undefined,
       country: item.country as string | undefined,
+      city: item.city as string | undefined,
+      birthdate: item.birthdate as string | undefined,
+      gender: item.gender as string | undefined,
       firstCompetition: item.firstCompetition as string | undefined,
       lastCompetition: item.lastCompetition as string | undefined,
       totalPoints: (item.totalPoints as number) ?? 0,
@@ -107,7 +115,11 @@ async function getCurrentUserFromDb(userId: string): Promise<User | null> {
       createdAt: (item.createdAt ?? '') as string,
       updatedAt: item.updatedAt as string | undefined,
       userId: item.userId as string | undefined,
+      isaUsersId: item.isaUsersId as string | undefined,
       country: item.country as string | undefined,
+      city: item.city as string | undefined,
+      birthdate: item.birthdate as string | undefined,
+      gender: item.gender as string | undefined,
       firstCompetition: item.firstCompetition as string | undefined,
       lastCompetition: item.lastCompetition as string | undefined,
       totalPoints: (item.totalPoints as number) ?? 0,

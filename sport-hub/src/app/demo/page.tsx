@@ -66,6 +66,7 @@ export default function Page() {
         <div className="flex flex-row gap-4">
           <div className="stack gap-4">
             <strong>Contest Size</strong>
+            <ContestSize variant="CHALLENGE" />
             <ContestSize variant="OPEN" />
             <ContestSize variant="MASTERS" />
             <ContestSize variant="GRAND_SLAM" />
@@ -82,11 +83,9 @@ export default function Page() {
           </div>
           <div className="stack gap-4">
             <strong>Age Category</strong>
-            <AgeCategory variant="YOUTH_U14" />
-            <AgeCategory variant="YOUTH_U16" />
+            <AgeCategory variant="ALL" />
+            <AgeCategory variant="YOUTH" />
             <AgeCategory variant="SENIOR" />
-            <AgeCategory variant="AMATEUR" />
-            <AgeCategory variant="PROFESSIONAL" />
           </div>
           <div className="stack gap-4">
             <strong>Role</strong>
@@ -97,8 +96,8 @@ export default function Page() {
           </div>
           <div className="stack gap-4">
             <strong>Gender</strong>
-            <Gender variant="FEMALE" />
-            <Gender variant="MALE" />
+            <Gender variant="MEN" />
+            <Gender variant="WOMEN" />
           </div>
           <div className="stack gap-4">
             <Badge color="NEUTRAL">NEUTRAL</Badge>

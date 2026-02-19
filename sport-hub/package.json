@@ -23,7 +23,9 @@
     "revalidate:all": "./scripts/revalidate-pages.sh",
     "revalidate:rankings": "./scripts/revalidate-pages.sh rankings",
     "revalidate:events": "./scripts/revalidate-pages.sh events",
-    "test:local": "NODE_ENV=development DYNAMODB_LOCAL=true next dev"
+    "test:local": "NODE_ENV=development DYNAMODB_LOCAL=true next dev",
+    "migrate:dry-run": "DYNAMODB_LOCAL=true tsx src/lib/migrations/migrate-isa-rankings-to-sporthub.ts --dry-run",
+    "migrate:execute": "DYNAMODB_LOCAL=true tsx src/lib/migrations/migrate-isa-rankings-to-sporthub.ts --execute"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.821.0",

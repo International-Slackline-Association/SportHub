@@ -13,6 +13,8 @@ interface FormValues {
   gender: string;
   email: string;
   country?: string;
+  city?: string;
+  birthdate?: string;
   isaId?: string;
 }
 
@@ -30,7 +32,11 @@ interface User {
   name: string;
   surname?: string;
   email: string;
+  isaUsersId?: string;
   country?: string;
+  city?: string;
+  birthdate?: string;
+  gender?: string;
   totalPoints?: number;
   contestsParticipated?: number;
   firstCompetition?: string;
@@ -56,6 +62,11 @@ interface DbUser {
   name: string;
   surname?: string;
   email: string;
+  isaUsersId?: string;
+  country?: string;
+  city?: string;
+  birthdate?: string;
+  gender?: string;
   role: Role;
   userSubTypes: UserSubType[];
   primarySubType?: UserSubType;
@@ -236,10 +247,13 @@ export default function TestCSRPage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: values.name,
-          surname: values.surname,
-          email: values.email,
-          country: values.country,
+          name: values.name.trim(),
+          surname: values.surname.trim() || undefined,
+          email: values.email.trim(),
+          country: values.country || undefined,
+          city: values.city?.trim() || undefined,
+          birthdate: values.birthdate || undefined,
+          gender: values.gender || undefined,
         }),
       });
 
@@ -258,10 +272,12 @@ export default function TestCSRPage() {
     id: user.id,
     name: user.name,
     surname: user.surname || '',
-    gender: 'male',
+    gender: user.gender || '',
     email: user.email,
     country: user.country || '',
-    isaId: '',
+    city: user.city || '',
+    birthdate: user.birthdate || '',
+    isaId: user.isaUsersId || '',
   });
 
   const deleteUser = async (id: string) => {
@@ -455,6 +471,36 @@ export default function TestCSRPage() {
                         <dt className="text-gray-500">Name</dt>
                         <dd className="text-gray-900">{`${dbUser.name} ${dbUser.surname || ''}`.trim()}</dd>
                       </div>
+                      {dbUser.isaUsersId && (
+                        <div className="flex justify-between">
+                          <dt className="text-gray-500">ISA User ID</dt>
+                          <dd className="font-mono text-gray-900 text-xs">{dbUser.isaUsersId}</dd>
+                        </div>
+                      )}
+                      {dbUser.country && (
+                        <div className="flex justify-between">
+                          <dt className="text-gray-500">Country</dt>
+                          <dd className="text-gray-900">{dbUser.country}</dd>
+                        </div>
+                      )}
+                      {dbUser.city && (
+                        <div className="flex justify-between">
+                          <dt className="text-gray-500">City</dt>
+                          <dd className="text-gray-900">{dbUser.city}</dd>
+                        </div>
+                      )}
+                      {dbUser.birthdate && (
+                        <div className="flex justify-between">
+                          <dt className="text-gray-500">Birthdate</dt>
+                          <dd className="text-gray-900">{dbUser.birthdate}</dd>
+                        </div>
+                      )}
+                      {dbUser.gender && (
+                        <div className="flex justify-between">
+                          <dt className="text-gray-500">Gender</dt>
+                          <dd className="text-gray-900 capitalize">{dbUser.gender}</dd>
+                        </div>
+                      )}
                       <div className="flex justify-between items-center">
                         <dt className="text-gray-500">Role</dt>
                         <dd>
@@ -821,7 +867,11 @@ export default function TestCSRPage() {
                     </div>
                     <p className="text-gray-600">{user.email}</p>
                     <p className="text-sm text-gray-500 font-mono">{user.id}</p>
+                    {user.isaUsersId && <p className="text-sm text-gray-500">ISA ID: <span className="font-mono">{user.isaUsersId}</span></p>}
                     {user.country && <p className="text-sm text-gray-500">Country: {user.country}</p>}
+                    {user.city && <p className="text-sm text-gray-500">City: {user.city}</p>}
+                    {user.birthdate && <p className="text-sm text-gray-500">Birthdate: {user.birthdate}</p>}
+                    {user.gender && <p className="text-sm text-gray-500 capitalize">Gender: {user.gender}</p>}
                     <div className="flex gap-4 text-sm text-gray-500 mt-1">
                       <span>Points: {user.totalPoints || 0}</span>
                       <span>Contests: {user.contestsParticipated || 0}</span>

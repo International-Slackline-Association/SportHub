@@ -4,22 +4,33 @@ import { useState } from 'react';
 import ProfileEditForm from './ProfileEditForm';
 import { getCountryByName } from '@utils/countries';
 import { CircleFlag } from 'react-circle-flags';
+import type { SocialMediaData } from '../actions';
 
 interface ProfileSectionProps {
   userId: string;
+  isaUsersId?: string;
   name: string;
   surname?: string;
   email: string;
   country?: string;
+  city?: string;
+  birthdate?: string;
+  gender?: string;
+  socialMedia?: SocialMediaData;
   role: string;
 }
 
 export default function ProfileSection({
   userId,
+  isaUsersId,
   name,
   surname,
   email,
   country,
+  city,
+  birthdate,
+  gender,
+  socialMedia,
   role,
 }: ProfileSectionProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -27,6 +38,11 @@ export default function ProfileSection({
 
   // Get country code for flag display
   const countryData = country ? getCountryByName(country) : undefined;
+
+  // Format social media for display
+  const socialMediaEntries = socialMedia
+    ? Object.entries(socialMedia).filter(([, v]) => v)
+    : [];
 
   const handleSuccess = () => {
     setIsEditing(false);
@@ -41,7 +57,7 @@ export default function ProfileSection({
         <h2 className="text-2xl font-bold mb-4">Edit Profile</h2>
         <ProfileEditForm
           userId={userId}
-          initialData={{ name, surname, email, country }}
+          initialData={{ name, surname, email, country, city, birthdate, gender, socialMedia }}
           onCancel={() => setIsEditing(false)}
           onSuccess={handleSuccess}
         />
@@ -91,6 +107,18 @@ export default function ProfileSection({
             </dd>
           </div>
           <div>
+            <dt className="text-sm font-medium text-gray-500">City</dt>
+            <dd className="mt-1 text-sm text-gray-900">{city || 'Not specified'}</dd>
+          </div>
+          <div>
+            <dt className="text-sm font-medium text-gray-500">Birthdate</dt>
+            <dd className="mt-1 text-sm text-gray-900">{birthdate || 'Not specified'}</dd>
+          </div>
+          <div>
+            <dt className="text-sm font-medium text-gray-500">Gender</dt>
+            <dd className="mt-1 text-sm text-gray-900 capitalize">{gender || 'Not specified'}</dd>
+          </div>
+          <div>
             <dt className="text-sm font-medium text-gray-500">Role</dt>
             <dd className="mt-1">
               <span
@@ -105,9 +133,35 @@ export default function ProfileSection({
             </dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-gray-500">Cognito User ID</dt>
+            <dt className="text-sm font-medium text-gray-500">SportHub User ID</dt>
             <dd className="mt-1 text-xs text-gray-900 font-mono break-all">{userId}</dd>
           </div>
+          {isaUsersId && (
+            <div>
+              <dt className="text-sm font-medium text-gray-500">ISA User ID</dt>
+              <dd className="mt-1 text-xs text-gray-900 font-mono break-all">{isaUsersId}</dd>
+            </div>
+          )}
+          {socialMediaEntries.length > 0 && (
+            <div className="col-span-full">
+              <dt className="text-sm font-medium text-gray-500 mb-1">Social Media</dt>
+              <dd className="mt-1 text-sm text-gray-900">
+                <div className="flex flex-wrap gap-2">
+                  {socialMediaEntries.map(([platform, url]) => (
+                    <a
+                      key={platform}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100"
+                    >
+                      {platform}
+                    </a>
+                  ))}
+                </div>
+              </dd>
+            </div>
+          )}
         </dl>
       </div>
     </div>

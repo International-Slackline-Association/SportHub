@@ -13,6 +13,8 @@ interface Form {
   gender: string;
   email: string;
   country?: string;
+  city?: string;
+  birthdate?: string;
   isaId?: string;
 };
 
@@ -23,6 +25,8 @@ const validationSchema = Yup.object({
   gender: Yup.string().required('Please select a gender'),
   email: Yup.string().email('Invalid email').required(),
   country: Yup.string(),
+  city: Yup.string(),
+  birthdate: Yup.string(),
   isaId: Yup.string(),
 });
 
@@ -33,6 +37,8 @@ const defaultValues = {
   gender: '',
   email: '',
   country: '',
+  city: '',
+  birthdate: '',
   isaId: '',
 };
 
@@ -101,25 +107,40 @@ export default function UserForm({
             />
             <FormikTextField
               id="email"
+              label="Email"
               placeholder="Enter email address"
             />
             <FormikTextField
               id="name"
+              label="Name"
               placeholder="Enter first name"
             />
             <FormikTextField
               id="surname"
+              label="Surname"
               placeholder="Enter last name"
             />
             <FormikSelectField
               id="gender"
+              label="Gender"
               options={userGenderOptions}
               placeholder="Select gender"
             />
             <FormikSelectField
               id="country"
+              label="Country"
               options={countryCodeOptions}
               placeholder="Select country"
+            />
+            <FormikTextField
+              id="city"
+              label="City"
+              placeholder="Enter city"
+            />
+            <FormikTextField
+              id="birthdate"
+              label="Birthdate"
+              placeholder="YYYY-MM-DD"
             />
           </div>
           {showSubmitButton && <FormikSubmitButton />}

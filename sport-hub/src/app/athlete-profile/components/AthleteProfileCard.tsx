@@ -17,9 +17,10 @@ export const AthleteProfileCard = ({ athlete }: AthleteProfileCardProps) => {
     roles,
     age,
     country,
-    website,
+    city,
     sponsors,
-    disciplines
+    disciplines,
+    profileImage
   } = athlete;
 
   const displayName = `${name} ${surname || ""}`.trim();
@@ -28,7 +29,7 @@ export const AthleteProfileCard = ({ athlete }: AthleteProfileCardProps) => {
   return (
     <StackedMediaCard
       className={styles.athleteProfileCard}
-      media={<SocialMediaLinks avatarDefaultLabel={abbreviatedName} links={socialMedia} />}
+      media={<SocialMediaLinks avatarDefaultLabel={abbreviatedName} profileImage={profileImage} links={socialMedia} />}
       desktopDirection="horizontal"
       mobileDirection="vertical"
     >
@@ -46,7 +47,7 @@ export const AthleteProfileCard = ({ athlete }: AthleteProfileCardProps) => {
           label="Country"
           value={(<Country countryCode={country.toLowerCase()} />)}
         />
-        <LabelValuePair label="Website" value={website} />
+        <LabelValuePair label="City" value={city} />
         <LabelValuePair label="Sponsors" value={sponsors} />
         <div className="col-span-full">
           <LabelValuePair

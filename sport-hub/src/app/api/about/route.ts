@@ -67,7 +67,11 @@ export async function GET(request: NextRequest) {
       createdAt: item.createdAt ?? '',
       updatedAt: item.updatedAt,
       userId: item.userId,
+      isaUsersId: item.isaUsersId,
       country: item.country,
+      city: item.city,
+      birthdate: item.birthdate,
+      gender: item.gender,
       firstCompetition: item.firstCompetition,
       lastCompetition: item.lastCompetition,
       totalPoints: item.totalPoints ?? 0,
@@ -105,9 +109,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: Request) {
   try {
-    const { id, name, email, country } = await request.json();
-    
-    if (!id || !name || !email) {
+    const body = await request.json();
+    const trimmedName = body.name?.trim();
+    const trimmedSurname = body.surname?.trim() || undefined;
+    const trimmedEmail = body.email?.trim();
+
+    if (!body.id || !trimmedName || !trimmedEmail) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -115,13 +122,17 @@ export async function POST(request: Request) {
     }
 
     // Generate ID if not provided
-    const userId = id || `athlete-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const userId = body.id || `athlete-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    const athleteSlug = `${trimmedName}--${trimmedSurname || ''}`.toLowerCase().replace(/\s+/g, '-').replace(/-+$/, '');
 
     const user = {
       userId: userId,
-      name,
-      email,
-      country: country || undefined,
+      name: trimmedName,
+      surname: trimmedSurname,
+      email: trimmedEmail,
+      athleteSlug,
+      country: body.country || undefined,
       createdAt: new Date().toISOString(),
     };
 
