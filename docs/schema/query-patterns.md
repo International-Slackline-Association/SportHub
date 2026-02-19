@@ -113,9 +113,9 @@ const rankings = await dynamodb.queryItems(
 - `Ranking:` - All rankings
 - `Ranking:1:` - Prize money rankings only
 - `Ranking:1:2024:` - 2024 prize money rankings
-- `Ranking:1:2024:12:` - 2024 prize money surfing rankings
-- `Ranking:1:2024:12:1:` - 2024 prize money surfing male rankings
-- `Ranking:1:2024:12:1:0` - 2024 prize money surfing male open rankings (exact)
+- `Ranking:1:2024:5:` - 2024 top score Freestyle Highline rankings
+- `Ranking:1:2024:5:1:` - 2024 top score Freestyle Highline men's rankings
+- `Ranking:1:2024:5:1:0` - 2024 top score Freestyle Highline men's all-age rankings (exact)
 
 ### 4. Get Athlete Participations
 
@@ -161,7 +161,7 @@ const { participations, lastKey } = await dynamodb.queryItems(
 
 ### 5. Get Discipline Leaderboard
 
-**Use Case**: Display top athletes for a discipline (e.g., surfing)
+**Use Case**: Display top athletes for a discipline (e.g., Freestyle Highline)
 
 **Service**: `user-query-service.ts:getTopAthletesByDiscipline()`
 

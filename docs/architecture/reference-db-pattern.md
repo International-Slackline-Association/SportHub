@@ -141,7 +141,7 @@ SportHub uses a **reference database separation pattern** to manage user identit
 
 - Format: `ISA_XXXXXXXX` (e.g., `ISA_FBE8B254`)
 - 8 random hexadecimal characters (uppercase)
-- Prefix: `ISA_` (International Surfing Association)
+- Prefix: `ISA_` (International Slackline Association)
 - Example: `ISA_FBE8B254`, `ISA_ABC12345`
 
 ## User Onboarding Flow

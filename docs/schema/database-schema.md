@@ -27,7 +27,7 @@ SportHub uses a **hierarchical sort key pattern** with AWS DynamoDB, optimized f
    - Sort Key: `totalPoints` (Number) - For leaderboard sorting
 
 2. **discipline-rankings-index**
-   - Partition Key: `discipline` (String) - e.g., "12" (surfing)
+   - Partition Key: `discipline` (String) - e.g., "5" (Freestyle Highline)
    - Sort Key: `gsiSortKey` (String) - Format: `{paddedPoints}#{userId}`
 
 ### Record Types
@@ -64,7 +64,14 @@ The Users table uses `sortKey` to distinguish between three record types:
   // Profile Metadata
   profileUrl?: string
   thumbnailUrl?: string
-  infoUrl?: string
+  socialMedia?: {                   // Parsed from infoUrl during migration
+    instagram?: string
+    youtube?: string
+    facebook?: string
+    whatsapp?: string
+    twitch?: string
+    tiktok?: string
+  }
   createdAt: number                 // Unix timestamp
   lastProfileUpdate?: number
   profileCompleted?: boolean
@@ -102,11 +109,31 @@ The Users table uses `sortKey` to distinguish between three record types:
 **Purpose**: Individual ranking entry for specific category
 
 **Sort Key Format**:
-- `type`: "1" (prize money) or "2" (points)
+- `type`: "1" (top score) or "2" (point score)
 - `year`: "2024", "2023", or "0" (all-time)
-- `discipline`: "12" (surfing), "13" (SUP), etc.
-- `gender`: "0" (all), "1" (male), "2" (female)
-- `ageCategory`: "0" (open), "1" (junior), "2" (master), etc.
+- `discipline`: Numeric enum (see Discipline Enums below)
+- `gender`: "0" (all), "1" (men), "2" (women), "3" (other)
+- `ageCategory`: "0" (all), "1" (youth), "2" (senior)
+
+**Discipline Enums**:
+| Value | Name |
+|-------|------|
+| 0 | Overall |
+| 1 | Trickline |
+| 2 | Trickline Aerial |
+| 3 | Trickline Jib & Static |
+| 4 | Trickline Transfer |
+| 5 | Freestyle Highline |
+| 6 | Speed |
+| 7 | Speedline Short |
+| 8 | Speedline Highline |
+| 9 | Endurance |
+| 10 | Blind |
+| 11 | Rigging |
+| 12 | Freestyle |
+| 13 | Walking |
+
+**Contest Type Enums**: 0=World Championship, 1=World Cup, 2=Masters, 3=Grand Slam, 4=Open, 5=Challenge
 
 **Fields**:
 ```typescript
@@ -118,7 +145,7 @@ The Users table uses `sortKey` to distinguish between three record types:
   // Fields from sortKey (denormalized for easy access)
   rankingType: string               // "1" or "2"
   year: string                      // "2024" or "0"
-  discipline: string                // "12", "13", etc. (for discipline-rankings-index GSI)
+  discipline: string                // "5", "8", etc. (for discipline-rankings-index GSI)
   gender: string                    // "0", "1", "2"
   ageCategory: string               // "0", "1", etc.
 
@@ -250,7 +277,7 @@ The `gsiSortKey` enables ranking queries sorted by points:
 {
   "eventId": "Event:a3637f",
   "sortKey": "Metadata",
-  "eventName": "World Surfing Games 2024",
+  "eventName": "World Slackline Games 2024",
   "startDate": "2024-06-01",
   "endDate": "2024-06-07",
   "location": "El Salvador",

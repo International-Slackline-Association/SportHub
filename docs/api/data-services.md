@@ -134,12 +134,69 @@ const firsts = await getWorldFirsts();
 
 **Note**: Currently returns hardcoded data. Future: query world-firsts table.
 
+## Athlete Profile
+
+### `getAthleteProfile(athleteId)`
+
+Get a complete athlete profile by athlete ID. Fetches profile data and ranking records in parallel, resolves identity from SportHub DB with fallback to reference DB (isa-users).
+
+**Signature**:
+```typescript
+async function getAthleteProfile(athleteId: string): Promise<AthleteProfile | null>
+```
+
+**Returns**:
+```typescript
+interface AthleteProfile {
+  name: string;
+  surname?: string;
+  age?: number;              // Calculated from birthdate
+  country: string;
+  city?: string;
+  sponsors?: string;
+  disciplines: string[];     // Real disciplines from ranking records (deduplicated)
+  roles: string[];
+  profileImage?: string;     // From profileUrl or thumbnailUrl in DB
+  socialMedia?: {
+    instagram?: string;
+    youtube?: string;
+    facebook?: string;
+    whatsapp?: string;
+    twitch?: string;
+    tiktok?: string;
+  };
+}
+```
+
+**Key behaviors**:
+- **Disciplines**: Extracted from `Ranking:*` records using `MAP_DISCIPLINE_ENUM_TO_NAME`. Filters out `OVERALL` (meta-category) and deduplicates generic parents when specific variants exist (e.g., removes `FREESTYLE` if `FREESTYLE_HIGHLINE` is present).
+- **Social media**: Read from `socialMedia` field on the profile record (parsed from `infoUrl` during migration).
+- **Age**: Calculated from `birthdate` on the profile record.
+- **Profile image**: Uses `profileUrl` with `thumbnailUrl` fallback.
+- **Identity priority**: SportHub DB name/surname > reference DB (isa-users) > athleteSlug fallback.
+
+### Rankings Data
+
+#### `getRankingsData()`
+
+Get all athletes for the leaderboard table. Returns empty `disciplines` array per athlete (disciplines are only resolved on individual profile pages to avoid N+1 queries).
+
+**Signature**:
+```typescript
+async function getRankingsData(): Promise<AthleteRanking[]>
+```
+
+**Performance**:
+- 2-minute cache
+- Batch-fetches names from reference DB
+- Sorted by points descending
+
 ## User Services
 
 See [`user-query-service.md`](user-query-service.md) for complete user/athlete query API.
 
 Quick reference:
-- `getAthleteProfile(userId)` - Get user profile
+- `getAthleteProfile(userId)` - Get user profile (low-level, used by data-services)
 - `getAthleteRankings(userId, filters?)` - Get rankings
 - `getAthleteParticipations(userId, limit?)` - Get contest history
 - `getAthleteProfilesBatch(userIds)` - Batch get profiles
