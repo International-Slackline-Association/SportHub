@@ -16,17 +16,7 @@ const isLocal = process.env.DYNAMODB_LOCAL === 'true';
 // TODO: Set up Amplify role for all server-side AWS actions (like dynamodb access)
 const clientConfig = {
   region: process.env.AWS_REGION || "us-east-2",
-  // PERFORMANCE OPTIMIZATION: Configure connection pooling
   maxAttempts: 3,
-  requestHandler: {
-    httpsAgent: {
-      maxSockets: 25, // Reduce from default 50 to prevent socket exhaustion
-      keepAlive: true,
-      keepAliveMsecs: 1000,
-    },
-    connectionTimeout: 2000,
-    requestTimeout: 5000,
-  },
   ...(isLocal ? {
     endpoint: process.env.DYNAMODB_ENDPOINT || "http://localhost:8000",
     credentials: {
@@ -35,7 +25,6 @@ const clientConfig = {
     },
   } : {})
   // AWS SDK will automatically use credentials from environment variables in production
-  // logger: console, // TODO: DEBUG ONLY
 };
 
 // console.log('🐛 DynamoDB Client Config:', JSON.stringify(clientConfig, null, 2));

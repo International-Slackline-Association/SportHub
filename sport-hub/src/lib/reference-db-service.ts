@@ -29,15 +29,6 @@ if(localReferenceDB){
     referenceClient = new DynamoDBClient({
       region: REFERENCE_REGION,
       maxAttempts: 3,
-      requestHandler: {
-        httpsAgent: {
-          maxSockets: 50,
-          keepAlive: true,
-          keepAliveMsecs: 1000,
-        },
-        connectionTimeout: 10000,  // 10 seconds for slow connections
-        requestTimeout: 15000,     // 15 seconds total timeout
-      },
     });
 
 }
