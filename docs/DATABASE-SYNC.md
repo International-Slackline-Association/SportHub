@@ -21,7 +21,7 @@ pnpm db:count    # Verify data loaded
 pnpm sync:compare
 ```
 
-Shows you the differences between all local and remote tables (users-dev, events-dev).
+Shows you the differences between all local and remote tables (sporthub-users-dev, sporthub-events-dev).
 
 ### 3. Sync All Data
 
@@ -59,10 +59,11 @@ Set up credentials in `.env.production` or use `aws configure`:
 
 ```bash
 # .env.production
-AWS_REGION=us-east-1
+AWS_REGION=us-east-2
 AWS_ACCESS_KEY_ID=your_access_key
 AWS_SECRET_ACCESS_KEY=your_secret_key
-DYNAMODB_TABLE_NAME=rankings-dev
+AWS_SESSION_TOKEN=your_session_token  # If using temporary credentials
+ISA_RANKINGS_REGION=eu-central-1      # Source tables region
 ```
 
 Or:
@@ -110,13 +111,13 @@ pnpm sync:recreate
 
 ### Compare (`sync:compare`)
 
-- Scans both local and remote tables (users-dev, events-dev)
+- Scans both local and remote tables (sporthub-users-dev, sporthub-events-dev)
 - Shows key schema, attributes, indexes, and item counts
 - Highlights which tables exist and differences
 
 ### Sync All (`sync:all`)
 
-- Scans all local tables (local-users, local-events)
+- Scans all local tables (local-sporthub-users, local-sporthub-events)
 - Creates remote tables if they don't exist
 - Writes to remote tables in batches of 25 (AWS limit)
 - **Adds** items to remote tables (doesn't delete existing)
@@ -191,14 +192,19 @@ pnpm sync:recreate
 
 **Local DynamoDB** (hardcoded):
 - Endpoint: `http://localhost:8000`
-- Table: `rankings`
-- Region: `us-east-1` (dummy)
+- Tables: `local-sporthub-users`, `local-sporthub-events`
+- Region: `us-east-2` (dummy)
 
 **Remote DynamoDB** (from environment):
-- `AWS_REGION` - AWS region (default: `us-east-1`)
+- `AWS_REGION` - AWS region (default: `us-east-2`)
 - `AWS_ACCESS_KEY_ID` - AWS credentials
 - `AWS_SECRET_ACCESS_KEY` - AWS credentials
-- `DYNAMODB_TABLE_NAME` - Remote table name (default: `rankings-dev`)
+- `AWS_SESSION_TOKEN` - Session token (if using temporary credentials)
+- `ISA_RANKINGS_REGION` - Source tables region (default: `eu-central-1`)
+
+**Table names** are defined in `src/lib/dynamodb.ts`:
+- `sporthub-users` → local: `local-sporthub-users`, AWS: `sporthub-users-dev`
+- `sporthub-events` → local: `local-sporthub-events`, AWS: `sporthub-events-dev`
 
 ## Technical Details
 

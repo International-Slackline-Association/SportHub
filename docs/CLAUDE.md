@@ -188,8 +188,7 @@ pnpm revalidate:all
 # Local DynamoDB
 DYNAMODB_LOCAL=true
 DYNAMODB_ENDPOINT=http://localhost:8000
-DYNAMODB_TABLE_NAME=rankings
-AWS_REGION=us-east-1
+AWS_REGION=us-east-2
 AWS_ACCESS_KEY_ID=dummy
 AWS_SECRET_ACCESS_KEY=dummy
 
@@ -200,11 +199,12 @@ NEXTAUTH_SECRET=your_secret_here
 
 ### Production (`.env.production` or Amplify env vars)
 ```env
-# AWS DynamoDB
-AWS_REGION=us-east-1
+# AWS DynamoDB (destination region)
+AWS_REGION=us-east-2
 AWS_ACCESS_KEY_ID=your_actual_key
 AWS_SECRET_ACCESS_KEY=your_actual_secret
-DYNAMODB_TABLE_NAME=rankings-dev
+AWS_SESSION_TOKEN=your_session_token  # If using temporary credentials
+ISA_RANKINGS_REGION=eu-central-1      # Source tables region
 
 # NextAuth
 NEXTAUTH_URL=https://your-app.com
@@ -213,7 +213,7 @@ NEXTAUTH_SECRET=your_production_secret
 # AWS Cognito
 COGNITO_CLIENT_ID=your_client_id
 COGNITO_CLIENT_SECRET=your_client_secret
-COGNITO_ISSUER=https://cognito-idp.us-east-1.amazonaws.com/your_pool_id
+COGNITO_ISSUER=https://cognito-idp.eu-central-1.amazonaws.com/your_pool_id
 
 # Revalidation
 REVALIDATE_SECRET=your_revalidation_secret
@@ -222,7 +222,7 @@ NEXT_PUBLIC_URL=https://your-app.com
 
 ## Database Schema
 
-### UserRecord (Main table: rankings / rankings-dev)
+### UserRecord (Main table: sporthub-users / sporthub-users-dev)
 ```typescript
 {
   userId: string;              // Primary key
@@ -436,7 +436,7 @@ Comprehensive guides in `/docs` folder:
 
 ### Database
 - Local: DynamoDB Local via Docker (port 8000)
-- Remote: AWS DynamoDB (`rankings-dev` table)
+- Remote: AWS DynamoDB (`sporthub-users-dev`, `sporthub-events-dev` tables in us-east-2)
 - Schema: Single table design with userId as primary key
 - Data persists in `sport-hub/dynamodb-data/`
 

@@ -96,6 +96,11 @@ src/
 - `pnpm db:stop` - Stop DynamoDB container
 - `pnpm db:clean` - Remove container and volumes
 - `pnpm test:local` - Start dev server with local DB config
+- `pnpm migrate:dry-run` - Dry run ISA-Rankings migration (local)
+- `pnpm migrate:execute` - Execute ISA-Rankings migration (local)
+- `pnpm db:setup:aws` - Create tables on AWS (uses `.env.production`)
+- `pnpm migrate:aws:dry-run` - Dry run ISA-Rankings migration on AWS
+- `pnpm migrate:aws:execute` - Execute ISA-Rankings migration on AWS
 
 ### Environment Configuration
 

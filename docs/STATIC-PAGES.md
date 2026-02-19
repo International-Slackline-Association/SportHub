@@ -230,17 +230,17 @@ pnpm revalidate:all
 ```bash
 # .env.local
 DYNAMODB_LOCAL=true
-DYNAMODB_TABLE_NAME=rankings
+DYNAMODB_ENDPOINT=http://localhost:8000
+AWS_REGION=us-east-2
 ```
 
 ### Production
 
 ```bash
 # .env.production or Amplify environment variables
-AWS_REGION=us-east-1
+AWS_REGION=us-east-2
 AWS_ACCESS_KEY_ID=xxx
 AWS_SECRET_ACCESS_KEY=xxx
-DYNAMODB_TABLE_NAME=rankings-dev
 REVALIDATE_SECRET=your_secret_here
 NEXT_PUBLIC_URL=https://your-app.com
 ```
