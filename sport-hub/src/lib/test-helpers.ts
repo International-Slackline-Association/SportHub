@@ -49,13 +49,13 @@ export class TestHelpers {
   // Database operations
   async createTestUser(data?: Partial<UserRecord>): Promise<UserRecord> {
     const user = this.generateTestUser(data);
-    await dynamodb.putItem('users', user as unknown as Record<string, unknown>);
+    await dynamodb.putItem('sporthub-users', user as unknown as Record<string, unknown>);
     return user;
   }
 
   async createTestEvent(data?: Partial<EventRecord>): Promise<EventRecord> {
     const event = this.generateTestEvent(data);
-    await dynamodb.putItem('events', event as unknown as Record<string, unknown>);
+    await dynamodb.putItem('sporthub-events', event as unknown as Record<string, unknown>);
     return event;
   }
 
@@ -64,11 +64,11 @@ export class TestHelpers {
     let totalCleaned = 0;
 
     // Clean users (use composite key: userId + sortKey)
-    const users = await dynamodb.scanItems('users');
+    const users = await dynamodb.scanItems('sporthub-users');
     if (users) {
       for (const user of users) {
         if (user.userId?.toString().startsWith(testPrefix)) {
-          await dynamodb.deleteItem('users', {
+          await dynamodb.deleteItem('sporthub-users', {
             userId: user.userId,
             sortKey: user.sortKey // Composite key required
           });
@@ -78,11 +78,11 @@ export class TestHelpers {
     }
 
     // Clean events (use composite key: eventId + sortKey)
-    const events = await dynamodb.scanItems('events');
+    const events = await dynamodb.scanItems('sporthub-events');
     if (events) {
       for (const event of events) {
         if (event.eventId?.toString().startsWith(testPrefix)) {
-          await dynamodb.deleteItem('events', {
+          await dynamodb.deleteItem('sporthub-events', {
             eventId: event.eventId,
             sortKey: event.sortKey // Composite key required
           });
@@ -97,7 +97,7 @@ export class TestHelpers {
   // Query helpers
   async findUserById(userId: string): Promise<UserRecord | null> {
     // Use composite key to get Profile record
-    const item = await dynamodb.getItem('users', {
+    const item = await dynamodb.getItem('sporthub-users', {
       userId,
       sortKey: 'Profile'
     });
@@ -106,7 +106,7 @@ export class TestHelpers {
 
   async findEventById(eventId: string): Promise<EventRecord | null> {
     // Use composite key to get Metadata record
-    const item = await dynamodb.getItem('events', {
+    const item = await dynamodb.getItem('sporthub-events', {
       eventId,
       sortKey: 'Metadata'
     });
@@ -115,7 +115,7 @@ export class TestHelpers {
 
   async getAllUsers(): Promise<UserRecord[]> {
     try {
-      const items = await dynamodb.scanItems('users');
+      const items = await dynamodb.scanItems('sporthub-users');
       // Filter to only Profile records (sortKey = "Profile")
       return (items || []).filter(item => item.sortKey === 'Profile') as UserRecord[];
     } catch {
@@ -126,7 +126,7 @@ export class TestHelpers {
 
   async getAllEvents(): Promise<EventRecord[]> {
     try {
-      const items = await dynamodb.scanItems('events');
+      const items = await dynamodb.scanItems('sporthub-events');
       // Filter to only Metadata records (sortKey = "Metadata")
       return (items || []).filter(item => item.sortKey === 'Metadata') as EventRecord[];
     } catch {
@@ -137,7 +137,7 @@ export class TestHelpers {
 
   // Test environment helpers
   async isTestEnvironmentReady(): Promise<{ ready: boolean; missing: string[] }> {
-    const requiredTables = ['users', 'events'];
+    const requiredTables = ['sporthub-users', 'sporthub-events'];
     const missing: string[] = [];
 
     for (const table of requiredTables) {

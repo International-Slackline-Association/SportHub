@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { testHelpers } from '@lib/test-helpers';
 import { getDataStats } from '@lib/migrations/seed-data';
 import LocalTestInterface from './LocalTestInterface';
-import { requireTestPageAccess } from '@lib/test-page-access';
+import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
   title: 'SportHub - Local Database Testing',
@@ -12,7 +12,10 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function LocalTestPage() {
-  await requireTestPageAccess();
+  // This page is strictly for local development only
+  if (process.env.DYNAMODB_LOCAL !== 'true') {
+    redirect('/');
+  }
 
   // Check if test environment is ready
   const envStatus = await testHelpers.isTestEnvironmentReady();

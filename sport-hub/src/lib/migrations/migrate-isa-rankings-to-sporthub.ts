@@ -39,52 +39,76 @@ import {
 } from "@aws-sdk/lib-dynamodb";
 
 // Configuration
-const AWS_REGION = process.env.AWS_REGION || 'eu-central-1';
 const USE_LOCAL = process.env.DYNAMODB_LOCAL === 'true';
 const LOCAL_ENDPOINT = process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000';
 
-// Table names - use local- prefix for local dev, no prefix for production
-const ISA_RANKINGS_TABLE = USE_LOCAL ? 'ISA-Rankings' : (process.env.ISA_RANKINGS_TABLE || 'ISA-Rankings');
-const ISA_USERS_TABLE = 'isa-users'; // Reference DB (no local- prefix, hosted locally in dev)
-const SPORTHUB_USERS_TABLE = USE_LOCAL ? 'local-users' : (process.env.SPORTHUB_USERS_TABLE || 'sporthub-users');
-const SPORTHUB_EVENTS_TABLE = USE_LOCAL ? 'local-events' : (process.env.SPORTHUB_EVENTS_TABLE || 'sporthub-events');
+// Source tables (ISA-Rankings + isa-users) are in eu-central-1
+// Destination tables (users-dev, events-dev) are in the app region (us-east-2)
+const SOURCE_REGION = process.env.ISA_RANKINGS_REGION || 'eu-central-1';
+const DEST_REGION = process.env.AWS_REGION || 'us-east-2';
 
-const DRY_RUN = process.argv.includes('--dry-run');
+// Table names - use local- prefix for local dev
+const ISA_RANKINGS_TABLE = USE_LOCAL ? 'ISA-Rankings' : (process.env.ISA_RANKINGS_TABLE || 'ISA-Rankings');
+const ISA_USERS_TABLE = process.env.ISA_USERS_TABLE || 'isa-users';
+const SPORTHUB_USERS_TABLE = USE_LOCAL ? 'local-sporthub-users' : (process.env.SPORTHUB_USERS_TABLE || 'sporthub-users-dev');
+const SPORTHUB_EVENTS_TABLE = USE_LOCAL ? 'local-sporthub-events' : (process.env.SPORTHUB_EVENTS_TABLE || 'sporthub-events-dev');
+
+let DRY_RUN = process.argv.includes('--dry-run');
 const EXECUTE = process.argv.includes('--execute');
 
-if (!DRY_RUN && !EXECUTE) {
+// Only enforce CLI args when run directly (not when imported as a module)
+const isDirectRun = process.argv[1]?.includes('migrate-isa-rankings');
+if (isDirectRun && !DRY_RUN && !EXECUTE) {
   console.error('❌ Error: Must specify either --dry-run or --execute');
   console.log('Usage:');
-  console.log('  pnpm tsx src/lib/migrate-isa-rankings-to-sporthub.ts --dry-run');
-  console.log('  pnpm tsx src/lib/migrate-isa-rankings-to-sporthub.ts --execute');
+  console.log('  pnpm tsx src/lib/migrations/migrate-isa-rankings-to-sporthub.ts --dry-run');
+  console.log('  pnpm tsx src/lib/migrations/migrate-isa-rankings-to-sporthub.ts --execute');
   process.exit(1);
 }
 
-// DynamoDB clients
-const clientConfig: {
+// DynamoDB client config builder
+interface ClientConfig {
   region: string;
   maxAttempts: number;
   endpoint?: string;
-  credentials?: { accessKeyId: string; secretAccessKey: string };
-} = {
-  region: AWS_REGION,
-  maxAttempts: 3,
-};
-
-if (USE_LOCAL) {
-  clientConfig.endpoint = LOCAL_ENDPOINT;
-  clientConfig.credentials = {
-    accessKeyId: 'dummy',
-    secretAccessKey: 'dummy',
+  credentials?: {
+    accessKeyId: string;
+    secretAccessKey: string;
+    sessionToken?: string;
   };
 }
 
-const sourceClient = new DynamoDBClient(clientConfig);
+function buildClientConfig(region: string): ClientConfig {
+  const config: ClientConfig = {
+    region,
+    maxAttempts: 3,
+  };
+
+  if (USE_LOCAL) {
+    config.endpoint = LOCAL_ENDPOINT;
+    config.credentials = {
+      accessKeyId: 'dummy',
+      secretAccessKey: 'dummy',
+    };
+  } else if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+    config.credentials = {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      ...(process.env.AWS_SESSION_TOKEN && { sessionToken: process.env.AWS_SESSION_TOKEN }),
+    };
+  }
+
+  return config;
+}
+
+// Source client: eu-central-1 (ISA-Rankings + isa-users)
+const sourceClient = new DynamoDBClient(buildClientConfig(SOURCE_REGION));
 const sourceDdb = DynamoDBDocumentClient.from(sourceClient, {
   marshallOptions: { removeUndefinedValues: true }
 });
 
-const destClient = new DynamoDBClient(clientConfig);
+// Destination client: us-east-2 (users-dev, events-dev)
+const destClient = new DynamoDBClient(buildClientConfig(DEST_REGION));
 const destDdb = DynamoDBDocumentClient.from(destClient, {
   marshallOptions: { removeUndefinedValues: true }
 });
@@ -1170,14 +1194,24 @@ async function writeRecords(
 /**
  * Main migration function
  */
-async function migrate() {
+export interface MigrationResult {
+  success: boolean;
+  stats: typeof stats;
+  duration: string;
+  error?: string;
+}
+
+export async function migrate(options?: { dryRun?: boolean }): Promise<MigrationResult> {
+  if (options?.dryRun !== undefined) {
+    DRY_RUN = options.dryRun;
+  }
   const startTime = Date.now();
 
   console.log('🚀 ISA-Rankings → SportHub Migration');
   console.log(`\nMode: ${DRY_RUN ? '🔍 DRY RUN' : '⚡ EXECUTE'}`);
-  console.log(`Environment: ${USE_LOCAL ? `🏠 Local (${LOCAL_ENDPOINT})` : `☁️  AWS (${AWS_REGION})`}`);
-  console.log(`Source: ${ISA_RANKINGS_TABLE}`);
-  console.log(`Destination: ${SPORTHUB_USERS_TABLE}, ${SPORTHUB_EVENTS_TABLE}`);
+  console.log(`Environment: ${USE_LOCAL ? `🏠 Local (${LOCAL_ENDPOINT})` : `☁️  AWS`}`);
+  console.log(`Source: ${ISA_RANKINGS_TABLE} + ${ISA_USERS_TABLE} (${SOURCE_REGION})`);
+  console.log(`Destination: ${SPORTHUB_USERS_TABLE}, ${SPORTHUB_EVENTS_TABLE} (${DEST_REGION})`);
   console.log('');
 
   try {
@@ -1236,11 +1270,16 @@ async function migrate() {
       console.log('\n♻️  This migration is idempotent - you can re-run it safely to update data');
     }
 
+    return { success: true, stats: { ...stats }, duration };
+
   } catch (error) {
     console.error('\n❌ Migration failed:', error);
-    process.exit(1);
+    if (isDirectRun) process.exit(1);
+    return { success: false, stats: { ...stats }, duration: '0', error: String(error) };
   }
 }
 
-// Run migration
-migrate();
+// Run migration when executed directly
+if (isDirectRun) {
+  migrate();
+}

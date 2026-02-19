@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { dynamodb } from '@lib/dynamodb';
-
-const TABLE_NAME = 'users';
+import { dynamodb, USERS_TABLE } from '@lib/dynamodb';
 
 export async function GET(
   request: Request,
@@ -9,7 +7,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const user = await dynamodb.getItem(TABLE_NAME, { userId: id, sortKey: 'Profile' });
+    const user = await dynamodb.getItem(USERS_TABLE, { userId: id, sortKey: 'Profile' });
 
     if (!user) {
       return NextResponse.json(
@@ -34,7 +32,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    await dynamodb.deleteItem(TABLE_NAME, { userId: id, sortKey: 'Profile' });
+    await dynamodb.deleteItem(USERS_TABLE, { userId: id, sortKey: 'Profile' });
     return NextResponse.json({ message: 'User deleted successfully' });
   } catch (error) {
     console.error('DynamoDB error:', error);
@@ -54,7 +52,7 @@ export async function PUT(
     const updateData = await request.json();
 
     // Get existing user first (use composite key)
-    const existingUser = await dynamodb.getItem(TABLE_NAME, { userId: id, sortKey: 'Profile' });
+    const existingUser = await dynamodb.getItem(USERS_TABLE, { userId: id, sortKey: 'Profile' });
     if (!existingUser) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -96,7 +94,7 @@ export async function PUT(
       updatedAt: new Date().toISOString(),
     };
 
-    await dynamodb.putItem(TABLE_NAME, updatedUser as unknown as Record<string, unknown>);
+    await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
     return NextResponse.json(updatedUser);
   } catch (error) {
     console.error('DynamoDB error:', error);

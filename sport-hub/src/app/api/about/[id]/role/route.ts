@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
-import { dynamodb } from '@lib/dynamodb';
+import { dynamodb, USERS_TABLE } from '@lib/dynamodb';
 import { auth } from '@lib/auth';
 import { clearRoleCache } from '@lib/rbac-service';
 import type { Role, UserSubType } from 'src/types/rbac';
-
-const TABLE_NAME = 'users';
 
 export async function PUT(
   request: Request,
@@ -45,7 +43,7 @@ export async function PUT(
     }
 
     // Get existing user (use composite key)
-    const existingUser = await dynamodb.getItem(TABLE_NAME, { userId: id, sortKey: 'Profile' });
+    const existingUser = await dynamodb.getItem(USERS_TABLE, { userId: id, sortKey: 'Profile' });
     if (!existingUser) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -68,7 +66,7 @@ export async function PUT(
       roleAssignedBy: session.user.id,
     };
 
-    await dynamodb.putItem(TABLE_NAME, updatedUser as unknown as Record<string, unknown>);
+    await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
 
     // Clear role cache for this user
     clearRoleCache(id);

@@ -1,12 +1,10 @@
 'use server';
 
-import { dynamodb } from '@lib/dynamodb';
+import { dynamodb, EVENTS_TABLE } from '@lib/dynamodb';
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@lib/authorization';
 import { auth } from '@lib/auth';
 import { EventSubmissionFormValues } from './types';
-
-const EVENTS_TABLE = 'events';
 
 // Simple in-memory cache for getAllEvents (5-minute TTL)
 interface CacheEntry<T> {

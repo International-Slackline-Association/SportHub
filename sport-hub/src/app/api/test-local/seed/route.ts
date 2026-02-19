@@ -1,14 +1,9 @@
 import { NextResponse } from 'next/server';
 import { DatabaseSeeder } from '@lib/migrations/seed-local-db';
-import { canAccessTestAPI } from '@lib/test-page-access';
 
 export async function POST() {
-  const accessCheck = await canAccessTestAPI();
-  if (!accessCheck.allowed) {
-    return NextResponse.json(
-      { error: accessCheck.reason },
-      { status: accessCheck.status }
-    );
+  if (process.env.DYNAMODB_LOCAL !== 'true') {
+    return NextResponse.json({ error: 'Only available in local development mode' }, { status: 403 });
   }
 
   try {

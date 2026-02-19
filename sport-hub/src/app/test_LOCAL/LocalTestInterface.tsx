@@ -114,6 +114,39 @@ export default function LocalTestInterface({ envReady, initialStats }: LocalTest
     }
   };
 
+  const runMigration = async (dryRun: boolean) => {
+    if (!dryRun && !confirm('Run ISA-Rankings migration with EXECUTE mode? This will write data to the database.')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      addLog(`Running ISA-Rankings migration (${dryRun ? 'dry run' : 'execute'})...`);
+
+      const response = await fetch('/api/test-local/migrate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dryRun }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        addLog(`Migration ${dryRun ? '(dry run)' : ''} complete in ${result.duration}s`);
+        addLog(`  Athletes: ${result.stats.athletesProcessed}, Profiles: ${result.stats.profilesCreated}, Rankings: ${result.stats.rankingsCreated}`);
+        addLog(`  Participations: ${result.stats.participationsCreated}, Events: ${result.stats.eventsCreated}, Contests: ${result.stats.contestsCreated}`);
+        if (!dryRun) await refreshStats();
+      } else {
+        const err = await response.json().catch(() => ({}));
+        addLog(`Migration failed: ${err.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error running migration:', error);
+      addLog('Error running migration');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const clearTestData = async () => {
     if (!confirm('Are you sure you want to clear test data?')) {
       return;
@@ -199,6 +232,32 @@ export default function LocalTestInterface({ envReady, initialStats }: LocalTest
           </button>
         </div>
       </div>
+
+      {/* ISA-Rankings Migration */}
+      {envReady && (
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-2">ISA-Rankings Migration</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Migrate data from ISA-Rankings table into SportHub schema (athletes, rankings, events, contests).
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <button
+              onClick={() => runMigration(true)}
+              disabled={loading}
+              className="bg-indigo-500 text-white px-4 py-2 rounded-md hover:bg-indigo-600 disabled:opacity-50 transition-colors"
+            >
+              {loading ? 'Working...' : 'Dry Run'}
+            </button>
+            <button
+              onClick={() => runMigration(false)}
+              disabled={loading}
+              className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 disabled:opacity-50 transition-colors"
+            >
+              {loading ? 'Working...' : 'Execute Migration'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions */}
       {envReady && (

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { dynamodb } from '@lib/dynamodb';
+import { dynamodb, USERS_TABLE } from '@lib/dynamodb';
 import { auth } from '@lib/auth';
 import UserForm from './UserForm';
 import UserListPagination from './UserListPagination';
@@ -11,7 +11,6 @@ export const metadata: Metadata = {
   title: 'SportHub - Test SSR',
 };
 
-const TABLE_NAME = 'users';
 const PAGE_SIZE = 100;
 
 interface User {
@@ -52,8 +51,8 @@ async function getUsers(): Promise<PaginatedUsersResult> {
 
     // Get total count and paginated results
     const [totalCount, result] = await Promise.all([
-      dynamodb.countItems(TABLE_NAME, filterOptions),
-      dynamodb.scanItemsPaginated(TABLE_NAME, {
+      dynamodb.countItems(USERS_TABLE, filterOptions),
+      dynamodb.scanItemsPaginated(USERS_TABLE, {
         limit: PAGE_SIZE,
         ...filterOptions,
       }),
@@ -92,7 +91,7 @@ async function getUsers(): Promise<PaginatedUsersResult> {
     if ((error && typeof error === 'object' && 'name' in error && error.name === 'ResourceNotFoundException') ||
         (error && typeof error === 'object' && '__type' in error && typeof error.__type === 'string' && error.__type.includes('ResourceNotFoundException')) ||
         (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' && error.message.includes('non-existent table'))) {
-      console.log(`Table ${TABLE_NAME} does not exist. Visit /test_LOCAL to create tables.`);
+      console.log(`Table ${USERS_TABLE} does not exist. Visit /test_LOCAL to create tables.`);
     }
     return { users: [], nextCursor: null, hasMore: false, totalCount: 0 };
   }
@@ -100,7 +99,7 @@ async function getUsers(): Promise<PaginatedUsersResult> {
 
 async function getCurrentUserFromDb(userId: string): Promise<User | null> {
   try {
-    const item = await dynamodb.getItem(TABLE_NAME, {
+    const item = await dynamodb.getItem(USERS_TABLE, {
       userId: userId,
       sortKey: 'Profile',
     });

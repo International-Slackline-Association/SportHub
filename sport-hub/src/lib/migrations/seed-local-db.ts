@@ -21,7 +21,7 @@ export class DatabaseSeeder {
     profiles: UserProfileRecord[],
     rankings: AthleteRankingRecord[],
     participations: AthleteParticipationRecord[],
-    tableName: string = 'users'
+    tableName: string = 'sporthub-users'
   ): Promise<{ success: number; failed: number }> {
     // Combine all user table records
     const allRecords = [
@@ -61,7 +61,7 @@ export class DatabaseSeeder {
   async seedEventRecords(
     eventMetadata: EventMetadataRecord[],
     contests: ContestRecord[],
-    tableName: string = 'events'
+    tableName: string = 'sporthub-events'
   ): Promise<{ success: number; failed: number }> {
     const allRecords = [...eventMetadata, ...contests];
 
@@ -182,14 +182,14 @@ export class DatabaseSeeder {
       data.userProfiles,
       data.athleteRankings,
       data.athleteParticipations,
-      'users'
+      'sporthub-users'
     );
     console.log();
 
     await this.seedEventRecords(
       data.eventMetadata,
       data.contests,
-      'events'
+      'sporthub-events'
     );
     console.log();
 
@@ -203,9 +203,9 @@ export class DatabaseSeeder {
     console.log('🔄 Resetting and seeding database...\n');
 
     // Clear all tables
-    await this.clearTable('users');
+    await this.clearTable('sporthub-users');
     console.log();
-    await this.clearTable('events');
+    await this.clearTable('sporthub-events');
     console.log();
 
     // Seed fresh data
@@ -222,7 +222,7 @@ export class DatabaseSeeder {
 
     // Check users table with breakdown by sortKey pattern
     try {
-      const users = await dynamodb.scanItems('users');
+      const users = await dynamodb.scanItems('sporthub-users');
       counts['users-total'] = users?.length || 0;
 
       if (users && users.length > 0) {
@@ -241,7 +241,7 @@ export class DatabaseSeeder {
 
     // Check events table with breakdown by sortKey pattern
     try {
-      const events = await dynamodb.scanItems('events');
+      const events = await dynamodb.scanItems('sporthub-events');
       counts['events-total'] = events?.length || 0;
 
       if (events && events.length > 0) {
@@ -274,8 +274,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       break;
     case 'clear':
       Promise.all([
-        seeder.clearTable('users'),
-        seeder.clearTable('events')
+        seeder.clearTable('sporthub-users'),
+        seeder.clearTable('sporthub-events')
       ]).catch(console.error);
       break;
     case 'count':

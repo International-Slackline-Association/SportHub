@@ -5,10 +5,8 @@
  * Events contain multiple contests as child records using composite key (PK + SK).
  */
 
-import { dynamodb } from './dynamodb';
+import { dynamodb, EVENTS_TABLE } from './dynamodb';
 import type { EventMetadataRecord, ContestRecord, EventOrganizer } from './relational-types';
-
-const EVENTS_TABLE = 'events';
 
 /**
  * Create new event (metadata record only)

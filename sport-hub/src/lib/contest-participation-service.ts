@@ -5,12 +5,9 @@
  * Uses DynamoDB UpdateExpression to prevent race conditions.
  */
 
-import { dynamodb } from './dynamodb';
+import { dynamodb, USERS_TABLE, EVENTS_TABLE } from './dynamodb';
 import { getReferenceUserById } from './reference-db-service';
 import { getEvent, getContest } from './event-contest-service';
-
-const USERS_TABLE = 'users';
-const EVENTS_TABLE = 'events';
 
 /**
  * Atomically add athlete to contest

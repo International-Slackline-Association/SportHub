@@ -4,11 +4,9 @@
  * Handles user CRUD operations with proper authorization checks
  */
 
-import { dynamodb } from './dynamodb';
+import { dynamodb, USERS_TABLE } from './dynamodb';
 import type { UserProfileRecord } from './relational-types';
 import { updateReferenceUser } from './reference-db-service';
-
-const USERS_TABLE = 'users';
 
 /**
  * User profile update data (allowed fields only)

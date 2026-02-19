@@ -6,7 +6,7 @@
  */
 
 import { DynamoDBDocumentClient, QueryCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
-import { dynamodb, dynamoClient, getTableName } from './dynamodb';
+import { dynamodb, dynamoClient, getTableName, USERS_TABLE } from './dynamodb';
 import type {
   UserProfileRecord,
   AthleteRankingRecord,
@@ -14,7 +14,6 @@ import type {
   RankingFilter,
 } from './relational-types';
 
-const USERS_TABLE = 'users';
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
 
 /**

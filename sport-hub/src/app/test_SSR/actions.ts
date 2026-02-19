@@ -1,13 +1,11 @@
 'use server'
 
-import { dynamodb } from '@lib/dynamodb';
+import { dynamodb, USERS_TABLE } from '@lib/dynamodb';
 import { auth } from '@lib/auth';
 import { clearRoleCache } from '@lib/rbac-service';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type { Role, UserSubType } from 'src/types/rbac';
-
-const TABLE_NAME = 'users';
 
 export async function createUser(formData: FormData) {
   const id = formData.get('id') as string;
@@ -46,7 +44,7 @@ export async function createUser(formData: FormData) {
     contestCount: 0,
   };
 
-  await dynamodb.putItem(TABLE_NAME, user as unknown as Record<string, unknown>);
+  await dynamodb.putItem(USERS_TABLE, user as unknown as Record<string, unknown>);
   revalidatePath('/test_SSR');
 }
 
@@ -65,7 +63,7 @@ export async function updateUser(formData: FormData) {
   }
 
   // Get existing user first (use composite key)
-  const existingUser = await dynamodb.getItem(TABLE_NAME, { userId: id, sortKey: 'Profile' });
+  const existingUser = await dynamodb.getItem(USERS_TABLE, { userId: id, sortKey: 'Profile' });
   if (!existingUser) {
     throw new Error('User not found');
   }
@@ -86,7 +84,7 @@ export async function updateUser(formData: FormData) {
     updatedAt: new Date().toISOString(),
   };
 
-  await dynamodb.putItem(TABLE_NAME, updatedUser as unknown as Record<string, unknown>);
+  await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
   revalidatePath('/test_SSR');
   redirect('/test_SSR');
 }
@@ -99,7 +97,7 @@ export async function deleteUser(formData: FormData) {
   }
 
   // Use composite key for deletion
-  await dynamodb.deleteItem(TABLE_NAME, { userId: id, sortKey: 'Profile' });
+  await dynamodb.deleteItem(USERS_TABLE, { userId: id, sortKey: 'Profile' });
   revalidatePath('/test_SSR');
 }
 
@@ -127,7 +125,7 @@ export async function updateUserRoleAndSubTypes(
 
   try {
     // Get existing user (use composite key)
-    const existingUser = await dynamodb.getItem(TABLE_NAME, { userId, sortKey: 'Profile' });
+    const existingUser = await dynamodb.getItem(USERS_TABLE, { userId, sortKey: 'Profile' });
     if (!existingUser) {
       return { success: false, error: 'User not found' };
     }
@@ -146,7 +144,7 @@ export async function updateUserRoleAndSubTypes(
       roleAssignedBy: session.user.id,
     };
 
-    await dynamodb.putItem(TABLE_NAME, updatedUser as unknown as Record<string, unknown>);
+    await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
 
     // Clear role cache for this user
     clearRoleCache(userId);

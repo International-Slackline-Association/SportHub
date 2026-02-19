@@ -2,11 +2,9 @@
 
 import { auth } from '@lib/auth';
 import { canEditUser } from '@lib/authorization';
-import { dynamodb } from '@lib/dynamodb';
+import { dynamodb, USERS_TABLE } from '@lib/dynamodb';
 import { revalidatePath } from 'next/cache';
 import type { UserProfileRecord } from '@lib/relational-types';
-
-const USERS_TABLE = 'users';
 
 export interface SocialMediaData {
   instagram?: string;

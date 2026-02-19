@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@lib/auth';
-import { dynamodb } from '@lib/dynamodb';
+import { dynamodb, USERS_TABLE } from '@lib/dynamodb';
 import { clearRoleCache, getCacheStats } from '@lib/rbac-service';
 import type { UserProfileRecord } from '@lib/relational-types';
-
-const USERS_TABLE = 'users';
 
 /**
  * GET /api/debug-rbac

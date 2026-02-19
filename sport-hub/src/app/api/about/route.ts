@@ -1,7 +1,6 @@
-import { dynamodb } from '@lib/dynamodb'
+import { dynamodb, USERS_TABLE } from '@lib/dynamodb'
 import { NextResponse, NextRequest } from 'next/server';
 
-const TABLE_NAME = 'users';
 const DEFAULT_PAGE_SIZE = 100;
 
 export async function GET(request: NextRequest) {
@@ -49,10 +48,10 @@ export async function GET(request: NextRequest) {
 
     // Get total count only on first request (no cursor) for efficiency
     const totalCount = !exclusiveStartKey
-      ? await dynamodb.countItems(TABLE_NAME, filterOptions)
+      ? await dynamodb.countItems(USERS_TABLE, filterOptions)
       : undefined;
 
-    const result = await dynamodb.scanItemsPaginated(TABLE_NAME, {
+    const result = await dynamodb.scanItemsPaginated(USERS_TABLE, {
       limit,
       exclusiveStartKey,
       ...filterOptions,
@@ -97,7 +96,7 @@ export async function GET(request: NextRequest) {
     console.error('DynamoDB error:', error);
     // Handle missing table gracefully by returning empty array
     if (error && typeof error === 'object' && 'name' in error && error.name === 'ResourceNotFoundException') {
-      console.log(`Table ${TABLE_NAME} does not exist. Returning empty array.`);
+      console.log(`Table ${USERS_TABLE} does not exist. Returning empty array.`);
       return NextResponse.json({ users: [], nextCursor: null, hasMore: false });
     }
     return NextResponse.json(
@@ -136,7 +135,7 @@ export async function POST(request: Request) {
       createdAt: new Date().toISOString(),
     };
 
-    await dynamodb.putItem(TABLE_NAME, user as unknown as Record<string, unknown>);
+    await dynamodb.putItem(USERS_TABLE, user as unknown as Record<string, unknown>);
     return NextResponse.json(user, { status: 201 });
 
   } catch (error) {

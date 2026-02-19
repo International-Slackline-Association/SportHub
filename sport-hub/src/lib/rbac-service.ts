@@ -5,12 +5,10 @@
  * Roles are stored in DynamoDB and cached in-memory for 5 minutes.
  */
 
-import { dynamodb } from './dynamodb';
+import { dynamodb, USERS_TABLE } from './dynamodb';
 import type { Role, Permission } from '../types/rbac';
 import { ROLE_PERMISSIONS } from '../types/rbac';
 import type { UserProfileRecord } from './relational-types';
-
-const USERS_TABLE = 'users';
 
 /**
  * Role cache entry with timestamp for TTL

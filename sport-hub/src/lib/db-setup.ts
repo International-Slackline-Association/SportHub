@@ -28,7 +28,7 @@ export interface TableSchema {
 export const TABLE_SCHEMAS: TableSchema[] = [
   // Users table with composite sort key and GSI for rankings
   {
-    tableName: 'users',
+    tableName: 'sporthub-users',
     keySchema: [
       { AttributeName: 'userId', KeyType: 'HASH' },
       { AttributeName: 'sortKey', KeyType: 'RANGE' }  // Profile, Ranking:*, Participation:*
@@ -62,7 +62,7 @@ export const TABLE_SCHEMAS: TableSchema[] = [
   },
   // Events table with composite key for Event → Contest hierarchy
   {
-    tableName: 'events',
+    tableName: 'sporthub-events',
     keySchema: [
       { AttributeName: 'eventId', KeyType: 'HASH' },  // PK
       { AttributeName: 'sortKey', KeyType: 'RANGE' }, // SK: "Metadata" or "Contest:{discipline}:{contestId}"
@@ -272,3 +272,13 @@ export class DatabaseSetup {
     return status;
   }
 }
+
+// CLI entry point
+const setup = new DatabaseSetup();
+setup.createAllTables().then(results => {
+  if (results.failed.length > 0) {
+    console.error('❌ Failed tables:', results.failed.join(', '));
+    process.exit(1);
+  }
+  console.log('✅ All tables ready:', results.success.map(t => getTableName(t)).join(', '));
+});

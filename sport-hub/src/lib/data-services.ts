@@ -1,5 +1,5 @@
 // import { UserSubType } from '@types/rbac';
-import { dynamodb } from './dynamodb';
+import { dynamodb, USERS_TABLE, EVENTS_TABLE } from './dynamodb';
 import type { ContestRecord, EventMetadataRecord, ContestParticipant } from './relational-types';
 import { getReferenceUserById, getReferenceUsersBatch } from './reference-db-service';
 import {
@@ -10,10 +10,6 @@ import {
 } from './user-query-service';
 import { MAP_DISCIPLINE_ENUM_TO_NAME } from '@utils/consts';
 import { UserRecord } from './relational-types';
-
-// Table names
-const EVENTS_TABLE = 'events';
-const USERS_TABLE = 'users';
 
 // PERFORMANCE OPTIMIZATION: Simple in-memory cache with TTL
 interface CacheEntry<T> {
