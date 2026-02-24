@@ -1,7 +1,11 @@
 import { dynamodb } from './dynamodb';
 import { DatabaseSetup } from './db-setup';
-import { DatabaseSeeder } from './seed-local-db';
-import { type UserRecord, type EventRecord } from './seed-data';
+import { DatabaseSeeder } from './migrations/seed-local-db';
+import type { UserProfileRecord, EventMetadataRecord } from './relational-types';
+
+// Backward compatibility type for old test code
+type EventRecord = EventMetadataRecord;
+type UserRecord = UserProfileRecord;
 
 export class TestHelpers {
   private dbSetup = new DatabaseSetup();
@@ -12,33 +16,32 @@ export class TestHelpers {
     const userId = overrides.userId || `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     return {
       userId,
-      type: 'athlete',
-      name: overrides.name || 'Test User',
-      email: overrides.email || `${userId}@test.local`,
-      createdAt: overrides.createdAt || new Date().toISOString(),
+      sortKey: 'Profile', // New hierarchical schema
+      athleteSlug: overrides.athleteSlug || userId.replace(/^test-/, 'test-athlete-'),
+      role: 'user',
+      userSubTypes: ['athlete'],
+      primarySubType: 'athlete',
+      createdAt: Date.now(),
       totalPoints: overrides.totalPoints || 0,
-      contestsParticipated: overrides.contestsParticipated || 0,
-      eventParticipations: overrides.eventParticipations || [],
+      contestCount: overrides.contestCount || 0,
       ...overrides
     };
   }
 
   generateTestEvent(overrides: Partial<EventRecord> = {}): EventRecord {
     const eventId = overrides.eventId || `test-event-${Date.now()}`;
+    const date = overrides.startDate || new Date().toISOString().split('T')[0];
     return {
       eventId,
-      type: 'contest',
-      discipline: overrides.discipline || 'FREESTYLE_HIGHLINE',
-      date: overrides.date || new Date().toISOString().split('T')[0],
-      name: overrides.name || 'Test Event',
-      normalizedName: overrides.normalizedName || 'test event',
-      prize: overrides.prize || 1000,
-      country: overrides.country || 'us',
-      gender: overrides.gender || 0,
-      city: overrides.city || 'Test City',
-      category: overrides.category || 1,
-      createdAt: overrides.createdAt || new Date().toISOString(),
-      participants: overrides.participants || [],
+      sortKey: 'Metadata', // New hierarchical schema (capital M)
+      eventName: overrides.eventName || 'Test Event',
+      startDate: date,
+      endDate: overrides.endDate || date,
+      location: overrides.location || 'Test Location',
+      country: overrides.country || 'USA',
+      contestCount: overrides.contestCount || 0,
+      type: 'competition',
+      createdAt: Date.now(),
       ...overrides
     };
   }
@@ -46,13 +49,13 @@ export class TestHelpers {
   // Database operations
   async createTestUser(data?: Partial<UserRecord>): Promise<UserRecord> {
     const user = this.generateTestUser(data);
-    await dynamodb.putItem('users', user as unknown as Record<string, unknown>);
+    await dynamodb.putItem('sporthub-users', user as unknown as Record<string, unknown>);
     return user;
   }
 
   async createTestEvent(data?: Partial<EventRecord>): Promise<EventRecord> {
     const event = this.generateTestEvent(data);
-    await dynamodb.putItem('events', event as unknown as Record<string, unknown>);
+    await dynamodb.putItem('sporthub-events', event as unknown as Record<string, unknown>);
     return event;
   }
 
@@ -60,23 +63,29 @@ export class TestHelpers {
   async cleanupTestData(testPrefix: string = 'test-'): Promise<number> {
     let totalCleaned = 0;
 
-    // Clean users
-    const users = await dynamodb.scanItems('users');
+    // Clean users (use composite key: userId + sortKey)
+    const users = await dynamodb.scanItems('sporthub-users');
     if (users) {
       for (const user of users) {
         if (user.userId?.toString().startsWith(testPrefix)) {
-          await dynamodb.deleteItem('users', { userId: user.userId });
+          await dynamodb.deleteItem('sporthub-users', {
+            userId: user.userId,
+            sortKey: user.sortKey // Composite key required
+          });
           totalCleaned++;
         }
       }
     }
 
-    // Clean events
-    const events = await dynamodb.scanItems('events');
+    // Clean events (use composite key: eventId + sortKey)
+    const events = await dynamodb.scanItems('sporthub-events');
     if (events) {
       for (const event of events) {
         if (event.eventId?.toString().startsWith(testPrefix)) {
-          await dynamodb.deleteItem('events', { eventId: event.eventId });
+          await dynamodb.deleteItem('sporthub-events', {
+            eventId: event.eventId,
+            sortKey: event.sortKey // Composite key required
+          });
           totalCleaned++;
         }
       }
@@ -87,19 +96,28 @@ export class TestHelpers {
 
   // Query helpers
   async findUserById(userId: string): Promise<UserRecord | null> {
-    const item = await dynamodb.getItem('users', { userId });
+    // Use composite key to get Profile record
+    const item = await dynamodb.getItem('sporthub-users', {
+      userId,
+      sortKey: 'Profile'
+    });
     return item as UserRecord | null;
   }
 
   async findEventById(eventId: string): Promise<EventRecord | null> {
-    const item = await dynamodb.getItem('events', { eventId });
+    // Use composite key to get Metadata record
+    const item = await dynamodb.getItem('sporthub-events', {
+      eventId,
+      sortKey: 'Metadata'
+    });
     return item as EventRecord | null;
   }
 
   async getAllUsers(): Promise<UserRecord[]> {
     try {
-      const items = await dynamodb.scanItems('users');
-      return (items || []) as UserRecord[];
+      const items = await dynamodb.scanItems('sporthub-users');
+      // Filter to only Profile records (sortKey = "Profile")
+      return (items || []).filter(item => item.sortKey === 'Profile') as UserRecord[];
     } catch {
       console.warn('Users table not found, returning empty array');
       return [];
@@ -108,8 +126,9 @@ export class TestHelpers {
 
   async getAllEvents(): Promise<EventRecord[]> {
     try {
-      const items = await dynamodb.scanItems('events');
-      return (items || []) as EventRecord[];
+      const items = await dynamodb.scanItems('sporthub-events');
+      // Filter to only Metadata records (sortKey = "Metadata")
+      return (items || []).filter(item => item.sortKey === 'Metadata') as EventRecord[];
     } catch {
       console.warn('Events table not found, returning empty array');
       return [];
@@ -118,7 +137,7 @@ export class TestHelpers {
 
   // Test environment helpers
   async isTestEnvironmentReady(): Promise<{ ready: boolean; missing: string[] }> {
-    const requiredTables = ['users', 'events'];
+    const requiredTables = ['sporthub-users', 'sporthub-events'];
     const missing: string[] = [];
 
     for (const table of requiredTables) {
@@ -164,7 +183,7 @@ export class TestHelpers {
       }
 
       // Seed with sample data
-      await this.seeder.fullSeed(true);
+      await this.seeder.fullSeed();
 
       console.log('✅ Test environment seeded');
       return true;
@@ -180,9 +199,8 @@ export class TestHelpers {
       !!user &&
       typeof user === 'object' &&
       typeof (user as Record<string, unknown>).userId === 'string' &&
-      typeof (user as Record<string, unknown>).name === 'string' &&
-      typeof (user as Record<string, unknown>).email === 'string' &&
-      typeof (user as Record<string, unknown>).createdAt === 'string'
+      (user as Record<string, unknown>).sortKey === 'Profile' &&
+      typeof (user as Record<string, unknown>).createdAt === 'number'
     );
   }
 
@@ -191,8 +209,9 @@ export class TestHelpers {
       !!event &&
       typeof event === 'object' &&
       typeof (event as Record<string, unknown>).eventId === 'string' &&
-      typeof (event as Record<string, unknown>).name === 'string' &&
-      typeof (event as Record<string, unknown>).date === 'string'
+      (event as Record<string, unknown>).sortKey === 'Metadata' &&
+      typeof (event as Record<string, unknown>).eventName === 'string' &&
+      typeof (event as Record<string, unknown>).startDate === 'string'
     );
   }
 

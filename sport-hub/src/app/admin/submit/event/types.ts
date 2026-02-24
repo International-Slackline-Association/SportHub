@@ -119,7 +119,7 @@ export interface ContestFormValues {
   gender: Gender;
   ageCategory: AgeCategory;
   judgingSystem: JudgingSystem;
-  contestSize: ContestSize;
+  contestSize: ContestType;
   totalPrizeValue?: number;
   judges?: {
     id: string;
@@ -190,7 +190,7 @@ export const initialContestValues: ContestFormValues = {
   judgingSystem: '' as JudgingSystem,
   ageCategory: '' as AgeCategory,
   totalPrizeValue: undefined,
-  contestSize: '' as ContestSize,
+  contestSize: '' as ContestType,
 };
 
 /*******************************************************************************

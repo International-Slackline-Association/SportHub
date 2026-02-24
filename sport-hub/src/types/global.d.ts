@@ -51,14 +51,18 @@ interface User {
   contestsParticipated?: number;
 }
 
-type Discipline = "RIGGING" | "TRICKLINE" | "FREESTYLE_HIGHLINE" | "SPEED_SHORT" | "SPEED_HIGHLINE";
+type Discipline = "OVERALL" | "TRICKLINE" | "TRICKLINE_AERIAL" | "TRICKLINE_JIB_AND_STATIC" | "TRICKLINE_TRANSFER" | "FREESTYLE_HIGHLINE" | "SPEED" | "SPEED_SHORT" | "SPEED_HIGHLINE" | "ENDURANCE" | "BLIND" | "RIGGING" | "FREESTYLE" | "WALKING";
 
 type Role = "ATHLETE" | "JUDGE" | "ISA_VERIFIED" | "ORGANIZER";
 
-type Gender = "FEMALE" | "MALE" | "MIXED" | "NON_BINARY" | "OTHER";
+type Gender = "ALL" | "MEN" | "WOMEN" | "OTHER";
 
-type AgeCategory = "PROFESSIONAL" | "AMATEUR" | "SENIOR" | "YOUTH_U16" | "YOUTH_U14";
+type AgeCategory = "ALL" | "YOUTH" | "SENIOR";
+
+type RankingType = "TOP_SCORE" | "POINT_SCORE";
+
+type ContestType = "WORLD_CHAMPIONSHIP" | "WORLD_CUP" | "MASTERS" | "GRAND_SLAM" | "OPEN" | "CHALLENGE";
+
+type ContestGender = "MIXED" | "MEN_ONLY" | "WOMEN_ONLY";
 
 type JudgingSystem = "ISA_FREESTYLE" | "ISA_SPEED" | "OTHER";
-
-type ContestSize = "LOCAL" | "NATIONAL" | "INTERNATIONAL" | "WORLD_CHAMPIONSHIP";

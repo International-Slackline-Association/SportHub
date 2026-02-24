@@ -7,31 +7,37 @@ export const countryCodeOptions: Option[] = COUNTRIES.map(({ name, code }) => ({
 }));
 
 export const userGenderOptions: Option[] = [
-  { value: "MALE", label: "Male" },
-  { value: "FEMALE", label: "Female" },
-  { value: "NON_BINARY", label: "Non-Binary" },
+  { value: "MEN", label: "Male" },
+  { value: "WOMEN", label: "Female" },
   { value: "OTHER", label: "Other" },
 ];
 
 export const eventGenderOptions: Option[] = [
-  { value: "MALE", label: "Male" },
-  { value: "FEMALE", label: "Female" },
+  { value: "MEN_ONLY", label: "Men Only" },
+  { value: "WOMEN_ONLY", label: "Women Only" },
+  { value: "MIXED", label: "Mixed" },
 ];
 
 export const disciplineOptions: Option[] = [
   { value: "FREESTYLE_HIGHLINE", label: "Freestyle Highline" },
-  { value: "RIGGING", label: "Rigging" },
-  { value: "SPEED_HIGHLINE", label: "Speed Highline" },
-  { value: "SPEED_SHORT", label: "Speed Short" },
   { value: "TRICKLINE", label: "Trickline" },
+  { value: "TRICKLINE_AERIAL", label: "Trickline Aerial" },
+  { value: "TRICKLINE_JIB_AND_STATIC", label: "Trickline Jib & Static" },
+  { value: "TRICKLINE_TRANSFER", label: "Trickline Transfer" },
+  { value: "SPEED", label: "Speed" },
+  { value: "SPEED_SHORT", label: "Speedline Short" },
+  { value: "SPEED_HIGHLINE", label: "Speedline Highline" },
+  { value: "ENDURANCE", label: "Endurance" },
+  { value: "BLIND", label: "Blind" },
+  { value: "RIGGING", label: "Rigging" },
+  { value: "FREESTYLE", label: "Freestyle" },
+  { value: "WALKING", label: "Walking" },
 ];
 
 export const ageCategoryOptions: Option[] = [
-  { value: "PROFESSIONAL", label: "Professional" },
-  { value: "AMATEUR", label: "Amateur" },
+  { value: "ALL", label: "All" },
+  { value: "YOUTH", label: "Youth" },
   { value: "SENIOR", label: "Senior" },
-  { value: "YOUTH_U16", label: "Youth (U16)" },
-  { value: "YOUTH_U14", label: "Youth (U14)" },
 ];
 
 export const judgingSystemOptions: Option[] = [

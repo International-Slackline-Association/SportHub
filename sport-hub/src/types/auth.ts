@@ -1,12 +1,16 @@
 import { DefaultSession } from "next-auth"
+import { Role, Permission } from './rbac'
 
 declare module "next-auth" {
   /**
-   * Extends the built-in session type to include Cognito-specific fields
+   * Extends the built-in session type to include Cognito-specific fields and RBAC
    */
   interface Session {
     user: {
-      id: string
+      id: string                     // Custom user ID (ISA_xxx format) - matches database partition key
+      cognitoSub?: string            // Cognito UUID (for debugging/reference)
+      role: Role                     // User's role: 'user' | 'admin'
+      permissions?: Permission[]     // Granular permissions based on role
     } & DefaultSession["user"]
     accessToken?: string
     idToken?: string
@@ -17,8 +21,7 @@ declare module "next-auth" {
    */
   interface User {
     id: string
+    role: Role
+    permissions?: Permission[]
   }
 }
-
-// Note: JWT token extensions are handled inline in the callbacks
-// NextAuth v5 beta doesn't support module augmentation for next-auth/jwt

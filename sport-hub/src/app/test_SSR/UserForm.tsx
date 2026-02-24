@@ -13,6 +13,8 @@ interface Form {
   gender: string;
   email: string;
   country?: string;
+  city?: string;
+  birthdate?: string;
   isaId?: string;
 };
 
@@ -23,6 +25,8 @@ const validationSchema = Yup.object({
   gender: Yup.string().required('Please select a gender'),
   email: Yup.string().email('Invalid email').required(),
   country: Yup.string(),
+  city: Yup.string(),
+  birthdate: Yup.string(),
   isaId: Yup.string(),
 });
 
@@ -33,6 +37,8 @@ const defaultValues = {
   gender: '',
   email: '',
   country: '',
+  city: '',
+  birthdate: '',
   isaId: '',
 };
 
@@ -41,13 +47,16 @@ interface UserFormProps {
   onSubmit?: (values: Form, helpers: FormikHelpers<Form>) => Promise<void>;
   showSubmitButton?: boolean;
   formRef?: React.RefObject<FormikProps<Form> | null>;
+  /** When true, prevents editing of the user ID field (for edit mode) */
+  isEditMode?: boolean;
 }
 
 export default function UserForm({
   initialValues,
   onSubmit,
   showSubmitButton = true,
-  formRef
+  formRef,
+  isEditMode = false
 }: UserFormProps) {
   const [apiSuccess, setApiSuccess] = useState(false);
   const [apiError, setApiError] = useState("");
@@ -87,7 +96,9 @@ export default function UserForm({
             <FormikTextField
               id="id"
               label="User ID"
-              placeholder="Auto-generated if empty"
+              placeholder={isEditMode ? undefined : "Auto-generated if empty"}
+              disabled={isEditMode}
+              title={isEditMode ? "User ID cannot be changed after creation" : undefined}
             />
             <FormikTextField
               id="isaId"
@@ -96,25 +107,40 @@ export default function UserForm({
             />
             <FormikTextField
               id="email"
+              label="Email"
               placeholder="Enter email address"
             />
             <FormikTextField
               id="name"
+              label="Name"
               placeholder="Enter first name"
             />
             <FormikTextField
               id="surname"
+              label="Surname"
               placeholder="Enter last name"
             />
             <FormikSelectField
               id="gender"
+              label="Gender"
               options={userGenderOptions}
               placeholder="Select gender"
             />
             <FormikSelectField
               id="country"
+              label="Country"
               options={countryCodeOptions}
               placeholder="Select country"
+            />
+            <FormikTextField
+              id="city"
+              label="City"
+              placeholder="Enter city"
+            />
+            <FormikTextField
+              id="birthdate"
+              label="Birthdate"
+              placeholder="YYYY-MM-DD"
             />
           </div>
           {showSubmitButton && <FormikSubmitButton />}

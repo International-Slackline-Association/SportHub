@@ -8,11 +8,9 @@ interface AgeCategoryProps {
 }
 
 const ageCategoryLabels: Record<AgeCategory, string> = {
-  AMATEUR: "Amateur",
-  PROFESSIONAL: "pro (17-35)",
+  ALL: "All",
+  YOUTH: "Youth",
   SENIOR: "Senior",
-  YOUTH_U14: "Youth u14",
-  YOUTH_U16: "youth u16",
 };
 
 const AgeCategory = ({ variant, className = "" }: AgeCategoryProps) => {

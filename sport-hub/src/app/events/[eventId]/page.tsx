@@ -12,10 +12,11 @@ interface EventPageProps {
 
 export default async function EventPage({ params }: EventPageProps) {
   const { eventId } = await params;
+  const decodedEventId = decodeURIComponent(eventId);
 
   // Fetch all contests and find the specific one
   const contests = await getContestsData();
-  const event = contests.find(c => c.eventId === eventId);
+  const event = contests.find(c => c.eventId === decodedEventId);
 
   if (!event) {
     notFound();
@@ -56,7 +57,11 @@ export default async function EventPage({ params }: EventPageProps) {
                           {participant.name}
                         </Link>
                       </td>
-                      <td className="p-3 text-right">{participant.points}</td>
+                      <td className="p-3 text-right">
+                        {isNaN(participant.points) || participant.points === undefined
+                          ? '-'
+                          : participant.points}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

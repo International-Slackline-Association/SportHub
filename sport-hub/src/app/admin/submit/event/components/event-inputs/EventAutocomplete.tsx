@@ -6,7 +6,7 @@ import { useFormikContext } from 'formik';
 import { EventSubmissionFormValues } from '../../types';
 import React from 'react';
 import FormikAutocomplete from '@ui/Form/FormikAutocomplete';
-import { EventRecord } from '@lib/relational-types';
+import { EventMetadataRecord } from '@lib/relational-types';
 import { Option } from '@ui/Form';
 
 export default function EventAutocomplete() {
@@ -24,13 +24,13 @@ export default function EventAutocomplete() {
     queryKey: ['events'],
     queryFn: async () => (await fetch('/api/events')).json(),
     enabled: debounced.length >= 3,
-    select: (data) => data.filter((ev: { name: string }) =>
-      ev.name.toLowerCase().includes(debounced.toLowerCase())
+    select: (data) => data.filter((ev: EventMetadataRecord) =>
+      ev.eventName.toLowerCase().includes(debounced.toLowerCase())
     ),
   });
 
   const updateFormWithSelectedEvent = ({ value }: Option) => {
-    const event = events.find(({ eventId }: EventRecord) => eventId === value);
+    const event = events.find(({ eventId }: EventMetadataRecord) => eventId === value);
 
     const nextTouchState = {
       event: {
@@ -79,8 +79,8 @@ export default function EventAutocomplete() {
       isLoading={isLoading}
       isError={isError}
       label="Event Name"
-      options={events?.map(({ eventId, name }: EventRecord) => ({
-        label: name,
+      options={events?.map(({ eventId, eventName }: EventMetadataRecord) => ({
+        label: eventName,
         value: eventId
       })) || []}
       // Prevent the field from being set to eventId; we'll set name + other fields ourselves

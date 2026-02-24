@@ -1,51 +1,165 @@
 import type { Metadata } from 'next';
-import { dynamodb } from '@lib/dynamodb';
-import { deleteUser } from './actions';
-import UserManagementClient from './UserManagementClient';
+import { dynamodb, USERS_TABLE } from '@lib/dynamodb';
+import { auth } from '@lib/auth';
 import UserForm from './UserForm';
-import Button from '@ui/Button';
+import UserListPagination from './UserListPagination';
+import CurrentUserPanel from './CurrentUserPanel';
+import { requireTestPageAccess } from '@lib/test-page-access';
+import type { Role, UserSubType } from 'src/types/rbac';
 
 export const metadata: Metadata = {
-  title: 'SportHub - About',
+  title: 'SportHub - Test SSR',
 };
 
-const TABLE_NAME = 'users';
+const PAGE_SIZE = 100;
 
-async function getUsers(): Promise<User[]> {
+interface User {
+  id: string;
+  name: string;
+  surname?: string;
+  email: string;
+  createdAt: string;
+  updatedAt?: string;
+  userId?: string;
+  isaUsersId?: string;
+  country?: string;
+  city?: string;
+  birthdate?: string;
+  gender?: string;
+  firstCompetition?: string;
+  lastCompetition?: string;
+  totalPoints?: number;
+  contestsParticipated?: number;
+  role?: Role;
+  userSubTypes?: UserSubType[];
+  primarySubType?: UserSubType;
+}
+
+interface PaginatedUsersResult {
+  users: User[];
+  nextCursor: string | null;
+  hasMore: boolean;
+  totalCount: number;
+}
+
+async function getUsers(): Promise<PaginatedUsersResult> {
   try {
-    const items = await dynamodb.scanItems(TABLE_NAME);
-    const users = items ? items.map(item => ({
-      id: item.id ?? '',
-      name: item.name ?? '',
-      email: item.email ?? '',
-      createdAt: item.createdAt ?? '',
-      updatedAt: item.updatedAt,
-      userId: item.userId,
-      country: item.country,
-      firstCompetition: item.firstCompetition,
-      lastCompetition: item.lastCompetition,
-      totalPoints: item.totalPoints ?? 0,
-      contestsParticipated: item.contestsParticipated ?? 0
+    const filterOptions = {
+      filterExpression: 'sortKey = :profileKey',
+      expressionAttributeValues: { ':profileKey': 'Profile' },
+    };
+
+    // Get total count and paginated results
+    const [totalCount, result] = await Promise.all([
+      dynamodb.countItems(USERS_TABLE, filterOptions),
+      dynamodb.scanItemsPaginated(USERS_TABLE, {
+        limit: PAGE_SIZE,
+        ...filterOptions,
+      }),
+    ]);
+
+    const users = result.items ? result.items.map(item => ({
+      id: (item.userId ?? item.id ?? '') as string,
+      name: (item.name ?? item.athleteSlug ?? '') as string,
+      surname: (item.surname ?? '') as string,
+      email: (item.email ?? '') as string,
+      createdAt: (item.createdAt ?? '') as string,
+      updatedAt: item.updatedAt as string | undefined,
+      userId: item.userId as string | undefined,
+      isaUsersId: item.isaUsersId as string | undefined,
+      country: item.country as string | undefined,
+      city: item.city as string | undefined,
+      birthdate: item.birthdate as string | undefined,
+      gender: item.gender as string | undefined,
+      firstCompetition: item.firstCompetition as string | undefined,
+      lastCompetition: item.lastCompetition as string | undefined,
+      totalPoints: (item.totalPoints as number) ?? 0,
+      contestsParticipated: ((item.contestsParticipated ?? item.contestCount) as number) ?? 0,
+      role: (item.role as Role) ?? 'user',
+      userSubTypes: (item.userSubTypes as UserSubType[]) ?? [],
+      primarySubType: item.primarySubType as UserSubType | undefined,
     })) : [];
-    return users;
+
+    const nextCursor = result.lastEvaluatedKey
+      ? Buffer.from(JSON.stringify(result.lastEvaluatedKey)).toString('base64')
+      : null;
+
+    return { users, nextCursor, hasMore: result.hasMore, totalCount };
   } catch (error: unknown) {
     console.error('Error fetching users:', error);
     // Handle missing table gracefully - check multiple possible error formats
     if ((error && typeof error === 'object' && 'name' in error && error.name === 'ResourceNotFoundException') ||
         (error && typeof error === 'object' && '__type' in error && typeof error.__type === 'string' && error.__type.includes('ResourceNotFoundException')) ||
         (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' && error.message.includes('non-existent table'))) {
-      console.log(`Table ${TABLE_NAME} does not exist. Visit /test_LOCAL to create tables.`);
+      console.log(`Table ${USERS_TABLE} does not exist. Visit /test_LOCAL to create tables.`);
     }
-    return [];
+    return { users: [], nextCursor: null, hasMore: false, totalCount: 0 };
+  }
+}
+
+async function getCurrentUserFromDb(userId: string): Promise<User | null> {
+  try {
+    const item = await dynamodb.getItem(USERS_TABLE, {
+      userId: userId,
+      sortKey: 'Profile',
+    });
+
+    if (!item) return null;
+
+    return {
+      id: (item.userId ?? item.id ?? '') as string,
+      name: (item.name ?? item.athleteSlug ?? '') as string,
+      surname: (item.surname ?? '') as string,
+      email: (item.email ?? '') as string,
+      createdAt: (item.createdAt ?? '') as string,
+      updatedAt: item.updatedAt as string | undefined,
+      userId: item.userId as string | undefined,
+      isaUsersId: item.isaUsersId as string | undefined,
+      country: item.country as string | undefined,
+      city: item.city as string | undefined,
+      birthdate: item.birthdate as string | undefined,
+      gender: item.gender as string | undefined,
+      firstCompetition: item.firstCompetition as string | undefined,
+      lastCompetition: item.lastCompetition as string | undefined,
+      totalPoints: (item.totalPoints as number) ?? 0,
+      contestsParticipated: ((item.contestsParticipated ?? item.contestCount) as number) ?? 0,
+      role: (item.role as Role) ?? 'user',
+      userSubTypes: (item.userSubTypes as UserSubType[]) ?? [],
+      primarySubType: item.primarySubType as UserSubType | undefined,
+    };
+  } catch (error) {
+    console.error('Error fetching current user:', error);
+    return null;
   }
 }
 
 export default async function AboutPage() {
-  const users = await getUsers();
+  await requireTestPageAccess();
+
+  const session = await auth();
+
+  // Fetch users list and current user's DB record in parallel
+  const [usersResult, currentUserData] = await Promise.all([
+    getUsers(),
+    session?.user?.id ? getCurrentUserFromDb(session.user.id) : Promise.resolve(null),
+  ]);
+
+  const { users, nextCursor, hasMore, totalCount } = usersResult;
 
   return (
     <div className="container mx-auto p-4 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-6">Users Management</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Users Management (SSR)</h1>
+        <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+          {process.env.NODE_ENV === 'development' ? 'Dev Mode' : 'Admin Only'}
+        </span>
+      </div>
+
+      {/* Current User Session Panel */}
+      <CurrentUserPanel
+        session={session}
+        dbUser={currentUserData}
+      />
 
       {/* Add User Form */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
@@ -59,44 +173,13 @@ export default async function AboutPage() {
           <h2 className="text-xl font-semibold">Users List</h2>
         </div>
         <div className="divide-y divide-gray-200">
-          {users.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">
-              <p>No users found.</p>
-              <p className="text-sm mt-2">If tables don&apos;t exist, visit <a href="/test_LOCAL" className="text-blue-600 hover:underline">/test_LOCAL</a> to create them.</p>
-            </div>
-          ) : (
-            users.map((user) => (
-              <div key={user.id} className="p-6 flex justify-between items-center hover:bg-gray-50">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg">{user.name}</h3>
-                  <p className="text-gray-600">{user.email}</p>
-                  <p className="text-sm text-gray-500">ID: {user.id}</p>
-                  {user.country && <p className="text-sm text-gray-500">Country: {user.country}</p>}
-                  <div className="flex gap-4 text-sm text-gray-500 mt-1">
-                    <span>Points: {user.totalPoints || 0}</span>
-                    <span>Contests: {user.contestsParticipated || 0}</span>
-                  </div>
-                  {(user.firstCompetition || user.lastCompetition) && (
-                    <p className="text-xs text-gray-400 mt-1">
-                      {user.firstCompetition} → {user.lastCompetition}
-                    </p>
-                  )}
-                </div>
-                <div className="flex gap-2 ml-4">
-                  <UserManagementClient user={user} />
-                  <form action={deleteUser} style={{ display: 'inline' }}>
-                    <input type="hidden" name="id" value={user.id} />
-                    <Button
-                      type="submit"
-                      variant="destructive"
-                    >
-                      Delete
-                    </Button>
-                  </form>
-                </div>
-              </div>
-            ))
-          )}
+          <UserListPagination
+            initialUsers={users}
+            initialCursor={nextCursor}
+            initialHasMore={hasMore}
+            totalCount={totalCount}
+            currentUserId={session?.user?.id}
+          />
         </div>
       </div>
     </div>

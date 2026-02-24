@@ -2,7 +2,7 @@ import React from "react";
 import styles from "./styles.module.css";
 import { pascalCaseToTitleCase } from ".";
 
-export type ContestSizeVariant = "MASTERS" | "OPEN" | "GRAND_SLAM" | "WORLD_CUP" | "WORLD_CHAMPIONSHIP";
+export type ContestSizeVariant = ContestType;
 
 interface ContestSizeProps {
   variant: ContestSizeVariant;
@@ -10,11 +10,12 @@ interface ContestSizeProps {
 }
 
 const contestSizeLabels: Record<ContestSizeVariant, string> = {
-  GRAND_SLAM: "GRAND SLAM",
-  MASTERS: "MASTERS",
-  OPEN: "OPEN",
+  WORLD_CHAMPIONSHIP: "WORLD CHAMPIONSHIP",
   WORLD_CUP: "WORLD CUP",
-  WORLD_CHAMPIONSHIP: "WORLD CHAMPIONSHIP"
+  MASTERS: "MASTERS",
+  GRAND_SLAM: "GRAND SLAM",
+  OPEN: "OPEN",
+  CHALLENGE: "CHALLENGE",
 };
 
 const ContestSize = ({ variant, className = "" }: ContestSizeProps) => {

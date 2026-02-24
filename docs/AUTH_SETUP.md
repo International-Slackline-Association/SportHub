@@ -364,7 +364,7 @@ export default async function Page() {
     return <div>Please sign in</div>
   }
 
-  return <div>Welcome {session.user.name}</div>
+  return <div>Welcome {currentUser?.name}</div>
 }
 ```
 
@@ -380,7 +380,7 @@ export default function Component() {
   if (status === "loading") return <div>Loading...</div>
   if (!session) return <div>Not authenticated</div>
 
-  return <div>Welcome {session.user.name}</div>
+  return <div>Welcome {currentUser?.name}</div>
 }
 ```
 

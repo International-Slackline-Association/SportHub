@@ -20,7 +20,7 @@ const CountryFlagWithName = ({ countryCode, defaultValue="N/A" }: { countryCode:
 
   return (
     <div className="flex items-center gap-2" title={countryName}>
-      <CircleFlag countryCode={"es"} height={22} width={22} />
+      <CircleFlag countryCode={countryCode.toLowerCase()} height={22} width={22} />
       <span className="text-sm text-gray-600">{countryName}</span>
     </div>
   );

@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { testHelpers } from '@lib/test-helpers';
 
 export async function POST() {
+  if (process.env.DYNAMODB_LOCAL !== 'true') {
+    return NextResponse.json({ error: 'Only available in local development mode' }, { status: 403 });
+  }
+
   try {
     const count = await testHelpers.cleanupTestData('test-');
 

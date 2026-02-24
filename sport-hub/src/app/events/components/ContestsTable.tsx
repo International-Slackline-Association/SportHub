@@ -17,7 +17,8 @@ const CountryFlagWithName = ({ countryCode, defaultValue="N/A" }: { countryCode:
     return <span className="text-gray-500">{defaultValue}</span>;
   }
 
-  const countryName = COUNTRIES.find(country => country.code === countryCode.toLowerCase())?.name;
+  const country = COUNTRIES.find(c => c.code.toLowerCase() === countryCode.toLowerCase());
+  const countryName = country?.name || countryCode.toUpperCase();
 
   return (
     <div className="flex items-center gap-2" title={countryName}>
@@ -26,6 +27,7 @@ const CountryFlagWithName = ({ countryCode, defaultValue="N/A" }: { countryCode:
     </div>
   );
 };
+
 const columnHelper = createColumnHelper<ContestData>();
 const columns = [
   columnHelper.accessor("name", {
@@ -103,13 +105,14 @@ const columns = [
       const winner = athletes.find(athlete => athlete.place === "1");
       if (!winner) return "No winner";
 
+      const displayName = `${winner.name} ${winner.surname || ''}`.trim();
       return (
-        <a
+        <Link
           href={`/athlete-profile/${winner.userId}`}
           className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
         >
-          {winner.name}
-        </a>
+          {displayName}
+        </Link>
       );
     },
   }),
@@ -121,10 +124,12 @@ const columns = [
 
 const SubmitButton = () => {
   const { data: session } = useSession();
-  const ADMIN_IDS = ["6f75dd45-2d90-4804-920f-d180ff71411a", "6501e189-14a7-48f4-8e22-620ac3d3760b"];
-  const hideSubmitButton = !ADMIN_IDS.includes(session?.user?.id || "");
 
-  if (hideSubmitButton) {
+  // Only show submit button to admins
+  // TODO: In the future, also check for 'organizer' sub-type for regular users
+  const canSubmitEvents = session?.user?.role === 'admin';
+
+  if (!canSubmitEvents) {
     return null;
   }
 

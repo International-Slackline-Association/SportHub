@@ -16,13 +16,19 @@
     "db:count": "DYNAMODB_LOCAL=true tsx src/lib/seed-local-db.ts count",
     "db:stop": "docker-compose stop dynamodb-local",
     "db:clean": "docker-compose down -v",
+    "db:gui": "npx dynamodb-admin -p 8001",
     "sync:compare": "tsx scripts/sync-dynamodb.ts --compare",
     "sync:all": "tsx scripts/sync-dynamodb.ts",
     "sync:recreate": "tsx scripts/sync-dynamodb.ts --recreate",
     "revalidate:all": "./scripts/revalidate-pages.sh",
     "revalidate:rankings": "./scripts/revalidate-pages.sh rankings",
     "revalidate:events": "./scripts/revalidate-pages.sh events",
-    "test:local": "NODE_ENV=development DYNAMODB_LOCAL=true pnpm run dev"
+    "test:local": "NODE_ENV=development DYNAMODB_LOCAL=true next dev",
+    "migrate:dry-run": "DYNAMODB_LOCAL=true tsx src/lib/migrations/migrate-isa-rankings-to-sporthub.ts --dry-run",
+    "migrate:execute": "DYNAMODB_LOCAL=true tsx src/lib/migrations/migrate-isa-rankings-to-sporthub.ts --execute",
+    "db:setup:aws": "env $(grep -v '^#' .env.production | xargs) tsx src/lib/db-setup.ts",
+    "migrate:aws:dry-run": "env $(grep -v '^#' .env.production | xargs) tsx src/lib/migrations/migrate-isa-rankings-to-sporthub.ts --dry-run",
+    "migrate:aws:execute": "env $(grep -v '^#' .env.production | xargs) tsx src/lib/migrations/migrate-isa-rankings-to-sporthub.ts --execute"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.821.0",
