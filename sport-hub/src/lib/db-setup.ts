@@ -273,12 +273,15 @@ export class DatabaseSetup {
   }
 }
 
-// CLI entry point
-const setup = new DatabaseSetup();
-setup.createAllTables().then(results => {
-  if (results.failed.length > 0) {
-    console.error('❌ Failed tables:', results.failed.join(', '));
-    process.exit(1);
-  }
-  console.log('✅ All tables ready:', results.success.map(t => getTableName(t)).join(', '));
-});
+// CLI entry point - only run when executed directly (not when imported as a module)
+const isMainModule = import.meta.url === `file://${process.argv[1]}`;
+if (isMainModule) {
+  const setup = new DatabaseSetup();
+  setup.createAllTables().then(results => {
+    if (results.failed.length > 0) {
+      console.error('❌ Failed tables:', results.failed.join(', '));
+      process.exit(1);
+    }
+    console.log('✅ All tables ready:', results.success.map(t => getTableName(t)).join(', '));
+  });
+}

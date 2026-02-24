@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import PageLayout from '@ui/PageLayout';
 import DisciplineCard from './components/DisciplineCard';
 import { FeaturedAthleteSection } from '@ui/FeaturedAthleteCard';
