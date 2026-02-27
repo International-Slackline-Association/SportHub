@@ -55,4 +55,4 @@ AWSCLIV2.pkg
 *.claude
 
 # database sync
-/data-exports
+sport-hub/src/mocks/data-exports/isa-rankings-export.json

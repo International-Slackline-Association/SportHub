@@ -8,11 +8,11 @@ export async function POST() {
 
   try {
     const seeder = new DatabaseSeeder();
-    await seeder.fullSeed();
+    await seeder.fullSeedFromRankings();
 
     return NextResponse.json({
       success: true,
-      message: 'Database seeded successfully with mock data'
+      message: 'Database seeded from ISA-Rankings mock data (200 athletes, 10 events)'
     });
   } catch (error) {
     console.error('Error seeding database:', error);

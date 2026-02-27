@@ -6,7 +6,7 @@
  */
 
 import { dynamodb, USERS_TABLE } from './dynamodb';
-import type { Role, Permission } from '../types/rbac';
+import type { Role, Permission, UserSubType } from '../types/rbac';
 import { ROLE_PERMISSIONS } from '../types/rbac';
 import type { UserProfileRecord } from './relational-types';
 
@@ -16,6 +16,7 @@ import type { UserProfileRecord } from './relational-types';
 interface RoleCacheEntry {
   role: Role;
   permissions: Permission[];
+  userSubTypes: UserSubType[];
   timestamp: number;
 }
 
@@ -49,11 +50,13 @@ export async function getUserRole(userId: string): Promise<Role> {
 
     const role = (user.role as Role) || 'user';
     const permissions = ROLE_PERMISSIONS[role];
+    const userSubTypes = (user.userSubTypes as UserSubType[]) || [];
 
     // Update cache
     roleCache.set(userId, {
       role,
       permissions,
+      userSubTypes,
       timestamp: Date.now(),
     });
 
@@ -82,6 +85,24 @@ export async function getUserPermissions(userId: string): Promise<Permission[]> 
   // Fetch role (which will also cache permissions)
   const role = await getUserRole(userId);
   return ROLE_PERMISSIONS[role];
+}
+
+/**
+ * Get user's sub-types from database with caching
+ *
+ * @param userId - Custom user ID (SportHubID:xxx or ISA_xxx format)
+ * @returns Array of UserSubType values
+ */
+export async function getUserSubTypes(userId: string): Promise<UserSubType[]> {
+  // Check cache first
+  const cached = roleCache.get(userId);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.userSubTypes;
+  }
+
+  // Fetch role (which will also cache userSubTypes)
+  await getUserRole(userId);
+  return roleCache.get(userId)?.userSubTypes ?? [];
 }
 
 /**

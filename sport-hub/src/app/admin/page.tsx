@@ -25,7 +25,7 @@ export default async function AdminPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Link
-              href="/admin/submit/event"
+              href="/events/submit"
               className="block p-6 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
             >
               <h3 className="text-lg font-semibold text-blue-900 mb-2">Submit Event</h3>

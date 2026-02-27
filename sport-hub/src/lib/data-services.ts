@@ -43,6 +43,10 @@ class SimpleCache {
     return entry.data;
   }
 
+  delete(key: string): void {
+    this.cache.delete(key);
+  }
+
   clear(): void {
     this.cache.clear();
   }
@@ -50,13 +54,25 @@ class SimpleCache {
 
 const cache = new SimpleCache();
 
+// Export cache utilities
+export const invalidateUsersCache = () => {
+  // Clear all user caches regardless of subtype
+  ['', 'athlete', 'admin'].forEach(subtype => {
+    cache.delete(`users-data-${subtype}`);
+  });
+};
+
 // ===========================================
 // USER DATA SERVICES
 // ===========================================
 export async function getUsers({ subtype }: { subtype: string }): Promise<Partial<UserRecord>[]> {
   const cacheKey = `users-data-${subtype}`;
-  const cached = cache.get<UserRecord[]>(cacheKey);
-  if (cached) return cached;
+  // const cached = cache.get<UserRecord[]>(cacheKey);
+
+  // TODO: We're running into a bug where the cachce sometimes returns stale data after user creation.
+  // Tried to fix by adding more aggressive cache invalidation, but still seeing it happen occasionally.
+  // Need to investigate further.
+  // if (cached) return cached;
 
   try {
     const items = await dynamodb.scanItems(USERS_TABLE);
@@ -67,6 +83,7 @@ export async function getUsers({ subtype }: { subtype: string }): Promise<Partia
     // TODO: Filter by subtype
     const users = items.map(userRecord => ({
       name: userRecord.name || '',
+      surname: userRecord.surname || '',
       userId: userRecord.userId || '',
     }));
 

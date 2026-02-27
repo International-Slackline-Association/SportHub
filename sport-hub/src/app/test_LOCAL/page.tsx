@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { testHelpers } from '@lib/test-helpers';
-import { getDataStats } from '@lib/migrations/seed-data';
+import { getRankingsDataStats as getDataStats } from '@lib/migrations/seed-from-rankings-data';
 import LocalTestInterface from './LocalTestInterface';
 import { redirect } from 'next/navigation';
 

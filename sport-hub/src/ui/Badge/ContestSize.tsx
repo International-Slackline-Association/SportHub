@@ -9,15 +9,6 @@ interface ContestSizeProps {
   className?: string;
 }
 
-const contestSizeLabels: Record<ContestSizeVariant, string> = {
-  WORLD_CHAMPIONSHIP: "WORLD CHAMPIONSHIP",
-  WORLD_CUP: "WORLD CUP",
-  MASTERS: "MASTERS",
-  GRAND_SLAM: "GRAND SLAM",
-  OPEN: "OPEN",
-  CHALLENGE: "CHALLENGE",
-};
-
 const ContestSize = ({ variant, className = "" }: ContestSizeProps) => {
   const variantClass = `contestSize${pascalCaseToTitleCase(variant)}`;
 
@@ -31,7 +22,7 @@ const ContestSize = ({ variant, className = "" }: ContestSizeProps) => {
       ].filter(Boolean).join(" ")}
     >
       <div className={styles.dot} />
-      {contestSizeLabels[variant]}
+      {variant.replaceAll("_", " ")}
     </div>
   );
 };

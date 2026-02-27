@@ -29,8 +29,9 @@ AWS_ACCESS_KEY_ID=dummy AWS_SECRET_ACCESS_KEY=dummy aws dynamodb list-tables --e
 
 1. **Open the test interface**: http://localhost:3000/test_LOCAL
 2. **Click "Setup Tables"** - Creates required database tables
-3. **Click "Seed Data"** - Loads ~1,686 athletes and ~5,186 contest entries
-    - This can take a minute...
+3. **Click "Seed Data"** - Seeds from `src/mocks/data-exports/rankings-seed-data.json`
+    - 200 athletes, 10 events, 40 contests, ~1,600 ranking records
+    - Takes about 30–60 seconds
 4. **Verify data loaded** - Check the data counts update on the page
 
 ## Available Commands
@@ -66,14 +67,22 @@ Once seeded, visit these pages to test functionality:
 - **`/test_SSR`** - Server-side rendering tests
 - **`/test_CSR`** - Client-side rendering tests
 
+## Seed Data Source
+
+Seed data comes from `src/mocks/data-exports/rankings-seed-data.json` — a reduced, anonymised export of the ISA-Rankings table (no real emails, profile URLs, or personal data). It is committed to the repo and requires no external dependencies.
+
+The `ISA-Rankings Migration` section on `/test_LOCAL` is a separate path used only when migrating directly from the live ISA-Rankings DynamoDB table (requires AWS credentials and access). For local development, always use **Seed Data**.
+
 ## Data Overview
 
 After seeding you'll have:
 
-- **1,686 unique athletes** (user profiles)
-- **5,186 athlete entries** (individual contest performances)
-- **~400 contests** across multiple disciplines
-- **Relational structure** enabling efficient lookups
+- **200 unique athletes** (user profiles, no ISA user IDs)
+- **1,600 ranking records** (Trickline + Highline, years 2024 and all-time)
+- **2,020 participation records** (athletes distributed across contests)
+- **10 events** across FR, DE, US, BR, CH, JP, AU, ES, CA, IT (2024–2025)
+- **40 contests** (Trickline/Highline × Men/Women per event)
+- **Hierarchical sort-key schema** enabling efficient lookups without table scans
 
 ## Troubleshooting
 
