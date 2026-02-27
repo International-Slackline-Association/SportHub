@@ -346,40 +346,51 @@ export function transformRankingsData(): {
 // ============================================================================
 
 export function getRankingsDataStats() {
-  const data = transformRankingsData();
+  // Computed directly from the static definitions — does not invoke transformRankingsData()
+  // so importing this function has no side effects and produces no console output.
+  const athletes = seedAthletes as SeedAthlete[];
+  const athleteCount = athletes.length;                      // 200
+  const genderGroups = 2;
+  // rankings: each athlete gets 2 disciplines × 2 years × 2 types = 8 records
+  const rankingsPerAthlete = DISCIPLINES.length * 2 * 2;
+  const athleteRankings = athleteCount * rankingsPerAthlete;
 
-  const disciplines = [...new Set(data.contests.map((c) => c.discipline))];
-  const countries = [...new Set(data.eventMetadata.map((e) => e.country))];
-  const contestDates = data.contests.map((c) => c.contestDate).filter(Boolean);
+  const eventCount = EVENTS.length;                          // 10
+  const contestCount = eventCount * DISCIPLINES.length * genderGroups; // 40
+
+  // Count participations by running just the participates() predicate
+  let athleteParticipations = 0;
+  for (let rankIndex = 0; rankIndex < athleteCount / genderGroups; rankIndex++) {
+    for (let eventIdx = 0; eventIdx < eventCount; eventIdx++) {
+      for (let disciplineIdx = 0; disciplineIdx < DISCIPLINES.length; disciplineIdx++) {
+        if (participates(rankIndex, eventIdx, disciplineIdx)) athleteParticipations++;
+      }
+    }
+  }
+  athleteParticipations *= genderGroups; // same distribution for each gender group
+
+  const disciplines = DISCIPLINES.map((d) => d.code);
+  const countries = EVENTS.map((e) => e.country);
   const dateRange = {
-    earliest: contestDates.reduce((min, d) => (d < min ? d : min), contestDates[0] ?? ''),
-    latest:   contestDates.reduce((max, d) => (d > max ? d : max), contestDates[0] ?? ''),
+    earliest: EVENTS[0].start,
+    latest:   EVENTS[EVENTS.length - 1].start,
   };
 
-  const totalUserRecords =
-    data.userProfiles.length +
-    data.athleteRankings.length +
-    data.athleteParticipations.length;
-  const totalEventRecords = data.eventMetadata.length + data.contests.length;
+  const totalUserRecords = athleteCount + athleteRankings + athleteParticipations;
+  const totalEventRecords = eventCount + contestCount;
 
   return {
-    userProfiles:           data.userProfiles.length,
-    athleteRankings:        data.athleteRankings.length,
-    athleteParticipations:  data.athleteParticipations.length,
+    userProfiles:           athleteCount,
+    athleteRankings,
+    athleteParticipations,
     totalUserRecords,
-    eventMetadata:          data.eventMetadata.length,
-    contests:               data.contests.length,
+    eventMetadata:          eventCount,
+    contests:               contestCount,
     totalEventRecords,
     disciplines,
     countries,
     dateRange,
-    athletesWithRankings:
-      data.athleteRankings.length > 0
-        ? new Set(data.athleteRankings.map((r) => r.userId)).size
-        : 0,
-    athletesWithParticipations:
-      data.athleteParticipations.length > 0
-        ? new Set(data.athleteParticipations.map((p) => p.userId)).size
-        : 0,
+    athletesWithRankings:        athleteCount,
+    athletesWithParticipations:  athleteCount,
   };
 }
