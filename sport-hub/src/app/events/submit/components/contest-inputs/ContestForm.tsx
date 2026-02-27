@@ -12,6 +12,7 @@ import Button from '@ui/Button';
 import sharedStyles from '../styles.module.css';
 import styles from './styles.module.css';
 import { ErrorMessage } from '../ErrorMessage';
+import { getContestNameFromForm } from './TabbedContestForms';
 
 type Props = {
   contestIdx: number;
@@ -33,7 +34,10 @@ const parseErrorsForContest = (errors: FormikErrors<EventSubmissionFormValues>, 
   const errorMessages = [];
 
   if (contestHasGeneralErrors) {
-    errorMessages.push("Error in contest general info");
+    errorMessages.push("Missing contest general information.");
+    if (contestErrors.contestSize) {
+      errorMessages.push("Contest size is required to calculate points.");
+    }
   }
 
   if (contestHasJudgesError) {
@@ -66,7 +70,6 @@ export default function ContestForm({ contestIdx, onRemove }: Props) {
   const [activeTab, setActiveTab] = useState('GENERAL_INFO');
 
   const contestKey = `contests[${contestIdx}]`;
-  const contestLabel = `Contest ${Number(contestIdx) + 1}`;
   const currentContest = getIn(values, contestKey) || {};
   const { judges = [], results = [] } = currentContest;
 
@@ -81,7 +84,7 @@ export default function ContestForm({ contestIdx, onRemove }: Props) {
           <ErrorMessage>{errorMessage}</ErrorMessage>
         )}
         <div className={cn(styles.contestFormHeader)}>
-          <h3>{contestLabel}</h3>
+          <h3>{getContestNameFromForm(values, contestIdx)}</h3>
           <TabGroup
             activeTab={activeTab}
             className={sharedStyles.borderBottom}

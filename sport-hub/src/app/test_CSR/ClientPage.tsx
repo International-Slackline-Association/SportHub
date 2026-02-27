@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { FormikHelpers, type FormikProps } from 'formik';
 import Modal from '@ui/Modal';
 import Button from '@ui/Button';
-import UserForm from '../test_SSR/UserForm';
+import { UpdateUserForm } from '@ui/UserForm';
 
 interface FormValues {
   id: string;
@@ -267,18 +267,6 @@ export default function TestCSRPage() {
       setSubmitting(false);
     }
   };
-
-  const getEditFormInitialValues = (user: User): FormValues => ({
-    id: user.id,
-    name: user.name,
-    surname: user.surname || '',
-    gender: user.gender || '',
-    email: user.email,
-    country: user.country || '',
-    city: user.city || '',
-    birthdate: user.birthdate || '',
-    isaId: user.isaUsersId || '',
-  });
 
   const deleteUser = async (id: string) => {
     if (typeof window !== 'undefined' && !confirm('Are you sure you want to delete this user?')) return;
@@ -641,12 +629,11 @@ export default function TestCSRPage() {
         showDefaultActions={true}
       >
         {editingUser && (
-          <UserForm
-            initialValues={getEditFormInitialValues(editingUser)}
+          <UpdateUserForm
+            user={editingUser}
             onSubmit={handleEditFormSubmit}
             showSubmitButton={false}
             formRef={formRef}
-            isEditMode={true}
           />
         )}
       </Modal>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import UserManagementClient from './UserManagementClient';
+import UserManagementModal from '@ui/UserForm/UserManagementModal';
 import { deleteUser } from './actions';
 import Button from '@ui/Button';
 import SearchBar from './SearchBar';
@@ -232,7 +232,8 @@ export default function UserListPagination({
               )}
             </div>
             <div className="flex gap-2 ml-4">
-              <UserManagementClient user={user} currentUserId={currentUserId} />
+              <UserManagementModal action="UPDATE" user={user} />
+              <UserManagementModal action="ROLES" user={user} currentUserId={currentUserId} />
               <form action={deleteUser} style={{ display: 'inline' }}>
                 <input type="hidden" name="id" value={user.id} />
                 <Button

@@ -62,6 +62,7 @@
 .tabGroup {
   display: flex;
   gap: 16px;
+  overflow-x: scroll;
 }
 
 .tabGroup.secondary {

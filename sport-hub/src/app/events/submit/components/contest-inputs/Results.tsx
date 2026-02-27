@@ -7,8 +7,8 @@ import { TrashIcon } from '@ui/Icons';
 import UserAutocomplete from './UserAutocomplete';
 import { ContestResultEntry, EventSubmissionFormValues } from '../../types';
 import { FormikNumberField, FormikTextField } from '@ui/Form';
-import SortableList from '@ui/SortableList';
-import { Option } from '@ui/Form';
+import UserManagementModal from '@ui/UserForm/UserManagementModal';
+import { calculatePointsForRank } from '@utils/points';
 
 const initialAthleteValues: Partial<ContestResultEntry> = {
   id: "",
@@ -24,34 +24,61 @@ type Props = {
 
 type AthleteListItemProps = {
   athleteFormKey: string,
-  onDelete: () => void
+  contestKey: string,
+  isNewUser?: boolean,
+  onDelete: () => void,
 };
 
-const AthleteListItem = ({ athleteFormKey, onDelete }: AthleteListItemProps) => {
-  const { setFieldTouched, setFieldValue, values } = useFormikContext<EventSubmissionFormValues>();
+const AthleteListItem = ({
+  athleteFormKey,
+  contestKey,
+  onDelete
+}: AthleteListItemProps) => {
+  const { values, setFieldValue } = useFormikContext<EventSubmissionFormValues>();
+  const formValueUserId = getIn(values, `${athleteFormKey}.id`);
+  const formValueName = getIn(values, `${athleteFormKey}.name`);
+  const isUnknownUser = formValueUserId == "" && formValueName != "";
 
   return (
-    <div className={cn("cluster", "items-end", "gap-4")}>
-      <FormikNumberField id={`${athleteFormKey}.rank`} label="Rank" min={1} />
-      <UserAutocomplete
-        id={`${athleteFormKey}.name`}
-        onSelectOption={(option: Option) => {
-          const athlete = getIn(values, athleteFormKey) || {};
-          setFieldValue(athleteFormKey, {
-            ...athlete,
-            id: option.value,
-            name: option.label
-          });
-          setFieldTouched(athleteFormKey, true, false);
+    <div className="flex flex-row cluster items-end gap-4 mb-4">
+      <FormikNumberField
+        className="shrink"
+        id={`${athleteFormKey}.rank`}
+        label="Rank"
+        min={1}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          const rank = Number(e.target.value);
+          const contestSize = getIn(values, `${contestKey}.contestSize`);
+          const points = calculatePointsForRank(rank, contestSize);
+          setFieldValue(`${athleteFormKey}.isaPoints`, points);
+          setFieldValue(`${athleteFormKey}.rank`, rank);
         }}
       />
-      <FormikNumberField id={`${athleteFormKey}.isaPoints`} label="ISA Points" min={0} />
-      <FormikTextField id={`${athleteFormKey}.stats`} label="Stats" />
+      <UserAutocomplete formKey={athleteFormKey} />
+      <FormikNumberField
+        className="shrink"
+        disabled
+        id={`${athleteFormKey}.isaPoints`}
+        label="Points"
+        min={0}
+      />
+      <FormikTextField
+        className="shrink"
+        id={`${athleteFormKey}.stats`}
+        label="Stats"
+        tooltip="Data relevant to placement. Varies by discipline e.g. line length, time, etc."
+      />
+      {isUnknownUser && (
+        <UserManagementModal
+          action="CREATE"
+          buttonSize="small"
+          buttonVariant="secondary"
+        />
+      )}
       <Button
         className="self-end"
         onClick={onDelete}
         variant='destructive-secondary'
-        type="button"
       >
         <TrashIcon/>
       </Button>
@@ -60,7 +87,8 @@ const AthleteListItem = ({ athleteFormKey, onDelete }: AthleteListItemProps) => 
 };
 
 export const Results = ({ contestKey, results }: Props) => {
-  const { setFieldTouched, setFieldValue } = useFormikContext<EventSubmissionFormValues>();
+  const { setFieldTouched, setFieldValue, values } = useFormikContext<EventSubmissionFormValues>();
+  const contestSize = getIn(values, `${contestKey}.contestSize`);
 
   return (
     <>
@@ -71,38 +99,62 @@ export const Results = ({ contestKey, results }: Props) => {
             {!results.length && (
               <div>No results added yet.</div>
             )}
-            <SortableList
-              items={results}
-              getKey={({ id }: ContestResultEntry) => id}
-              renderItem={(_, idx: number) =>
+            <ol>
+              {results.map((entry, idx) => (
                 <AthleteListItem
                   athleteFormKey={`${contestKey}.results[${idx}]`}
+                  contestKey={contestKey}
+                  key={`${entry.id}-${idx}`}
                   onDelete={() => {
-                    remove(idx);
+                    // Recalculate index because item may have been re-ordered
+                    const currentIdx = results.findIndex((r) => r.id === entry.id);
+                    remove(currentIdx);
                     setFieldTouched(`${contestKey}.results`, true, false);
                   }}
                 />
-              }
-              onReorder={(next: ContestResultEntry[]) => {
-                const cleaned = next.map((contestResultEntry, i) => ({ ...contestResultEntry, rank: i + 1 }));
-                setFieldValue(`${contestKey}.results`, cleaned, true);
-                setFieldTouched(`${contestKey}.results`, true, false);
-              }}
-            />
-            <Button
-              className="w-fit"
-              onClick={() => {
-                push({
-                  ...initialAthleteValues,
-                  rank: results.length + 1
-                });
-                setFieldTouched(`${contestKey}.results`, true, false);
-              }}
-              type="button"
-              variant="secondary"
-            >
-              Add Athlete
-            </Button>
+              ))}
+            </ol>
+            <div className="flex flex-row justify-start gap-4">
+              <Button
+                onClick={() => {
+                  let rank;
+                  let points;
+                  const ranksSet = new Set(results.map(r => r.rank));
+                  const hasNoSharedRanks = ranksSet.size === results.length;
+                  if (hasNoSharedRanks) {
+                    // If no shared ranks, assign next rank
+                    rank = results.length + 1;
+                  } else {
+                    // If there are shared ranks, leave rank undefined for manual entry
+                    rank = undefined;
+                  }
+
+                  if (rank && contestSize) {
+                    points = calculatePointsForRank(rank, contestSize);
+                  }
+
+                  push({ ...initialAthleteValues, rank, isaPoints: points });
+                  setFieldTouched(`${contestKey}.results`, true, false);
+                }}
+                variant="secondary"
+              >
+                Add Athlete
+              </Button>
+              {results.length > 1 && (
+                <>
+                  <Button
+                    onClick={() => {
+                      const sortedResults = [...results].sort((a, b) => (a.rank || 0) - (b.rank || 0));
+                      setFieldValue(`${contestKey}.results`,  sortedResults, true);
+                      setFieldTouched(`${contestKey}.results`, true, false);
+                    }}
+                    variant="secondary"
+                    >
+                    Sort by rank
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         )}
       </FieldArray>

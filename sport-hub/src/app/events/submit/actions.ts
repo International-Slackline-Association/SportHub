@@ -36,6 +36,8 @@ export async function saveEvent({ event }: EventSubmissionFormValues) {
     const eventId = generateEventId();
     const eventData = {
       ...event,
+      // TODO: Ensure DB schema reflects support for date ranges,
+      // revisit after migration to ensure dates are stored correctly.
       eventId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -45,7 +47,6 @@ export async function saveEvent({ event }: EventSubmissionFormValues) {
     };
 
     // Save to DynamoDB
-    console.log("Saving event ", eventId);
     await dynamodb.putItem(EVENTS_TABLE, eventData);
 
     // Revalidate events page to show new data

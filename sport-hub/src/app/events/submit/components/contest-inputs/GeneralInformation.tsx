@@ -9,6 +9,7 @@ import {
   eventGenderOptions,
   FormikRadioGroup,
   FormikNumberField,
+  FormikTextField,
 } from '@ui/Form';
 import styles from './styles.module.css';
 
@@ -20,6 +21,23 @@ export const GeneralInformation = ({ contestKey }: Props) => {
   return (
     <>
       <h4>General Information</h4>
+      <div className="flex flex-row gap-4">
+        <FormikTextField
+          className="grow"
+          id={`${contestKey}.startDate`}
+          label="Start Date"
+          placeholder="YYYY-MM-DD"
+          type="date"
+          />
+        <FormikTextField
+          className="grow"
+          id={`${contestKey}.endDate`}
+          label="End Date"
+          placeholder="YYYY-MM-DD"
+          tooltip="Date of the final round"
+          type="date"
+          />
+      </div>
       <FormikRadioGroup
         className={styles.formBox}
         direction="row"
@@ -44,7 +62,6 @@ export const GeneralInformation = ({ contestKey }: Props) => {
         label="Judging System"
         options={judgingSystemOptions}
         placeholder="Select judging system"
-        required
       />
       <FormikRadioGroup
         className={styles.formBox}

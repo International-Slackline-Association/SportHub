@@ -13,7 +13,7 @@ type Props = {
 }
 
 export const Judges = ({ contestKey, judges }: Props) => {
-  const { setFieldTouched, setFieldValue } = useFormikContext<EventSubmissionFormValues>();
+  const { setFieldTouched } = useFormikContext<EventSubmissionFormValues>();
 
   return (
     <div className={cn("stack", "gap-4")}>
@@ -28,15 +28,7 @@ export const Judges = ({ contestKey, judges }: Props) => {
               {judges.map((_, idx) => (
                 <li key={idx} className="pb-4">
                   <div className={cn("cluster", "items-end", "gap-4")}>
-                    <UserAutocomplete
-                      id={`${contestKey}.judges[${idx}]`}
-                      onSelectOption={({ label, value }) => {
-                        setFieldValue(`${contestKey}.judges[${idx}]`, {
-                          value: value,
-                          name: label,
-                        });
-                      }}
-                    />
+                    <UserAutocomplete formKey={`${contestKey}.judges[${idx}]`} />
                     <Button
                       onClick={() => remove(idx)}
                       variant='destructive-secondary'

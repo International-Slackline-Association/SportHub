@@ -38,6 +38,7 @@ interface Ranking {
 }
 
 interface User {
+  userId?: string;
   id: string;
   name: string;
   email: string;

@@ -21,18 +21,13 @@
 }
 
 .contestFormHeader {
-  align-items: center;
+  align-items: start;
   display: flex;
   flex-direction: column;
   gap: 16px;
   justify-content: space-between;
 }
 
-@media (min-width: 40rem) {
-  .contestFormHeader {
-    align-items: center;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-  }
+.shortField {
+  width: 100px;
 }

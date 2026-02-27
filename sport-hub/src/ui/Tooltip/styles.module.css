@@ -1,0 +1,116 @@
+.tooltipContainer {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tooltipTrigger:hover,
+.tooltipTrigger:focus {
+  color: var(--color-primary);
+}
+
+.tooltip {
+  position: absolute;
+  z-index: 1000;
+  width: max-content;
+  max-width: 250px;
+  padding: 8px 12px;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #FFFFFF;
+  background-color: #2D2A40; /* Neutral/1000 */
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(45, 42, 64, 0.15);
+  white-space: normal;
+  word-wrap: break-word;
+  animation: tooltipFadeIn 0.15s ease-out;
+}
+
+.tooltip::before {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+
+/* Position-specific styles */
+.tooltipTop {
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.tooltipTop::before {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px 6px 0 6px;
+  border-color: #2D2A40 transparent transparent transparent;
+}
+
+.tooltipBottom {
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.tooltipBottom::before {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 0 6px 6px 6px;
+  border-color: transparent transparent #2D2A40 transparent;
+}
+
+.tooltipLeft {
+  right: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.tooltipLeft::before {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 6px 0 6px 6px;
+  border-color: transparent transparent transparent #2D2A40;
+}
+
+.tooltipRight {
+  left: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.tooltipRight::before {
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 6px 6px 6px 0;
+  border-color: transparent #2D2A40 transparent transparent;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 40rem) {
+  .tooltip {
+    max-width: 200px;
+    font-size: 11px;
+  }
+  
+  .tooltipTrigger {
+    padding: 4px;
+  }
+}
