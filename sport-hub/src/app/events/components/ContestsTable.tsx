@@ -125,20 +125,20 @@ const columns = [
 const SubmitButton = () => {
   const { data: session } = useSession();
 
-  // Only show submit button to admins
-  // TODO: In the future, also check for 'organizer' sub-type for regular users
-  const canSubmitEvents = session?.user?.role === 'admin';
+  const canSubmitEvents =
+    session?.user?.role === 'admin' ||
+    session?.user?.userSubTypes?.includes('organizer');
 
   if (!canSubmitEvents) {
     return null;
   }
 
   return (
-    <a href="/admin/submit/event">
+    <Link href="/events/submit">
       <Button variant="secondary">
         Submit Event
       </Button>
-    </a>
+    </Link>
   );
 };
 
