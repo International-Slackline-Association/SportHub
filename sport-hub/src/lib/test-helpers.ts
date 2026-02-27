@@ -183,7 +183,7 @@ export class TestHelpers {
       }
 
       // Seed with sample data
-      await this.seeder.fullSeed();
+      await this.seeder.fullSeedFromRankings();
 
       console.log('✅ Test environment seeded');
       return true;

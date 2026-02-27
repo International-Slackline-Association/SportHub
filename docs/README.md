@@ -36,7 +36,7 @@ pnpm test:local             # Dev with local DynamoDB
 # Database
 pnpm db:local               # Start local DynamoDB
 pnpm db:setup               # Create tables
-pnpm db:seed                # Add sample data
+pnpm db:seed                # Seed from rankings JSON (200 athletes, 10 events)
 
 # Sync to Production
 pnpm sync:compare           # Compare schemas

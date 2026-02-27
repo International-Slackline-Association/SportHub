@@ -191,7 +191,7 @@ export default function LocalTestInterface({ envReady, initialStats }: LocalTest
     <div className="space-y-6">
       {/* Control Panel */}
       <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-4">Database Operations</h2>
+        <h2 className="text-xl font-semibold mb-4">Seed Database from JSON</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <button
             onClick={setupEnvironment}
@@ -317,9 +317,11 @@ export default function LocalTestInterface({ envReady, initialStats }: LocalTest
           <div>
             <h3 className="font-semibold mb-2">Current Stats</h3>
             <div className="space-y-1">
-              <div>Users: <code className="bg-white px-1 rounded">{stats.tables.rankings || 0}</code></div>
-              <div>Contests: <code className="bg-white px-1 rounded">{stats.tables.contests || 0}</code></div>
-              <div>Athletes: <code className="bg-white px-1 rounded">{stats.tables.athletes || 0}</code></div>
+              <div>Profiles: <code className="bg-white px-1 rounded">{stats.tables['users-profiles'] || 0}</code></div>
+              <div>Rankings: <code className="bg-white px-1 rounded">{stats.tables['users-rankings'] || 0}</code></div>
+              <div>Participations: <code className="bg-white px-1 rounded">{stats.tables['users-participations'] || 0}</code></div>
+              <div>Events: <code className="bg-white px-1 rounded">{stats.tables['events-metadata'] || 0}</code></div>
+              <div>Contests: <code className="bg-white px-1 rounded">{stats.tables['events-contests'] || 0}</code></div>
             </div>
           </div>
         </div>

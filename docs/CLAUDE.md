@@ -35,6 +35,7 @@ SportHub/                              # Repository root
     │   ├── utils/                    # Utility functions
     │   ├── types/                    # TypeScript definitions
     │   └── mocks/                    # Mock data
+    │       └── data-exports/         # Seed JSON exports
     ├── scripts/                       # Utility scripts
     │   ├── sync-dynamodb.ts          # Database sync tool
     │   └── revalidate-pages.sh       # Revalidation helper
@@ -87,11 +88,15 @@ src/
 │   ├── data-services.ts   # Data access layer
 │   ├── relational-types.ts # Type definitions
 │   ├── db-setup.ts        # Database initialization
-│   └── seed-local-db.ts   # Database seeding
+│   ├── seed-local-db.ts   # DatabaseSeeder class (fullSeedFromRankings, resetAndSeed, clearTable)
+│   └── migrations/        # Migration & seed transformers
+│       ├── seed-from-rankings-data.ts          # Seed transformer (reads rankings-seed-data.json)
+│       └── migrate-isa-rankings-to-sporthub.ts # Live ISA-Rankings → SportHub migration
 ├── utils/                 # Utility functions
 ├── types/                 # TypeScript type definitions
 └── mocks/                 # Mock data
-    └── contests_with_athletes.json
+    └── data-exports/
+        └── rankings-seed-data.json    # Committed seed file (200 athletes, anonymised)
 ```
 
 ## Path Aliases
@@ -118,7 +123,7 @@ pnpm test:local             # Dev server with local DynamoDB
 ```bash
 pnpm db:local               # Start local DynamoDB container
 pnpm db:setup               # Create required tables
-pnpm db:seed                # Seed with mock data (~2000+ records)
+pnpm db:seed                # Seed from rankings JSON (200 athletes, 10 events, 40 contests)
 pnpm db:reset               # Clear and reseed data
 pnpm db:clear               # Clear all data only
 pnpm db:count               # Show item counts
@@ -275,11 +280,18 @@ NEXT_PUBLIC_URL=https://your-app.com
 - `/test_SSR` - Server-side rendering tests
 - `/test_CSR` - Client-side rendering tests
 
-### Mock Data
-Located in `src/mocks/contests_with_athletes.json`:
-- **~1600+ athletes** converted to users with aggregated stats
-- **~600+ contests** with detailed competition information
-- **~5000+ performance records** linking athletes to contests
+### Seed Data
+
+Local seeding uses `src/mocks/data-exports/rankings-seed-data.json` — a reduced, anonymised subset of the ISA-Rankings export (no real emails, URLs, or personal data). It is committed to the repo.
+
+The transformer `src/lib/migrations/seed-from-rankings-data.ts` reads this JSON and synthesises:
+- **200 athlete profiles** (generated `SportHubID:xxxx`, no `isaUsersId`)
+- **1,600 ranking records** (Trickline + Highline, years 2024 and all-time)
+- **10 synthetic events** across 10 countries (2024–2025)
+- **40 contests** (Trickline/Highline × Men/Women per event)
+- **2,020 participation records**
+
+The **ISA-Rankings Migration** flow (`migrate-isa-rankings-to-sporthub.ts`) is a separate path used only when migrating directly from the live AWS ISA-Rankings table — it requires AWS credentials and is not part of the local dev seed workflow.
 
 ### Local DynamoDB Workflow
 ```bash
@@ -291,7 +303,7 @@ open http://localhost:3000/test_LOCAL
 
 # 3. Or use CLI commands
 pnpm db:setup
-pnpm db:seed
+pnpm db:seed   # Seeds from rankings-seed-data.json
 pnpm db:count
 
 # 4. Develop with local data
