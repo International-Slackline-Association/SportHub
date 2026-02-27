@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getIn, useFormikContext } from 'formik';
 import React from 'react';
@@ -29,7 +29,7 @@ export default function UserAutocomplete<TFormValues>({
     return () => clearTimeout(t);
   }, [currentFormValueUserName]);
 
-  const { data: users, isLoading, isError } = useQuery({
+  const { data: allUsers, isLoading, isError } = useQuery({
     queryKey: ['users'],
     queryFn: async () => (await fetch('/api/users')).json(),
     // Enable only when user has typed at least 3 chars
@@ -41,10 +41,16 @@ export default function UserAutocomplete<TFormValues>({
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchOnMount: false,
-    select: data => data.filter((user: UserProfileRecord) =>
-      createUserLabel(user).includes(debouncedUserName.toLowerCase()),
-    ),
   });
+
+  // Memoize filtering so it only re-runs when the shared data or this instance's
+  // search term changes — not on every Formik re-render of sibling rows.
+  const users = useMemo(
+    () => allUsers?.filter((user: UserProfileRecord) =>
+      createUserLabel(user).includes(debouncedUserName.toLowerCase())
+    ),
+    [allUsers, debouncedUserName]
+  );
 
   const userOptions = users?.map(({ name, userId }: UserProfileRecord) => ({
     label: name,

@@ -200,8 +200,7 @@ export const contestValidationSchema = Yup.object({
           .trim()
           .nullable(),
       })
-    )
-    .min(1, 'Please add at least one result entry'),
+    ),
 });
 
 export const initialContestValues: ContestFormValues = {
