@@ -49,8 +49,8 @@ export default function SubmitEventClient() {
         contests: [] as unknown as ContestFormValues[],
       }}
       validationSchema={eventSubmissionValidationSchema}
-      validateOnChange
-      validateOnBlur={false}
+      validateOnChange={false}
+      validateOnBlur
       onSubmit={handleSubmit}
     >
       {({ errors, isValid, setFieldTouched, validateForm, values }) => {

@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getIn, useFormikContext } from 'formik';
-import React from 'react';
 import FormikAutocomplete from '@ui/Form/FormikAutocomplete';
 import { UserProfileRecord } from '@lib/relational-types';
 import { Option } from '@ui/Form';
