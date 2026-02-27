@@ -2,7 +2,7 @@
 
 import { dynamodb } from '../dynamodb';
 import { DatabaseSetup } from '../db-setup';
-import { transformSeedData, getDataStats } from './seed-data';
+import { transformRankingsData } from './seed-from-rankings-data';
 import type {
   UserProfileRecord,
   AthleteRankingRecord,
@@ -138,65 +138,6 @@ export class DatabaseSeeder {
   }
 
   /**
-   * Full database seed with transformed data
-   */
-  async fullSeed(): Promise<void> {
-    console.log('🚀 Starting full database seed...\n');
-
-    // Transform seed data
-    const data = transformSeedData();
-    console.log();
-
-    // Show statistics
-    const stats = getDataStats();
-    console.log('📊 Data Statistics:');
-    console.log(`   Users table:`);
-    console.log(`     - Profiles: ${stats.userProfiles}`);
-    console.log(`     - Rankings: ${stats.athleteRankings}`);
-    console.log(`     - Participations: ${stats.athleteParticipations}`);
-    console.log(`     - Total records: ${stats.totalUserRecords}`);
-    console.log(`   Events table:`);
-    console.log(`     - Event Metadata: ${stats.eventMetadata}`);
-    console.log(`     - Contests: ${stats.contests}`);
-    console.log(`     - Total records: ${stats.totalEventRecords}`);
-    console.log(`   Metadata:`);
-    console.log(`     - Disciplines: ${stats.disciplines.join(', ')}`);
-    console.log(`     - Countries: ${stats.countries.join(', ')}`);
-    console.log(`     - Date range: ${stats.dateRange.earliest} to ${stats.dateRange.latest}`);
-    console.log(`   Athletes:`);
-    console.log(`     - With rankings: ${stats.athletesWithRankings}`);
-    console.log(`     - With participations: ${stats.athletesWithParticipations}`);
-    console.log();
-
-    // Ensure tables exist
-    console.log('📋 Ensuring tables exist...');
-    const createResults = await this.dbSetup.createAllTables();
-    if (createResults.failed.length > 0) {
-      console.error('❌ Failed to create some tables:', createResults.failed);
-      return;
-    }
-    console.log();
-
-    // Seed data
-    await this.seedUserRecords(
-      data.userProfiles,
-      data.athleteRankings,
-      data.athleteParticipations,
-      'sporthub-users'
-    );
-    console.log();
-
-    await this.seedEventRecords(
-      data.eventMetadata,
-      data.contests,
-      'sporthub-events'
-    );
-    console.log();
-
-    console.log('🎉 Full database seed completed!');
-  }
-
-  /**
    * Reset and seed database
    */
   async resetAndSeed(): Promise<void> {
@@ -209,9 +150,41 @@ export class DatabaseSeeder {
     console.log();
 
     // Seed fresh data
-    await this.fullSeed();
+    await this.fullSeedFromRankings();
 
     console.log('🎉 Database reset and seed completed!');
+  }
+
+  /**
+   * Full database seed using ISA-Rankings mock data (rankings-seed-data.json).
+   * Unlike fullSeed(), this does not require athlete_details.json or
+   * contests_with_real_userids.json.  ISA user IDs are left blank intentionally.
+   */
+  async fullSeedFromRankings(): Promise<void> {
+    console.log('🚀 Starting rankings-data seed...\n');
+
+    const data = transformRankingsData();
+
+    console.log('📋 Ensuring tables exist...');
+    const createResults = await this.dbSetup.createAllTables();
+    if (createResults.failed.length > 0) {
+      console.error('❌ Failed to create some tables:', createResults.failed);
+      return;
+    }
+    console.log();
+
+    await this.seedUserRecords(
+      data.userProfiles,
+      data.athleteRankings,
+      data.athleteParticipations,
+      'sporthub-users'
+    );
+    console.log();
+
+    await this.seedEventRecords(data.eventMetadata, data.contests, 'sporthub-events');
+    console.log();
+
+    console.log('🎉 Rankings-data seed completed!');
   }
 
   /**
@@ -267,7 +240,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   switch (action) {
     case 'seed':
-      seeder.fullSeed().catch(console.error);
+      seeder.fullSeedFromRankings().catch(console.error);
       break;
     case 'reset':
       seeder.resetAndSeed().catch(console.error);

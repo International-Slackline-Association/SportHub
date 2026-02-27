@@ -1,0 +1,1202 @@
+[
+  {
+    "athleteId": "haruki-kinoshita",
+    "name": "haruki",
+    "totalPoints": 23392,
+    "contestsParticipated": 43
+  },
+  {
+    "athleteId": "rikuto-nakamura",
+    "name": "rikuto",
+    "totalPoints": 21917,
+    "contestsParticipated": 34
+  },
+  {
+    "athleteId": "abraham-hernandez",
+    "name": "abraham",
+    "totalPoints": 20422,
+    "contestsParticipated": 31
+  },
+  {
+    "athleteId": "joshua-leupolz",
+    "name": "joshua",
+    "totalPoints": 19888,
+    "contestsParticipated": 44
+  },
+  {
+    "athleteId": "alisson-ferreira",
+    "name": "alisson",
+    "totalPoints": 18563,
+    "contestsParticipated": 31
+  },
+  {
+    "athleteId": "mao-takebe",
+    "name": "mao",
+    "totalPoints": 17071,
+    "contestsParticipated": 32
+  },
+  {
+    "athleteId": "shin-kikukawa",
+    "name": "shin",
+    "totalPoints": 16346,
+    "contestsParticipated": 29
+  },
+  {
+    "athleteId": "david-palomo-echevarrieta",
+    "name": "david",
+    "totalPoints": 13709,
+    "contestsParticipated": 16
+  },
+  {
+    "athleteId": "matheus-vidal",
+    "name": "matheus",
+    "totalPoints": 13594,
+    "contestsParticipated": 24
+  },
+  {
+    "athleteId": "marius-kitowski",
+    "name": "marius",
+    "totalPoints": 13070,
+    "contestsParticipated": 35
+  },
+  {
+    "athleteId": "eishin-hayashi",
+    "name": "eishin",
+    "totalPoints": 12730,
+    "contestsParticipated": 32
+  },
+  {
+    "athleteId": "sascha--saschg-saschg",
+    "name": "sascha",
+    "totalPoints": 12412,
+    "contestsParticipated": 21
+  },
+  {
+    "athleteId": "benni-schmid",
+    "name": "benni",
+    "totalPoints": 10910,
+    "contestsParticipated": 29
+  },
+  {
+    "athleteId": "hendle-santos",
+    "name": "hendle",
+    "totalPoints": 10492,
+    "contestsParticipated": 21
+  },
+  {
+    "athleteId": "akari-sasaki",
+    "name": "akari",
+    "totalPoints": 10372,
+    "contestsParticipated": 37
+  },
+  {
+    "athleteId": "pedro-rafael-marques",
+    "name": "pedro",
+    "totalPoints": 10098,
+    "contestsParticipated": 21
+  },
+  {
+    "athleteId": "koi-okazawa",
+    "name": "koi",
+    "totalPoints": 9531,
+    "contestsParticipated": 18
+  },
+  {
+    "athleteId": "louis-sarawout-boniface",
+    "name": "louis sarawout",
+    "totalPoints": 8835,
+    "contestsParticipated": 16
+  },
+  {
+    "athleteId": "thomas-buckingham",
+    "name": "thomas",
+    "totalPoints": 8810,
+    "contestsParticipated": 19
+  },
+  {
+    "athleteId": "augustin-moinat",
+    "name": "augustin",
+    "totalPoints": 8334,
+    "contestsParticipated": 23
+  },
+  {
+    "athleteId": "teruto-tanaka",
+    "name": "teruto",
+    "totalPoints": 8220,
+    "contestsParticipated": 15
+  },
+  {
+    "athleteId": "cecilia-stock",
+    "name": "cecilia",
+    "totalPoints": 8000,
+    "contestsParticipated": 10
+  },
+  {
+    "athleteId": "valentin-huet",
+    "name": "valentin",
+    "totalPoints": 7685,
+    "contestsParticipated": 29
+  },
+  {
+    "athleteId": "mirai-kuwabara",
+    "name": "mirai",
+    "totalPoints": 7631,
+    "contestsParticipated": 26
+  },
+  {
+    "athleteId": "louise-lenoble",
+    "name": "louise",
+    "totalPoints": 7444,
+    "contestsParticipated": 14
+  },
+  {
+    "athleteId": "marc-thompson",
+    "name": "marc",
+    "totalPoints": 7401,
+    "contestsParticipated": 18
+  },
+  {
+    "athleteId": "luccas--amorim",
+    "name": "luccas",
+    "totalPoints": 7379,
+    "contestsParticipated": 21
+  },
+  {
+    "athleteId": "sebastian-egger",
+    "name": "sebastian",
+    "totalPoints": 7328,
+    "contestsParticipated": 15
+  },
+  {
+    "athleteId": "matias-sepulveda",
+    "name": "matias",
+    "totalPoints": 7214,
+    "contestsParticipated": 23
+  },
+  {
+    "athleteId": "randley-freitas-borges",
+    "name": "randley",
+    "totalPoints": 7133,
+    "contestsParticipated": 10
+  },
+  {
+    "athleteId": "renzo-robles-lopez-albujar",
+    "name": "renzo",
+    "totalPoints": 6789,
+    "contestsParticipated": 11
+  },
+  {
+    "athleteId": "annalisa-casiraghi",
+    "name": "annalisa",
+    "totalPoints": 6788,
+    "contestsParticipated": 23
+  },
+  {
+    "athleteId": "erika-sedlacek-de-almeida",
+    "name": "erika",
+    "totalPoints": 6685,
+    "contestsParticipated": 13
+  },
+  {
+    "athleteId": "carmen-schillingmann",
+    "name": "carmen",
+    "totalPoints": 6645,
+    "contestsParticipated": 11
+  },
+  {
+    "athleteId": "salome-cholet",
+    "name": "salome",
+    "totalPoints": 6639,
+    "contestsParticipated": 11
+  },
+  {
+    "athleteId": "marcel-foca-cervia",
+    "name": "marcel",
+    "totalPoints": 6393,
+    "contestsParticipated": 24
+  },
+  {
+    "athleteId": "sarah-gmeiner",
+    "name": "sarah",
+    "totalPoints": 6297,
+    "contestsParticipated": 11
+  },
+  {
+    "athleteId": "mio-sudo",
+    "name": "mio",
+    "totalPoints": 6272,
+    "contestsParticipated": 20
+  },
+  {
+    "athleteId": "richard-derico",
+    "name": "richard",
+    "totalPoints": 6044,
+    "contestsParticipated": 15
+  },
+  {
+    "athleteId": "darllyon-araujo",
+    "name": "darllyon",
+    "totalPoints": 6024,
+    "contestsParticipated": 15
+  },
+  {
+    "athleteId": "emil-unkown",
+    "name": "emil",
+    "totalPoints": 5861,
+    "contestsParticipated": 11
+  },
+  {
+    "athleteId": "mia-noblet",
+    "name": "mia",
+    "totalPoints": 5802,
+    "contestsParticipated": 11
+  },
+  {
+    "athleteId": "takushi-nakamura",
+    "name": "takushi",
+    "totalPoints": 5727,
+    "contestsParticipated": 26
+  },
+  {
+    "athleteId": "nathan-jacquemond",
+    "name": "nathan",
+    "totalPoints": 5611,
+    "contestsParticipated": 21
+  },
+  {
+    "athleteId": "alexian--masson",
+    "name": "alexian",
+    "totalPoints": 5506,
+    "contestsParticipated": 9
+  },
+  {
+    "athleteId": "davis-hermes",
+    "name": "davis",
+    "totalPoints": 5240,
+    "contestsParticipated": 11
+  },
+  {
+    "athleteId": "joaquin--neira",
+    "name": "joaquin",
+    "totalPoints": 5225,
+    "contestsParticipated": 19
+  },
+  {
+    "athleteId": "benoit-humm",
+    "name": "benoit",
+    "totalPoints": 5202,
+    "contestsParticipated": 10
+  },
+  {
+    "athleteId": "ian-eisenberg",
+    "name": "ian",
+    "totalPoints": 4701,
+    "contestsParticipated": 9
+  },
+  {
+    "athleteId": "matias-paves",
+    "name": "matias",
+    "totalPoints": 4671,
+    "contestsParticipated": 12
+  },
+  {
+    "athleteId": "daniel-laruelle",
+    "name": "daniel",
+    "totalPoints": 4665,
+    "contestsParticipated": 11
+  },
+  {
+    "athleteId": "taylor-st-germain",
+    "name": "taylor",
+    "totalPoints": 4533,
+    "contestsParticipated": 6
+  },
+  {
+    "athleteId": "hallam-unknown",
+    "name": "hailin",
+    "totalPoints": 4505,
+    "contestsParticipated": 9
+  },
+  {
+    "athleteId": "oscar-cortegoso",
+    "name": "oscar",
+    "totalPoints": 4333,
+    "contestsParticipated": 14
+  },
+  {
+    "athleteId": "samuel-volery",
+    "name": "samuel",
+    "totalPoints": 4238,
+    "contestsParticipated": 13
+  },
+  {
+    "athleteId": "carlo-cozzio",
+    "name": "carlo",
+    "totalPoints": 4210,
+    "contestsParticipated": 13
+  },
+  {
+    "athleteId": "pedro-tlaloc-moctezuma-burns",
+    "name": "pedro tlaloc",
+    "totalPoints": 4132,
+    "contestsParticipated": 10
+  },
+  {
+    "athleteId": "giada-regoli",
+    "name": "giada",
+    "totalPoints": 4073,
+    "contestsParticipated": 23
+  },
+  {
+    "athleteId": "choza-robles",
+    "name": "choza",
+    "totalPoints": 4061,
+    "contestsParticipated": 10
+  },
+  {
+    "athleteId": "lucas-clemente",
+    "name": "lucas",
+    "totalPoints": 3904,
+    "contestsParticipated": 11
+  },
+  {
+    "athleteId": "aron-andrijanic",
+    "name": "aron",
+    "totalPoints": 3897,
+    "contestsParticipated": 7
+  },
+  {
+    "athleteId": "tania-monier",
+    "name": "tania",
+    "totalPoints": 3895,
+    "contestsParticipated": 8
+  },
+  {
+    "athleteId": "yuga--nakamura",
+    "name": "yuga",
+    "totalPoints": 3894,
+    "contestsParticipated": 13
+  },
+  {
+    "athleteId": "remi-mengarelli_1",
+    "name": "remi",
+    "totalPoints": 3695,
+    "contestsParticipated": 10
+  },
+  {
+    "athleteId": "alexandre-macarini",
+    "name": "alexandre",
+    "totalPoints": 3607,
+    "contestsParticipated": 8
+  },
+  {
+    "athleteId": "itsuki-hosoe",
+    "name": "itsuki",
+    "totalPoints": 3553,
+    "contestsParticipated": 4
+  },
+  {
+    "athleteId": "xavier-bisang",
+    "name": "xavier",
+    "totalPoints": 3350,
+    "contestsParticipated": 11
+  },
+  {
+    "athleteId": "jef-cox",
+    "name": "jef",
+    "totalPoints": 3296,
+    "contestsParticipated": 5
+  },
+  {
+    "athleteId": "stepan-pecka",
+    "name": "stepan",
+    "totalPoints": 3240,
+    "contestsParticipated": 11
+  },
+  {
+    "athleteId": "dylon-lousberg",
+    "name": "dylon",
+    "totalPoints": 3147,
+    "contestsParticipated": 7
+  },
+  {
+    "athleteId": "gino-anoso",
+    "name": "gino",
+    "totalPoints": 3141,
+    "contestsParticipated": 19
+  },
+  {
+    "athleteId": "wesley-eduardo",
+    "name": "wesley",
+    "totalPoints": 3111,
+    "contestsParticipated": 15
+  },
+  {
+    "athleteId": "bacot-raphael",
+    "name": "raphael",
+    "totalPoints": 3110,
+    "contestsParticipated": 9
+  },
+  {
+    "athleteId": "pettrucci--giovanna",
+    "name": "giovanna",
+    "totalPoints": 3085,
+    "contestsParticipated": 9
+  },
+  {
+    "athleteId": "tim-odermatt",
+    "name": "tim",
+    "totalPoints": 3078,
+    "contestsParticipated": 7
+  },
+  {
+    "athleteId": "dyan-enghard",
+    "name": "dyan",
+    "totalPoints": 3070,
+    "contestsParticipated": 12
+  },
+  {
+    "athleteId": "claire-irad",
+    "name": "claire",
+    "totalPoints": 3026,
+    "contestsParticipated": 17
+  },
+  {
+    "athleteId": "mao-fuchigami",
+    "name": "mao",
+    "totalPoints": 3020,
+    "contestsParticipated": 13
+  },
+  {
+    "athleteId": "ayumi-okada",
+    "name": "ayumi",
+    "totalPoints": 2986,
+    "contestsParticipated": 17
+  },
+  {
+    "athleteId": "kensuke-tanaka",
+    "name": "kensuke",
+    "totalPoints": 2957,
+    "contestsParticipated": 17
+  },
+  {
+    "athleteId": "alex-mason",
+    "name": "alex",
+    "totalPoints": 2940,
+    "contestsParticipated": 6
+  },
+  {
+    "athleteId": "gonzalo-caturelli",
+    "name": "gonzalo",
+    "totalPoints": 2935,
+    "contestsParticipated": 9
+  },
+  {
+    "athleteId": "sage-quentin",
+    "name": "sage",
+    "totalPoints": 2828,
+    "contestsParticipated": 15
+  },
+  {
+    "athleteId": "perfetti--enzo",
+    "name": "enzo",
+    "totalPoints": 2781,
+    "contestsParticipated": 13
+  },
+  {
+    "athleteId": "bastian-lagos",
+    "name": "bastian",
+    "totalPoints": 2725,
+    "contestsParticipated": 7
+  },
+  {
+    "athleteId": "tauri-vahesaar",
+    "name": "tauri",
+    "totalPoints": 2705,
+    "contestsParticipated": 10
+  },
+  {
+    "athleteId": "diego-soriano",
+    "name": "diego",
+    "totalPoints": 2705,
+    "contestsParticipated": 5
+  },
+  {
+    "athleteId": "pedro-theodoro",
+    "name": "pedro",
+    "totalPoints": 2667,
+    "contestsParticipated": 9
+  },
+  {
+    "athleteId": "mikel-ros-de-zobre",
+    "name": "mikel",
+    "totalPoints": 2584,
+    "contestsParticipated": 11
+  },
+  {
+    "athleteId": "tibor-mikulec",
+    "name": "tibor",
+    "totalPoints": 2555,
+    "contestsParticipated": 8
+  },
+  {
+    "athleteId": "martin-hernandez",
+    "name": "martin",
+    "totalPoints": 2518,
+    "contestsParticipated": 8
+  },
+  {
+    "athleteId": "axel-cespedez",
+    "name": "axel",
+    "totalPoints": 2445,
+    "contestsParticipated": 14
+  },
+  {
+    "athleteId": "florentina-fink",
+    "name": "florentina",
+    "totalPoints": 2416,
+    "contestsParticipated": 2
+  },
+  {
+    "athleteId": "mika-taguchi",
+    "name": "mika",
+    "totalPoints": 2392,
+    "contestsParticipated": 21
+  },
+  {
+    "athleteId": "javiera-aylwin",
+    "name": "javiera",
+    "totalPoints": 2356,
+    "contestsParticipated": 15
+  },
+  {
+    "athleteId": "filip-oleksik",
+    "name": "filip",
+    "totalPoints": 2350,
+    "contestsParticipated": 8
+  },
+  {
+    "athleteId": "lukas--cerny",
+    "name": "lukas",
+    "totalPoints": 2336,
+    "contestsParticipated": 10
+  },
+  {
+    "athleteId": "girault-coralie",
+    "name": "coralie",
+    "totalPoints": 2310,
+    "contestsParticipated": 6
+  },
+  {
+    "athleteId": "jiri-maslo",
+    "name": "jiri",
+    "totalPoints": 2260,
+    "contestsParticipated": 14
+  },
+  {
+    "athleteId": "jimmy-he",
+    "name": "jinyi",
+    "totalPoints": 2257,
+    "contestsParticipated": 5
+  },
+  {
+    "athleteId": "maggie-preimesberger",
+    "name": "magdalena",
+    "totalPoints": 2257,
+    "contestsParticipated": 4
+  },
+  {
+    "athleteId": "nahuel-calder-n",
+    "name": "nahuel",
+    "totalPoints": 2244,
+    "contestsParticipated": 7
+  },
+  {
+    "athleteId": "cristi-n-reyes",
+    "name": "cristian",
+    "totalPoints": 2242,
+    "contestsParticipated": 14
+  },
+  {
+    "athleteId": "julien-diaz",
+    "name": "julien",
+    "totalPoints": 2234,
+    "contestsParticipated": 11
+  },
+  {
+    "athleteId": "robin-jacquat",
+    "name": "robin",
+    "totalPoints": 2214,
+    "contestsParticipated": 13
+  },
+  {
+    "athleteId": "soma-ishida",
+    "name": "soma",
+    "totalPoints": 2195,
+    "contestsParticipated": 15
+  },
+  {
+    "athleteId": "jaan-roose",
+    "name": "jaan",
+    "totalPoints": 2185,
+    "contestsParticipated": 7
+  },
+  {
+    "athleteId": "roberto-orlando",
+    "name": "roberto",
+    "totalPoints": 2173,
+    "contestsParticipated": 7
+  },
+  {
+    "athleteId": "cherif-sophien",
+    "name": "cherif",
+    "totalPoints": 2144,
+    "contestsParticipated": 21
+  },
+  {
+    "athleteId": "nathan-paulin",
+    "name": "nathan",
+    "totalPoints": 2129,
+    "contestsParticipated": 3
+  },
+  {
+    "athleteId": "nina-ammann",
+    "name": "nina",
+    "totalPoints": 2129,
+    "contestsParticipated": 8
+  },
+  {
+    "athleteId": "chenevier-nicolas",
+    "name": "nicolas",
+    "totalPoints": 2125,
+    "contestsParticipated": 7
+  },
+  {
+    "athleteId": "rosa-tokumoto_1",
+    "name": "rosa",
+    "totalPoints": 2119,
+    "contestsParticipated": 10
+  },
+  {
+    "athleteId": "agustin-palomero",
+    "name": "agustin",
+    "totalPoints": 2105,
+    "contestsParticipated": 7
+  },
+  {
+    "athleteId": "rosendo-casarrubias",
+    "name": "rosendo",
+    "totalPoints": 2061,
+    "contestsParticipated": 7
+  },
+  {
+    "athleteId": "debora-casimiro",
+    "name": "debora",
+    "totalPoints": 2056,
+    "contestsParticipated": 9
+  },
+  {
+    "athleteId": "kieran-blood",
+    "name": "kieran",
+    "totalPoints": 2051,
+    "contestsParticipated": 5
+  },
+  {
+    "athleteId": "kanon-ito",
+    "name": "kanon",
+    "totalPoints": 2032,
+    "contestsParticipated": 17
+  },
+  {
+    "athleteId": "alex--fernandez",
+    "name": "alex",
+    "totalPoints": 2026,
+    "contestsParticipated": 3
+  },
+  {
+    "athleteId": "alexander-schulz",
+    "name": "alexander",
+    "totalPoints": 1988,
+    "contestsParticipated": 6
+  },
+  {
+    "athleteId": "tijmen-van-dieren",
+    "name": "tijmen",
+    "totalPoints": 1968,
+    "contestsParticipated": 7
+  },
+  {
+    "athleteId": "kaede-miyashita",
+    "name": "kaede",
+    "totalPoints": 1961,
+    "contestsParticipated": 17
+  },
+  {
+    "athleteId": "ramun-tomaschett",
+    "name": "ramun",
+    "totalPoints": 1957,
+    "contestsParticipated": 7
+  },
+  {
+    "athleteId": "sebastian-codina",
+    "name": "sebastian enrique",
+    "totalPoints": 1931,
+    "contestsParticipated": 6
+  },
+  {
+    "athleteId": "paulo-henrique",
+    "name": "paulo",
+    "totalPoints": 1930,
+    "contestsParticipated": 8
+  },
+  {
+    "athleteId": "michael-gato-torrealba",
+    "name": "michael gato",
+    "totalPoints": 1922,
+    "contestsParticipated": 2
+  },
+  {
+    "athleteId": "guilherme-de-oliveira-barbosa-",
+    "name": "guilherme",
+    "totalPoints": 1911,
+    "contestsParticipated": 6
+  },
+  {
+    "athleteId": "melanie--beguelin-",
+    "name": "melanie",
+    "totalPoints": 1899,
+    "contestsParticipated": 8
+  },
+  {
+    "athleteId": "edward-beroiza",
+    "name": "edward",
+    "totalPoints": 1890,
+    "contestsParticipated": 6
+  },
+  {
+    "athleteId": "dylan-bennett",
+    "name": "dylan",
+    "totalPoints": 1873,
+    "contestsParticipated": 4
+  },
+  {
+    "athleteId": "andreza-pereira-monteiro-",
+    "name": "andreza",
+    "totalPoints": 1866,
+    "contestsParticipated": 5
+  },
+  {
+    "athleteId": "masanori-kajita",
+    "name": "masanori",
+    "totalPoints": 1854,
+    "contestsParticipated": 13
+  },
+  {
+    "athleteId": "emi-gimenez",
+    "name": "emi",
+    "totalPoints": 1831,
+    "contestsParticipated": 4
+  },
+  {
+    "athleteId": "yukimi-fukuda",
+    "name": "yukimi",
+    "totalPoints": 1821,
+    "contestsParticipated": 17
+  },
+  {
+    "athleteId": "monique-paredes",
+    "name": "monique",
+    "totalPoints": 1813,
+    "contestsParticipated": 8
+  },
+  {
+    "athleteId": "nikolay-shelamov",
+    "name": "nikolay",
+    "totalPoints": 1782,
+    "contestsParticipated": 18
+  },
+  {
+    "athleteId": "gustavo-henrique-coutinho",
+    "name": "gustavo",
+    "totalPoints": 1773,
+    "contestsParticipated": 5
+  },
+  {
+    "athleteId": "audhild-hogasen",
+    "name": "audhild",
+    "totalPoints": 1735,
+    "contestsParticipated": 5
+  },
+  {
+    "athleteId": "newton-antony",
+    "name": "antony",
+    "totalPoints": 1730,
+    "contestsParticipated": 4
+  },
+  {
+    "athleteId": "paloma-hess",
+    "name": "paloma",
+    "totalPoints": 1725,
+    "contestsParticipated": 11
+  },
+  {
+    "athleteId": "jien-hu",
+    "name": "jien",
+    "totalPoints": 1700,
+    "contestsParticipated": 4
+  },
+  {
+    "athleteId": "joao-pedro-freitas",
+    "name": "joao pedro",
+    "totalPoints": 1647,
+    "contestsParticipated": 11
+  },
+  {
+    "athleteId": "axel-weber",
+    "name": "axel",
+    "totalPoints": 1637,
+    "contestsParticipated": 4
+  },
+  {
+    "athleteId": "miriam-fuss",
+    "name": "miriam",
+    "totalPoints": 1622,
+    "contestsParticipated": 4
+  },
+  {
+    "athleteId": "bruno-toso-del-valle",
+    "name": "bruno",
+    "totalPoints": 1620,
+    "contestsParticipated": 5
+  },
+  {
+    "athleteId": "valentina-eriza",
+    "name": "valentina",
+    "totalPoints": 1614,
+    "contestsParticipated": 12
+  },
+  {
+    "athleteId": "chinatsu-taguchi",
+    "name": "chinatsu",
+    "totalPoints": 1613,
+    "contestsParticipated": 26
+  },
+  {
+    "athleteId": "elliott-peier",
+    "name": "elliott",
+    "totalPoints": 1602,
+    "contestsParticipated": 6
+  },
+  {
+    "athleteId": "jessica-levine",
+    "name": "jessica",
+    "totalPoints": 1602,
+    "contestsParticipated": 3
+  },
+  {
+    "athleteId": "justin-wagers",
+    "name": "justin",
+    "totalPoints": 1600,
+    "contestsParticipated": 3
+  },
+  {
+    "athleteId": "nathan-faure-vincent",
+    "name": "nathan",
+    "totalPoints": 1577,
+    "contestsParticipated": 6
+  },
+  {
+    "athleteId": "edoardo-ruiz",
+    "name": "eduardo",
+    "totalPoints": 1570,
+    "contestsParticipated": 4
+  },
+  {
+    "athleteId": "shinobu-kusumoto",
+    "name": "shinobu",
+    "totalPoints": 1562,
+    "contestsParticipated": 11
+  },
+  {
+    "athleteId": "quentin-eline",
+    "name": "quentin",
+    "totalPoints": 1545,
+    "contestsParticipated": 15
+  },
+  {
+    "athleteId": "pablo-signoret",
+    "name": "pablo",
+    "totalPoints": 1542,
+    "contestsParticipated": 3
+  },
+  {
+    "athleteId": "rebeka-karrer",
+    "name": "rebekka",
+    "totalPoints": 1489,
+    "contestsParticipated": 4
+  },
+  {
+    "athleteId": "maria-jose-vega",
+    "name": "maria",
+    "totalPoints": 1476,
+    "contestsParticipated": 7
+  },
+  {
+    "athleteId": "nick-muller",
+    "name": "nick",
+    "totalPoints": 1441,
+    "contestsParticipated": 9
+  },
+  {
+    "athleteId": "brenda-gomez-ortiz",
+    "name": "brenda",
+    "totalPoints": 1412,
+    "contestsParticipated": 7
+  },
+  {
+    "athleteId": "tomofumi-oota",
+    "name": "tomofumi",
+    "totalPoints": 1397,
+    "contestsParticipated": 11
+  },
+  {
+    "athleteId": "simon-meirandres",
+    "name": "simon",
+    "totalPoints": 1381,
+    "contestsParticipated": 5
+  },
+  {
+    "athleteId": "rafael-zugno-bridi",
+    "name": "rafael",
+    "totalPoints": 1378,
+    "contestsParticipated": 6
+  },
+  {
+    "athleteId": "timothee-philipp",
+    "name": "timothee",
+    "totalPoints": 1361,
+    "contestsParticipated": 6
+  },
+  {
+    "athleteId": "caio-matos",
+    "name": "caio",
+    "totalPoints": 1352,
+    "contestsParticipated": 5
+  },
+  {
+    "athleteId": "barbora--kubatova",
+    "name": "barbora",
+    "totalPoints": 1333,
+    "contestsParticipated": 9
+  },
+  {
+    "athleteId": "lukas-irmler",
+    "name": "lukas",
+    "totalPoints": 1323,
+    "contestsParticipated": 4
+  },
+  {
+    "athleteId": "kevin-monch",
+    "name": "kevin",
+    "totalPoints": 1319,
+    "contestsParticipated": 5
+  },
+  {
+    "athleteId": "carlos-neto",
+    "name": "carlos",
+    "totalPoints": 1318,
+    "contestsParticipated": 6
+  },
+  {
+    "athleteId": "esneider--arrieta-escudero",
+    "name": "esneider",
+    "totalPoints": 1313,
+    "contestsParticipated": 6
+  },
+  {
+    "athleteId": "philipp-gesing",
+    "name": "philipp",
+    "totalPoints": 1312,
+    "contestsParticipated": 5
+  },
+  {
+    "athleteId": "gonzalo-sanhueza",
+    "name": "gonzalo",
+    "totalPoints": 1309,
+    "contestsParticipated": 6
+  },
+  {
+    "athleteId": "alexandra-arendt",
+    "name": "alexandra",
+    "totalPoints": 1309,
+    "contestsParticipated": 5
+  },
+  {
+    "athleteId": "lyell-grunberg",
+    "name": "lyell",
+    "totalPoints": 1297,
+    "contestsParticipated": 4
+  },
+  {
+    "athleteId": "andrea--dattoli-escobedo",
+    "name": "andrea",
+    "totalPoints": 1291,
+    "contestsParticipated": 4
+  },
+  {
+    "athleteId": "wilson-mickey",
+    "name": "mickey",
+    "totalPoints": 1280,
+    "contestsParticipated": 3
+  },
+  {
+    "athleteId": "friedrich-kuhne",
+    "name": "friedrich",
+    "totalPoints": 1259,
+    "contestsParticipated": 3
+  },
+  {
+    "athleteId": "felix-brodocz",
+    "name": "felix",
+    "totalPoints": 1256,
+    "contestsParticipated": 15
+  },
+  {
+    "athleteId": "delaney-lyman",
+    "name": "delaney",
+    "totalPoints": 1255,
+    "contestsParticipated": 7
+  },
+  {
+    "athleteId": "jordi-zhang",
+    "name": "jordi",
+    "totalPoints": 1252,
+    "contestsParticipated": 10
+  },
+  {
+    "athleteId": "daan-nieuwenhuis",
+    "name": "daan",
+    "totalPoints": 1245,
+    "contestsParticipated": 4
+  },
+  {
+    "athleteId": "florencia--munoz-_1",
+    "name": "florencia",
+    "totalPoints": 1232,
+    "contestsParticipated": 4
+  },
+  {
+    "athleteId": "andrea-pacini",
+    "name": "andrea",
+    "totalPoints": 1231,
+    "contestsParticipated": 14
+  },
+  {
+    "athleteId": "fuga-inoue",
+    "name": "fuga",
+    "totalPoints": 1223,
+    "contestsParticipated": 15
+  },
+  {
+    "athleteId": "boxian-li",
+    "name": "boxian",
+    "totalPoints": 1211,
+    "contestsParticipated": 5
+  },
+  {
+    "athleteId": "bruno-flauzino",
+    "name": "bruno",
+    "totalPoints": 1209,
+    "contestsParticipated": 4
+  },
+  {
+    "athleteId": "rui-mimoso",
+    "name": "rui",
+    "totalPoints": 1209,
+    "contestsParticipated": 6
+  },
+  {
+    "athleteId": "kunyu-yang",
+    "name": "kunyu",
+    "totalPoints": 1200,
+    "contestsParticipated": 2
+  },
+  {
+    "athleteId": "zhang-lai",
+    "name": "zhang",
+    "totalPoints": 1175,
+    "contestsParticipated": 4
+  },
+  {
+    "athleteId": "diego-castro",
+    "name": "diego",
+    "totalPoints": 1173,
+    "contestsParticipated": 8
+  },
+  {
+    "athleteId": "anita-jost",
+    "name": "anita",
+    "totalPoints": 1172,
+    "contestsParticipated": 7
+  },
+  {
+    "athleteId": "michal-p-",
+    "name": "michal",
+    "totalPoints": 1161,
+    "contestsParticipated": 7
+  },
+  {
+    "athleteId": "fanette-dufour",
+    "name": "fanette",
+    "totalPoints": 1152,
+    "contestsParticipated": 2
+  },
+  {
+    "athleteId": "daniel-edon",
+    "name": "daniel",
+    "totalPoints": 1152,
+    "contestsParticipated": 6
+  },
+  {
+    "athleteId": "moritz-hollich",
+    "name": "moritz",
+    "totalPoints": 1150,
+    "contestsParticipated": 7
+  },
+  {
+    "athleteId": "martin-koscielniak",
+    "name": "martin",
+    "totalPoints": 1148,
+    "contestsParticipated": 9
+  },
+  {
+    "athleteId": "daniela-seeber",
+    "name": "daniela",
+    "totalPoints": 1147,
+    "contestsParticipated": 4
+  },
+  {
+    "athleteId": "kara-ratcliff",
+    "name": "kara",
+    "totalPoints": 1141,
+    "contestsParticipated": 3
+  },
+  {
+    "athleteId": "alexis-gonin",
+    "name": "alexis",
+    "totalPoints": 1137,
+    "contestsParticipated": 2
+  },
+  {
+    "athleteId": "jakub-morawski",
+    "name": "jakub",
+    "totalPoints": 1125,
+    "contestsParticipated": 1
+  },
+  {
+    "athleteId": "takafumi-yamaguchi",
+    "name": "takafumi",
+    "totalPoints": 1110,
+    "contestsParticipated": 17
+  }
+]
