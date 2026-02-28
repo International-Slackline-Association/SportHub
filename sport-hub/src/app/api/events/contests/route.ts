@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
-import { getEventsData } from '@lib/data-services';
+import { getContestsData } from '@lib/data-services';
 
 export async function GET() {
   try {
-    const events = await getEventsData();
+    const events = await getContestsData();
     return NextResponse.json(events);
   } catch (error) {
-    console.error('Error fetching events data:', error);
+    console.error('Error fetching contest data:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch events data' },
+      { error: 'Failed to fetch contest data' },
       { status: 500 }
     );
   }

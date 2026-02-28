@@ -46,6 +46,7 @@ const AthleteListItem = ({
         id={`${athleteFormKey}.rank`}
         label="Rank"
         min={1}
+        name={`${athleteFormKey}.rank`}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           const rank = Number(e.target.value);
           const contestSize = getIn(values, `${contestKey}.contestSize`);
@@ -61,11 +62,13 @@ const AthleteListItem = ({
         id={`${athleteFormKey}.isaPoints`}
         label="Points"
         min={0}
+        name={`${athleteFormKey}.isaPoints`}
       />
       <FormikTextField
         className="shrink"
         id={`${athleteFormKey}.stats`}
         label="Stats"
+        name={`${athleteFormKey}.stats`}
         tooltip="Data relevant to placement. Varies by discipline e.g. line length, time, etc."
       />
       {isUnknownUser && (

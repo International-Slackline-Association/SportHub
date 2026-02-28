@@ -51,8 +51,8 @@ export default function UserAutocomplete<TFormValues>({
     [allUsers, debouncedUserName]
   );
 
-  const userOptions = users?.map(({ name, userId }: UserProfileRecord) => ({
-    label: name,
+  const userOptions = users?.map(({ name, surname, userId }: UserProfileRecord) => ({
+    label: `${name} ${surname} | ${userId}`,
     value: userId
   })) || [];
 
@@ -74,6 +74,7 @@ export default function UserAutocomplete<TFormValues>({
     <FormikAutocomplete
       caption={caption}
       id={formKeyName}
+      name={formKeyName}
       isLoading={isLoading}
       hideErrorMessage
       getDisplayValue={(value: unknown) => {
