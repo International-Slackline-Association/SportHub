@@ -1,6 +1,7 @@
 'use client';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Formik, Form, getIn } from 'formik';
+import Link from 'next/link';
 import { TabGroup } from '@ui/Tab';
 import Button from '@ui/Button';
 import EventForm from './event-inputs/EventForm';
@@ -13,27 +14,35 @@ import {
 import styles from './styles.module.css';
 import { saveEvent } from '../actions';
 import { cn } from '@utils/cn';
-import { FormikSubmitButton } from '@ui/Form';
 import TabbedContestForms from './contest-inputs/TabbedContestForms';
 import { ErrorMessage } from './ErrorMessage';
 import { ReviewEventForm } from './ReviewEventForm';
+import Spinner from '@ui/Spinner';
 
 type Step = "EVENT" | "CONTESTS" | "REVIEW";
+type SubmitIntent = 'draft' | 'pending';
 
 const stepOrder: Step[] = ["EVENT", "CONTESTS", "REVIEW"] as const;
 
 export default function SubmitEventClient() {
   const [currentStep, setCurrentStep] = useState(0);
+  const [submittedStatus, setSubmittedStatus] = useState<SubmitIntent | null>(null);
+  const [hasValidated, setHasValidated] = useState(false);
+  const submitIntentRef = useRef<SubmitIntent>('draft');
 
   const handleSubmit = (
     values: EventSubmissionFormValues,
-    { setSubmitting, resetForm }: { setSubmitting: (isSubmitting: boolean) => void; resetForm: () => void }
+    { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void; resetForm: () => void }
   ) =>
-    saveEvent(values).then(() => {
-      resetForm();
+    saveEvent(values, submitIntentRef.current).then((result) => {
+      if (!result.success) {
+        alert(result.error || 'Failed to save event. Please try again.');
+        return;
+      }
+      setSubmittedStatus(submitIntentRef.current);
     }).catch((error) => {
-      console.error('Error submitting EVENT:', error);
-      alert('Failed to submit EVENT. Please try again.');
+      console.error('Error submitting event:', error);
+      alert('Failed to submit event. Please try again.');
     }).finally(() => {
       setSubmitting(false);
     });
@@ -49,11 +58,11 @@ export default function SubmitEventClient() {
         contests: [] as unknown as ContestFormValues[],
       }}
       validationSchema={eventSubmissionValidationSchema}
-      validateOnChange={false}
-      validateOnBlur
+      validateOnChange={true}
+      validateOnBlur={false}
       onSubmit={handleSubmit}
     >
-      {({ errors, isValid, setFieldTouched, validateForm, values }) => {
+      {({ errors, isValid, dirty, isSubmitting, setFieldTouched, validateForm, values, resetForm }) => {
         const isErrorEvent = Object.keys(errors?.event || {}).length > 0;
         const isErrorContest = (errors?.contests?.length || 0) > 0;
 
@@ -62,6 +71,47 @@ export default function SubmitEventClient() {
           { id: 'CONTESTS', label: 'Step 2: Contests', disabled: isErrorEvent },
           { id: 'REVIEW', label: 'Step 3: Review', disabled: isErrorEvent || isErrorContest },
         ];
+
+        if (submittedStatus) {
+          const isDraft = submittedStatus === 'draft';
+          return (
+            <div className={cn(styles.formWrapper, "stack gap-6 items-start p-4 sm:p-0")}>
+              <div className="stack gap-2">
+                <h2 className="text-xl font-semibold">
+                  {isDraft ? 'Event saved as draft' : 'Event submitted for approval'}
+                </h2>
+                <p className="text-sm text-gray-600">
+                  {isDraft
+                    ? <>Your event has been saved as a draft. Go to{" "}
+                        <Link href="/events/my-events" className="underline font-medium">My Events</Link>
+                        {" "}to submit it for admin approval when ready.</>
+                    : <>Your event has been submitted and is pending admin approval. Go to{" "}
+                        <Link href="/events/my-events" className="underline font-medium">My Events</Link>
+                        {" "}to track its status.</>
+                  }
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <Link href="/events/my-events">
+                  <Button type="button" variant="primary">Go to My Events</Button>
+                </Link>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    resetForm();
+                    setSubmittedStatus(null);
+                    setCurrentStep(0);
+                  }}
+                >
+                  Submit another event
+                </Button>
+              </div>
+            </div>
+          );
+        }
+
+        const submitDisabled = isSubmitting || !isValid || !dirty;
 
         return (
           <Form className={cn(styles.formWrapper, "stack")}>
@@ -83,12 +133,12 @@ export default function SubmitEventClient() {
             {activeTab === 'REVIEW' && <ReviewEventForm />}
 
             {/*  Validation */}
-            {!isValid && (
+            {hasValidated && !isValid && (
               <ErrorMessage
                 className={cn(styles.borderTop, "justify-end", "gap-1", "pb-4")}
                 size="SM"
               >
-                Please reviews errors before proceeding.
+                Please review errors before proceeding.
               </ErrorMessage>
             )}
 
@@ -107,7 +157,10 @@ export default function SubmitEventClient() {
               </Button>
               {!isFirstStep && (
                 <Button
-                  onClick={() => setCurrentStep(currentStep - 1)}
+                  onClick={() => {
+                    setCurrentStep(currentStep - 1);
+                    setHasValidated(false);
+                  }}
                   type="button"
                   variant="secondary"
                 >
@@ -126,14 +179,17 @@ export default function SubmitEventClient() {
                         : Array.isArray(contestsErrors) && contestsErrors.some(e => e && Object.keys(e).length > 0);
 
                     if (hasErrors) {
-                      // mark section touched so messages render
+                      setHasValidated(true);
+                      // mark section fields as touched so error messages render
                       if (activeTab === 'EVENT') {
                         Object.keys(initialEventValues).forEach((key) =>
-                          setFieldTouched(`event.${key}`, true, true)
+                          setFieldTouched(`event.${key}`, true, false)
                         );
                       } else {
-                        (values.contests || []).forEach((_, idx) =>
-                          setFieldTouched(`contests[${idx}]`, true, true)
+                        (values.contests || []).forEach((contest, idx) =>
+                          Object.keys(contest).forEach((key) =>
+                            setFieldTouched(`contests[${idx}].${key}`, true, false)
+                          )
                         );
                       }
                       return; // prevent advancing
@@ -147,7 +203,28 @@ export default function SubmitEventClient() {
                   Next
                 </Button>
               )}
-              {isLastStep && <FormikSubmitButton />}
+              {isLastStep && (
+                <>
+                  <Button
+                    type="submit"
+                    variant="secondary"
+                    disabled={submitDisabled}
+                    onClick={() => { submitIntentRef.current = 'draft'; }}
+                  >
+                    {isSubmitting && submitIntentRef.current === 'draft' && <Spinner size="small" color="white" />}
+                    Save as Draft
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    disabled={submitDisabled}
+                    onClick={() => { submitIntentRef.current = 'pending'; }}
+                  >
+                    {isSubmitting && submitIntentRef.current === 'pending' && <Spinner size="small" color="white" />}
+                    Submit for Approval
+                  </Button>
+                </>
+              )}
             </div>
           </Form>
         );

@@ -79,18 +79,21 @@ export default function EventForm() {
           <FormikTextField
             id="event.website"
             label="Website"
+            name="event.website"
             placeholder="https://example.com"
             type="url"
           />
           <FormikTextField
             id="event.city"
             label="City"
+            name="event.city"
             placeholder="Enter city"
             required
           />
           <FormikSelectField
             id="event.country"
             label="Country"
+            name="event.country"
             options={countryCodeOptions}
             placeholder="Select country"
             required
@@ -98,6 +101,7 @@ export default function EventForm() {
           <FormikTextField
             id="event.startDate"
             label="Start Date"
+            name="event.startDate"
             placeholder="YYYY-MM-DD"
             type="date"
             required
@@ -105,6 +109,7 @@ export default function EventForm() {
           <FormikTextField
             id="event.endDate"
             label="End Date"
+            name="event.endDate"
             placeholder="YYYY-MM-DD"
             type="date"
             required
@@ -114,6 +119,7 @@ export default function EventForm() {
               direction="row"
               id="event.disciplines"
               label="Disciplines"
+              name="event.disciplines"
               options={disciplineOptions}
             />
           </div>
@@ -125,28 +131,33 @@ export default function EventForm() {
           <FormikTextField
             id="event.socialMedia.instagram"
             label="Instagram"
+            name="event.socialMedia.instagram"
             placeholder="@username or profile URL"
           />
           <FormikTextField
             id="event.socialMedia.youtube"
             label="YouTube"
+            name="event.socialMedia.youtube"
             placeholder="https://youtube.com/..."
             type="url"
           />
           <FormikTextField
             id="event.socialMedia.facebook"
             label="Facebook"
+            name="event.socialMedia.facebook"
             placeholder="https://facebook.com/..."
             type="url"
           />
           <FormikTextField
             id="event.socialMedia.tiktok"
             label="TikTok"
+            name="event.socialMedia.tiktok"
             placeholder="@username or profile URL"
           />
           <FormikTextField
             id="event.socialMedia.twitch"
             label="Twitch"
+            name="event.socialMedia.twitch"
             placeholder="https://twitch.tv/..."
             type="url"
           />

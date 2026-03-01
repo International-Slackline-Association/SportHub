@@ -216,3 +216,64 @@ export function getCountryByCode(code: string): Country | undefined {
 export function getCountryByName(name: string): Country | undefined {
   return COUNTRIES.find(c => c.name.toLowerCase() === name.toLowerCase());
 }
+
+/**
+ * ISO 3166-1 alpha-2 (lowercase) → IOC 3-letter code mapping.
+ * IOC codes differ from ISO-3 for some countries (e.g. de→GER, ch→SUI).
+ */
+export const ISO2_TO_IOC: Record<string, string> = {
+  af: 'AFG', al: 'ALB', dz: 'ALG', ad: 'AND', ao: 'ANG',
+  ar: 'ARG', am: 'ARM', au: 'AUS', at: 'AUT', az: 'AZE',
+  bs: 'BAH', bh: 'BRN', bd: 'BAN', bb: 'BAR', by: 'BLR',
+  be: 'BEL', bz: 'BIZ', bj: 'BEN', bt: 'BHU', bo: 'BOL',
+  ba: 'BIH', bw: 'BOT', br: 'BRA', bn: 'BRU', bg: 'BUL',
+  bf: 'BUR', bi: 'BDI', cv: 'CPV', kh: 'CAM', cm: 'CMR',
+  ca: 'CAN', cf: 'CAF', td: 'CHA', cl: 'CHI', cn: 'CHN',
+  co: 'COL', km: 'COM', cg: 'CGO', cr: 'CRC', hr: 'CRO',
+  cu: 'CUB', cy: 'CYP', cz: 'CZE', cd: 'COD', dk: 'DEN',
+  dj: 'DJI', dm: 'DMA', do: 'DOM', ec: 'ECU', eg: 'EGY',
+  sv: 'ESA', gq: 'GEQ', er: 'ERI', ee: 'EST', sz: 'SWZ',
+  et: 'ETH', fj: 'FIJ', fi: 'FIN', fr: 'FRA', ga: 'GAB',
+  gm: 'GAM', ge: 'GEO', de: 'GER', gh: 'GHA', gr: 'GRE',
+  gd: 'GRN', gt: 'GUA', gn: 'GUI', gw: 'GBS', gy: 'GUY',
+  ht: 'HAI', hn: 'HON', hu: 'HUN', is: 'ISL', in: 'IND',
+  id: 'INA', ir: 'IRI', iq: 'IRQ', ie: 'IRL', il: 'ISR',
+  it: 'ITA', jm: 'JAM', jp: 'JPN', jo: 'JOR', kz: 'KAZ',
+  ke: 'KEN', ki: 'KIR', kw: 'KUW', kg: 'KGZ', la: 'LAO',
+  lv: 'LAT', lb: 'LIB', ls: 'LES', lr: 'LBR', ly: 'LBA',
+  li: 'LIE', lt: 'LTU', lu: 'LUX', mg: 'MAD', mw: 'MAW',
+  my: 'MAS', mv: 'MDV', ml: 'MLI', mt: 'MLT', mh: 'MHL',
+  mr: 'MTN', mu: 'MRI', mx: 'MEX', fm: 'FSM', md: 'MDA',
+  mc: 'MON', mn: 'MGL', me: 'MNE', ma: 'MAR', mz: 'MOZ',
+  mm: 'MYA', na: 'NAM', nr: 'NRU', np: 'NEP', nl: 'NED',
+  nz: 'NZL', ni: 'NCA', ne: 'NIG', ng: 'NGR', kp: 'PRK',
+  mk: 'MKD', no: 'NOR', om: 'OMA', pk: 'PAK', pw: 'PLW',
+  ps: 'PLE', pa: 'PAN', pg: 'PNG', py: 'PAR', pe: 'PER',
+  ph: 'PHI', pl: 'POL', pt: 'POR', qa: 'QAT', ro: 'ROU',
+  ru: 'RUS', rw: 'RWA', kn: 'SKN', lc: 'LCA', vc: 'VIN',
+  ws: 'SAM', sm: 'SMR', st: 'STP', sa: 'KSA', sn: 'SEN',
+  rs: 'SRB', sc: 'SEY', sl: 'SLE', sg: 'SGP', sk: 'SVK',
+  si: 'SLO', sb: 'SOL', so: 'SOM', za: 'RSA', kr: 'KOR',
+  ss: 'SSD', es: 'ESP', lk: 'SRI', sd: 'SUD', sr: 'SUR',
+  se: 'SWE', ch: 'SUI', sy: 'SYR', tj: 'TJK', tz: 'TAN',
+  th: 'THA', tl: 'TLS', tg: 'TOG', to: 'TGA', tt: 'TTO',
+  tn: 'TUN', tr: 'TUR', tm: 'TKM', tv: 'TUV', ug: 'UGA',
+  ua: 'UKR', ae: 'UAE', gb: 'GBR', us: 'USA', uy: 'URU',
+  uz: 'UZB', vu: 'VAN', va: 'VAT', ve: 'VEN', vn: 'VIE',
+  ye: 'YEM', zm: 'ZAM', zw: 'ZIM',
+};
+
+/** Reverse mapping: IOC 3-letter → ISO-2 lowercase */
+export const IOC_TO_ISO2: Record<string, string> = Object.fromEntries(
+  Object.entries(ISO2_TO_IOC).map(([iso2, ioc]) => [ioc, iso2])
+);
+
+/** Convert ISO-2 code (any case) to IOC 3-letter code */
+export function getIocCode(iso2: string): string {
+  return ISO2_TO_IOC[iso2.toLowerCase()] ?? iso2.toUpperCase();
+}
+
+/** Convert IOC 3-letter code to ISO-2 lowercase (for flag libraries) */
+export function getIso2FromIoc(ioc: string): string {
+  return IOC_TO_ISO2[ioc.toUpperCase()] ?? ioc.toLowerCase();
+}

@@ -17,6 +17,7 @@ import { getContestNameFromForm } from './TabbedContestForms';
 type Props = {
   contestIdx: number;
   onRemove: () => void;
+  onDuplicate: () => void;
 }
 
 const parseErrorsForContest = (errors: FormikErrors<EventSubmissionFormValues>, contestKey: string) => {
@@ -65,7 +66,7 @@ const parseErrorsForContest = (errors: FormikErrors<EventSubmissionFormValues>, 
   ) : null;
 };
 
-export default function ContestForm({ contestIdx, onRemove }: Props) {
+export default function ContestForm({ contestIdx, onRemove, onDuplicate }: Props) {
   const { errors, touched, values } = useFormikContext<EventSubmissionFormValues>();
   const [activeTab, setActiveTab] = useState('GENERAL_INFO');
 
@@ -117,7 +118,7 @@ export default function ContestForm({ contestIdx, onRemove }: Props) {
         </Button>
         <Button
           disabled={contestHasErrors}
-          onClick={() => {}}
+          onClick={onDuplicate}
           type="button"
           variant="secondary"
         >

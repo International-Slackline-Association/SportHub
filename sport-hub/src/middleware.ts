@@ -11,8 +11,9 @@ const PROTECTED_ROUTES: Array<{
 }> = [
   { pattern: '/dashboard', requireAuth: true },
   { pattern: '/admin', requiredRole: 'admin', requireAuth: true },
-  // Event submission: accessible to admins and organizers
+  // Event submission and management: accessible to admins and organizers
   { pattern: '/events/submit', requireAuth: true, allowedSubTypes: ['organizer'] },
+  { pattern: '/events/my-events', requireAuth: true, allowedSubTypes: ['organizer'] },
   { pattern: '/api/admin', requiredRole: 'admin', requireAuth: true },
 ];
 

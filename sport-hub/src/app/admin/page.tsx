@@ -34,12 +34,25 @@ export default async function AdminPage() {
               </p>
             </Link>
 
-            <div className="block p-6 bg-gray-50 border border-gray-200 rounded-lg opacity-50">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Manage Users</h3>
-              <p className="text-sm text-gray-700">
-                View and manage user accounts (Coming soon)
+            <Link
+              href="/admin/event-approval"
+              className="block p-6 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+            >
+              <h3 className="text-lg font-semibold text-amber-900 mb-2">Event Approval</h3>
+              <p className="text-sm text-amber-700">
+                Review and approve events submitted by organizers
               </p>
-            </div>
+            </Link>
+
+            <Link
+              href="/test_SSR"
+              className="block p-6 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+            >
+              <h3 className="text-lg font-semibold text-green-900 mb-2">Manage Users</h3>
+              <p className="text-sm text-green-700">
+                View and manage user accounts
+              </p>
+            </Link>
 
             <div className="block p-6 bg-gray-50 border border-gray-200 rounded-lg opacity-50">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Reports</h3>

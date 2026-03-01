@@ -8,21 +8,23 @@ import { cn } from '@utils/cn';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
-import { DISCIPLINE_DATA, MAP_DISCIPLINE_ENUM_TO_NAME } from '@utils/consts';
+import { DISCIPLINE_DATA, MAP_DISCIPLINE_ENUM_TO_NAME, MAP_CONTEST_TYPE_ENUM_TO_NAME } from '@utils/consts';
 import { CircleFlag } from 'react-circle-flags';
-import { COUNTRIES } from '@utils/countries';
+import { COUNTRIES, getIocCode, getIso2FromIoc } from '@utils/countries';
+import { contestSizeOptions } from '@ui/Form/commonOptions';
 
-const CountryFlagWithName = ({ countryCode, defaultValue="N/A" }: { countryCode: string, defaultValue?: string }) => {
-  if (countryCode === 'N/A' || !countryCode) {
+const CountryFlagWithName = ({ iocCode, defaultValue="N/A" }: { iocCode: string, defaultValue?: string }) => {
+  if (iocCode === 'N/A' || !iocCode) {
     return <span className="text-gray-500">{defaultValue}</span>;
   }
 
-  const country = COUNTRIES.find(c => c.code.toLowerCase() === countryCode.toLowerCase());
-  const countryName = country?.name || countryCode.toUpperCase();
+  const iso2 = getIso2FromIoc(iocCode);
+  const country = COUNTRIES.find(c => c.code === iso2);
+  const countryName = country?.name ?? iocCode;
 
   return (
     <div className="flex items-center gap-2" title={countryName}>
-      <CircleFlag countryCode={countryCode.toLowerCase()} height={22} width={22} />
+      <CircleFlag countryCode={iso2} height={22} width={22} />
       <span className="text-sm text-gray-600">{countryName}</span>
     </div>
   );
@@ -55,29 +57,26 @@ const columns = [
       }
     },
   }),
-  columnHelper.accessor("country", {
+  columnHelper.accessor((row: ContestData) => getIocCode(row.country), {
+    id: "country",
     enableColumnFilter: true,
     header: "Country",
     cell: info => (
-      <CountryFlagWithName countryCode={info.getValue()} />
+      <CountryFlagWithName iocCode={info.getValue()} />
     ),
     meta: { filterVariant: 'select' },
   }),
-  columnHelper.accessor("discipline", {
+  columnHelper.accessor((row: ContestData) => {
+    const key = MAP_DISCIPLINE_ENUM_TO_NAME[Number(row.discipline)];
+    return DISCIPLINE_DATA[key]?.name ?? String(row.discipline);
+  }, {
+    id: "discipline",
     enableColumnFilter: true,
     header: "Discipline",
     cell: info => {
-      let discipline = info.getValue();
-      if (Number.isInteger(Number(discipline))) {
-        discipline = MAP_DISCIPLINE_ENUM_TO_NAME[Number(discipline)];
-      }
-
-      const data = DISCIPLINE_DATA[discipline as keyof typeof DISCIPLINE_DATA];
-
-      if (!data) {
-        return discipline;
-      }
-
+      const disciplineName = info.getValue();
+      const data = Object.values(DISCIPLINE_DATA).find(d => d.name === disciplineName);
+      if (!data) return disciplineName;
       return (
         <div className="flex flex-row items-center">
           <div className="h-8 w-8">
@@ -91,7 +90,11 @@ const columns = [
   columnHelper.accessor("prize", {
     header: "Prize Value",
   }),
-  columnHelper.accessor((row: ContestData) => String(row.athletes.length), {
+  columnHelper.accessor((row: ContestData) => {
+    const key = MAP_CONTEST_TYPE_ENUM_TO_NAME[row.category];
+    return contestSizeOptions.find(o => o.value === key)?.label ?? String(row.category);
+  }, {
+    id: "size",
     enableColumnFilter: true,
     header: "Size",
   }),
@@ -145,7 +148,7 @@ const SubmitButton = () => {
 const ContestsTable = () => {
   const eventsQuery = useQuery({
     queryKey: ['events'],
-    queryFn: async () => (await fetch('/api/events')).json(),
+    queryFn: async () => (await fetch('/api/events/contests')).json(),
   });
 
   if (eventsQuery.isLoading) {

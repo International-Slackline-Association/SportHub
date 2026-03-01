@@ -112,12 +112,23 @@ export const initialEventValues: EventFormValues = {
 /*******************************************************************************
  * Contest Form Types and Validation
  ******************************************************************************/
+export interface PendingUserData {
+  name: string;
+  surname: string;
+  email: string;
+  gender?: string;
+  country?: string;
+  city?: string;
+  birthdate?: string;
+}
+
 export interface ContestResultEntry {
   rank: number;
   id: string;
   name?: string;
   isaPoints: number;
   stats: string;
+  pendingUser?: PendingUserData;
 }
 
 export interface ContestFormValues {
@@ -132,6 +143,7 @@ export interface ContestFormValues {
   judges?: {
     id: string;
     name?: string;
+    pendingUser?: PendingUserData;
   }[];
   results?: ContestResultEntry[];
 }
@@ -178,8 +190,7 @@ export const contestValidationSchema = Yup.object({
         const uniqueIds = new Set(allIds);
         return allIds.length === uniqueIds.size;
       }
-    )
-    .min(1, 'Please add at least one judge'),
+    ),
   results: Yup.array()
     .of(
       Yup.object().shape({

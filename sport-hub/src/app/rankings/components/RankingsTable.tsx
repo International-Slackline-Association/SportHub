@@ -7,21 +7,21 @@ import Table from '@ui/Table';
 import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import Link from 'next/link';
 import { CircleFlag } from 'react-circle-flags';
+import { getIocCode, getIso2FromIoc } from '@utils/countries';
 
 const columnHelper = createColumnHelper<AthleteRanking>();
 
-const CountryFlagWithName = ({ countryCode, defaultValue="N/A" }: { countryCode: string, defaultValue?: string }) => {
-  if (countryCode === 'N/A' || !countryCode) {
+const CountryFlagWithName = ({ iocCode, defaultValue="N/A" }: { iocCode: string, defaultValue?: string }) => {
+  if (iocCode === 'N/A' || !iocCode) {
     return <span className="text-gray-500">{defaultValue}</span>;
   }
 
-  // Convert country code to flag
-  const countryName = countryCode.toUpperCase(); // You could add a country name lookup here
+  const iso2 = getIso2FromIoc(iocCode);
 
   return (
-    <div className="flex items-center gap-2" title={countryName}>
-      <CircleFlag countryCode={countryCode.toLowerCase()} height={22} width={22} />
-      <span className="text-sm text-gray-600">{countryName}</span>
+    <div className="flex items-center gap-2" title={iocCode}>
+      <CircleFlag countryCode={iso2} height={22} width={22} />
+      <span className="text-sm text-gray-600">{iocCode}</span>
     </div>
   );
 };
@@ -38,7 +38,7 @@ const NameCell = ({ athlete, showCountry=false }: { athlete: AthleteRanking, sho
         >
           {displayName}
         </Link>
-        <CountryFlagWithName countryCode={athlete.country} defaultValue="" />
+        <CountryFlagWithName iocCode={getIocCode(athlete.country)} defaultValue="" />
     </div>
     );
   }
@@ -63,16 +63,24 @@ const desktopColumns = [
     ),
     meta: { filterVariant: 'text' },
   }),
-  columnHelper.accessor('ageCategory', {
+  columnHelper.accessor((row: AthleteRanking) => {
+    const cat = row.ageCategory;
+    if (cat === 'YOUTH') return 'Youth';
+    if (cat === 'SENIOR') return 'Senior';
+    if (cat === 'ALL') return 'All';
+    return cat;
+  }, {
+    id: 'ageCategory',
     enableColumnFilter: true,
     header: 'Age Category',
     meta: { filterVariant: 'select' },
   }),
-  columnHelper.accessor('country', {
+  columnHelper.accessor((row: AthleteRanking) => getIocCode(row.country), {
+    id: 'country',
     enableColumnFilter: true,
     header: 'Country',
     cell: info => (
-      <CountryFlagWithName countryCode={info.getValue()} />
+      <CountryFlagWithName iocCode={info.getValue()} />
     ),
     meta: { filterVariant: 'select' },
   }),
@@ -99,13 +107,21 @@ const mobileColumns = [
   columnHelper.accessor('points', {
     header: 'Points',
   }),
-  columnHelper.accessor('ageCategory', {
+  columnHelper.accessor((row: AthleteRanking) => {
+    const cat = row.ageCategory;
+    if (cat === 'YOUTH') return 'Youth';
+    if (cat === 'SENIOR') return 'Senior';
+    if (cat === 'ALL') return 'All';
+    return cat;
+  }, {
+    id: 'ageCategory',
     enableColumnFilter: true,
     header: 'Age Category',
     meta: { filterVariant: 'select' },
   }),
   // Temporary workaround to include country filter for mobile view
-  columnHelper.accessor('country', {
+  columnHelper.accessor((row: AthleteRanking) => getIocCode(row.country), {
+    id: 'country',
     enableColumnFilter: true,
     header: 'Country',
     cell: () => <></>,

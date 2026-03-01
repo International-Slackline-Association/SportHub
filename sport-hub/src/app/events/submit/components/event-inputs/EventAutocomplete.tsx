@@ -30,7 +30,7 @@ export default function EventAutocomplete() {
   });
 
   const updateFormWithSelectedEvent = ({ value }: Option) => {
-    const event = events.find(({ eventId }: EventMetadataRecord) => eventId === value);
+    const event: EventMetadataRecord = events.find(({ eventId }: EventMetadataRecord) => eventId === value);
 
     const nextTouchState = {
       event: {
@@ -56,15 +56,15 @@ export default function EventAutocomplete() {
 
     const nextFormState = {
       event: {
-        name: event.name,
-        city: event.city,
+        name: event.eventName,
+        city: event.location,
         country: event.country.toLowerCase(),
-        // Guard against older event data without date range
-        startDate: event?.startDate || event?.date || '',
-        endDate: event?.endDate || event?.date || '',
-        website: event.website,
-        socialMedia: event.socialMedia || {},
-        disciplines: event.disciplines || [],
+        startDate: event?.startDate,
+        endDate: event?.endDate,
+        // TODO Backend: Missing columns from EventMetadataRecord - need to add to DynamoDB and data model
+        website: "",
+        socialMedia: {},
+        disciplines: [],
         profileUrl: event.profileUrl,
         thumbnailUrl: event.thumbnailUrl,
       },

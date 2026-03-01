@@ -44,6 +44,12 @@ export default function TabbedContestForms() {
             setActiveContestIdx(activeContestIdx + 1);
           };
 
+          const duplicateCurrentContest = () => {
+            const current = contests[activeContestIdx];
+            push(JSON.parse(JSON.stringify(current)));
+            setActiveContestIdx(contests.length);
+          };
+
           const handleClickAddContest = async () => {
             if (contests.length <= 0) {
               createNewContest();
@@ -85,6 +91,7 @@ export default function TabbedContestForms() {
               {contests.length > 0 && (
                 <ContestForm
                   contestIdx={activeContestIdx}
+                  onDuplicate={duplicateCurrentContest}
                   onRemove={() => {
                     remove(activeContestIdx);
                     setActiveContestIdx(activeContestIdx - 1);

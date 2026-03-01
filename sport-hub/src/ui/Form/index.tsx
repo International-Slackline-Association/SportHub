@@ -68,6 +68,7 @@ export const FormikTextField = ({
   className,
   id,
   label,
+  name,
   required,
   tooltip,
   ...inputProps
@@ -81,19 +82,19 @@ export const FormikTextField = ({
       required={required}
       tooltip={tooltip}
     >
-      <Field name={id}>
+      <Field name={name}>
         {({ field, meta }: FormikFieldProps<string>) => (
           <div className={styles.inputContainer}>
             <input
               {...field}
               {...inputProps}
-              className={cn(styles.input, meta.error && styles.error)}
+              className={cn(styles.input, meta.touched && meta.error && styles.error)}
               id={id}
-              name={id}
+              name={name}
               type="text"
               value={field.value || ""}
             />
-            {meta.error && (
+            {meta.touched && meta.error && (
               <div className={styles.errorMessage}>{meta.error}</div>
             )}
           </div>
@@ -109,6 +110,7 @@ export const FormikNumberField = ({
   caption,
   id,
   label,
+  name,
   required,
   tooltip,
   ...inputProps
@@ -122,19 +124,19 @@ export const FormikNumberField = ({
       required={required}
       tooltip={tooltip}
     >
-      <Field name={id}>
+      <Field name={name}>
         {({ field, meta }: FormikFieldProps<string>) => (
           <div className={styles.inputContainer}>
             <input
               {...field}
               {...inputProps}
-              className={cn(styles.input, meta.error && styles.error)}
+              className={cn(styles.input, meta.touched && meta.error && styles.error)}
               id={id}
-              name={id}
+              name={name}
               type="number"
               value={field.value == null || field.value == undefined ? "" : field.value}
             />
-            {meta.error && (
+            {meta.touched && meta.error && (
               <div className={styles.errorMessage}>{meta.error}</div>
             )}
           </div>
@@ -152,6 +154,7 @@ export const FormikSelectField = ({
   className,
   id,
   label,
+  name,
   options,
   placeholder = "Select an option",
   required,
@@ -167,14 +170,15 @@ export const FormikSelectField = ({
       required={required}
       tooltip={tooltip}
     >
-      <Field name={id}>
+      <Field name={name}>
         {({ field, meta }: FormikFieldProps<string>) => (
           <div className={styles.inputContainer}>
             <select
               {...field}
               {...selectProps}
               id={id}
-              className={cn(styles.select, meta.error && styles.error)}
+              name={name}
+              className={cn(styles.select, meta.touched && meta.error && styles.error)}
             >
               <option value="">{placeholder}</option>
               {options.map((option) => (
@@ -183,7 +187,7 @@ export const FormikSelectField = ({
                 </option>
               ))}
             </select>
-            {meta.error && (
+            {meta.touched && meta.error && (
               <div className={styles.errorMessage}>{meta.error}</div>
             )}
           </div>
@@ -198,6 +202,7 @@ export const FormikCheckboxField = ({
   className,
   id,
   label,
+  name,
   required,
   tooltip,
 }: PropsWithChildren<BaseFormFieldProps<HTMLInputElement>>) => (
@@ -209,16 +214,16 @@ export const FormikCheckboxField = ({
     tooltip={tooltip}
     required={required}
   >
-    <Field name={id}>
+    <Field name={name}>
       {({ field, form, meta }: FormikFieldProps<boolean>) => (
         <>
           <input
             className={styles.checkbox}
             checked={field.value}
-            onChange={() => form.setFieldValue(id || '', !field.value)}
+            onChange={() => form.setFieldValue(name || '', !field.value)}
             type="checkbox"
           />
-          {meta.error && (
+          {meta.touched && meta.error && (
             <div className={styles.errorMessage}>{meta.error}</div>
           )}
         </>
@@ -238,6 +243,7 @@ export const FormikCheckboxGroup = ({
   direction = 'column',
   id,
   label,
+  name,
   options,
   required,
   tooltip,
@@ -250,7 +256,7 @@ export const FormikCheckboxGroup = ({
     required={required}
     tooltip={tooltip}
   >
-    <Field name={id}>
+    <Field name={name}>
       {({ field, form, meta }: FormikFieldProps<string[]>) => {
         const currentValue = field.value || [];
         return (
@@ -277,8 +283,8 @@ export const FormikCheckboxGroup = ({
                           selections.push(option.value);
                         }
 
-                        await form.setFieldValue(id || '', selections);
-                        form.setFieldTouched(id || '', true);
+                        await form.setFieldValue(name || '', selections);
+                        form.setFieldTouched(name || '', true);
                       }}
                       type="checkbox"
                     />
@@ -286,7 +292,7 @@ export const FormikCheckboxGroup = ({
                 );
               })}
             </div>
-            {meta.error && (
+            {meta.touched && meta.error && (
               <div className={styles.errorMessage}>{meta.error}</div>
             )}
           </>
@@ -306,9 +312,10 @@ export const FormikRadioGroup = ({
   direction = 'column',
   id,
   label,
+  name,
   options,
   required,
-  tooltip
+  tooltip,
 }: RadioGroupProps) => (
   <FormikFormField
     caption={caption}
@@ -318,7 +325,7 @@ export const FormikRadioGroup = ({
     required={required}
     tooltip={tooltip}
   >
-    <Field name={id}>
+    <Field name={name}>
       {({ field, form, meta }: FormikFieldProps<string>) => (
         <>
           <div className={cn(direction === "column" ? styles.verticalGroup : styles.horizontalGroup)}>
@@ -326,16 +333,18 @@ export const FormikRadioGroup = ({
               const isSelected = field.value === option.value;
               return (
                 <div className={styles.checkboxField} key={option.value}>
-                  <label htmlFor={id} className={styles.label}>
+                  <label htmlFor={`${id}-${option.value}`} className={styles.label}>
                     {option.label}
                   </label>
                   <input
                     className={styles.checkbox}
                     checked={isSelected}
-                    onChange={() => {
-                      form.setFieldValue(id || '', option.value);
-                      form.setFieldTouched(id || '', true);
+                    id={`${id}-${option.value}`}
+                    onChange={async () => {
+                      await form.setFieldValue(name || '', option.value);
+                      form.setFieldTouched(name || '', true);
                     }}
+                    name={name}
                     value={option.value}
                     type="radio"
                   />
@@ -343,7 +352,7 @@ export const FormikRadioGroup = ({
               );
             })}
           </div>
-          {meta.error && (
+          {meta.touched && meta.error && (
             <div className={styles.errorMessage}>{meta.error}</div>
           )}
         </>

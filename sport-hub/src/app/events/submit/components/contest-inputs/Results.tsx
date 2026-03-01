@@ -7,7 +7,7 @@ import { TrashIcon } from '@ui/Icons';
 import UserAutocomplete from './UserAutocomplete';
 import { ContestResultEntry, EventSubmissionFormValues } from '../../types';
 import { FormikNumberField, FormikTextField } from '@ui/Form';
-import UserManagementModal from '@ui/UserForm/UserManagementModal';
+import PendingUserForm from './PendingUserForm';
 import { calculatePointsForRank } from '@utils/points';
 
 const initialAthleteValues: Partial<ContestResultEntry> = {
@@ -36,8 +36,6 @@ const AthleteListItem = ({
 }: AthleteListItemProps) => {
   const { values, setFieldValue } = useFormikContext<EventSubmissionFormValues>();
   const formValueUserId = getIn(values, `${athleteFormKey}.id`);
-  const formValueName = getIn(values, `${athleteFormKey}.name`);
-  const isUnknownUser = formValueUserId == "" && formValueName != "";
 
   return (
     <div className="flex flex-row cluster items-end gap-4 mb-4">
@@ -46,6 +44,7 @@ const AthleteListItem = ({
         id={`${athleteFormKey}.rank`}
         label="Rank"
         min={1}
+        name={`${athleteFormKey}.rank`}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           const rank = Number(e.target.value);
           const contestSize = getIn(values, `${contestKey}.contestSize`);
@@ -54,30 +53,27 @@ const AthleteListItem = ({
           setFieldValue(`${athleteFormKey}.rank`, rank);
         }}
       />
-      <UserAutocomplete formKey={athleteFormKey} />
+      <UserAutocomplete formKey={athleteFormKey} readOnlyIfSet={!!formValueUserId} />
       <FormikNumberField
         className="shrink"
         disabled
         id={`${athleteFormKey}.isaPoints`}
         label="Points"
         min={0}
+        name={`${athleteFormKey}.isaPoints`}
       />
       <FormikTextField
         className="shrink"
         id={`${athleteFormKey}.stats`}
         label="Stats"
+        name={`${athleteFormKey}.stats`}
         tooltip="Data relevant to placement. Varies by discipline e.g. line length, time, etc."
       />
-      {isUnknownUser && (
-        <UserManagementModal
-          action="CREATE"
-          buttonSize="small"
-          buttonVariant="secondary"
-        />
-      )}
+      <PendingUserForm formKey={athleteFormKey} />
       <Button
         className="self-end"
         onClick={onDelete}
+        type="button"
         variant='destructive-secondary'
       >
         <TrashIcon/>
@@ -116,6 +112,7 @@ export const Results = ({ contestKey, results }: Props) => {
             </ol>
             <div className="flex flex-row justify-start gap-4">
               <Button
+                type="button"
                 onClick={() => {
                   let rank;
                   let points;
@@ -143,6 +140,7 @@ export const Results = ({ contestKey, results }: Props) => {
               {results.length > 1 && (
                 <>
                   <Button
+                    type="button"
                     onClick={() => {
                       const sortedResults = [...results].sort((a, b) => (a.rank || 0) - (b.rank || 0));
                       setFieldValue(`${contestKey}.results`,  sortedResults, true);
