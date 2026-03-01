@@ -1,8 +1,9 @@
 import { auth } from "@lib/auth"
 import { redirect } from "next/navigation"
+import Link from "next/link"
 import PageLayout from "@ui/PageLayout"
 import ProfileSection from "./components/ProfileSection"
-import { getUserProfile, getFullUserProfile } from "./actions"
+import { getUserProfile, getFullUserProfile, becomeOrganizer } from "./actions"
 import { getReferenceUserById } from "@lib/reference-db-service"
 
 export default async function DashboardPage() {
@@ -48,12 +49,45 @@ export default async function DashboardPage() {
         )}
 
         {/* Welcome Message */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-2xl font-bold mb-2">Welcome back, {displayName}!</h2>
-          <p className="text-gray-600">
-            Manage your profile and access your personal information.
-          </p>
+        <div className="bg-white shadow rounded-lg p-6 flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h2 className="text-2xl font-bold mb-2">Welcome back, {displayName}!</h2>
+            <p className="text-gray-600">
+              Manage your profile and access your personal information.
+            </p>
+          </div>
+          <Link
+            href={`/athlete-profile/${encodeURIComponent(session.user.id)}`}
+            className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 font-medium shrink-0"
+          >
+            View Profile
+          </Link>
         </div>
+
+        {/* Organizer Section */}
+        {profileResult.success && profileResult.user?.userSubTypes?.includes('organizer') ? (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center justify-between gap-4">
+            <span className="text-green-800 font-medium text-sm">You are an event organizer</span>
+            <a href="/events/my-events" className="text-sm text-blue-600 hover:underline font-medium">
+              My Events →
+            </a>
+          </div>
+        ) : (
+          <div className="bg-white shadow rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-1">Want to host events?</h3>
+            <p className="text-gray-600 text-sm mb-4">
+              Become an event organizer to submit and manage competitions on SportHub.
+            </p>
+            <form action={becomeOrganizer}>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm cursor-pointer"
+              >
+                Become an Organizer
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* Profile Section with Edit Button */}
         <ProfileSection

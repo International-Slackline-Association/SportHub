@@ -72,7 +72,20 @@ export default async function EventApprovalPage() {
                         {String(event.name ?? "—")}
                       </Link>
                       <div className="text-xs text-gray-500 flex gap-3 flex-wrap">
-                        <span>By {String(event.createdByName ?? event.createdBy ?? "—")}</span>
+                        <span>
+                          By{" "}
+                          {event.createdBy ? (
+                            <Link
+                              href={`/athlete-profile/${event.createdBy}`}
+                              className="text-blue-600 hover:underline"
+                            >
+                              {String(event.createdByName ?? event.createdBy)}
+                            </Link>
+                          ) : "—"}
+                          {event.createdBy && (
+                            <span className="ml-1 text-gray-400">({String(event.createdBy)})</span>
+                          )}
+                        </span>
                         <span>{dates}</span>
                         <span>{[event.city, countryName].filter(Boolean).join(", ") || "—"}</span>
                         <span>{contests.length} contest{contests.length !== 1 ? "s" : ""}</span>

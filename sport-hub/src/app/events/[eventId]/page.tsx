@@ -7,6 +7,7 @@ import { getEvent } from '../submit/actions';
 import { disciplineOptions, eventGenderOptions, ageCategoryOptions } from '@ui/Form/commonOptions';
 import ContestTabs, { ContestTabData } from './ContestTabs';
 import { auth } from '@lib/auth';
+import { getFullUserProfile } from '../../dashboard/actions';
 
 interface EventPageProps {
   params: Promise<{
@@ -30,6 +31,12 @@ export default async function EventPage({ params }: EventPageProps) {
     const eventRecord = newFormatResult.event as Record<string, unknown>;
     if (Array.isArray(eventRecord.contests)) {
       const event = eventRecord;
+
+      const organizerId = event.createdBy ? String(event.createdBy) : null;
+      const organizerProfile = organizerId ? await getFullUserProfile(organizerId) : null;
+      const organizerName = organizerProfile
+        ? [organizerProfile.name, organizerProfile.surname].filter(Boolean).join(' ') || null
+        : null;
       const eventContests = (event.contests as Record<string, unknown>[]);
       const totalPrize = eventContests.reduce((sum, c) => sum + Number(c.totalPrizeValue ?? 0), 0);
 
@@ -100,6 +107,17 @@ export default async function EventPage({ params }: EventPageProps) {
               </div>
             )}
             <EventDetailsCard event={eventLike} />
+            {organizerId && (
+              <p className="text-sm text-gray-500">
+                Organized by{' '}
+                <Link
+                  href={`/athlete-profile/${encodeURIComponent(organizerId)}`}
+                  className="text-blue-600 hover:underline font-medium"
+                >
+                  {organizerName ?? String(event.createdByName ?? organizerId)}
+                </Link>
+              </p>
+            )}
             <ContestTabs contests={contestTabs} />
           </div>
         </PageLayout>

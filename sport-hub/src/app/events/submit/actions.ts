@@ -416,6 +416,22 @@ export async function getPublishedEvents(): Promise<Record<string, unknown>[]> {
 }
 
 /**
+ * Get published events created by a specific organizer
+ * PUBLIC: No authentication required (read-only)
+ */
+export async function getPublishedEventsByOrganizer(organizerId: string): Promise<Record<string, unknown>[]> {
+  try {
+    const result = await getAllEvents();
+    if (!result.success) return [];
+    return (result.events as Record<string, unknown>[])
+      .filter(e => e.status === 'published' && e.createdBy === organizerId)
+      .sort((a, b) => String(b.startDate ?? '').localeCompare(String(a.startDate ?? '')));
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Get all events with pending status (awaiting admin approval)
  * PROTECTED: Requires admin role
  */
