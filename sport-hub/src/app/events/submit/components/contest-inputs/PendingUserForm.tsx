@@ -97,23 +97,26 @@ export default function PendingUserForm({ formKey }: Props) {
           </button>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <FormikTextField id={`${formKey}.pendingUser.name`} label="First Name" required />
-          <FormikTextField id={`${formKey}.pendingUser.surname`} label="Last Name" required />
-          <FormikTextField id={`${formKey}.pendingUser.email`} label="Email" required />
+          <FormikTextField id={`${formKey}.pendingUser.name`} name={`${formKey}.pendingUser.name`} label="First Name" required />
+          <FormikTextField id={`${formKey}.pendingUser.surname`} name={`${formKey}.pendingUser.surname`} label="Last Name" required />
+          <FormikTextField id={`${formKey}.pendingUser.email`} name={`${formKey}.pendingUser.email`} label="Email" required />
           <FormikSelectField
             id={`${formKey}.pendingUser.gender`}
+            name={`${formKey}.pendingUser.gender`}
             label="Gender"
             options={userGenderOptions}
             required
           />
           <FormikSelectField
             id={`${formKey}.pendingUser.country`}
+            name={`${formKey}.pendingUser.country`}
             label="Country"
             options={countryCodeOptions}
           />
-          <FormikTextField id={`${formKey}.pendingUser.city`} label="City" />
+          <FormikTextField id={`${formKey}.pendingUser.city`} name={`${formKey}.pendingUser.city`} label="City" />
           <FormikTextField
             id={`${formKey}.pendingUser.birthdate`}
+            name={`${formKey}.pendingUser.birthdate`}
             label="Birthdate"
             placeholder="YYYY-MM-DD"
           />
