@@ -148,7 +148,7 @@ const SubmitButton = () => {
 const ContestsTable = () => {
   const eventsQuery = useQuery({
     queryKey: ['events'],
-    queryFn: async () => (await fetch('/api/events')).json(),
+    queryFn: async () => (await fetch('/api/events/contests')).json(),
   });
 
   if (eventsQuery.isLoading) {

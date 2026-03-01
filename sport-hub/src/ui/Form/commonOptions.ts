@@ -13,8 +13,8 @@ export const userGenderOptions: Option[] = [
 ];
 
 export const eventGenderOptions: Option[] = [
-  { value: "MEN_ONLY", label: "Men Only" },
-  { value: "WOMEN_ONLY", label: "Women Only" },
+  { value: "MEN_ONLY", label: "Men" },
+  { value: "WOMEN_ONLY", label: "Women" },
   { value: "MIXED", label: "Mixed" },
 ];
 

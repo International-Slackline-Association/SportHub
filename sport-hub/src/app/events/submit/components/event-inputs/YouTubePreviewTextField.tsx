@@ -71,6 +71,7 @@ export default function YouTubePreviewTextField() {
       )}
       <FormikTextField
         id="event.youtubeVideo"
+        name="event.youtubeVideo"
         label="YouTube Video"
         placeholder="https://www.youtube.com/watch?v=example"
         onBlur={handleBlur}

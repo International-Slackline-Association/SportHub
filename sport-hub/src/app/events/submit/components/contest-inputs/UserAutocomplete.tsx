@@ -90,6 +90,7 @@ export default function UserAutocomplete<TFormValues>({
     <FormikAutocomplete
       caption={caption}
       id={formKeyName}
+      name={formKeyName}
       isLoading={isLoading}
       hideErrorMessage
       getDisplayValue={(value: unknown) => {

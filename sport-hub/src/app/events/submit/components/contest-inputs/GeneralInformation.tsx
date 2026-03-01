@@ -26,6 +26,7 @@ export const GeneralInformation = ({ contestKey }: Props) => {
           className="grow"
           id={`${contestKey}.startDate`}
           label="Start Date"
+          name={`${contestKey}.startDate`}
           placeholder="YYYY-MM-DD"
           type="date"
           />
@@ -33,6 +34,7 @@ export const GeneralInformation = ({ contestKey }: Props) => {
           className="grow"
           id={`${contestKey}.endDate`}
           label="End Date"
+          name={`${contestKey}.endDate`}
           placeholder="YYYY-MM-DD"
           tooltip="Date of the final round"
           type="date"
@@ -43,6 +45,7 @@ export const GeneralInformation = ({ contestKey }: Props) => {
         direction="row"
         id={`${contestKey}.gender`}
         label="Gender"
+        name={`${contestKey}.gender`}
         options={eventGenderOptions}
         placeholder="Select gender"
         required
@@ -52,6 +55,7 @@ export const GeneralInformation = ({ contestKey }: Props) => {
         direction="row"
         id={`${contestKey}.discipline`}
         label="Discipline"
+        name={`${contestKey}.discipline`}
         placeholder="Select discipline"
         options={disciplineOptions}
         required
@@ -60,6 +64,7 @@ export const GeneralInformation = ({ contestKey }: Props) => {
         caption="Scoring System used for this competition"
         id={`${contestKey}.judgingSystem`}
         label="Judging System"
+        name={`${contestKey}.judgingSystem`}
         options={judgingSystemOptions}
         placeholder="Select judging system"
       />
@@ -68,6 +73,7 @@ export const GeneralInformation = ({ contestKey }: Props) => {
         direction="row"
         id={`${contestKey}.ageCategory`}
         label="Age Category"
+        name={`${contestKey}.ageCategory`}
         options={ageCategoryOptions}
         placeholder="Select age category"
         required
@@ -76,6 +82,7 @@ export const GeneralInformation = ({ contestKey }: Props) => {
         caption="Sum in Euro of all cash and gear prizes (retail value) given per competition. Without Food and Accomodation."
         id={`${contestKey}.totalPrizeValue`}
         label="Total Prize Value (€)"
+        name={`${contestKey}.totalPrizeValue`}
         placeholder="0"
         min="0"
       />
@@ -85,6 +92,7 @@ export const GeneralInformation = ({ contestKey }: Props) => {
         direction="row"
         id={`${contestKey}.contestSize`}
         label="Contest Size"
+        name={`${contestKey}.contestSize`}
         options={contestSizeOptions}
         placeholder="Select contest size"
         required

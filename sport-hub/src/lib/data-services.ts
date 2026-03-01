@@ -236,6 +236,36 @@ export interface ContestData {
   }>;
 }
 
+export async function getEventsData(): Promise<EventMetadataRecord[]> {
+  const cacheKey = 'events-data';
+  const cached = cache.get<EventMetadataRecord[]>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    // Scan with projection to reduce data transfer
+    const allItems = await dynamodb.scanItems(EVENTS_TABLE, {
+      projectionExpression: 'eventId, eventName, sortKey, country, profileUrl, thumbnailUrl, startDate, endDate, #loc',
+      expressionAttributeNames: {
+        '#loc': 'location' // 'location' is a reserved word in DynamoDB
+      }
+    });
+
+    if (!allItems || allItems.length === 0) {
+      return [];
+    }
+
+    const eventRecords: EventMetadataRecord[] = allItems.filter(item => item.sortKey === 'Metadata');
+    const sortedEvents = eventRecords.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+
+    // Cache the results (10 min TTL to reduce scan frequency)
+    cache.set(cacheKey, sortedEvents, 600000); // Cache for 10 minutes (was 3 min)
+    return sortedEvents;
+  } catch (error) {
+    console.error('Error fetching events data:', error);
+    return [];
+  }
+}
+
 /**
  * Get all contests for events table
  * OPTIMIZED: Scan with projection expression (reduces data transfer) + 10-min caching

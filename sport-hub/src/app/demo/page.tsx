@@ -198,16 +198,19 @@ export default function Page() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormikTextField
                     id="eventName"
+                    name="eventName"
                     placeholder="Laax"
                   />
                   <FormikTextField
                     id="city"
+                    name="city"
                     placeholder="Laax"
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormikSelectField
                     id="country"
+                    name="country"
                     placeholder="Swiss"
                     options={[
                       { value: "CH", label: "Switzerland" },
@@ -219,6 +222,7 @@ export default function Page() {
                   />
                   <FormikAutocomplete
                     id="lineType"
+                    name="lineType"
                     label="Autocomplete Field"
                     options={[
                       { value: "slackline", label: "Slackline" },
@@ -234,12 +238,17 @@ export default function Page() {
                     }}
                     placeholder="Types of slacklines"
                   />
-                  <FormikCheckboxField id="verified" label="Single Checkbox" />
+                  <FormikCheckboxField
+                    id="verified"
+                    name="verified"
+                    label="Single Checkbox"
+                  />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormikCheckboxGroup
                     direction="row"
                     id="disciplines"
+                    name="disciplines"
                     label="Checkbox Group"
                     options={[
                       { label: "A", value: "a" },
@@ -250,6 +259,7 @@ export default function Page() {
                   />
                   <FormikRadioGroup
                     id="level"
+                    name="level"
                     label="Level"
                     options={[
                       { label: "1", value: "1" },
