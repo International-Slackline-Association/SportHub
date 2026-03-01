@@ -82,7 +82,7 @@ export default async function EventApprovalPage() {
                               {String(event.createdByName ?? event.createdBy)}
                             </Link>
                           ) : "—"}
-                          {event.createdBy && (
+                          {!!event.createdBy && (
                             <span className="ml-1 text-gray-400">({String(event.createdBy)})</span>
                           )}
                         </span>

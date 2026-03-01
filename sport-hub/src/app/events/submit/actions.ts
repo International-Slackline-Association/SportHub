@@ -550,26 +550,26 @@ export async function createPendingUserFromEvent(
   contestIdx: number,
   entryType: 'judge' | 'athlete',
   entryIdx: number,
-): Promise<{ success: boolean; error?: string }> {
+): Promise<void> {
   await requireAdmin();
 
   try {
     const result = await getEvent(eventId);
     if (!result.success || !result.event) {
-      return { success: false, error: 'Event not found' };
+      throw new Error('Event not found');
     }
 
     const event = result.event as Record<string, unknown>;
     const contests = (event.contests as Record<string, unknown>[]) ?? [];
     const contest = contests[contestIdx] as Record<string, unknown> | undefined;
-    if (!contest) return { success: false, error: 'Contest not found' };
+    if (!contest) throw new Error('Contest not found');
 
     const entries = (
       entryType === 'judge' ? contest.judges : contest.results
     ) as Record<string, unknown>[] | undefined;
 
     const entry = entries?.[entryIdx];
-    if (!entry?.pendingUser) return { success: false, error: 'No pending user data' };
+    if (!entry?.pendingUser) throw new Error('No pending user data');
 
     const pending = entry.pendingUser as PendingUserData;
 
@@ -594,6 +594,7 @@ export async function createPendingUserFromEvent(
     // Update the event entry: replace pendingUser with real userId
     // Destructure to omit pendingUser key entirely (undefined values in nested arrays
     // are not handled by removeUndefinedValues in older AWS SDK versions)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { pendingUser: _removed, ...entryWithoutPending } = entry as Record<string, unknown>;
     const updatedEntries = [...(entries ?? [])];
     updatedEntries[entryIdx] = {
@@ -611,10 +612,8 @@ export async function createPendingUserFromEvent(
     await dynamodb.putItem(EVENTS_TABLE, { ...event, contests: updatedContests });
 
     revalidatePath('/admin/event-approval');
-
-    return { success: true };
   } catch (error) {
     console.error('Error creating pending user:', error);
-    return { success: false, error: 'Failed to create user' };
+    throw error;
   }
 }

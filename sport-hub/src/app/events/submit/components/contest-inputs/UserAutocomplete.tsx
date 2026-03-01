@@ -29,26 +29,13 @@ export default function UserAutocomplete<TFormValues>({
     return () => clearTimeout(t);
   }, [currentFormValueUserName]);
 
-  // When readOnlyIfSet and the entry already has an id, show a profile link — no query needed
-  if (readOnlyIfSet && formikValueUserId) {
-    return (
-      <div className="stack gap-1">
-        <span className="text-xs text-gray-500">Name</span>
-        <a
-          href={`/athlete-profile/${formikValueUserId}`}
-          className="text-sm px-2 py-1.5 border border-gray-200 rounded bg-gray-50 text-blue-600 hover:underline min-w-32 inline-block"
-        >
-          {currentFormValueUserName || formikValueUserId}
-        </a>
-      </div>
-    );
-  }
+  const isReadOnly = Boolean(readOnlyIfSet && formikValueUserId);
 
   const { data: allUsers, isLoading, isError } = useQuery({
     queryKey: ['users'],
     queryFn: async () => (await fetch('/api/users')).json(),
-    // Enable only when user has typed at least 3 chars
-    enabled: debouncedUserName.length >= 3,
+    // Enable only when user has typed at least 3 chars and not in read-only mode
+    enabled: !isReadOnly && debouncedUserName.length >= 3,
     // Cache for 1 hour, consider data fresh for 10 minutes
     gcTime: 60 * 60 * 1000,
     staleTime: 10 * 60 * 1000,
@@ -66,6 +53,21 @@ export default function UserAutocomplete<TFormValues>({
     ),
     [allUsers, debouncedUserName]
   );
+
+  // When readOnlyIfSet and the entry already has an id, show a profile link — no query needed
+  if (isReadOnly) {
+    return (
+      <div className="stack gap-1">
+        <span className="text-xs text-gray-500">Name</span>
+        <a
+          href={`/athlete-profile/${formikValueUserId}`}
+          className="text-sm px-2 py-1.5 border border-gray-200 rounded bg-gray-50 text-blue-600 hover:underline min-w-32 inline-block"
+        >
+          {currentFormValueUserName || formikValueUserId}
+        </a>
+      </div>
+    );
+  }
 
   const userOptions = users?.map(({ name, surname, userId }: UserProfileRecord) => {
     const displayName = [name, surname].filter(Boolean).join(' ') || userId;

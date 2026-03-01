@@ -8,7 +8,15 @@ import {
   getAthleteLeaderboard,
   getAthleteRankings
 } from './user-query-service';
-import { MAP_DISCIPLINE_ENUM_TO_NAME } from '@utils/consts';
+import { MAP_DISCIPLINE_ENUM_TO_NAME, MAP_GENDER_ENUM_TO_NAME, MAP_CONTEST_TYPE_ENUM_TO_NAME } from '@utils/consts';
+
+// Reverse lookups: name → numeric enum (for mapping new-format string values back to ContestData numbers)
+const GENDER_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
+  Object.entries(MAP_GENDER_ENUM_TO_NAME).map(([num, name]) => [name, Number(num)])
+);
+const CONTEST_TYPE_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
+  Object.entries(MAP_CONTEST_TYPE_ENUM_TO_NAME).map(([num, name]) => [name, Number(num)])
+);
 import { UserRecord } from './relational-types';
 
 // PERFORMANCE OPTIMIZATION: Simple in-memory cache with TTL
@@ -372,6 +380,8 @@ export async function getContestsData(): Promise<ContestData[]> {
           city: String(meta.city ?? ''),
           discipline: String(contest.discipline ?? ''),
           prize: Number(contest.totalPrizeValue ?? 0),
+          gender: GENDER_NAME_TO_ENUM[String(contest.gender ?? '')] ?? 0,
+          category: CONTEST_TYPE_NAME_TO_ENUM[String(contest.contestSize ?? '')] ?? 0,
           verified: false,
           athletes,
         });

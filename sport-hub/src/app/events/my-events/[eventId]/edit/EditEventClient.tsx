@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Formik, Form, getIn } from 'formik';
+import Link from 'next/link';
 import { TabGroup } from '@ui/Tab';
 import Button from '@ui/Button';
 import EventForm from '../../../submit/components/event-inputs/EventForm';
@@ -8,7 +9,6 @@ import {
   initialEventValues,
   eventSubmissionValidationSchema,
   EventSubmissionFormValues,
-  ContestFormValues,
 } from '../../../submit/types';
 import styles from '../../../submit/components/styles.module.css';
 import { updateEvent } from '../../../submit/actions';
@@ -60,9 +60,9 @@ export default function EditEventClient({ eventId, initialValues }: Props) {
           <p className="text-sm text-gray-600">Your event has been updated.</p>
         </div>
         <div className="flex gap-3">
-          <a href="/events/my-events">
+          <Link href="/events/my-events">
             <Button type="button" variant="primary">Back to My Events</Button>
-          </a>
+          </Link>
           <Button type="button" variant="secondary" onClick={() => setSaved(false)}>
             Keep editing
           </Button>
@@ -115,9 +115,9 @@ export default function EditEventClient({ eventId, initialValues }: Props) {
             )}
 
             <div className={cn(styles.formActions)}>
-              <a href="/events/my-events">
+              <Link href="/events/my-events">
                 <Button type="button" variant="ghost">Cancel</Button>
-              </a>
+              </Link>
               {!isFirstStep && (
                 <Button
                   onClick={() => { setCurrentStep(currentStep - 1); setHasValidated(false); }}

@@ -1,6 +1,7 @@
 "use client"
 
 import { useSession, signIn, signOut } from "next-auth/react"
+import Link from "next/link"
 import { useState, useRef, useEffect } from "react"
 import styles from "./styles.module.css"
 import Button from "@ui/Button"
@@ -104,13 +105,13 @@ export default function UserMenu() {
           )}
 
           {(session.user.role === 'admin' || session.user.userSubTypes?.includes('organizer')) && (
-            <a
+            <Link
               href="/events/my-events"
               className={styles.userMenuDropdownLink}
               onClick={() => setIsOpen(false)}
             >
               My Events
-            </a>
+            </Link>
           )}
 
           <button

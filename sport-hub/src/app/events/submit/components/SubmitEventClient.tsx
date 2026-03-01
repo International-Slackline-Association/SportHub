@@ -1,6 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import { Formik, Form, getIn } from 'formik';
+import Link from 'next/link';
 import { TabGroup } from '@ui/Tab';
 import Button from '@ui/Button';
 import EventForm from './event-inputs/EventForm';
@@ -82,18 +83,18 @@ export default function SubmitEventClient() {
                 <p className="text-sm text-gray-600">
                   {isDraft
                     ? <>Your event has been saved as a draft. Go to{" "}
-                        <a href="/events/my-events" className="underline font-medium">My Events</a>
+                        <Link href="/events/my-events" className="underline font-medium">My Events</Link>
                         {" "}to submit it for admin approval when ready.</>
                     : <>Your event has been submitted and is pending admin approval. Go to{" "}
-                        <a href="/events/my-events" className="underline font-medium">My Events</a>
+                        <Link href="/events/my-events" className="underline font-medium">My Events</Link>
                         {" "}to track its status.</>
                   }
                 </p>
               </div>
               <div className="flex gap-3">
-                <a href="/events/my-events">
+                <Link href="/events/my-events">
                   <Button type="button" variant="primary">Go to My Events</Button>
-                </a>
+                </Link>
                 <Button
                   type="button"
                   variant="secondary"

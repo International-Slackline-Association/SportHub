@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Formik, Form } from 'formik';
+import Link from 'next/link';
 import Button from '@ui/Button';
 import { Judges } from '../../../submit/components/contest-inputs/Judges';
 import { Results } from '../../../submit/components/contest-inputs/Results';
@@ -40,9 +41,9 @@ export default function EditScoresClient({ eventId, eventName, initialValues }: 
       <div className="stack gap-4 p-4 sm:p-0">
         <p className="text-sm text-gray-600">Judges and scores saved.</p>
         <div className="flex gap-3">
-          <a href="/events/my-events">
+          <Link href="/events/my-events">
             <Button type="button" variant="primary">Back to My Events</Button>
-          </a>
+          </Link>
           <Button type="button" variant="secondary" onClick={() => setSaved(false)}>
             Keep editing
           </Button>
@@ -85,9 +86,9 @@ export default function EditScoresClient({ eventId, eventName, initialValues }: 
           })}
 
           <div className={cn(styles.formActions)}>
-            <a href="/events/my-events">
+            <Link href="/events/my-events">
               <Button type="button" variant="ghost">Cancel</Button>
-            </a>
+            </Link>
             <Button type="submit" variant="primary" disabled={isSubmitting}>
               {isSubmitting && <Spinner size="small" color="white" />}
               Save Judges &amp; Scores
