@@ -87,13 +87,13 @@ export const FormikTextField = ({
             <input
               {...field}
               {...inputProps}
-              className={cn(styles.input, meta.error && styles.error)}
+              className={cn(styles.input, meta.touched && meta.error && styles.error)}
               id={id}
               name={id}
               type="text"
               value={field.value || ""}
             />
-            {meta.error && (
+            {meta.touched && meta.error && (
               <div className={styles.errorMessage}>{meta.error}</div>
             )}
           </div>
@@ -128,13 +128,13 @@ export const FormikNumberField = ({
             <input
               {...field}
               {...inputProps}
-              className={cn(styles.input, meta.error && styles.error)}
+              className={cn(styles.input, meta.touched && meta.error && styles.error)}
               id={id}
               name={id}
               type="number"
               value={field.value == null || field.value == undefined ? "" : field.value}
             />
-            {meta.error && (
+            {meta.touched && meta.error && (
               <div className={styles.errorMessage}>{meta.error}</div>
             )}
           </div>
@@ -174,7 +174,7 @@ export const FormikSelectField = ({
               {...field}
               {...selectProps}
               id={id}
-              className={cn(styles.select, meta.error && styles.error)}
+              className={cn(styles.select, meta.touched && meta.error && styles.error)}
             >
               <option value="">{placeholder}</option>
               {options.map((option) => (
@@ -183,7 +183,7 @@ export const FormikSelectField = ({
                 </option>
               ))}
             </select>
-            {meta.error && (
+            {meta.touched && meta.error && (
               <div className={styles.errorMessage}>{meta.error}</div>
             )}
           </div>
@@ -218,7 +218,7 @@ export const FormikCheckboxField = ({
             onChange={() => form.setFieldValue(id || '', !field.value)}
             type="checkbox"
           />
-          {meta.error && (
+          {meta.touched && meta.error && (
             <div className={styles.errorMessage}>{meta.error}</div>
           )}
         </>
@@ -286,7 +286,7 @@ export const FormikCheckboxGroup = ({
                 );
               })}
             </div>
-            {meta.error && (
+            {meta.touched && meta.error && (
               <div className={styles.errorMessage}>{meta.error}</div>
             )}
           </>
@@ -343,7 +343,7 @@ export const FormikRadioGroup = ({
               );
             })}
           </div>
-          {meta.error && (
+          {meta.touched && meta.error && (
             <div className={styles.errorMessage}>{meta.error}</div>
           )}
         </>

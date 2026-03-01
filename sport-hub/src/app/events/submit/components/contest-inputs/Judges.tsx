@@ -5,11 +5,12 @@ import { cn } from '@utils/cn';
 import Button from '@ui/Button';
 import { TrashIcon } from '@ui/Icons';
 import UserAutocomplete from './UserAutocomplete';
+import PendingUserForm from './PendingUserForm';
 import { EventSubmissionFormValues } from '../../types';
 
 type Props = {
   contestKey: string;
-  judges: string[];
+  judges: { id: string; name?: string }[];
 }
 
 export const Judges = ({ contestKey, judges }: Props) => {
@@ -25,20 +26,24 @@ export const Judges = ({ contestKey, judges }: Props) => {
               {!judges.length && (
                 <div>No judges added yet.</div>
               )}
-              {judges.map((_, idx) => (
-                <li key={idx} className="pb-4">
-                  <div className={cn("cluster", "items-end", "gap-4")}>
-                    <UserAutocomplete formKey={`${contestKey}.judges[${idx}]`} />
-                    <Button
-                      onClick={() => remove(idx)}
-                      variant='destructive-secondary'
-                      type="button"
+              {judges.map((judge, idx) => {
+                const judgeFormKey = `${contestKey}.judges[${idx}]`;
+                return (
+                  <li key={idx} className="pb-4">
+                    <div className={cn("cluster", "items-end", "gap-4")}>
+                      <UserAutocomplete formKey={judgeFormKey} readOnlyIfSet={!!judge.id} />
+                      <PendingUserForm formKey={judgeFormKey} />
+                      <Button
+                        onClick={() => remove(idx)}
+                        variant='destructive-secondary'
+                        type="button"
                       >
-                      <TrashIcon/>
-                    </Button>
-                  </div>
-                </li>
-              ))}
+                        <TrashIcon />
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
             <Button
               className="w-fit"
@@ -55,5 +60,5 @@ export const Judges = ({ contestKey, judges }: Props) => {
         )}
       </FieldArray>
     </div>
-  )
+  );
 };

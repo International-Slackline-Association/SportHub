@@ -93,6 +93,26 @@ export default function UserMenu() {
             Dashboard
           </a>
 
+          {session.user.role === 'admin' && (
+            <a
+              href="/admin"
+              className={styles.userMenuDropdownLink}
+              onClick={() => setIsOpen(false)}
+            >
+              Admin Panel
+            </a>
+          )}
+
+          {(session.user.role === 'admin' || session.user.userSubTypes?.includes('organizer')) && (
+            <a
+              href="/events/my-events"
+              className={styles.userMenuDropdownLink}
+              onClick={() => setIsOpen(false)}
+            >
+              My Events
+            </a>
+          )}
+
           <button
             onClick={() => {
               setIsOpen(false)

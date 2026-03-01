@@ -10,10 +10,11 @@ import { ErrorMessage } from '../ErrorMessage';
 
 const createUserLabel = (user: UserProfileRecord) => `${user.name} ${user.surname} | ${user.userId}`.toLocaleLowerCase();
 
-type Props = { formKey: string; onSelectOption?: (option: Option) => void };
+type Props = { formKey: string; onSelectOption?: (option: Option) => void; readOnlyIfSet?: boolean };
 
 export default function UserAutocomplete<TFormValues>({
   formKey,
+  readOnlyIfSet,
   ...autocompleteProps
 }: Props) {
   const { setFieldTouched, setFieldValue, values } = useFormikContext<TFormValues>();
@@ -27,6 +28,21 @@ export default function UserAutocomplete<TFormValues>({
     const t = setTimeout(() => setDebouncedUserName(currentFormValueUserName), 300);
     return () => clearTimeout(t);
   }, [currentFormValueUserName]);
+
+  // When readOnlyIfSet and the entry already has an id, show a profile link — no query needed
+  if (readOnlyIfSet && formikValueUserId) {
+    return (
+      <div className="stack gap-1">
+        <span className="text-xs text-gray-500">Name</span>
+        <a
+          href={`/athlete-profile/${formikValueUserId}`}
+          className="text-sm px-2 py-1.5 border border-gray-200 rounded bg-gray-50 text-blue-600 hover:underline min-w-32 inline-block"
+        >
+          {currentFormValueUserName || formikValueUserId}
+        </a>
+      </div>
+    );
+  }
 
   const { data: allUsers, isLoading, isError } = useQuery({
     queryKey: ['users'],
@@ -51,10 +67,10 @@ export default function UserAutocomplete<TFormValues>({
     [allUsers, debouncedUserName]
   );
 
-  const userOptions = users?.map(({ name, userId }: UserProfileRecord) => ({
-    label: name,
-    value: userId
-  })) || [];
+  const userOptions = users?.map(({ name, surname, userId }: UserProfileRecord) => {
+    const displayName = [name, surname].filter(Boolean).join(' ') || userId;
+    return { label: `${displayName} | ${userId}`, value: userId };
+  }) || [];
 
   const currentUser = users?.find((user: UserProfileRecord) => user.userId === formikValueUserId);
   const isUnknownUser = formikValueUserId == "" && currentFormValueUserName != "";
@@ -87,14 +103,12 @@ export default function UserAutocomplete<TFormValues>({
       options={userOptions}
       onSelectOption={(option: Option) => {
         const formValue = getIn(values, formKey) || {};
-        const [name, id] = option.label.split('|');
+        const displayName = option.label.split('|')[0].trim();
+        const id = option.value;
 
-        let athletePayload = {};
-        if (typeof formValue === "string") {
-          athletePayload = { id, name };
-        } else {
-          athletePayload = { ...formValue, id, name };
-        }
+        const athletePayload = typeof formValue === 'string'
+          ? { id, name: displayName }
+          : { ...formValue, id, name: displayName };
 
         setFieldValue(formKey, athletePayload);
         setFieldTouched(formKey, true, false);
