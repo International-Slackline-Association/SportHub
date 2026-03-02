@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { dynamodb, USERS_TABLE } from '@lib/dynamodb';
 import { auth } from '@lib/auth';
-import UserForm from './UserForm';
+import { CreateUserForm } from '@ui/UserForm';
 import UserListPagination from './UserListPagination';
 import CurrentUserPanel from './CurrentUserPanel';
 import { requireTestPageAccess } from '@lib/test-page-access';
@@ -164,7 +164,7 @@ export default async function AboutPage() {
       {/* Add User Form */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
         <h2 className="text-xl font-semibold mb-4">Add New User</h2>
-        <UserForm />
+        <CreateUserForm />
       </div>
 
       {/* Users List */}

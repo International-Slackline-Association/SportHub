@@ -8,7 +8,7 @@ import styles from './styles.module.css';
 import React from 'react';
 import Spinner from '@ui/Spinner';
 
-interface FormikAutocompleteProps extends BaseFormFieldProps<HTMLInputElement> {
+export interface FormikAutocompleteProps extends BaseFormFieldProps<HTMLInputElement> {
   hideErrorMessage?: boolean;
   isError?: boolean;
   isLoading?: boolean;
@@ -40,6 +40,7 @@ const highlightMatch = (text: string, query: string) => {
  * Capable of handling string or complex field value types.
  */
 export default function FormikAutocomplete({
+  caption,
   className,
   hideErrorMessage = false,
   id,
@@ -71,6 +72,7 @@ export default function FormikAutocomplete({
   return (
     <div className={styles.autocompleteContainer} ref={containerRef}>
       <FormikFormField
+        caption={caption}
         className={className}
         id={id}
         label={
@@ -87,7 +89,7 @@ export default function FormikAutocomplete({
             const toDisplay =
               getDisplayValue ||
               ((value: unknown, opts: Option[]) => {
-                const match = opts.find((o) => o.value === value);
+                const match = opts.find((o) => o.value === (value as string)?.trim());
                 if (match) return match.label;
                 return typeof value === 'string' ? value : '';
               });
@@ -126,7 +128,7 @@ export default function FormikAutocomplete({
                       {isError && <div className={styles.dropdownMessage}>Error loading options</div>}
                       {!isLoading && !isError && (
                         filteredOptions.map(({ label, value }: Option) => (
-                          <React.Fragment key={value}>
+                          <React.Fragment key={`${label}-${value}`}>
                             <li className={styles.dropdownItem}>
                               <button
                                 className={styles.dropdownButton}

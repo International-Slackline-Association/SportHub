@@ -15,3 +15,13 @@
 .chevronDark {
   color: var(--color-neutral-700);
 }
+
+.infoIcon {
+  color: var(--color-neutral-500);
+  cursor: help;
+  transition: color 0.2s ease;
+}
+
+.infoIcon:hover {
+  color: var(--color-primary);
+}

@@ -1,15 +1,19 @@
 import { auth } from "@lib/auth"
 import { NextResponse } from "next/server"
-import type { Role } from "./types/rbac"
+import type { Role, UserSubType } from "./types/rbac"
 
-// Define route patterns and their required roles
+// Define route patterns and their required roles/sub-types
 const PROTECTED_ROUTES: Array<{
   pattern: string;
   requiredRole?: Role;
+  allowedSubTypes?: UserSubType[];
   requireAuth: boolean;
 }> = [
   { pattern: '/dashboard', requireAuth: true },
   { pattern: '/admin', requiredRole: 'admin', requireAuth: true },
+  // Event submission and management: accessible to admins and organizers
+  { pattern: '/events/submit', requireAuth: true, allowedSubTypes: ['organizer'] },
+  { pattern: '/events/my-events', requireAuth: true, allowedSubTypes: ['organizer'] },
   { pattern: '/api/admin', requiredRole: 'admin', requireAuth: true },
 ];
 
@@ -17,6 +21,7 @@ export default auth((req) => {
   const { pathname } = req.nextUrl
   const isLoggedIn = !!req.auth
   const userRole = req.auth?.user?.role
+  const userSubTypes = req.auth?.user?.userSubTypes ?? []
 
   // Find matching route pattern
   const matchedRoute = PROTECTED_ROUTES.find(route =>
@@ -35,11 +40,25 @@ export default auth((req) => {
     return NextResponse.redirect(signInUrl)
   }
 
-  // Check role-based access (admins always have access)
-  if (matchedRoute.requiredRole && userRole !== matchedRoute.requiredRole && userRole !== 'admin') {
+  // Admins always have access
+  if (userRole === 'admin') {
+    return NextResponse.next()
+  }
+
+  // Check role-based access
+  if (matchedRoute.requiredRole && userRole !== matchedRoute.requiredRole) {
     const unauthorizedUrl = new URL('/unauthorized', req.url)
     unauthorizedUrl.searchParams.set('required', matchedRoute.requiredRole)
     return NextResponse.redirect(unauthorizedUrl)
+  }
+
+  // Check sub-type access (for routes that allow specific sub-types)
+  if (matchedRoute.allowedSubTypes) {
+    const hasAllowedSubType = matchedRoute.allowedSubTypes.some(t => userSubTypes.includes(t))
+    if (!hasAllowedSubType) {
+      const unauthorizedUrl = new URL('/unauthorized', req.url)
+      return NextResponse.redirect(unauthorizedUrl)
+    }
   }
 
   return NextResponse.next()

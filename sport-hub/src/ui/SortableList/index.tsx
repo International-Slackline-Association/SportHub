@@ -5,6 +5,7 @@ import { cn } from '@utils/cn';
 import styles from './styles.module.css';
 
 export type SortableListProps<T> = {
+  draggable?: boolean;
   items: T[];
   getKey: (item: T) => string;
   renderItem: (item: T, index: number, isDragging: boolean) => React.ReactNode;
@@ -25,6 +26,7 @@ function arrayMove<T>(arr: T[], from: number, to: number): T[] {
 }
 
 export default function SortableList<T>({
+  draggable = true,
   items,
   getKey,
   renderItem,
@@ -76,7 +78,7 @@ export default function SortableList<T>({
           <li
             key={key}
             className={cn(styles.item, itemClassName, isDragging && styles.dragging, isOver && styles.over)}
-            draggable
+            draggable={draggable}
             onDragStart={handleDragStart(idx)}
             onDragEnter={handleDragEnter(idx)}
             onDragEnd={handleDragEnd}

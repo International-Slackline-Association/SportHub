@@ -8,7 +8,15 @@ import {
   getAthleteLeaderboard,
   getAthleteRankings
 } from './user-query-service';
-import { MAP_DISCIPLINE_ENUM_TO_NAME } from '@utils/consts';
+import { MAP_DISCIPLINE_ENUM_TO_NAME, MAP_GENDER_ENUM_TO_NAME, MAP_CONTEST_TYPE_ENUM_TO_NAME } from '@utils/consts';
+
+// Reverse lookups: name → numeric enum (for mapping new-format string values back to ContestData numbers)
+const GENDER_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
+  Object.entries(MAP_GENDER_ENUM_TO_NAME).map(([num, name]) => [name, Number(num)])
+);
+const CONTEST_TYPE_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
+  Object.entries(MAP_CONTEST_TYPE_ENUM_TO_NAME).map(([num, name]) => [name, Number(num)])
+);
 import { UserRecord } from './relational-types';
 
 // PERFORMANCE OPTIMIZATION: Simple in-memory cache with TTL
@@ -43,12 +51,28 @@ class SimpleCache {
     return entry.data;
   }
 
+  delete(key: string): void {
+    this.cache.delete(key);
+  }
+
   clear(): void {
     this.cache.clear();
   }
 }
 
 const cache = new SimpleCache();
+
+// Export cache utilities
+export const invalidateUsersCache = () => {
+  // Clear all user caches regardless of subtype
+  ['', 'athlete', 'admin'].forEach(subtype => {
+    cache.delete(`users-data-${subtype}`);
+  });
+};
+
+export const invalidateContestsCache = () => {
+  cache.delete('contests-data');
+};
 
 // ===========================================
 // USER DATA SERVICES
@@ -64,11 +88,14 @@ export async function getUsers({ subtype }: { subtype: string }): Promise<Partia
       return [];
     }
 
-    // TODO: Filter by subtype
-    const users = items.map(userRecord => ({
-      name: userRecord.name || '',
-      userId: userRecord.userId || '',
-    }));
+    const users = items
+      .filter(item => item.sortKey === 'Profile')
+      .filter(item => item.name || item.surname || item.athleteSlug)
+      .map(userRecord => ({
+        name: userRecord.name || userRecord.athleteSlug || '',
+        surname: userRecord.surname || '',
+        userId: userRecord.userId || '',
+      }));
 
     // Cache the results
     cache.set(cacheKey, users, 120000); // Cache for 2 minutes
@@ -217,6 +244,36 @@ export interface ContestData {
   }>;
 }
 
+export async function getEventsData(): Promise<EventMetadataRecord[]> {
+  const cacheKey = 'events-data';
+  const cached = cache.get<EventMetadataRecord[]>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    // Scan with projection to reduce data transfer
+    const allItems = await dynamodb.scanItems(EVENTS_TABLE, {
+      projectionExpression: 'eventId, eventName, sortKey, country, profileUrl, thumbnailUrl, startDate, endDate, #loc',
+      expressionAttributeNames: {
+        '#loc': 'location' // 'location' is a reserved word in DynamoDB
+      }
+    });
+
+    if (!allItems || allItems.length === 0) {
+      return [];
+    }
+
+    const eventRecords: EventMetadataRecord[] = allItems.filter(item => item.sortKey === 'Metadata');
+    const sortedEvents = eventRecords.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+
+    // Cache the results (10 min TTL to reduce scan frequency)
+    cache.set(cacheKey, sortedEvents, 600000); // Cache for 10 minutes (was 3 min)
+    return sortedEvents;
+  } catch (error) {
+    console.error('Error fetching events data:', error);
+    return [];
+  }
+}
+
 /**
  * Get all contests for events table
  * OPTIMIZED: Scan with projection expression (reduces data transfer) + 10-min caching
@@ -236,11 +293,14 @@ export async function getContestsData(): Promise<ContestData[]> {
   if (cached) return cached;
 
   try {
-    // Scan with projection to reduce data transfer
+    // Scan with projection to reduce data transfer.
+    // Includes both old-format Contest:* fields and new-format Metadata fields (name, status, contests).
     const allItems = await dynamodb.scanItems(EVENTS_TABLE, {
-      projectionExpression: 'eventId, sortKey, contestName, contestDate, country, city, discipline, prize, gender, category, profileUrl, thumbnailUrl, athletes, #loc',
+      projectionExpression: 'eventId, sortKey, contestName, contestDate, country, city, discipline, prize, gender, category, profileUrl, thumbnailUrl, athletes, #loc, #eventName, startDate, #eventStatus, contests',
       expressionAttributeNames: {
-        '#loc': 'location' // 'location' is a reserved word in DynamoDB
+        '#loc': 'location',       // reserved word
+        '#eventName': 'name',     // reserved word
+        '#eventStatus': 'status', // reserved word
       }
     });
 
@@ -260,7 +320,7 @@ export async function getContestsData(): Promise<ContestData[]> {
       }
     });
 
-    // Map contests with parent event data
+    // Map old-format Contest:* records
     const contests: ContestData[] = contestRecords.map(contest => {
       const event = metadataMap.get(contest.eventId);
 
@@ -294,7 +354,41 @@ export async function getContestsData(): Promise<ContestData[]> {
       };
     });
 
-    const sortedContests = contests.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    // Map new-format Metadata records (published events with embedded contests array)
+    const submittedContests: ContestData[] = [];
+    metadataMap.forEach((rawMeta) => {
+      const meta = rawMeta as unknown as Record<string, unknown>;
+      if (meta.status !== 'published') return;
+      const embeddedContests = (meta.contests as Record<string, unknown>[] | undefined) ?? [];
+      embeddedContests.forEach(contest => {
+        const results = (contest.results as Record<string, unknown>[] | undefined) ?? [];
+        const athletes = results
+          .slice()
+          .sort((a, b) => Number(a.rank ?? 999) - Number(b.rank ?? 999))
+          .map(r => ({
+            userId: String(r.id ?? ''),
+            name: String(r.name ?? ''),
+            surname: '',
+            place: String(r.rank ?? ''),
+            points: Number(r.isaPoints ?? 0),
+          }));
+        submittedContests.push({
+          eventId: String(meta.eventId ?? ''),
+          name: String(meta.name ?? ''),
+          date: String(meta.startDate ?? ''),
+          country: String(meta.country ?? 'N/A'),
+          city: String(meta.city ?? ''),
+          discipline: String(contest.discipline ?? ''),
+          prize: Number(contest.totalPrizeValue ?? 0),
+          gender: GENDER_NAME_TO_ENUM[String(contest.gender ?? '')] ?? 0,
+          category: CONTEST_TYPE_NAME_TO_ENUM[String(contest.contestSize ?? '')] ?? 0,
+          verified: false,
+          athletes,
+        });
+      });
+    });
+
+    const sortedContests = [...contests, ...submittedContests].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     // Cache the results (10 min TTL to reduce scan frequency)
     cache.set(cacheKey, sortedContests, 600000); // Cache for 10 minutes (was 3 min)

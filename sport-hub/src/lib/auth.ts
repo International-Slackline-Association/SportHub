@@ -1,9 +1,9 @@
 import NextAuth from "next-auth"
 import Cognito from "next-auth/providers/cognito"
-import { getUserRole, getUserPermissions } from './rbac-service'
+import { getUserRole, getUserPermissions, getUserSubTypes } from './rbac-service'
 import { ensureUserExists } from './onboarding'
 import { getUserByEmail } from './user-service'
-import type { Role, Permission } from '../types/rbac'
+import type { Role, Permission, UserSubType } from '../types/rbac'
 
 // Validate required environment variables at runtime (not during build)
 // During build, secrets may not be available yet - they're only needed when server actually runs
@@ -88,24 +88,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         }
 
-        // Load user role and permissions from database using custom ID
+        // Load user role, permissions, and sub-types from database using custom ID
         // The database uses custom ID (SportHubID:xxx or ISA_xxx) as partition key
         if (token.customUserId) {
           try {
             const role = await getUserRole(token.customUserId as string)
             const permissions = await getUserPermissions(token.customUserId as string)
+            const userSubTypes = await getUserSubTypes(token.customUserId as string)
             token.role = role
             token.permissions = permissions
+            token.userSubTypes = userSubTypes
           } catch (error) {
             console.error('Error loading user role:', error)
             // Fail-safe: default to user role
             token.role = 'user'
             token.permissions = []
+            token.userSubTypes = []
           }
         } else {
           // No custom ID available - default to user role
           token.role = 'user'
           token.permissions = []
+          token.userSubTypes = []
         }
       }
       return token
@@ -122,9 +126,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.accessToken = token.accessToken as string
         session.idToken = token.idToken as string
 
-        // Pass role and permissions to session
+        // Pass role, permissions, and sub-types to session
         session.user.role = (token.role as Role) || 'user'
         session.user.permissions = (token.permissions as Permission[]) || []
+        session.user.userSubTypes = (token.userSubTypes as UserSubType[]) || []
       }
       return session
     }

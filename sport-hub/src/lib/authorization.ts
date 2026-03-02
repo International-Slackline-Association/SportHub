@@ -6,7 +6,7 @@
  */
 
 import { auth } from './auth';
-import type { Role, Permission, AuthorizationResult } from '../types/rbac';
+import type { Role, Permission, UserSubType, AuthorizationResult } from '../types/rbac';
 import { redirect } from 'next/navigation';
 
 /**
@@ -121,6 +121,28 @@ export async function requireRole(
  */
 export async function requireAdmin(): Promise<void> {
   await requireRole('admin');
+}
+
+/**
+ * Require admin role OR organizer sub-type - redirect if neither
+ *
+ * Used for event submission, which is accessible to both admins and organizers.
+ */
+export async function requireEventSubmitter(): Promise<void> {
+  const session = await auth();
+
+  if (!session) {
+    redirect('/auth/signin?error=SessionRequired');
+  }
+
+  if (
+    session.user.role === 'admin' ||
+    (session.user.userSubTypes as UserSubType[] | undefined)?.includes('organizer')
+  ) {
+    return;
+  }
+
+  redirect('/unauthorized');
 }
 
 /**

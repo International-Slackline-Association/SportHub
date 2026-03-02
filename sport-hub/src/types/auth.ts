@@ -1,5 +1,5 @@
 import { DefaultSession } from "next-auth"
-import { Role, Permission } from './rbac'
+import { Role, Permission, UserSubType } from './rbac'
 
 declare module "next-auth" {
   /**
@@ -11,6 +11,7 @@ declare module "next-auth" {
       cognitoSub?: string            // Cognito UUID (for debugging/reference)
       role: Role                     // User's role: 'user' | 'admin'
       permissions?: Permission[]     // Granular permissions based on role
+      userSubTypes?: UserSubType[]   // User sub-types: 'athlete' | 'organizer' | 'judge'
     } & DefaultSession["user"]
     accessToken?: string
     idToken?: string
@@ -23,5 +24,6 @@ declare module "next-auth" {
     id: string
     role: Role
     permissions?: Permission[]
+    userSubTypes?: UserSubType[]
   }
 }

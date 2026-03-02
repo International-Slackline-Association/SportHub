@@ -5,6 +5,8 @@ import { canEditUser } from '@lib/authorization';
 import { dynamodb, USERS_TABLE } from '@lib/dynamodb';
 import { revalidatePath } from 'next/cache';
 import type { UserProfileRecord } from '@lib/relational-types';
+import type { UserSubType } from '../../types/rbac';
+import { clearRoleCache } from '@lib/rbac-service';
 
 export interface SocialMediaData {
   instagram?: string;
@@ -198,4 +200,37 @@ export async function getFullUserProfile(userId: string) {
     console.error('Error fetching full user profile:', error);
     return null;
   }
+}
+
+/**
+ * Add 'organizer' subtype to the current user's profile and set it as primary.
+ * Any authenticated user may call this on their own account.
+ */
+export async function becomeOrganizer(): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error('Not authenticated');
+  }
+
+  const userId = session.user.id;
+
+  const currentUser = await dynamodb.getItem(USERS_TABLE, { userId, sortKey: 'Profile' }) as UserProfileRecord | undefined;
+
+  if (!currentUser) {
+    throw new Error('Profile not found. Please save your profile first.');
+  }
+
+  const currentSubTypes = (currentUser.userSubTypes || []) as UserSubType[];
+  if (currentSubTypes.includes('organizer')) return;
+
+  const updatedUser: UserProfileRecord = {
+    ...currentUser,
+    userSubTypes: [...currentSubTypes, 'organizer'] as UserSubType[],
+    primarySubType: 'organizer',
+    lastProfileUpdate: Date.now(),
+  };
+
+  await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
+  clearRoleCache(userId);
+  revalidatePath('/dashboard');
 }

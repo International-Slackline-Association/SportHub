@@ -8,6 +8,7 @@ export { RiggingIcon } from './RiggingIcon';
 export { SlacklineSportHubIcon } from './SlacklineSportHubIcon';
 export { SpeedHighlineIcon } from './SpeedHighlineIcon';
 export { SpeedShortIcon } from './SpeedShortIcon';
+export { InfoIcon } from './InfoIcon';
 export { TrashIcon } from './TrashIcon';
 export { FreestyleTricklineIcon } from './FreestyleTricklineIcon';
 export { TrophyIcon } from './TrophyIcon';
