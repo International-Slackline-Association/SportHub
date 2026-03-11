@@ -265,13 +265,15 @@ export async function getContestsData(): Promise<ContestData[]> {
 
   try {
     // Scan with projection to reduce data transfer.
-    // Includes both old-format Contest:* fields and new-format Metadata fields (name, status, contests).
+    // Covers both old-format Contest:* fields (contestName/athletes) and
+    // new-format Contest:* fields (results/contestSize/totalPrizeValue) plus Metadata.
     const allItems = await scanAllEventItems({
-      projectionExpression: 'eventId, sortKey, contestName, contestDate, country, city, discipline, prize, gender, category, profileUrl, thumbnailUrl, athletes, #loc, #eventName, startDate, #eventStatus, contests',
+      projectionExpression: 'eventId, sortKey, contestName, contestDate, country, city, discipline, prize, gender, category, profileUrl, thumbnailUrl, athletes, results, contestSize, totalPrizeValue, contestIndex, #loc, #eventName, startDate, #eventStatus, #city, contests',
       expressionAttributeNames: {
         '#loc': 'location',       // reserved word
         '#eventName': 'name',     // reserved word
         '#eventStatus': 'status', // reserved word
+        '#city': 'city',          // may conflict with reserved words in some SDK versions
       }
     });
 
@@ -285,18 +287,57 @@ export async function getContestsData(): Promise<ContestData[]> {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (allItems as any[]).forEach(item => {
-      if (item.sortKey === 'Metadata') { // Capital M in new schema
+      if (item.sortKey === 'Metadata') {
         metadataMap.set(item.eventId, item as EventMetadataRecord);
-      } else if (item.sortKey?.startsWith('Contest:')) { // Contest:{discipline}:{contestId}
+      } else if (item.sortKey?.startsWith('Contest:')) {
         contestRecords.push(item as ContestRecord);
       }
     });
 
-    // Map old-format Contest:* records
+    // Track which events have separate Contest:* records.
+    // For these events, Contest:* records are authoritative (more up-to-date than
+    // the embedded snapshot in Metadata written by updateEventStatus).
+    const eventIdsWithContestRecords = new Set(contestRecords.map(c => c.eventId));
+
+    // Map all Contest:* records — handles both old-format (athletes) and new-format (results)
     const contests: ContestData[] = contestRecords.map(contest => {
       const event = metadataMap.get(contest.eventId);
+      const raw = contest as unknown as Record<string, unknown>;
 
-      const participants = (contest.athletes || []) // New schema uses 'athletes' field
+      // New-format: written by saveEventContestRecords / updateEventScores
+      // Detected by presence of 'results' array (may be empty [])
+      if ('results' in raw) {
+        const results = (raw.results as Record<string, unknown>[] | undefined) ?? [];
+        const athletes = results
+          .slice()
+          .sort((a, b) => Number(a.rank ?? 999) - Number(b.rank ?? 999))
+          .map(r => ({
+            userId: String(r.id ?? ''),
+            name: String(r.name ?? ''),
+            surname: '',
+            place: String(r.rank ?? ''),
+            points: Number(r.isaPoints ?? 0),
+          }));
+        const meta = event as unknown as Record<string, unknown>;
+        return {
+          eventId: contest.eventId,
+          name: String(meta?.name || meta?.eventName || ''),
+          date: String(raw.startDate || meta?.startDate || ''),
+          country: String(meta?.country || 'N/A'),
+          city: String(raw.city || meta?.city || meta?.location || ''),
+          discipline: String(raw.discipline ?? ''),
+          prize: Number(raw.totalPrizeValue ?? 0),
+          gender: GENDER_NAME_TO_ENUM[String(raw.gender ?? '')] ?? 0,
+          category: CONTEST_TYPE_NAME_TO_ENUM[String(raw.contestSize ?? '')] ?? 0,
+          verified: true,
+          profileUrl: '',
+          thumbnailUrl: '',
+          athletes,
+        };
+      }
+
+      // Old-format: written by seed/migration (contestName, contestDate, athletes)
+      const participants = (contest.athletes || [])
         .map((p: ContestParticipant) => {
           const points = parseFloat(p.points || '0');
           return {
@@ -312,7 +353,7 @@ export async function getContestsData(): Promise<ContestData[]> {
       return {
         eventId: contest.eventId,
         name: contest.contestName || '',
-        date: contest.contestDate || '', // New schema uses contestDate
+        date: contest.contestDate || '',
         country: event?.country || contest.country || 'N/A',
         city: contest.city || event?.location || '',
         discipline: contest.discipline || '',
@@ -326,11 +367,14 @@ export async function getContestsData(): Promise<ContestData[]> {
       };
     });
 
-    // Map new-format Metadata records (published events with embedded contests array)
+    // Map published events that only have embedded contests in Metadata
+    // (no separate Contest:* records). Skip events that already have Contest:* records
+    // above — those are authoritative and more up-to-date.
     const submittedContests: ContestData[] = [];
     metadataMap.forEach((rawMeta) => {
       const meta = rawMeta as unknown as Record<string, unknown>;
       if (meta.status !== 'published') return;
+      if (eventIdsWithContestRecords.has(String(meta.eventId ?? ''))) return;
       const embeddedContests = (meta.contests as Record<string, unknown>[] | undefined) ?? [];
       embeddedContests.forEach(contest => {
         const results = (contest.results as Record<string, unknown>[] | undefined) ?? [];

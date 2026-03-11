@@ -134,12 +134,18 @@ export async function updateEventScores(
       return { success: false, error: 'You do not have permission to edit this event' };
     }
 
-    // Merge updated judges/results into individual Contest records
+    // Merge updated judges/results into individual Contest records.
+    // For old-format events the embedded contest objects lack eventId/sortKey,
+    // so we supply them here (effectively migrating to separate Contest:* records).
     const existingContests = (existingEvent.contests as Record<string, unknown>[]) || [];
     await Promise.all(
       existingContests.map(async (ec, idx) => {
+        const sortKey = (ec.sortKey as string) || `Contest:${ec.discipline ?? 'unknown'}:${idx}`;
         const updated = {
           ...ec,
+          eventId,
+          sortKey,
+          contestIndex: ec.contestIndex ?? idx,
           judges: contests[idx]?.judges ?? ec.judges,
           results: contests[idx]?.results ?? ec.results,
         };
@@ -147,6 +153,7 @@ export async function updateEventScores(
       })
     );
 
+    invalidateContestsCache();
     revalidatePath('/events');
     revalidatePath('/events/my-events');
     revalidatePath('/rankings');
@@ -322,8 +329,7 @@ export async function updateEventStatus(eventId: string, status: 'draft' | 'publ
 
     await putEventItem(updatedEvent);
 
-    // Bust in-memory cache and revalidate events page
-
+    invalidateContestsCache();
     revalidatePath('/events');
 
     return {
