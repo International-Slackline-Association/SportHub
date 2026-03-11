@@ -268,12 +268,11 @@ export async function getContestsData(): Promise<ContestData[]> {
     // Covers both old-format Contest:* fields (contestName/athletes) and
     // new-format Contest:* fields (results/contestSize/totalPrizeValue) plus Metadata.
     const allItems = await scanAllEventItems({
-      projectionExpression: 'eventId, sortKey, contestName, contestDate, country, city, discipline, prize, gender, category, profileUrl, thumbnailUrl, athletes, results, contestSize, totalPrizeValue, contestIndex, #loc, #eventName, startDate, #eventStatus, #city, contests',
+      projectionExpression: 'eventId, sortKey, contestName, contestDate, country, city, discipline, prize, gender, category, profileUrl, thumbnailUrl, athletes, results, contestSize, totalPrizeValue, contestIndex, #loc, #eventName, startDate, #eventStatus, contests',
       expressionAttributeNames: {
         '#loc': 'location',       // reserved word
         '#eventName': 'name',     // reserved word
         '#eventStatus': 'status', // reserved word
-        '#city': 'city',          // may conflict with reserved words in some SDK versions
       }
     });
 

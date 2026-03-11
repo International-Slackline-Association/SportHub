@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: 'SportHub - Events',
 }
 
-export const revalidate = false
+export const dynamic = 'force-dynamic'
 
 export default async function Page() {
   const contestsData = await getContestsData();
