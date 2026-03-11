@@ -4,7 +4,6 @@ import Link from "next/link"
 import PageLayout from "@ui/PageLayout"
 import ProfileSection from "./components/ProfileSection"
 import { getUserProfile, getFullUserProfile, becomeOrganizer } from "./actions"
-import { getReferenceUserById } from "@lib/reference-db-service"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -17,18 +16,13 @@ export default async function DashboardPage() {
   const profileResult = await getUserProfile(session.user.id);
   const dbProfile = await getFullUserProfile(session.user.id);
 
-  // Fetch identity data from reference DB (fallback for name, email, country)
-  const referenceUser = await getReferenceUserById(session.user.id);
-
-  // Priority: SportHub DB -> reference DB -> session data
-  // TODO: If SportHub DB name/email differs from reference DB, we currently prefer SportHub DB.
-  //       A sync mechanism should be implemented to keep both in sync on edits.
-  const firstName = dbProfile?.name || referenceUser?.name || session.user.name || '';
-  const surname = dbProfile?.surname || referenceUser?.surname || '';
+  // Priority: SportHub DB -> session data (reference DB removed — identity is in sporthub-users Profile)
+  const firstName = dbProfile?.name || session.user.name || '';
+  const surname = dbProfile?.surname || '';
   const displayName = `${firstName} ${surname}`.trim();
-  const displayEmail = dbProfile?.email || referenceUser?.email || session.user.email || '';
-  const displayCountry = dbProfile?.country || referenceUser?.country;
-  const displayGender = dbProfile?.gender || referenceUser?.gender;
+  const displayEmail = dbProfile?.email || session.user.email || '';
+  const displayCountry = dbProfile?.country;
+  const displayGender = dbProfile?.gender;
   const displayCity = dbProfile?.city || '';
   const displayBirthdate = dbProfile?.birthdate || '';
   const isaUsersId = dbProfile?.isaUsersId;

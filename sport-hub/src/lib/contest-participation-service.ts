@@ -6,7 +6,7 @@
  */
 
 import { dynamodb, USERS_TABLE, EVENTS_TABLE } from './dynamodb';
-import { getReferenceUserById } from './reference-db-service';
+import { getUser } from './user-service';
 import { getEvent, getContest } from './event-contest-service';
 
 /**
@@ -21,14 +21,14 @@ export async function addAthleteToContest(params: {
 }) {
   const contestId = `${params.eventId}#${params.contestSortKey}`;
 
-  // Get names from reference DB and event metadata
-  const [userIdentity, event, contest] = await Promise.all([
-    getReferenceUserById(params.userId),
+  const [userProfile, event, contest] = await Promise.all([
+    getUser(params.userId),
     getEvent(params.eventId),
     getContest(params.eventId, params.contestSortKey),
   ]);
 
-  if (!userIdentity) throw new Error(`User not found: ${params.userId}`);
+  if (!userProfile) throw new Error(`User not found: ${params.userId}`);
+  const userName = userProfile.name || userProfile.athleteSlug?.replace(/-/g, ' ') || params.userId;
   if (!event) throw new Error(`Event not found: ${params.eventId}`);
   if (!contest) throw new Error(`Contest not found: ${contestId}`);
 
@@ -77,7 +77,7 @@ export async function addAthleteToContest(params: {
       expressionAttributeValues: {
         ':newParticipant': [{
           userId: params.userId,
-          name: userIdentity.name,
+          name: userName,
           place: params.place,
           points: params.points,
         }],
@@ -101,13 +101,14 @@ export async function addJudgeToContest(params: {
   const role = params.role || 'judge';
   const contestId = `${params.eventId}#${params.contestSortKey}`;
 
-  const [userIdentity, event, contest] = await Promise.all([
-    getReferenceUserById(params.userId),
+  const [userProfile, event, contest] = await Promise.all([
+    getUser(params.userId),
     getEvent(params.eventId),
     getContest(params.eventId, params.contestSortKey),
   ]);
 
-  if (!userIdentity) throw new Error(`User not found: ${params.userId}`);
+  if (!userProfile) throw new Error(`User not found: ${params.userId}`);
+  const userName = userProfile.name || userProfile.athleteSlug?.replace(/-/g, ' ') || params.userId;
   if (!event) throw new Error(`Event not found: ${params.eventId}`);
   if (!contest) throw new Error(`Contest not found: ${contestId}`);
 
@@ -151,7 +152,7 @@ export async function addJudgeToContest(params: {
       expressionAttributeValues: {
         ':newJudge': [{
           userId: params.userId,
-          name: userIdentity.name,
+          name: userName,
           role,
         }],
         ':empty': [],
@@ -172,12 +173,13 @@ export async function addOrganizerToEvent(params: {
 }) {
   const role = params.role || 'organizer';
 
-  const [userIdentity, event] = await Promise.all([
-    getReferenceUserById(params.userId),
+  const [userProfile, event] = await Promise.all([
+    getUser(params.userId),
     getEvent(params.eventId),
   ]);
 
-  if (!userIdentity) throw new Error(`User not found: ${params.userId}`);
+  if (!userProfile) throw new Error(`User not found: ${params.userId}`);
+  const userName = userProfile.name || userProfile.athleteSlug?.replace(/-/g, ' ') || params.userId;
   if (!event) throw new Error(`Event not found: ${params.eventId}`);
 
   // 1. Update user record
@@ -219,7 +221,7 @@ export async function addOrganizerToEvent(params: {
       expressionAttributeValues: {
         ':newOrganizer': [{
           userId: params.userId,
-          name: userIdentity.name,
+          name: userName,
           role,
         }],
         ':empty': [],
@@ -242,12 +244,13 @@ export async function addOrganizerToContest(params: {
   const role = params.role || 'organizer';
   const contestId = `${params.eventId}#${params.contestSortKey}`;
 
-  const [userIdentity, contest] = await Promise.all([
-    getReferenceUserById(params.userId),
+  const [userProfile, contest] = await Promise.all([
+    getUser(params.userId),
     getContest(params.eventId, params.contestSortKey),
   ]);
 
-  if (!userIdentity) throw new Error(`User not found: ${params.userId}`);
+  if (!userProfile) throw new Error(`User not found: ${params.userId}`);
+  const userName = userProfile.name || userProfile.athleteSlug?.replace(/-/g, ' ') || params.userId;
   if (!contest) throw new Error(`Contest not found: ${contestId}`);
 
   // Update contest record with organizer
@@ -261,7 +264,7 @@ export async function addOrganizerToContest(params: {
       expressionAttributeValues: {
         ':newOrganizer': [{
           userId: params.userId,
-          name: userIdentity.name,
+          name: userName,
           role,
         }],
         ':empty': [],

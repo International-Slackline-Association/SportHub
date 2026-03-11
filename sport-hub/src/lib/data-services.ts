@@ -1,6 +1,5 @@
 // import { UserSubType } from '@types/rbac';
 import type { ContestRecord, EventMetadataRecord, ContestParticipant } from './relational-types';
-import { getReferenceUserById, getReferenceUsersBatch } from './reference-db-service';
 import {
   getAthleteProfile as getAthleteProfileOptimized,
   getAthleteParticipations as getAthleteParticipationsOptimized,
@@ -132,8 +131,7 @@ export interface AthleteRanking {
  * OPTIMIZED: Uses getAthleteLeaderboard with GSI query (40x faster than scan)
  * CACHED: Reduces redundant DB calls
  *
- * In production: Batch-fetches names/countries from reference DB (isa-users table)
- * In local dev: Uses athleteSlug field populated by seed data
+ * Uses name/surname/country from sporthub-users Profile; falls back to athleteSlug.
  */
 export async function getRankingsData(): Promise<AthleteRanking[]> {
   const cacheKey = 'rankings-data';
@@ -148,38 +146,11 @@ export async function getRankingsData(): Promise<AthleteRanking[]> {
       return [];
     }
 
-    // Batch-fetch names from isa-users (works in both local and production)
-    let referenceUsers = new Map<string, { name: string; surname?: string; country?: string }>();
-    const athleteIds = profiles.map(p => p.isaUsersId).filter((id): id is string => Boolean(id));
-    const refUsersMap = await getReferenceUsersBatch(athleteIds);
-    referenceUsers = new Map(
-      Array.from(refUsersMap.entries()).map(([id, user]) => [
-        id,
-        { name: user.name, surname: user.surname, country: user.country }
-      ])
-    );
-
-    // Add error logging to help diagnose reference DB issues
-    if (referenceUsers.size === 0 && athleteIds.length > 0) {
-      console.error('❌ Reference DB lookup failed. Got 0 users for', athleteIds.length, 'requests');
-      console.error('   Check:');
-      console.error('   - LOCAL_REFERENCE_DB=true in .env.local (for local dev)');
-      console.error('   - Reference DB table "isa-users" exists and has data');
-      console.error('   - DynamoDB Local running on port 8000');
-      console.error('   - Check pnpm db:gui (port 8001) to verify isa-users table');
-    } else {
-      console.log(`📊 Reference DB lookup: Requested ${athleteIds.length}, Got ${referenceUsers.size}`);
-    }
-
     const rankings = profiles
       .map((profile): AthleteRanking => {
-        // Priority: SportHub DB name/surname -> reference DB (isa-users) -> athleteSlug fallback
-        // TODO: If SportHub DB name differs from reference DB, we currently prefer SportHub DB.
-        //       A sync mechanism should be implemented to keep both in sync on edits.
-        const refUser = profile.isaUsersId ? referenceUsers.get(profile.isaUsersId) : undefined;
-        const name = profile.name || refUser?.name || profile.athleteSlug?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || '';
-        const surname = profile.surname || refUser?.surname || '';
-        const country = refUser?.country || '-'; // Use '-' for missing country data
+        const name = profile.name || profile.athleteSlug?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || '';
+        const surname = profile.surname || '';
+        const country = profile.country || '-';
         const fullName = `${name} ${surname}`.trim();
 
         return {
@@ -452,8 +423,7 @@ export interface WorldFirst {
  * Get athlete profile by athlete ID
  * OPTIMIZED: Uses composite key (userId + sortKey="Profile") for O(1) lookup
  *
- * In production: Fetches name/email/country from isa-users
- * In local dev: Uses athleteSlug field populated by seed data
+ * Uses name/surname/country from sporthub-users Profile; falls back to athleteSlug.
  */
 export async function getAthleteProfile(athleteId: string): Promise<AthleteProfile | null> {
   try {
@@ -467,25 +437,10 @@ export async function getAthleteProfile(athleteId: string): Promise<AthleteProfi
       return null;
     }
 
-    // Priority: SportHub DB name/surname -> reference DB (isa-users) -> athleteSlug fallback
-    let refName = '';
-    let refSurname = '';
-    let country = 'N/A';
+    let name = profile.name || '';
+    const surname = profile.surname || '';
+    const country = profile.country || 'N/A';
 
-    if (profile.isaUsersId) {
-      const referenceUser = await getReferenceUserById(profile.isaUsersId);
-      if (referenceUser) {
-        refName = referenceUser.name;
-        refSurname = referenceUser.surname || '';
-        country = referenceUser.country || 'N/A';
-      }
-    }
-
-    // SportHub DB fields take priority over reference DB
-    let name = profile.name || refName;
-    const surname = profile.surname || refSurname;
-
-    // Fallback to athleteSlug if no name found anywhere
     if (!name && profile.athleteSlug) {
       name = profile.athleteSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
