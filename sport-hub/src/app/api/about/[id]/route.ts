@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { dynamodb } from '@lib/dynamodb';
-import { getUser, deleteUser } from '@lib/user-service';
+import { getUser, deleteUser, saveUserProfile } from '@lib/user-service';
+import type { UserProfileRecord } from '@lib/relational-types';
 
 export async function GET(
   request: Request,
@@ -95,7 +95,7 @@ export async function PUT(
       updatedAt: new Date().toISOString(),
     };
 
-    await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
+    await saveUserProfile(updatedUser as unknown as UserProfileRecord);
     return NextResponse.json(updatedUser);
   } catch (error) {
     console.error('DynamoDB error:', error);

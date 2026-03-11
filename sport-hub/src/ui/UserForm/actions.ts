@@ -1,12 +1,12 @@
 'use server'
 
-import { dynamodb, USERS_TABLE } from '@lib/dynamodb';
 import { auth } from '@lib/auth';
 import { revalidatePath } from 'next/cache';
 import { invalidateUsersCache } from '@lib/data-services';
 import { UserFormValues } from './types';
 import type { Role, UserSubType } from 'src/types/rbac';
-import { getUser, deleteUser as deleteUserRecord, updateUserRoleAndSubTypes as updateRoleService } from '@lib/user-service';
+import { getUser, deleteUser as deleteUserRecord, updateUserRoleAndSubTypes as updateRoleService, saveUserProfile } from '@lib/user-service';
+import type { UserProfileRecord } from '@lib/relational-types';
 
 export async function createUser(payload: UserFormValues, path: string) {
   const userId = payload?.id || `athlete-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -27,7 +27,7 @@ export async function createUser(payload: UserFormValues, path: string) {
     createdAt: Date.now(),
   };
 
-  await dynamodb.putItem(USERS_TABLE, user as unknown as Record<string, unknown>);
+  await saveUserProfile(user as unknown as UserProfileRecord);
   invalidateUsersCache();
   revalidatePath(path);
 }
@@ -67,7 +67,7 @@ export async function updateUser(formData: FormData) {
     updatedAt: new Date().toISOString(),
   };
 
-  await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
+  await saveUserProfile(updatedUser as unknown as UserProfileRecord);
   revalidatePath('/test_SSR');
 }
 

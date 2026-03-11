@@ -2,12 +2,11 @@
 
 import { auth } from '@lib/auth';
 import { canEditUser } from '@lib/authorization';
-import { dynamodb } from '@lib/dynamodb';
 import { revalidatePath } from 'next/cache';
 import type { UserProfileRecord } from '@lib/relational-types';
 import type { UserSubType } from '../../types/rbac';
 import { clearRoleCache } from '@lib/rbac-service';
-import { getUser, createUser } from '@lib/user-service';
+import { getUser, createUser, saveUserProfile } from '@lib/user-service';
 
 export interface SocialMediaData {
   instagram?: string;
@@ -110,7 +109,7 @@ export async function updateProfile(userId: string, data?: ProfileUpdateData) {
       lastProfileUpdate: Date.now(),
     };
 
-    await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
+    await saveUserProfile(updatedUser);
 
     // TODO: Also sync identity changes to reference DB (isa-users table) once
     //       a sync mechanism is implemented. For now, edits only go to SportHub DB.
@@ -220,7 +219,7 @@ export async function becomeOrganizer(): Promise<void> {
     lastProfileUpdate: Date.now(),
   };
 
-  await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
+  await saveUserProfile(updatedUser);
   clearRoleCache(userId);
   revalidatePath('/dashboard');
 }

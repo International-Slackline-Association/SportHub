@@ -159,6 +159,76 @@ export async function updateUserRoleAndSubTypes(
 }
 
 /**
+ * Save a user profile record directly (low-level upsert)
+ *
+ * Use this when you already have a fully-assembled UserProfileRecord and just
+ * need to persist it — e.g. after merging updates in an action.
+ *
+ * @param user - Complete user profile record to persist
+ */
+export async function saveUserProfile(user: UserProfileRecord): Promise<void> {
+  await dynamodb.putItem(USERS_TABLE, user as unknown as Record<string, unknown>);
+}
+
+/**
+ * Create a user with a full profile (admin/form use case)
+ *
+ * Unlike the onboarding `createUser(customUserId)`, this accepts all profile
+ * fields at creation time (e.g. from an admin form).
+ *
+ * @param userId - User ID to assign
+ * @param profileData - Profile fields; merged over safe defaults
+ * @returns Created user record
+ */
+export async function createUserWithProfile(
+  userId: string,
+  profileData: Partial<UserProfileRecord>
+): Promise<UserProfileRecord> {
+  const user: UserProfileRecord = {
+    userId,
+    sortKey: 'Profile',
+    role: 'user',
+    userSubTypes: ['athlete'],
+    primarySubType: 'athlete',
+    totalPoints: 0,
+    contestCount: 0,
+    createdAt: Date.now(),
+    ...profileData,
+  } as UserProfileRecord;
+
+  await dynamodb.putItem(USERS_TABLE, user as unknown as Record<string, unknown>);
+  return user;
+}
+
+/**
+ * Fetch → merge → save a user profile
+ *
+ * Convenience wrapper for the common update pattern used in action files.
+ *
+ * @param userId - User ID to update
+ * @param updates - Fields to merge into the existing record
+ * @returns Updated user record
+ * @throws Error if user not found
+ */
+export async function updateUserData(
+  userId: string,
+  updates: Partial<UserProfileRecord>
+): Promise<UserProfileRecord> {
+  const existingUser = await getUser(userId);
+  if (!existingUser) {
+    throw new Error('User not found');
+  }
+
+  const updatedUser: UserProfileRecord = {
+    ...existingUser,
+    ...updates,
+  };
+
+  await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
+  return updatedUser;
+}
+
+/**
  * Check if user exists in database
  *
  * @param userId - User ID to check

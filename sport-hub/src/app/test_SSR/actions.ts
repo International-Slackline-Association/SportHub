@@ -1,11 +1,11 @@
 'use server'
 
-import { dynamodb, USERS_TABLE } from '@lib/dynamodb';
 import { auth } from '@lib/auth';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type { Role, UserSubType } from 'src/types/rbac';
-import { getUser, deleteUser as deleteUserRecord, updateUserRoleAndSubTypes as updateRoleService } from '@lib/user-service';
+import { getUser, deleteUser as deleteUserRecord, updateUserRoleAndSubTypes as updateRoleService, saveUserProfile } from '@lib/user-service';
+import type { UserProfileRecord } from '@lib/relational-types';
 
 export async function createUser(formData: FormData) {
   const id = formData.get('id') as string;
@@ -44,7 +44,7 @@ export async function createUser(formData: FormData) {
     contestCount: 0,
   };
 
-  await dynamodb.putItem(USERS_TABLE, user as unknown as Record<string, unknown>);
+  await saveUserProfile(user as unknown as UserProfileRecord);
   revalidatePath('/test_SSR');
 }
 
@@ -84,7 +84,7 @@ export async function updateUser(formData: FormData) {
     updatedAt: new Date().toISOString(),
   };
 
-  await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
+  await saveUserProfile(updatedUser as unknown as UserProfileRecord);
   revalidatePath('/test_SSR');
   redirect('/test_SSR');
 }

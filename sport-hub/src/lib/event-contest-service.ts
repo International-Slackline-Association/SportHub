@@ -212,6 +212,92 @@ export async function updateEvent(
 }
 
 /**
+ * Low-level upsert for any events-table record
+ *
+ * Replaces bare `dynamodb.putItem(EVENTS_TABLE, record)` calls in action files.
+ */
+export async function putEventItem(record: Record<string, unknown>): Promise<void> {
+  await dynamodb.putItem(EVENTS_TABLE, record);
+}
+
+/**
+ * Get assembled event (metadata + sorted Contest records)
+ *
+ * Equivalent to the local `getEvent()` in events/submit/actions.ts — returns
+ * `{ ...metadataOnly, contests }` where contests are separate Contest:* records
+ * (or the embedded array for old-format events).
+ */
+export async function getAssembledEvent(
+  eventId: string
+): Promise<{ success: boolean; event: Record<string, unknown> | null }> {
+  try {
+    const metadata = await dynamodb.getItem(EVENTS_TABLE, { eventId, sortKey: 'Metadata' });
+    if (!metadata) {
+      return { success: false, event: null };
+    }
+
+    const contestItems = await dynamodb.queryItems(
+      EVENTS_TABLE,
+      'eventId = :eid AND begins_with(sortKey, :prefix)',
+      { ':eid': eventId, ':prefix': 'Contest:' },
+    );
+
+    const sortedContests = [...contestItems].sort(
+      (a, b) => ((a.contestIndex as number) || 0) - ((b.contestIndex as number) || 0)
+    );
+    const { contests: embeddedContests, ...metadataOnly } = metadata as Record<string, unknown>;
+    const contests = sortedContests.length > 0
+      ? sortedContests
+      : (embeddedContests as Record<string, unknown>[]) || [];
+
+    return { success: true, event: { ...metadataOnly, contests } };
+  } catch (error) {
+    console.error('Error fetching event:', error);
+    return { success: false, event: null };
+  }
+}
+
+/**
+ * Delete all Contest:* records for an event (leaves Metadata intact)
+ */
+export async function deleteEventContestRecords(eventId: string): Promise<void> {
+  const items = await dynamodb.queryItems(
+    EVENTS_TABLE,
+    'eventId = :eid AND begins_with(sortKey, :prefix)',
+    { ':eid': eventId, ':prefix': 'Contest:' },
+  );
+  await Promise.all(
+    items.map(item => dynamodb.deleteItem(EVENTS_TABLE, { eventId, sortKey: item.sortKey }))
+  );
+}
+
+/**
+ * Write contest form values as separate Contest:* records
+ */
+export async function saveEventContestRecords(
+  eventId: string,
+  contests: Record<string, unknown>[]
+): Promise<void> {
+  for (let i = 0; i < contests.length; i++) {
+    await dynamodb.putItem(EVENTS_TABLE, {
+      eventId,
+      sortKey: `Contest:${contests[i].discipline}:${i}`,
+      contestIndex: i,
+      ...contests[i],
+    });
+  }
+}
+
+/**
+ * Scan all items in the events table
+ *
+ * Replaces bare `dynamodb.scanItems(EVENTS_TABLE)` calls in action files.
+ */
+export async function scanAllEventItems(): Promise<Record<string, unknown>[]> {
+  return (await dynamodb.scanItems(EVENTS_TABLE)) || [];
+}
+
+/**
  * Delete event and all its contests
  */
 export async function deleteEvent(eventId: string): Promise<boolean> {
