@@ -145,10 +145,12 @@ const SubmitButton = () => {
   );
 };
 
-const ContestsTable = () => {
+const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
   const eventsQuery = useQuery({
     queryKey: ['events'],
     queryFn: async () => (await fetch('/api/events/contests')).json(),
+    initialData,
+    staleTime: 60_000,
   });
 
   if (eventsQuery.isLoading) {

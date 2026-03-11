@@ -149,6 +149,7 @@ export async function updateEventScores(
 
     revalidatePath('/events');
     revalidatePath('/events/my-events');
+    revalidatePath('/rankings');
 
     return { success: true };
   } catch (error) {

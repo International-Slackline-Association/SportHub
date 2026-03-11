@@ -130,10 +130,10 @@ const mobileColumns = [
   }),
 ];
 
-const RankingsTable = () => {
+const RankingsTable = ({ initialData = [] }: { initialData?: AthleteRanking[] }) => {
   const { isDesktop } = useClientMediaQuery();
-  const [rankings, setRankings] = useState<AthleteRanking[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [rankings, setRankings] = useState<AthleteRanking[]>(initialData);
+  const [loading, setLoading] = useState(initialData.length === 0);
   const [error, setError] = useState(false);
 
   useEffect(() => {
