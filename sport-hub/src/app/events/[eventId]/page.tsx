@@ -53,17 +53,20 @@ export default async function EventPage({ params }: EventPageProps) {
         verified: false,
       };
 
-      // Process contests into clean tab data on the server
+      // Process contests into clean tab data on the server.
+      // Handles both new-format (results/judges) and old-format (athletes/contestName) records.
       const contestTabs: ContestTabData[] = eventContests.map((contest, idx) => {
-        const rawJudges = (contest.judges as Record<string, unknown>[] | undefined) ?? [];
-        const rawResults = (contest.results as Record<string, unknown>[] | undefined) ?? [];
-        const label = [
-          labelOf(disciplineOptions, contest.discipline as string),
-          labelOf(eventGenderOptions, contest.gender as string),
-          labelOf(ageCategoryOptions, contest.ageCategory as string),
-        ].filter(Boolean).join(' · ') || `Contest ${idx + 1}`;
+        const isOldFormat = Array.isArray(contest.athletes) && !('results' in contest);
 
-        const judges = rawJudges.map(j => {
+        const label = isOldFormat
+          ? String(contest.contestName ?? `Contest ${idx + 1}`)
+          : [
+              labelOf(disciplineOptions, contest.discipline as string),
+              labelOf(eventGenderOptions, contest.gender as string),
+              labelOf(ageCategoryOptions, contest.ageCategory as string),
+            ].filter(Boolean).join(' · ') || `Contest ${idx + 1}`;
+
+        const judges = isOldFormat ? [] : ((contest.judges as Record<string, unknown>[] | undefined) ?? []).map(j => {
           const pending = j.pendingUser as Record<string, unknown> | undefined;
           return {
             id: pending ? undefined : (j.id as string | undefined),
@@ -74,23 +77,32 @@ export default async function EventPage({ params }: EventPageProps) {
           };
         });
 
-        const results = rawResults
-          .slice()
-          .sort((a, b) => Number(a.rank ?? 999) - Number(b.rank ?? 999))
-          .map(r => {
-            const pending = r.pendingUser as Record<string, unknown> | undefined;
-            return {
-              rank: Number(r.rank ?? 0),
-              id: pending ? undefined : (r.id as string | undefined),
-              name: pending
-                ? `${pending.name} ${pending.surname} (new)`
-                : (r.name as string) || (r.id as string) || '—',
-              isaPoints: Number(r.isaPoints ?? 0),
-              isPending: Boolean(pending),
-            };
-          });
+        // Normalize old-format athletes → results shape
+        const rawResults = isOldFormat
+          ? ((contest.athletes as Record<string, unknown>[]).map(a => ({
+              rank: Number(a.place ?? 999),
+              id: String(a.userId ?? ''),
+              name: String(a.name ?? ''),
+              isaPoints: Number(a.points ?? 0),
+              isPending: false,
+            })))
+          : ((contest.results as Record<string, unknown>[] | undefined) ?? [])
+              .slice()
+              .sort((a, b) => Number(a.rank ?? 999) - Number(b.rank ?? 999))
+              .map(r => {
+                const pending = r.pendingUser as Record<string, unknown> | undefined;
+                return {
+                  rank: Number(r.rank ?? 0),
+                  id: pending ? undefined : (r.id as string | undefined),
+                  name: pending
+                    ? `${pending.name} ${pending.surname} (new)`
+                    : (r.name as string) || (r.id as string) || '—',
+                  isaPoints: Number(r.isaPoints ?? 0),
+                  isPending: Boolean(pending),
+                };
+              });
 
-        return { label, judges, results };
+        return { label, judges, results: rawResults };
       });
 
       return (
