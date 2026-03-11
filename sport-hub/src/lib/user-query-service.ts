@@ -233,6 +233,68 @@ export async function getAthleteProfilesBatch(
 }
 
 /**
+ * Get users with pagination and optional text search
+ * Wraps countItems + scanItemsPaginated on USERS_TABLE for Profile records
+ */
+export async function getUsersPaginated(options: {
+  search?: string;
+  limit: number;
+  exclusiveStartKey?: Record<string, unknown>;
+}): Promise<{
+  users: Record<string, unknown>[];
+  lastEvaluatedKey?: Record<string, unknown>;
+  hasMore: boolean;
+  totalCount?: number;
+}> {
+  let filterExpression = 'sortKey = :profileKey';
+  const expressionAttributeValues: Record<string, unknown> = { ':profileKey': 'Profile' };
+  const expressionAttributeNames: Record<string, string> = {};
+
+  if (options.search) {
+    filterExpression += ' AND (contains(#searchName, :search) OR contains(#searchEmail, :search) OR contains(#searchSlug, :search))';
+    expressionAttributeValues[':search'] = options.search;
+    expressionAttributeNames['#searchName'] = 'name';
+    expressionAttributeNames['#searchEmail'] = 'email';
+    expressionAttributeNames['#searchSlug'] = 'athleteSlug';
+  }
+
+  const filterOptions = {
+    filterExpression,
+    expressionAttributeValues,
+    ...(Object.keys(expressionAttributeNames).length > 0 && { expressionAttributeNames }),
+  };
+
+  const totalCount = !options.exclusiveStartKey
+    ? await dynamodb.countItems(USERS_TABLE, filterOptions)
+    : undefined;
+
+  const result = await dynamodb.scanItemsPaginated(USERS_TABLE, {
+    limit: options.limit,
+    exclusiveStartKey: options.exclusiveStartKey,
+    ...filterOptions,
+  });
+
+  return {
+    users: result.items,
+    lastEvaluatedKey: result.lastEvaluatedKey,
+    hasMore: result.hasMore,
+    totalCount,
+  };
+}
+
+/**
+ * Get all user Profile records (full scan, no pagination)
+ * Used by data-services for building user lists
+ */
+export async function getAllUserProfiles(): Promise<Record<string, unknown>[]> {
+  const items = await dynamodb.scanItems(USERS_TABLE, {
+    filterExpression: 'sortKey = :sk',
+    expressionAttributeValues: { ':sk': 'Profile' },
+  });
+  return items || [];
+}
+
+/**
  * Search athletes by total points using userSubType-index GSI
  * Queries existing GSI for efficient leaderboard
  *

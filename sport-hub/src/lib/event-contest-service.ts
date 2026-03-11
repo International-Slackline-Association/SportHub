@@ -293,8 +293,10 @@ export async function saveEventContestRecords(
  *
  * Replaces bare `dynamodb.scanItems(EVENTS_TABLE)` calls in action files.
  */
-export async function scanAllEventItems(): Promise<Record<string, unknown>[]> {
-  return (await dynamodb.scanItems(EVENTS_TABLE)) || [];
+export async function scanAllEventItems(
+  options?: Parameters<typeof dynamodb.scanItems>[1]
+): Promise<Record<string, unknown>[]> {
+  return (await dynamodb.scanItems(EVENTS_TABLE, options)) || [];
 }
 
 /**
