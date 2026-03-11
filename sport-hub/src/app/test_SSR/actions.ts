@@ -2,10 +2,10 @@
 
 import { dynamodb, USERS_TABLE } from '@lib/dynamodb';
 import { auth } from '@lib/auth';
-import { clearRoleCache } from '@lib/rbac-service';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type { Role, UserSubType } from 'src/types/rbac';
+import { getUser, deleteUser as deleteUserRecord, updateUserRoleAndSubTypes as updateRoleService } from '@lib/user-service';
 
 export async function createUser(formData: FormData) {
   const id = formData.get('id') as string;
@@ -63,7 +63,7 @@ export async function updateUser(formData: FormData) {
   }
 
   // Get existing user first (use composite key)
-  const existingUser = await dynamodb.getItem(USERS_TABLE, { userId: id, sortKey: 'Profile' });
+  const existingUser = await getUser(id);
   if (!existingUser) {
     throw new Error('User not found');
   }
@@ -96,8 +96,7 @@ export async function deleteUser(formData: FormData) {
     throw new Error('Missing user ID');
   }
 
-  // Use composite key for deletion
-  await dynamodb.deleteItem(USERS_TABLE, { userId: id, sortKey: 'Profile' });
+  await deleteUserRecord(id);
   revalidatePath('/test_SSR');
 }
 
@@ -124,31 +123,7 @@ export async function updateUserRoleAndSubTypes(
   }
 
   try {
-    // Get existing user (use composite key)
-    const existingUser = await dynamodb.getItem(USERS_TABLE, { userId, sortKey: 'Profile' });
-    if (!existingUser) {
-      return { success: false, error: 'User not found' };
-    }
-
-    // Ensure primarySubType is valid
-    const validPrimarySubType = primarySubType && userSubTypes.includes(primarySubType)
-      ? primarySubType
-      : userSubTypes[0];
-
-    const updatedUser = {
-      ...existingUser,
-      role,
-      userSubTypes,
-      primarySubType: validPrimarySubType,
-      roleAssignedAt: new Date().toISOString(),
-      roleAssignedBy: session.user.id,
-    };
-
-    await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
-
-    // Clear role cache for this user
-    clearRoleCache(userId);
-
+    await updateRoleService(userId, role, userSubTypes, primarySubType, session.user.id);
     revalidatePath('/test_SSR');
 
     const isSelf = userId === session.user.id;
