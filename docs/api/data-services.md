@@ -51,6 +51,8 @@ const contests = await getContestsData();
 - Uses table scan (necessary to get all contests across all events)
 - Optimized with projection expressions and caching
 - Returns pre-sorted data (newest first)
+- Handles both **old-format** Contest:* records (`athletes`, `contestName`, `contestDate`) and **new-format** records (`results`, `contestSize`, `totalPrizeValue`) transparently — format is detected per-record via `'results' in raw`
+- For events whose contests are embedded in the Metadata record (`submittedContests`), separate Contest:* records take precedence when present
 
 ### Events Data
 
@@ -173,7 +175,7 @@ interface AthleteProfile {
 - **Social media**: Read from `socialMedia` field on the profile record (parsed from `infoUrl` during migration).
 - **Age**: Calculated from `birthdate` on the profile record.
 - **Profile image**: Uses `profileUrl` with `thumbnailUrl` fallback.
-- **Identity priority**: SportHub DB name/surname > reference DB (isa-users) > athleteSlug fallback.
+- **Identity**: `name`, `surname`, and `country` are read directly from the sporthub-users Profile record — no reference DB (isa-users) query at display time. `athleteSlug` is used as a display-name fallback for legacy records that predate the stored-name field.
 
 ### Rankings Data
 
@@ -188,7 +190,8 @@ async function getRankingsData(): Promise<AthleteRanking[]>
 
 **Performance**:
 - 2-minute cache
-- Batch-fetches names from reference DB
+- Identity fields (`name`, `surname`, `country`) read from sporthub-users Profile — no reference DB (isa-users) queries in this path
+- `athleteSlug` used as display-name fallback for legacy records without stored name
 - Sorted by points descending
 
 ## User Services
