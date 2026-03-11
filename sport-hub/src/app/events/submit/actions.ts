@@ -13,6 +13,30 @@ function generateEventId(): string {
   return `event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
+// Write contests as separate Contest:* records
+async function saveContestRecords(eventId: string, contests: ContestFormValues[]): Promise<void> {
+  for (let i = 0; i < contests.length; i++) {
+    await dynamodb.putItem(EVENTS_TABLE, {
+      eventId,
+      sortKey: `Contest:${contests[i].discipline}:${i}`,
+      contestIndex: i,
+      ...contests[i],
+    });
+  }
+}
+
+// Delete all Contest:* records for an event
+async function deleteContestRecords(eventId: string): Promise<void> {
+  const items = await dynamodb.queryItems(
+    EVENTS_TABLE,
+    'eventId = :eid AND begins_with(sortKey, :prefix)',
+    { ':eid': eventId, ':prefix': 'Contest:' },
+  );
+  await Promise.all(
+    items.map(item => dynamodb.deleteItem(EVENTS_TABLE, { eventId, sortKey: item.sortKey }))
+  );
+}
+
 
 /**
  * Save event to DynamoDB
@@ -60,7 +84,6 @@ export async function saveEvent(values: EventSubmissionFormValues, status: Event
     const eventId = generateEventId();
     const eventData = {
       ...event,
-      contests: contests || [],
       eventId,
       sortKey: 'Metadata',
       createdAt: new Date().toISOString(),
@@ -71,9 +94,10 @@ export async function saveEvent(values: EventSubmissionFormValues, status: Event
       ...(status === 'pending' && { submittedForApprovalAt: new Date().toISOString() }),
     };
 
-    // Save to DynamoDB
+    // Save event metadata and contests as separate records
     console.log(`[saveEvent] saving event ${eventId} with status=${status} createdBy=${session?.user?.id}`);
     await dynamodb.putItem(EVENTS_TABLE, eventData);
+    await saveContestRecords(eventId, contests || []);
     console.log(`[saveEvent] saved successfully`);
 
     // Revalidate events pages
@@ -127,15 +151,18 @@ export async function updateEventScores(
       return { success: false, error: 'You do not have permission to edit this event' };
     }
 
-    // Merge updated judges/results into existing contest metadata
+    // Merge updated judges/results into individual Contest records
     const existingContests = (existingEvent.contests as Record<string, unknown>[]) || [];
-    const updatedContests = existingContests.map((ec, idx) => ({
-      ...ec,
-      judges: contests[idx]?.judges ?? ec.judges,
-      results: contests[idx]?.results ?? ec.results,
-    }));
-
-    await dynamodb.putItem(EVENTS_TABLE, { ...existingEvent, contests: updatedContests });
+    await Promise.all(
+      existingContests.map(async (ec, idx) => {
+        const updated = {
+          ...ec,
+          judges: contests[idx]?.judges ?? ec.judges,
+          results: contests[idx]?.results ?? ec.results,
+        };
+        await dynamodb.putItem(EVENTS_TABLE, updated as Record<string, unknown>);
+      })
+    );
 
     revalidatePath('/events');
     revalidatePath('/events/my-events');
@@ -184,33 +211,26 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
 
     const { event, contests } = values;
 
+    // Strip assembled contests field before writing Metadata record
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { contests: _assembled, ...existingMetadata } = existingEvent as Record<string, unknown>;
     const updatedEvent = {
-      ...existingEvent,
+      ...existingMetadata,
       ...event,
-      contests: contests || [],
       updatedAt: new Date().toISOString(),
     };
 
-    console.log(`[updateEvent] updating event ${eventId}`);
+    console.log(`[updateEvent] updating event ${eventId}${isMigration ? ' (migration)' : ''}`);
     await dynamodb.putItem(EVENTS_TABLE, updatedEvent);
 
-    // Migration: delete old Contest:* records now that a Metadata record exists
+    // Delete existing Contest records (handles both old-format and previous new-format)
+    await deleteContestRecords(eventId);
     if (isMigration) {
-      const allRecords = await dynamodb.queryItems(
-        EVENTS_TABLE,
-        'eventId = :eid',
-        { ':eid': eventId },
-      );
-      const oldContestRecords = (allRecords as Record<string, unknown>[]).filter(
-        (r) => typeof r.sortKey === 'string' && r.sortKey.startsWith('Contest:'),
-      );
-      await Promise.all(
-        oldContestRecords.map((r) =>
-          dynamodb.deleteItem(EVENTS_TABLE, { eventId, sortKey: r.sortKey }),
-        ),
-      );
-      console.log(`[updateEvent] migrated old-format event: deleted ${oldContestRecords.length} Contest:* records`);
+      console.log(`[updateEvent] migrated old-format event`);
     }
+
+    // Save contests as separate records
+    await saveContestRecords(eventId, contests || []);
 
     invalidateContestsCache();
     revalidatePath('/events');
@@ -229,11 +249,28 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
  */
 export async function getEvent(eventId: string) {
   try {
-    const event = await dynamodb.getItem(EVENTS_TABLE, { eventId, sortKey: 'Metadata' });
-    return {
-      success: true,
-      event,
-    };
+    const metadata = await dynamodb.getItem(EVENTS_TABLE, { eventId, sortKey: 'Metadata' });
+    if (!metadata) {
+      return { success: false, event: null };
+    }
+
+    // Fetch separate Contest records (new schema)
+    const contestItems = await dynamodb.queryItems(
+      EVENTS_TABLE,
+      'eventId = :eid AND begins_with(sortKey, :prefix)',
+      { ':eid': eventId, ':prefix': 'Contest:' },
+    );
+
+    // Sort by contestIndex; fall back to embedded contests array for old events
+    const sortedContests = [...contestItems].sort(
+      (a, b) => ((a.contestIndex as number) || 0) - ((b.contestIndex as number) || 0)
+    );
+    const { contests: embeddedContests, ...metadataOnly } = metadata as Record<string, unknown>;
+    const contests = sortedContests.length > 0
+      ? sortedContests
+      : (embeddedContests as Record<string, unknown>[]) || [];
+
+    return { success: true, event: { ...metadataOnly, contests } };
   } catch (error) {
     console.error('Error fetching event:', error);
     return {
@@ -284,6 +321,7 @@ export async function deleteEvent(eventId: string) {
     // Require admin authentication
     await requireAdmin();
 
+    await deleteContestRecords(eventId);
     await dynamodb.deleteItem(EVENTS_TABLE, { eventId, sortKey: 'Metadata' });
 
     // Revalidate events page
@@ -591,7 +629,7 @@ export async function createPendingUserFromEvent(
       '/admin/event-approval',
     );
 
-    // Update the event entry: replace pendingUser with real userId
+    // Update the contest entry: replace pendingUser with real userId
     // Destructure to omit pendingUser key entirely (undefined values in nested arrays
     // are not handled by removeUndefinedValues in older AWS SDK versions)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -603,13 +641,11 @@ export async function createPendingUserFromEvent(
       name: `${pending.name} ${pending.surname}`.trim(),
     };
 
-    const updatedContests = [...contests];
-    updatedContests[contestIdx] = {
+    // Update only the specific Contest record (contest has eventId + sortKey from getEvent)
+    await dynamodb.putItem(EVENTS_TABLE, {
       ...contest,
       [entryType === 'judge' ? 'judges' : 'results']: updatedEntries,
-    };
-
-    await dynamodb.putItem(EVENTS_TABLE, { ...event, contests: updatedContests });
+    } as Record<string, unknown>);
 
     revalidatePath('/admin/event-approval');
   } catch (error) {
