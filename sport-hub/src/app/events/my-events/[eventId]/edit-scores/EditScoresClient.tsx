@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Formik, Form } from 'formik';
 import Link from 'next/link';
 import Button from '@ui/Button';
@@ -19,6 +20,7 @@ type Props = {
 
 export default function EditScoresClient({ eventId, eventName, initialValues }: Props) {
   const [saved, setSaved] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = (
     values: EventSubmissionFormValues,
@@ -29,6 +31,7 @@ export default function EditScoresClient({ eventId, eventName, initialValues }: 
         alert(result.error || 'Failed to save changes. Please try again.');
         return;
       }
+      router.refresh(); // clear client router cache so /events shows updated data immediately
       setSaved(true);
     }).catch(() => {
       alert('Failed to save changes. Please try again.');

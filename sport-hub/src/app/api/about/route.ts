@@ -1,5 +1,6 @@
-import { dynamodb, USERS_TABLE } from '@lib/dynamodb'
 import { NextResponse, NextRequest } from 'next/server';
+import { getUsersPaginated } from '@lib/user-query-service';
+import { createUserWithProfile } from '@lib/user-service';
 
 const DEFAULT_PAGE_SIZE = 100;
 
@@ -26,39 +27,15 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Filter options for Profile records only (hierarchical schema)
-    // Add search filter if search query is provided
-    let filterExpression = 'sortKey = :profileKey';
-    const expressionAttributeValues: Record<string, unknown> = { ':profileKey': 'Profile' };
-    const expressionAttributeNames: Record<string, string> = {};
-
-    if (searchQuery) {
-      filterExpression += ' AND (contains(#searchName, :search) OR contains(#searchEmail, :search) OR contains(#searchSlug, :search))';
-      expressionAttributeValues[':search'] = searchQuery;
-      expressionAttributeNames['#searchName'] = 'name';
-      expressionAttributeNames['#searchEmail'] = 'email';
-      expressionAttributeNames['#searchSlug'] = 'athleteSlug';
-    }
-
-    const filterOptions = {
-      filterExpression,
-      expressionAttributeValues,
-      ...(Object.keys(expressionAttributeNames).length > 0 && { expressionAttributeNames }),
-    };
-
-    // Get total count only on first request (no cursor) for efficiency
-    const totalCount = !exclusiveStartKey
-      ? await dynamodb.countItems(USERS_TABLE, filterOptions)
-      : undefined;
-
-    const result = await dynamodb.scanItemsPaginated(USERS_TABLE, {
+    const result = await getUsersPaginated({
+      search: searchQuery || undefined,
       limit,
       exclusiveStartKey,
-      ...filterOptions,
     });
+    const totalCount = result.totalCount;
 
     // Transform items to match expected UI schema
-    const users = result.items.map(item => ({
+    const users = result.users.map(item => ({
       id: item.userId ?? item.id ?? '',
       name: item.name ?? item.athleteSlug ?? '',
       surname: item.surname ?? '',
@@ -96,7 +73,7 @@ export async function GET(request: NextRequest) {
     console.error('DynamoDB error:', error);
     // Handle missing table gracefully by returning empty array
     if (error && typeof error === 'object' && 'name' in error && error.name === 'ResourceNotFoundException') {
-      console.log(`Table ${USERS_TABLE} does not exist. Returning empty array.`);
+      console.log('Users table does not exist. Returning empty array.');
       return NextResponse.json({ users: [], nextCursor: null, hasMore: false });
     }
     return NextResponse.json(
@@ -125,18 +102,14 @@ export async function POST(request: Request) {
 
     const athleteSlug = `${trimmedName}--${trimmedSurname || ''}`.toLowerCase().replace(/\s+/g, '-').replace(/-+$/, '');
 
-    const user = {
-      userId: userId,
+    const created = await createUserWithProfile(userId, {
       name: trimmedName,
       surname: trimmedSurname,
       email: trimmedEmail,
       athleteSlug,
       country: body.country || undefined,
-      createdAt: new Date().toISOString(),
-    };
-
-    await dynamodb.putItem(USERS_TABLE, user as unknown as Record<string, unknown>);
-    return NextResponse.json(user, { status: 201 });
+    });
+    return NextResponse.json(created, { status: 201 });
 
   } catch (error) {
     console.error('DynamoDB error:', error);

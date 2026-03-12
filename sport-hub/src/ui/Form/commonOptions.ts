@@ -32,6 +32,9 @@ export const disciplineOptions: Option[] = [
   { value: "RIGGING", label: "Rigging" },
   { value: "FREESTYLE", label: "Freestyle" },
   { value: "WALKING", label: "Walking" },
+  // ISA-Rankings numeric discipline codes (used in migrated records)
+  { value: "2",  label: "Trickline" },
+  { value: "12", label: "Freestyle Highline" },
 ];
 
 export const ageCategoryOptions: Option[] = [

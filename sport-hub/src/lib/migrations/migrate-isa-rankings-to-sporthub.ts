@@ -168,10 +168,11 @@ interface EventMetadata {
   eventName: string;
   startDate: string;
   endDate: string;
-  location: string;
+  city?: string;
   country: string;
   contestCount: number;
   type: string;
+  profileUrl?: string;
   createdAt: number;
 }
 
@@ -182,23 +183,30 @@ interface ContestRecord {
   discipline: string;
   contestDate: string;
   dateSortKey: string; // For date-discipline-index GSI
-  contestName: string;
-  country: string;
   city?: string;
-  category?: number;
-  gender?: number;
+  gender?: string;
+  ageCategory?: string;
   prize?: number;
   profileUrl?: string;
   thumbnailUrl?: string;
   infoUrl?: string;
   createdAt: number;
-  athletes: Array<{
-    userId: string;
-    isaUsersId?: string;
+  results: Array<{
+    rank: number;
+    id: string;
     name: string;
-    place: string;
-    points: string;
+    isaPoints: number;
+    isPending: boolean;
   }>;
+}
+
+/**
+ * Map numeric gender code from ISA-Rankings to string format.
+ */
+function mapGender(n: number | undefined): string {
+  if (n === 1) return 'MEN_ONLY';
+  if (n === 2) return 'WOMEN_ONLY';
+  return 'MIXED';
 }
 
 /**
@@ -697,10 +705,15 @@ async function scanRankings(
 /**
  * Step 3: Scan Contests from ISA-Rankings
  */
-async function scanContests(): Promise<Map<string, ContestRecord>> {
+const ISA_DISCIPLINE_LABEL: Record<string, string> = { '2': 'Trickline', '12': 'Freestyle Highline' };
+
+interface EventInfo { country: string; city?: string; name: string; }
+
+async function scanContests(): Promise<{ contests: Map<string, ContestRecord>; eventInfoMap: Map<string, EventInfo> }> {
   console.log('📥 Scanning ISA-Rankings for Contests...');
 
   const contests = new Map<string, ContestRecord>();
+  const eventInfoMap = new Map<string, EventInfo>();
   let scannedCount = 0;
   let lastEvaluatedKey: Record<string, unknown> | undefined = undefined;
 
@@ -741,6 +754,15 @@ async function scanContests(): Promise<Map<string, ContestRecord>> {
       // Create GSI sort key for date-discipline-index: contestDate#eventId
       const dateSortKey = `${date}#${eventId}`;
 
+      const country = item.country as string || '';
+      const city = item.city as string | undefined;
+      const contestName = item.name as string || '';
+
+      // Track country/city/name per event for EventMetadata creation
+      if (!eventInfoMap.has(eventId)) {
+        eventInfoMap.set(eventId, { country, city, name: contestName });
+      }
+
       const contest: ContestRecord = {
         eventId,
         sortKey: `Contest:${discipline}:${contestId}`,
@@ -748,16 +770,14 @@ async function scanContests(): Promise<Map<string, ContestRecord>> {
         discipline,
         contestDate: date,
         dateSortKey,
-        contestName: item.name as string || '',
-        country: item.country as string || '',
-        city: item.city as string | undefined,
-        category: item.category as number | undefined,
-        gender: item.gender as number | undefined,
+        city,
+        gender: mapGender(item.gender as number | undefined),
+        ageCategory: 'ALL',
         prize: item.prize as number | undefined,
         profileUrl: item.profileUrl as string | undefined,
         thumbnailUrl: item.thumbnailUrl as string | undefined,
         infoUrl: item.infoUrl as string | undefined,
-        athletes: [], // Will be populated from participations
+        results: [], // Will be populated from participations
         createdAt: Date.now(),
       };
 
@@ -774,7 +794,7 @@ async function scanContests(): Promise<Map<string, ContestRecord>> {
 
   console.log(`✅ Found ${contests.size} contests`);
   stats.contestsCreated = contests.size;
-  return contests;
+  return { contests, eventInfoMap };
 }
 
 /**
@@ -853,6 +873,9 @@ async function scanParticipations(
 
       // Create participation record for users table
       const sortKey = `Participation:${contestId}`;
+      const disciplineLabel = ISA_DISCIPLINE_LABEL[contest.discipline] ?? contest.discipline;
+      const genderLabel = contest.gender ?? 'MIXED';
+      const contestName = `${disciplineLabel} / ${genderLabel} / ALL`;
 
       const participation: AthleteParticipation = {
         userId,
@@ -863,7 +886,7 @@ async function scanParticipations(
         place,
         points,
         contestDate: contest.contestDate,
-        contestName: contest.contestName,
+        contestName,
       };
 
       if (!participationsByAthlete.has(userId)) {
@@ -871,13 +894,13 @@ async function scanParticipations(
       }
       participationsByAthlete.get(userId)!.push(participation);
 
-      // Add athlete to contest's athletes array (for denormalization)
-      contest.athletes.push({
-        userId,
-        isaUsersId: athlete.isaUsersId,
-        name: athleteSlug, // Will be replaced with actual name from isa-users
-        place: place.toString(),
-        points,
+      // Add athlete to contest's results array (for denormalization)
+      contest.results.push({
+        rank: Number(place),
+        id: userId,
+        name: athleteSlug,
+        isaPoints: Number(points) || 0,
+        isPending: false,
       });
 
       scannedCount++;
@@ -923,7 +946,7 @@ function calculateAggregations(
 /**
  * Step 6: Create event metadata records from contests
  */
-function createEventMetadata(contests: Map<string, ContestRecord>): Map<string, EventMetadata> {
+function createEventMetadata(contests: Map<string, ContestRecord>, eventInfoMap: Map<string, EventInfo>): Map<string, EventMetadata> {
   console.log('🏗️  Creating event metadata records...');
 
   const events = new Map<string, EventMetadata>();
@@ -940,17 +963,27 @@ function createEventMetadata(contests: Map<string, ContestRecord>): Map<string, 
   // Create event metadata for each group
   for (const [eventId, eventContests] of contestsByEvent.entries()) {
     const firstContest = eventContests[0];
+    const info = eventInfoMap.get(eventId);
+    const country = info?.country ?? '';
+    const city = info?.city ?? firstContest.city;
+
+    // Derive event name: find common prefix among all contest names, fall back to country+date
+    const allNames = eventContests
+      .map(c => eventInfoMap.get(c.eventId)?.name)
+      .filter((n): n is string => Boolean(n));
+    const commonName = allNames.length > 0 ? allNames[0] : '';
 
     const event: EventMetadata = {
       eventId,
       sortKey: 'Metadata',
-      eventName: `${firstContest.country} - ${firstContest.contestDate}`,
+      eventName: commonName || (country ? `${country} - ${firstContest.contestDate}` : firstContest.contestDate),
       startDate: firstContest.contestDate,
       endDate: firstContest.contestDate,
-      location: firstContest.country,
-      country: firstContest.country,
+      city,
+      country,
       contestCount: eventContests.length,
       type: 'competition',
+      profileUrl: firstContest.profileUrl,
       createdAt: Date.now(),
     };
 
@@ -1020,8 +1053,8 @@ async function writeRecords(
   }
 
   for (const contest of contests.values()) {
-    // Sort athletes by place before writing
-    contest.athletes.sort((a, b) => Number(a.place) - Number(b.place));
+    // Sort results by rank before writing
+    contest.results.sort((a, b) => a.rank - b.rank);
     eventRecords.push({ ...contest });
   }
 
@@ -1232,7 +1265,7 @@ export async function migrate(options?: { dryRun?: boolean }): Promise<Migration
     console.log();
 
     // Step 3: Scan contests
-    const contests = await scanContests();
+    const { contests, eventInfoMap } = await scanContests();
     console.log();
 
     // Step 4: Scan participations
@@ -1244,7 +1277,7 @@ export async function migrate(options?: { dryRun?: boolean }): Promise<Migration
     console.log();
 
     // Step 6: Create event metadata
-    const events = createEventMetadata(contests);
+    const events = createEventMetadata(contests, eventInfoMap);
     console.log();
 
     // Step 7: Write records

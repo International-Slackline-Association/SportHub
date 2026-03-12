@@ -5,16 +5,14 @@
  * Eliminates full table scans and N+1 query patterns.
  */
 
-import { DynamoDBDocumentClient, QueryCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
-import { dynamodb, dynamoClient, getTableName, USERS_TABLE } from './dynamodb';
+import { QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { dynamodb, ddbClient, getTableName, USERS_TABLE } from './dynamodb';
 import type {
   UserProfileRecord,
   AthleteRankingRecord,
   AthleteParticipationRecord,
   RankingFilter,
 } from './relational-types';
-
-const ddb = DynamoDBDocumentClient.from(dynamoClient);
 
 /**
  * Get athlete profile by userId
@@ -27,21 +25,8 @@ export async function getAthleteProfile(
   userId: string
 ): Promise<UserProfileRecord | null> {
   try {
-    const command = new GetCommand({
-      TableName: getTableName(USERS_TABLE),
-      Key: {
-        userId,
-        sortKey: 'Profile',
-      },
-    });
-
-    const response = await ddb.send(command);
-
-    if (!response.Item) {
-      return null;
-    }
-
-    return response.Item as UserProfileRecord;
+    const item = await dynamodb.getItem(USERS_TABLE, { userId, sortKey: 'Profile' });
+    return item as UserProfileRecord | null;
   } catch (error) {
     console.error(`Error fetching athlete profile ${userId}:`, error);
     return null;
@@ -83,18 +68,12 @@ export async function getAthleteRankings(
       }
     }
 
-    // Query with sortKey begins_with
-    const command = new QueryCommand({
-      TableName: getTableName(USERS_TABLE),
-      KeyConditionExpression: 'userId = :userId AND begins_with(sortKey, :sortKeyPrefix)',
-      ExpressionAttributeValues: {
-        ':userId': userId,
-        ':sortKeyPrefix': sortKeyPrefix,
-      },
-    });
-
-    const response = await ddb.send(command);
-    return (response.Items || []) as AthleteRankingRecord[];
+    const items = await dynamodb.queryItems(
+      USERS_TABLE,
+      'userId = :userId AND begins_with(sortKey, :sortKeyPrefix)',
+      { ':userId': userId, ':sortKeyPrefix': sortKeyPrefix },
+    );
+    return items as AthleteRankingRecord[];
   } catch (error) {
     console.error(`Error fetching rankings for ${userId}:`, error);
     return [];
@@ -129,7 +108,7 @@ export async function getAthleteParticipations(
       ScanIndexForward: false, // Most recent first (reverse chronological)
     });
 
-    const response = await ddb.send(command);
+    const response = await ddbClient.send(command);
 
     return {
       participations: (response.Items || []) as AthleteParticipationRecord[],
@@ -159,20 +138,13 @@ export async function getTopAthletesByDiscipline(
   }
 ): Promise<AthleteRankingRecord[]> {
   try {
-    // Query discipline-rankings-index GSI
-    const command = new QueryCommand({
-      TableName: getTableName(USERS_TABLE),
-      IndexName: 'discipline-rankings-index',
-      KeyConditionExpression: 'discipline = :discipline',
-      ExpressionAttributeValues: {
-        ':discipline': discipline,
-      },
-      Limit: limit * 2, // Get more to account for filtering
-      ScanIndexForward: false, // Descending order (highest points first)
-    });
-
-    const response = await ddb.send(command);
-    let rankings = (response.Items || []) as AthleteRankingRecord[];
+    const items = await dynamodb.queryItems(
+      USERS_TABLE,
+      'discipline = :discipline',
+      { ':discipline': discipline },
+      { indexName: 'discipline-rankings-index', scanIndexForward: false, limit: limit * 2 },
+    );
+    let rankings = items as AthleteRankingRecord[];
 
     // Apply additional filters if provided
     if (filters) {
@@ -261,6 +233,68 @@ export async function getAthleteProfilesBatch(
 }
 
 /**
+ * Get users with pagination and optional text search
+ * Wraps countItems + scanItemsPaginated on USERS_TABLE for Profile records
+ */
+export async function getUsersPaginated(options: {
+  search?: string;
+  limit: number;
+  exclusiveStartKey?: Record<string, unknown>;
+}): Promise<{
+  users: Record<string, unknown>[];
+  lastEvaluatedKey?: Record<string, unknown>;
+  hasMore: boolean;
+  totalCount?: number;
+}> {
+  let filterExpression = 'sortKey = :profileKey';
+  const expressionAttributeValues: Record<string, unknown> = { ':profileKey': 'Profile' };
+  const expressionAttributeNames: Record<string, string> = {};
+
+  if (options.search) {
+    filterExpression += ' AND (contains(#searchName, :search) OR contains(#searchEmail, :search) OR contains(#searchSlug, :search))';
+    expressionAttributeValues[':search'] = options.search;
+    expressionAttributeNames['#searchName'] = 'name';
+    expressionAttributeNames['#searchEmail'] = 'email';
+    expressionAttributeNames['#searchSlug'] = 'athleteSlug';
+  }
+
+  const filterOptions = {
+    filterExpression,
+    expressionAttributeValues,
+    ...(Object.keys(expressionAttributeNames).length > 0 && { expressionAttributeNames }),
+  };
+
+  const totalCount = !options.exclusiveStartKey
+    ? await dynamodb.countItems(USERS_TABLE, filterOptions)
+    : undefined;
+
+  const result = await dynamodb.scanItemsPaginated(USERS_TABLE, {
+    limit: options.limit,
+    exclusiveStartKey: options.exclusiveStartKey,
+    ...filterOptions,
+  });
+
+  return {
+    users: result.items,
+    lastEvaluatedKey: result.lastEvaluatedKey,
+    hasMore: result.hasMore,
+    totalCount,
+  };
+}
+
+/**
+ * Get all user Profile records (full scan, no pagination)
+ * Used by data-services for building user lists
+ */
+export async function getAllUserProfiles(): Promise<Record<string, unknown>[]> {
+  const items = await dynamodb.scanItems(USERS_TABLE, {
+    filterExpression: 'sortKey = :sk',
+    expressionAttributeValues: { ':sk': 'Profile' },
+  });
+  return items || [];
+}
+
+/**
  * Search athletes by total points using userSubType-index GSI
  * Queries existing GSI for efficient leaderboard
  *
@@ -287,7 +321,7 @@ export async function getAthleteLeaderboard(
       ScanIndexForward: false, // Descending order (highest points first)
     });
 
-    const response = await ddb.send(command);
+    const response = await ddbClient.send(command);
 
     // Filter to only Profile records (GSI will return all record types for matching users)
     const profiles = (response.Items || []).filter(

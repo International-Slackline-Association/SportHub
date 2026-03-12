@@ -7,6 +7,8 @@
 import { dynamodb, USERS_TABLE } from './dynamodb';
 import type { UserProfileRecord } from './relational-types';
 import { updateReferenceUser } from './reference-db-service';
+import { clearRoleCache } from './rbac-service';
+import type { Role, UserSubType } from '../types/rbac';
 
 /**
  * User profile update data (allowed fields only)
@@ -104,6 +106,126 @@ export async function createUser(
   await dynamodb.putItem(USERS_TABLE, newUser as unknown as Record<string, unknown>);
   console.log(`Created new user: ${customUserId}`);
   return newUser;
+}
+
+/**
+ * Delete user profile by ID
+ *
+ * @param userId - User ID to delete
+ */
+export async function deleteUser(userId: string): Promise<void> {
+  await dynamodb.deleteItem(USERS_TABLE, { userId, sortKey: 'Profile' });
+}
+
+/**
+ * Update user role, sub-types, and clear role cache
+ *
+ * Consolidates the get→merge→put→clearRoleCache pattern used across multiple callers.
+ *
+ * @param userId - User ID to update
+ * @param role - New role to assign
+ * @param userSubTypes - New sub-types
+ * @param primarySubType - Optional primary sub-type (defaults to first in userSubTypes)
+ * @param assignedBy - Optional user ID of who made the change
+ * @throws Error if user not found
+ */
+export async function updateUserRoleAndSubTypes(
+  userId: string,
+  role: Role,
+  userSubTypes: UserSubType[],
+  primarySubType?: UserSubType,
+  assignedBy?: string
+): Promise<void> {
+  const existingUser = await getUser(userId);
+  if (!existingUser) {
+    throw new Error('User not found');
+  }
+
+  const validPrimarySubType = primarySubType && userSubTypes.includes(primarySubType)
+    ? primarySubType
+    : userSubTypes[0];
+
+  const updatedUser: UserProfileRecord = {
+    ...existingUser,
+    role,
+    userSubTypes,
+    primarySubType: validPrimarySubType,
+    roleAssignedAt: new Date().toISOString(),
+    ...(assignedBy !== undefined && { roleAssignedBy: assignedBy }),
+  };
+
+  await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
+  clearRoleCache(userId);
+}
+
+/**
+ * Save a user profile record directly (low-level upsert)
+ *
+ * Use this when you already have a fully-assembled UserProfileRecord and just
+ * need to persist it — e.g. after merging updates in an action.
+ *
+ * @param user - Complete user profile record to persist
+ */
+export async function saveUserProfile(user: UserProfileRecord): Promise<void> {
+  await dynamodb.putItem(USERS_TABLE, user as unknown as Record<string, unknown>);
+}
+
+/**
+ * Create a user with a full profile (admin/form use case)
+ *
+ * Unlike the onboarding `createUser(customUserId)`, this accepts all profile
+ * fields at creation time (e.g. from an admin form).
+ *
+ * @param userId - User ID to assign
+ * @param profileData - Profile fields; merged over safe defaults
+ * @returns Created user record
+ */
+export async function createUserWithProfile(
+  userId: string,
+  profileData: Partial<UserProfileRecord>
+): Promise<UserProfileRecord> {
+  const user: UserProfileRecord = {
+    userId,
+    sortKey: 'Profile',
+    role: 'user',
+    userSubTypes: ['athlete'],
+    primarySubType: 'athlete',
+    totalPoints: 0,
+    contestCount: 0,
+    createdAt: Date.now(),
+    ...profileData,
+  } as UserProfileRecord;
+
+  await dynamodb.putItem(USERS_TABLE, user as unknown as Record<string, unknown>);
+  return user;
+}
+
+/**
+ * Fetch → merge → save a user profile
+ *
+ * Convenience wrapper for the common update pattern used in action files.
+ *
+ * @param userId - User ID to update
+ * @param updates - Fields to merge into the existing record
+ * @returns Updated user record
+ * @throws Error if user not found
+ */
+export async function updateUserData(
+  userId: string,
+  updates: Partial<UserProfileRecord>
+): Promise<UserProfileRecord> {
+  const existingUser = await getUser(userId);
+  if (!existingUser) {
+    throw new Error('User not found');
+  }
+
+  const updatedUser: UserProfileRecord = {
+    ...existingUser,
+    ...updates,
+  };
+
+  await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
+  return updatedUser;
 }
 
 /**

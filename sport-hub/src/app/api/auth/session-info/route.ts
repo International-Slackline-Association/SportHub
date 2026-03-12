@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@lib/auth';
-import { dynamodb } from '@lib/dynamodb';
+import { getUser } from '@lib/user-service';
 import { ROLE_PERMISSIONS } from 'src/types/rbac';
 import type { Role, UserSubType } from 'src/types/rbac';
 
@@ -15,14 +15,11 @@ export async function GET() {
     // Get user from database
     let dbUser = null;
     if (session.user.id) {
-      const user = await dynamodb.getItem('users', {
-        userId: session.user.id,
-        sortKey: 'Profile',
-      });
+      const user = await getUser(session.user.id);
 
       if (user) {
         dbUser = {
-          id: user.userId as string,
+          id: user.userId,
           name: (user.name ?? user.athleteSlug ?? '') as string,
           surname: (user.surname ?? '') as string,
           email: (user.email ?? '') as string,

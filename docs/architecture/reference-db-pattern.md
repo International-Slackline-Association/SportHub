@@ -36,10 +36,22 @@ SportHub uses a **reference database separation pattern** to manage user identit
 
 ### Key Concepts
 
-1. **Single Source of Truth**: User identity stored once in `isa-users` table
+1. **Identity fields cached in sporthub-users**: `name`, `surname`, `country`, and other display fields are stored directly on the sporthub-users Profile record and updated on profile save — hot display paths do not query the reference DB
 2. **Reference by ID**: App database references users via `isaUsersId` field
-3. **Cross-Region**: Identity DB can be in different region (eu-central-1 vs. us-east-2)
+3. **Cross-Region**: Identity DB is in eu-central-1; app DB is in us-east-2 — cross-region queries are avoided except where strictly necessary
 4. **Separation of Concerns**: Identity management separate from app logic
+
+### When is the Reference DB Used?
+
+The reference DB is now contacted only on paths that genuinely require it:
+
+| Path | Reason |
+|------|--------|
+| `onboarding.ts` (JWT callback) | Create record on first login; fetch `customUserId` |
+| Migration scripts | Map athletes to ISA IDs |
+| `dashboard/actions.ts` `updateProfile()` | Sync edited identity fields back (non-fatal, wrapped in try/catch) |
+
+All other paths — rankings, athlete profiles, event participants, dashboard display — read identity fields directly from the sporthub-users Profile record.
 
 ## Benefits
 
@@ -274,37 +286,47 @@ const updated = await updateReferenceUser('ISA_FBE8B254', {
 
 ### 1. Display User Profile
 
+Identity fields (`name`, `surname`, `country`) are stored directly on the sporthub-users Profile record. No reference DB query is needed at display time.
+
 ```typescript
-// Get app data
+// Get app data — name/surname/country already present
 const profile = await getAthleteProfile('SportHubID:12345');
 
-// Get identity data
-const identity = await getReferenceUserById(profile.isaUsersId);
-
-// Merge for display
+// Display directly — no reference DB call
 const fullProfile = {
   ...profile,
-  name: identity.name,
-  email: identity.email,
-  country: identity.country
+  name: profile.name,          // from sporthub-users Profile
+  country: profile.country,    // from sporthub-users Profile
 };
+```
+
+The reference DB is only contacted when the user saves their profile via the dashboard:
+
+```typescript
+// dashboard/actions.ts — updateProfile()
+await saveUserProfile(userId, { name, surname, country, ... });  // primary write
+
+// Non-fatal sync to reference DB
+try {
+  await updateReferenceUser(isaUsersId, { name, surname, country });
+} catch (e) {
+  console.error('Reference DB sync failed (non-fatal):', e);
+}
 ```
 
 ### 2. Contest Participants with Names
 
+Participant names are read from the sporthub-users Profile record via `getUser()` when participants are added. No batch reference DB lookup is performed at display time.
+
 ```typescript
-// Contest record has participants with userId
-const contest = await getContest('c5f8a2');
-
-// Batch fetch identities
-const userIds = contest.athletes.map(a => a.isaUsersId).filter(Boolean);
-const identities = await getReferenceUsersBatch(userIds);
-
-// Enrich participant data
-const enrichedAthletes = contest.athletes.map(athlete => ({
-  ...athlete,
-  name: identities.get(athlete.isaUsersId)?.name || athlete.name
-}));
+// When adding a participant — identity cached in participation record
+const user = await getUser(userId);  // reads from sporthub-users
+await addParticipation({
+  userId,
+  name: user.name,      // stored from sporthub-users Profile
+  country: user.country,
+  // ...
+});
 ```
 
 ### 3. User Search by Email
@@ -322,25 +344,24 @@ if (identity) {
 
 ## Local Development Mode
 
-### Fallback to athleteSlug
+### Identity fields in Profile record
 
-For offline development or when reference DB is unavailable:
+Because identity fields (`name`, `surname`, `country`) are stored directly on the sporthub-users Profile record, local development works without any reference DB access. Seed data populates these fields directly.
 
 ```typescript
-// User profile includes athleteSlug as fallback
+// User profile — name/country available locally
 {
   userId: "SportHubID:12345",
-  isaUsersId: "ISA_FBE8B254",  // Primary: reference DB lookup
-  athleteSlug: "john-doe",     // Fallback: local display name
-  name: "John Doe",            // LOCAL DEV ONLY
-  email: "john@example.com"    // LOCAL DEV ONLY
+  isaUsersId: "",              // blank in seed data (no ISA users table locally)
+  athleteSlug: "john-doe",    // fallback for legacy records without a name field
+  name: "John Doe",           // canonical display name (from Profile record)
+  country: "USA"
 }
 ```
 
 **Display Priority**:
-1. If `isaUsersId` exists → fetch from reference DB
-2. Else if `athleteSlug` exists → use as display name
-3. Else use local `name` field (dev only)
+1. `profile.name` / `profile.surname` from sporthub-users Profile (canonical)
+2. `athleteSlug` as display name fallback (legacy records without a stored name)
 
 ### Local Reference DB
 

@@ -270,5 +270,7 @@ export const dynamodb = {
   },
 };
 
-// Export client for advanced operations
+// Export raw client for advanced operations
 export { client as dynamoClient };
+// Export document client for callers that need direct SDK command access
+export { ddb as ddbClient };

@@ -2,11 +2,12 @@
 
 import { auth } from '@lib/auth';
 import { canEditUser } from '@lib/authorization';
-import { dynamodb, USERS_TABLE } from '@lib/dynamodb';
 import { revalidatePath } from 'next/cache';
 import type { UserProfileRecord } from '@lib/relational-types';
 import type { UserSubType } from '../../types/rbac';
 import { clearRoleCache } from '@lib/rbac-service';
+import { getUser, createUser, saveUserProfile } from '@lib/user-service';
+import { updateReferenceUser } from '@lib/reference-db-service';
 
 export interface SocialMediaData {
   instagram?: string;
@@ -50,24 +51,13 @@ export async function updateProfile(userId: string, data?: ProfileUpdateData) {
     const session = await auth();
 
     // Get current user profile data
-    const currentUser = await dynamodb.getItem(USERS_TABLE, { userId, sortKey: 'Profile' }) as UserProfileRecord | undefined;
+    const currentUser = await getUser(userId) as UserProfileRecord | undefined;
 
     // If user doesn't exist, create them (handles users who signed in before migration)
     if (!currentUser) {
       console.log(`User ${userId} not found in database, creating new record`);
 
-      const newUser: UserProfileRecord = {
-        userId,
-        sortKey: 'Profile',
-        role: 'user',
-        userSubTypes: ['athlete'],
-        primarySubType: 'athlete',
-        createdAt: Date.now(),
-        totalPoints: 0,
-        contestCount: 0,
-      };
-
-      await dynamodb.putItem(USERS_TABLE, newUser as unknown as Record<string, unknown>);
+      await createUser(userId);
       revalidatePath('/dashboard');
 
       console.log(`Created new user record for ${userId}`);
@@ -120,10 +110,26 @@ export async function updateProfile(userId: string, data?: ProfileUpdateData) {
       lastProfileUpdate: Date.now(),
     };
 
-    await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
+    await saveUserProfile(updatedUser);
 
-    // TODO: Also sync identity changes to reference DB (isa-users table) once
-    //       a sync mechanism is implemented. For now, edits only go to SportHub DB.
+    // Sync identity changes to reference DB (isa-users), guarded so a failure
+    // there doesn't break the dashboard save.
+    // NOTE: Requires isa-users table write permissions on AWS — verify before enabling in production.
+    if (updatedUser.isaUsersId) {
+      try {
+        await updateReferenceUser(updatedUser.isaUsersId, {
+          name: updatedUser.name,
+          surname: updatedUser.surname,
+          email: updatedUser.email,
+          country: updatedUser.country,
+          city: updatedUser.city,
+          birthDate: updatedUser.birthdate,
+          gender: updatedUser.gender,
+        });
+      } catch (err) {
+        console.warn('[updateProfile] Reference DB sync failed (non-fatal):', err);
+      }
+    }
 
     // Revalidate dashboard to show updated data
     revalidatePath('/dashboard');
@@ -148,7 +154,7 @@ export async function updateProfile(userId: string, data?: ProfileUpdateData) {
  */
 export async function getUserProfile(userId: string) {
   try {
-    const user = await dynamodb.getItem(USERS_TABLE, { userId, sortKey: 'Profile' }) as UserProfileRecord | undefined;
+    const user = await getUser(userId) as UserProfileRecord | undefined;
 
     if (!user) {
       return {
@@ -182,7 +188,7 @@ export async function getUserProfile(userId: string) {
  */
 export async function getFullUserProfile(userId: string) {
   try {
-    const user = await dynamodb.getItem(USERS_TABLE, { userId, sortKey: 'Profile' }) as UserProfileRecord | undefined;
+    const user = await getUser(userId) as UserProfileRecord | undefined;
     if (!user) return null;
 
     return {
@@ -214,7 +220,7 @@ export async function becomeOrganizer(): Promise<void> {
 
   const userId = session.user.id;
 
-  const currentUser = await dynamodb.getItem(USERS_TABLE, { userId, sortKey: 'Profile' }) as UserProfileRecord | undefined;
+  const currentUser = await getUser(userId) as UserProfileRecord | undefined;
 
   if (!currentUser) {
     throw new Error('Profile not found. Please save your profile first.');
@@ -230,7 +236,7 @@ export async function becomeOrganizer(): Promise<void> {
     lastProfileUpdate: Date.now(),
   };
 
-  await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
+  await saveUserProfile(updatedUser);
   clearRoleCache(userId);
   revalidatePath('/dashboard');
 }

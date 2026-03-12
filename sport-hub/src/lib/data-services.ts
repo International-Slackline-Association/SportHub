@@ -1,18 +1,18 @@
 // import { UserSubType } from '@types/rbac';
-import { dynamodb, USERS_TABLE, EVENTS_TABLE } from './dynamodb';
 import type { ContestRecord, EventMetadataRecord, ContestParticipant } from './relational-types';
-import { getReferenceUserById, getReferenceUsersBatch } from './reference-db-service';
 import {
   getAthleteProfile as getAthleteProfileOptimized,
   getAthleteParticipations as getAthleteParticipationsOptimized,
   getAthleteLeaderboard,
-  getAthleteRankings
+  getAthleteRankings,
+  getAllUserProfiles,
 } from './user-query-service';
-import { MAP_DISCIPLINE_ENUM_TO_NAME, MAP_GENDER_ENUM_TO_NAME, MAP_CONTEST_TYPE_ENUM_TO_NAME } from '@utils/consts';
+import { getEvent, getContest, scanAllEventItems } from './event-contest-service';
+import { MAP_DISCIPLINE_ENUM_TO_NAME, MAP_CONTEST_TYPE_ENUM_TO_NAME, MAP_CONTEST_GENDER_ENUM_TO_NAME } from '@utils/consts';
 
 // Reverse lookups: name → numeric enum (for mapping new-format string values back to ContestData numbers)
-const GENDER_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
-  Object.entries(MAP_GENDER_ENUM_TO_NAME).map(([num, name]) => [name, Number(num)])
+const CONTEST_GENDER_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
+  Object.entries(MAP_CONTEST_GENDER_ENUM_TO_NAME).map(([num, name]) => [name, Number(num)])
 );
 const CONTEST_TYPE_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
   Object.entries(MAP_CONTEST_TYPE_ENUM_TO_NAME).map(([num, name]) => [name, Number(num)])
@@ -83,18 +83,17 @@ export async function getUsers({ subtype }: { subtype: string }): Promise<Partia
   if (cached) return cached;
 
   try {
-    const items = await dynamodb.scanItems(USERS_TABLE);
+    const items = await getAllUserProfiles();
     if (!items || items.length === 0) {
       return [];
     }
 
     const users = items
-      .filter(item => item.sortKey === 'Profile')
       .filter(item => item.name || item.surname || item.athleteSlug)
       .map(userRecord => ({
-        name: userRecord.name || userRecord.athleteSlug || '',
-        surname: userRecord.surname || '',
-        userId: userRecord.userId || '',
+        name: (userRecord.name || userRecord.athleteSlug || '') as string,
+        surname: (userRecord.surname || '') as string,
+        userId: (userRecord.userId || '') as string,
       }));
 
     // Cache the results
@@ -132,8 +131,7 @@ export interface AthleteRanking {
  * OPTIMIZED: Uses getAthleteLeaderboard with GSI query (40x faster than scan)
  * CACHED: Reduces redundant DB calls
  *
- * In production: Batch-fetches names/countries from reference DB (isa-users table)
- * In local dev: Uses athleteSlug field populated by seed data
+ * Uses name/surname/country from sporthub-users Profile; falls back to athleteSlug.
  */
 export async function getRankingsData(): Promise<AthleteRanking[]> {
   const cacheKey = 'rankings-data';
@@ -148,38 +146,11 @@ export async function getRankingsData(): Promise<AthleteRanking[]> {
       return [];
     }
 
-    // Batch-fetch names from isa-users (works in both local and production)
-    let referenceUsers = new Map<string, { name: string; surname?: string; country?: string }>();
-    const athleteIds = profiles.map(p => p.isaUsersId).filter((id): id is string => Boolean(id));
-    const refUsersMap = await getReferenceUsersBatch(athleteIds);
-    referenceUsers = new Map(
-      Array.from(refUsersMap.entries()).map(([id, user]) => [
-        id,
-        { name: user.name, surname: user.surname, country: user.country }
-      ])
-    );
-
-    // Add error logging to help diagnose reference DB issues
-    if (referenceUsers.size === 0 && athleteIds.length > 0) {
-      console.error('❌ Reference DB lookup failed. Got 0 users for', athleteIds.length, 'requests');
-      console.error('   Check:');
-      console.error('   - LOCAL_REFERENCE_DB=true in .env.local (for local dev)');
-      console.error('   - Reference DB table "isa-users" exists and has data');
-      console.error('   - DynamoDB Local running on port 8000');
-      console.error('   - Check pnpm db:gui (port 8001) to verify isa-users table');
-    } else {
-      console.log(`📊 Reference DB lookup: Requested ${athleteIds.length}, Got ${referenceUsers.size}`);
-    }
-
     const rankings = profiles
       .map((profile): AthleteRanking => {
-        // Priority: SportHub DB name/surname -> reference DB (isa-users) -> athleteSlug fallback
-        // TODO: If SportHub DB name differs from reference DB, we currently prefer SportHub DB.
-        //       A sync mechanism should be implemented to keep both in sync on edits.
-        const refUser = profile.isaUsersId ? referenceUsers.get(profile.isaUsersId) : undefined;
-        const name = profile.name || refUser?.name || profile.athleteSlug?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || '';
-        const surname = profile.surname || refUser?.surname || '';
-        const country = refUser?.country || '-'; // Use '-' for missing country data
+        const name = profile.name || profile.athleteSlug?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || '';
+        const surname = profile.surname || '';
+        const country = profile.country || '-';
         const fullName = `${name} ${surname}`.trim();
 
         return {
@@ -251,18 +222,15 @@ export async function getEventsData(): Promise<EventMetadataRecord[]> {
 
   try {
     // Scan with projection to reduce data transfer
-    const allItems = await dynamodb.scanItems(EVENTS_TABLE, {
-      projectionExpression: 'eventId, eventName, sortKey, country, profileUrl, thumbnailUrl, startDate, endDate, #loc',
-      expressionAttributeNames: {
-        '#loc': 'location' // 'location' is a reserved word in DynamoDB
-      }
+    const allItems = await scanAllEventItems({
+      projectionExpression: 'eventId, eventName, sortKey, country, city, profileUrl, thumbnailUrl, startDate, endDate'
     });
 
     if (!allItems || allItems.length === 0) {
       return [];
     }
 
-    const eventRecords: EventMetadataRecord[] = allItems.filter(item => item.sortKey === 'Metadata');
+    const eventRecords: EventMetadataRecord[] = allItems.filter(item => item.sortKey === 'Metadata') as unknown as EventMetadataRecord[];
     const sortedEvents = eventRecords.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
 
     // Cache the results (10 min TTL to reduce scan frequency)
@@ -294,11 +262,11 @@ export async function getContestsData(): Promise<ContestData[]> {
 
   try {
     // Scan with projection to reduce data transfer.
-    // Includes both old-format Contest:* fields and new-format Metadata fields (name, status, contests).
-    const allItems = await dynamodb.scanItems(EVENTS_TABLE, {
-      projectionExpression: 'eventId, sortKey, contestName, contestDate, country, city, discipline, prize, gender, category, profileUrl, thumbnailUrl, athletes, #loc, #eventName, startDate, #eventStatus, contests',
+    // Covers both old-format Contest:* fields (contestName/athletes) and
+    // new-format Contest:* fields (results/contestSize/totalPrizeValue) plus Metadata.
+    const allItems = await scanAllEventItems({
+      projectionExpression: 'eventId, sortKey, contestName, contestDate, country, city, discipline, prize, gender, category, profileUrl, thumbnailUrl, athletes, results, contestSize, totalPrizeValue, contestIndex, eventName, #eventName, startDate, #eventStatus, contests',
       expressionAttributeNames: {
-        '#loc': 'location',       // reserved word
         '#eventName': 'name',     // reserved word
         '#eventStatus': 'status', // reserved word
       }
@@ -312,19 +280,61 @@ export async function getContestsData(): Promise<ContestData[]> {
     const metadataMap = new Map<string, EventMetadataRecord>();
     const contestRecords: ContestRecord[] = [];
 
-    allItems.forEach(item => {
-      if (item.sortKey === 'Metadata') { // Capital M in new schema
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (allItems as any[]).forEach(item => {
+      if (item.sortKey === 'Metadata') {
         metadataMap.set(item.eventId, item as EventMetadataRecord);
-      } else if (item.sortKey?.startsWith('Contest:')) { // Contest:{discipline}:{contestId}
+      } else if (item.sortKey?.startsWith('Contest:')) {
         contestRecords.push(item as ContestRecord);
       }
     });
 
-    // Map old-format Contest:* records
+    // Track which events have separate Contest:* records.
+    // For these events, Contest:* records are authoritative (more up-to-date than
+    // the embedded snapshot in Metadata written by updateEventStatus).
+    const eventIdsWithContestRecords = new Set(contestRecords.map(c => c.eventId));
+
+    // Map all Contest:* records — handles both old-format (athletes) and new-format (results)
     const contests: ContestData[] = contestRecords.map(contest => {
       const event = metadataMap.get(contest.eventId);
+      const raw = contest as unknown as Record<string, unknown>;
 
-      const participants = (contest.athletes || []) // New schema uses 'athletes' field
+      // New-format: written by saveEventContestRecords / updateEventScores
+      // Detected by presence of 'results' array (may be empty [])
+      if ('results' in raw) {
+        const results = (raw.results as Record<string, unknown>[] | undefined) ?? [];
+        const athletes = results
+          .slice()
+          .sort((a, b) => Number(a.rank ?? 999) - Number(b.rank ?? 999))
+          .map(r => ({
+            userId: String(r.id ?? ''),
+            name: String(r.name ?? ''),
+            surname: '',
+            place: String(r.rank ?? ''),
+            points: Number(r.isaPoints ?? 0),
+          }));
+        const meta = event as unknown as Record<string, unknown>;
+        return {
+          eventId: contest.eventId,
+          name: String(meta?.eventName || meta?.name || ''),
+          date: String(raw.startDate || meta?.startDate || ''),
+          country: String(meta?.country || 'N/A'),
+          city: String(raw.city || meta?.city || ''),
+          discipline: String(raw.discipline ?? ''),
+          prize: Number(raw.totalPrizeValue ?? raw.prize ?? 0),
+          gender: CONTEST_GENDER_NAME_TO_ENUM[String(raw.gender ?? '')] ?? 0,
+          category: CONTEST_TYPE_NAME_TO_ENUM[String(raw.contestSize ?? '')] ?? 0,
+          verified: true,
+          profileUrl: '',
+          thumbnailUrl: '',
+          athletes,
+        };
+      }
+
+      // Old-format: written by seed/migration (contestName, contestDate, athletes)
+      // Uses raw cast since ContestRecord no longer has athletes field
+      const legacyAthletes = (raw.athletes as ContestParticipant[] | undefined) ?? [];
+      const participants = legacyAthletes
         .map((p: ContestParticipant) => {
           const points = parseFloat(p.points || '0');
           return {
@@ -339,14 +349,14 @@ export async function getContestsData(): Promise<ContestData[]> {
 
       return {
         eventId: contest.eventId,
-        name: contest.contestName || '',
-        date: contest.contestDate || '', // New schema uses contestDate
-        country: event?.country || contest.country || 'N/A',
-        city: contest.city || event?.location || '',
+        name: event?.eventName || (raw.contestName as string) || '',
+        date: contest.contestDate || '',
+        country: event?.country || 'N/A',
+        city: contest.city || event?.city || '',
         discipline: contest.discipline || '',
         prize: contest.prize || 0,
-        gender: contest.gender || 0,
-        category: contest.category || 0,
+        gender: CONTEST_GENDER_NAME_TO_ENUM[String(contest.gender ?? '')] ?? 0,
+        category: 0,
         verified: true,
         profileUrl: contest.profileUrl || '',
         thumbnailUrl: contest.thumbnailUrl || '',
@@ -354,11 +364,14 @@ export async function getContestsData(): Promise<ContestData[]> {
       };
     });
 
-    // Map new-format Metadata records (published events with embedded contests array)
+    // Map published events that only have embedded contests in Metadata
+    // (no separate Contest:* records). Skip events that already have Contest:* records
+    // above — those are authoritative and more up-to-date.
     const submittedContests: ContestData[] = [];
     metadataMap.forEach((rawMeta) => {
       const meta = rawMeta as unknown as Record<string, unknown>;
       if (meta.status !== 'published') return;
+      if (eventIdsWithContestRecords.has(String(meta.eventId ?? ''))) return;
       const embeddedContests = (meta.contests as Record<string, unknown>[] | undefined) ?? [];
       embeddedContests.forEach(contest => {
         const results = (contest.results as Record<string, unknown>[] | undefined) ?? [];
@@ -380,7 +393,7 @@ export async function getContestsData(): Promise<ContestData[]> {
           city: String(meta.city ?? ''),
           discipline: String(contest.discipline ?? ''),
           prize: Number(contest.totalPrizeValue ?? 0),
-          gender: GENDER_NAME_TO_ENUM[String(contest.gender ?? '')] ?? 0,
+          gender: CONTEST_GENDER_NAME_TO_ENUM[String(contest.gender ?? '')] ?? 0,
           category: CONTEST_TYPE_NAME_TO_ENUM[String(contest.contestSize ?? '')] ?? 0,
           verified: false,
           athletes,
@@ -451,8 +464,7 @@ export interface WorldFirst {
  * Get athlete profile by athlete ID
  * OPTIMIZED: Uses composite key (userId + sortKey="Profile") for O(1) lookup
  *
- * In production: Fetches name/email/country from isa-users
- * In local dev: Uses athleteSlug field populated by seed data
+ * Uses name/surname/country from sporthub-users Profile; falls back to athleteSlug.
  */
 export async function getAthleteProfile(athleteId: string): Promise<AthleteProfile | null> {
   try {
@@ -466,25 +478,10 @@ export async function getAthleteProfile(athleteId: string): Promise<AthleteProfi
       return null;
     }
 
-    // Priority: SportHub DB name/surname -> reference DB (isa-users) -> athleteSlug fallback
-    let refName = '';
-    let refSurname = '';
-    let country = 'N/A';
+    let name = profile.name || '';
+    const surname = profile.surname || '';
+    const country = profile.country || 'N/A';
 
-    if (profile.isaUsersId) {
-      const referenceUser = await getReferenceUserById(profile.isaUsersId);
-      if (referenceUser) {
-        refName = referenceUser.name;
-        refSurname = referenceUser.surname || '';
-        country = referenceUser.country || 'N/A';
-      }
-    }
-
-    // SportHub DB fields take priority over reference DB
-    let name = profile.name || refName;
-    const surname = profile.surname || refSurname;
-
-    // Fallback to athleteSlug if no name found anywhere
     if (!name && profile.athleteSlug) {
       name = profile.athleteSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
@@ -562,10 +559,7 @@ export async function getAthleteContests(athleteId: string): Promise<AthleteCont
 
     // Fetch event metadata for unique events
     const uniqueEventIds = [...new Set(participations.map(p => p.eventId))];
-    const eventMetadataPromises = uniqueEventIds.map(eventId =>
-      dynamodb.getItem(EVENTS_TABLE, { eventId, sortKey: 'Metadata' }) as Promise<EventMetadataRecord | null>
-    );
-    const eventMetadataResults = await Promise.all(eventMetadataPromises);
+    const eventMetadataResults = await Promise.all(uniqueEventIds.map(id => getEvent(id)));
     const eventMetadataMap = new Map<string, EventMetadataRecord>();
     eventMetadataResults.forEach(metadata => {
       if (metadata) {
@@ -575,13 +569,9 @@ export async function getAthleteContests(athleteId: string): Promise<AthleteCont
 
     // Fetch contest records to get athlete counts
     // Contest sortKey format: "Contest:{discipline}:{contestId}"
-    const contestPromises = participations.map(p =>
-      dynamodb.getItem(EVENTS_TABLE, {
-        eventId: p.eventId,
-        sortKey: `Contest:${p.discipline}:${p.contestId}`
-      }) as Promise<ContestRecord | null>
+    const contestResults = await Promise.all(
+      participations.map(p => getContest(p.eventId, `Contest:${p.discipline}:${p.contestId}`))
     );
-    const contestResults = await Promise.all(contestPromises);
     const contestMap = new Map<string, ContestRecord>();
     contestResults.forEach(contest => {
       if (contest) {
@@ -593,7 +583,7 @@ export async function getAthleteContests(athleteId: string): Promise<AthleteCont
     const contests: AthleteContest[] = participations.map(participation => {
       const eventMetadata = eventMetadataMap.get(participation.eventId);
       const contest = contestMap.get(`${participation.eventId}:${participation.contestId}`);
-      const contestSize = contest?.athletes?.length;
+      const contestSize = contest?.results?.length;
 
       return {
         rank: participation.place,

@@ -8,22 +8,20 @@ export const metadata: Metadata = {
   title: 'SportHub - Events',
 }
 
-// Enable ISR (Incremental Static Regeneration)
-// Revalidate this page every hour (3600 seconds)
-export const revalidate = 3600
+export const dynamic = 'force-dynamic'
 
 export default async function Page() {
-  const featuredEvents = await getContestsData();
+  const contestsData = await getContestsData();
 
   return (
     <PageLayout
       title="Events"
       description="View the latest events and competitions across all disciplines."
     >
-      <FeaturedEventSection events={featuredEvents.slice(0,3)} />
+      <FeaturedEventSection events={contestsData.slice(0,3)} />
 
       <section className="p-4 sm:p-0">
-        <ContestsTable />
+        <ContestsTable initialData={contestsData} />
       </section>
     </PageLayout>
   );
