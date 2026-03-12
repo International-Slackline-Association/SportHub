@@ -48,7 +48,6 @@ export async function addAthleteToContest(params: {
         ':newContest': [{
           contestId,
           eventId: params.eventId,
-          contestName: contest.contestName,
           eventName: event.eventName,
           place: params.place,
           points: params.points,
@@ -127,7 +126,6 @@ export async function addJudgeToContest(params: {
         ':newContest': [{
           contestId,
           eventId: params.eventId,
-          contestName: contest.contestName,
           eventName: event.eventName,
           date: contest.contestDate,
           role,
@@ -199,7 +197,7 @@ export async function addOrganizerToEvent(params: {
           eventName: event.eventName,
           date: event.startDate,
           role,
-          location: event.location,
+          city: event.city,
           country: event.country,
           contestCount: event.contestCount,
         }],

@@ -14,7 +14,6 @@ import type {
   AthleteParticipationRecord,
   EventMetadataRecord,
   ContestRecord,
-  ContestParticipant,
 } from '../relational-types';
 
 // ============================================================================
@@ -53,7 +52,6 @@ const DISCIPLINES = [
 ] as const;
 
 // Contest category (2 = World Cup / international level)
-const CATEGORY = 2;
 
 // ============================================================================
 // ID GENERATION
@@ -246,7 +244,7 @@ export function transformRankingsData(): {
       eventName: eventDef.name,
       startDate: eventDef.start,
       endDate: eventDef.end,
-      location: eventDef.city,
+      city: eventDef.city,
       country: eventDef.country,
       contestCount,
       type: 'competition',
@@ -254,9 +252,9 @@ export function transformRankingsData(): {
     });
 
     for (const [disciplineIdx, discipline] of DISCIPLINES.entries()) {
-      for (const [gIdx, { genderCode, genderNum, genderLabel, group }] of ([
-        { genderCode: '1', genderNum: 1, genderLabel: 'Men',   group: menAthletes },
-        { genderCode: '2', genderNum: 2, genderLabel: 'Women', group: womenAthletes },
+      for (const [gIdx, { genderCode, genderNum, group }] of ([
+        { genderCode: '1', genderNum: 1, group: menAthletes },
+        { genderCode: '2', genderNum: 2, group: womenAthletes },
       ] as const).entries()) {
         const contestId = generateContestId(eventIdx, discipline.code, genderNum);
 
@@ -271,32 +269,30 @@ export function transformRankingsData(): {
         // Assign places (already sorted by totalPoints desc)
         selectedAthletes.forEach((entry, i) => { entry.place = i + 1; });
 
-        const contestName = `${discipline.label} ${genderLabel} Open`;
         const contestDate = eventDef.start; // contest starts on event start date
 
-        // Build embedded participants for the Contest record
-        const contestParticipants: ContestParticipant[] = selectedAthletes.map(({ athlete, place }) => ({
-          userId: athleteIdToUserId.get(athlete.athleteId)!,
-          name: athlete.name,
-          place: String(place),
-          points: String(contestPoints(athlete)),
-        }));
-
         const dateSortKey = `${contestDate}#${eventId}`;
+
+        const genderCode = genderNum === 1 ? 'MEN_ONLY' : 'WOMEN_ONLY';
+        const participationContestName = `${discipline.label} / ${genderCode} / ALL`;
 
         contests.push({
           eventId,
           sortKey: `Contest:${discipline.code}:${contestId}`,
           contestId,
           discipline: discipline.code,
-          contestName,
           contestDate,
           dateSortKey,
-          country: eventDef.country,
           city: eventDef.city,
-          category: CATEGORY,
-          gender: genderNum,
-          athletes: contestParticipants,
+          gender: genderCode,
+          ageCategory: 'ALL',
+          results: selectedAthletes.map(({ athlete, place }) => ({
+            rank: place,
+            id: athleteIdToUserId.get(athlete.athleteId)!,
+            name: athlete.name,
+            isaPoints: contestPoints(athlete),
+            isPending: false,
+          })),
           createdAt: Date.now(),
         });
 
@@ -312,7 +308,7 @@ export function transformRankingsData(): {
             place,
             points: String(contestPoints(athlete)),
             contestDate,
-            contestName,
+            contestName: participationContestName,
           });
         }
       }

@@ -4,7 +4,9 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { EventDetailsCard } from '@ui/EventDetailsCard';
 import { getEvent } from '../submit/actions';
-import { disciplineOptions, eventGenderOptions, ageCategoryOptions } from '@ui/Form/commonOptions';
+import { getEventContests } from '@lib/event-contest-service';
+import { eventGenderOptions, ageCategoryOptions } from '@ui/Form/commonOptions';
+import { DISCIPLINE_DATA } from '@utils/consts';
 import ContestTabs, { ContestTabData } from './ContestTabs';
 import { auth } from '@lib/auth';
 import { getFullUserProfile } from '../../dashboard/actions';
@@ -17,6 +19,13 @@ interface EventPageProps {
 
 const labelOf = (opts: { value: string; label: string }[], val: string | undefined) =>
   opts.find(o => o.value === val)?.label ?? val ?? '—';
+
+const disciplineLabel = (val: string | undefined): string => {
+  if (!val) return '—';
+  const byKey = DISCIPLINE_DATA[val as keyof typeof DISCIPLINE_DATA];
+  if (byKey) return byKey.name;
+  return Object.values(DISCIPLINE_DATA).find(e => e.enumValue === Number(val))?.name ?? val;
+};
 
 
 export default async function EventPage({ params }: EventPageProps) {
@@ -42,31 +51,26 @@ export default async function EventPage({ params }: EventPageProps) {
 
       // Build an EventLike-compatible object for EventDetailsCard
       const eventLike = {
-        name: String(event.name ?? ''),
+        name: String(event.name ?? (event as Record<string, unknown>).eventName ?? ''),
         date: event.startDate as string | undefined,
-        city: String(event.city ?? ''),
+        city: String(event.city ?? eventContests[0]?.city ?? ''),
         country: String(event.country ?? ''),
         discipline: (event.disciplines as string[] | undefined) ?? [],
         prize: totalPrize || undefined,
-        profileUrl: event.profileUrl as string | undefined,
-        thumbnailUrl: event.thumbnailUrl as string | undefined,
+        profileUrl: (event.profileUrl as string | undefined) || (eventContests[0]?.profileUrl as string | undefined),
+        thumbnailUrl: (event.thumbnailUrl as string | undefined) || (eventContests[0]?.thumbnailUrl as string | undefined),
         verified: false,
       };
 
       // Process contests into clean tab data on the server.
-      // Handles both new-format (results/judges) and old-format (athletes/contestName) records.
       const contestTabs: ContestTabData[] = eventContests.map((contest, idx) => {
-        const isOldFormat = Array.isArray(contest.athletes) && !('results' in contest);
+        const label = [
+          disciplineLabel(contest.discipline as string),
+          labelOf(eventGenderOptions, contest.gender as string),
+          labelOf(ageCategoryOptions, contest.ageCategory as string),
+        ].filter(Boolean).join('-') || `Contest ${idx + 1}`;
 
-        const label = isOldFormat
-          ? String(contest.contestName ?? `Contest ${idx + 1}`)
-          : [
-              labelOf(disciplineOptions, contest.discipline as string),
-              labelOf(eventGenderOptions, contest.gender as string),
-              labelOf(ageCategoryOptions, contest.ageCategory as string),
-            ].filter(Boolean).join(' · ') || `Contest ${idx + 1}`;
-
-        const judges = isOldFormat ? [] : ((contest.judges as Record<string, unknown>[] | undefined) ?? []).map(j => {
+        const judges = ((contest.judges as Record<string, unknown>[] | undefined) ?? []).map(j => {
           const pending = j.pendingUser as Record<string, unknown> | undefined;
           return {
             id: pending ? undefined : (j.id as string | undefined),
@@ -77,36 +81,27 @@ export default async function EventPage({ params }: EventPageProps) {
           };
         });
 
-        // Normalize old-format athletes → results shape
-        const rawResults = isOldFormat
-          ? ((contest.athletes as Record<string, unknown>[]).map(a => ({
-              rank: Number(a.place ?? 999),
-              id: String(a.userId ?? ''),
-              name: String(a.name ?? ''),
-              isaPoints: Number(a.points ?? 0),
-              isPending: false,
-            })))
-          : ((contest.results as Record<string, unknown>[] | undefined) ?? [])
-              .slice()
-              .sort((a, b) => Number(a.rank ?? 999) - Number(b.rank ?? 999))
-              .map(r => {
-                const pending = r.pendingUser as Record<string, unknown> | undefined;
-                return {
-                  rank: Number(r.rank ?? 0),
-                  id: pending ? undefined : (r.id as string | undefined),
-                  name: pending
-                    ? `${pending.name} ${pending.surname} (new)`
-                    : (r.name as string) || (r.id as string) || '—',
-                  isaPoints: Number(r.isaPoints ?? 0),
-                  isPending: Boolean(pending),
-                };
-              });
+        const rawResults = ((contest.results as Record<string, unknown>[] | undefined) ?? [])
+          .slice()
+          .sort((a, b) => Number(a.rank ?? 999) - Number(b.rank ?? 999))
+          .map(r => {
+            const pending = r.pendingUser as Record<string, unknown> | undefined;
+            return {
+              rank: Number(r.rank ?? 0),
+              id: pending ? undefined : (r.id as string | undefined),
+              name: pending
+                ? `${pending.name} ${pending.surname} (new)`
+                : (r.name as string) || (r.id as string) || '—',
+              isaPoints: Number(r.isaPoints ?? 0),
+              isPending: Boolean(pending),
+            };
+          });
 
         return { label, judges, results: rawResults };
       });
 
       return (
-        <PageLayout title="">
+        <PageLayout>
           <div className="space-y-6">
             {isAdmin && (
               <div className="flex justify-end">
@@ -137,7 +132,65 @@ export default async function EventPage({ params }: EventPageProps) {
     }
   }
 
-  // Fall through to old-format events (Contest:* sort key records, no embedded contests array)
+  // Mid-path: event has Metadata + separate Contest:* records (migrated/seeded events)
+  if (newFormatResult.success && newFormatResult.event) {
+    const metaRecord = newFormatResult.event as Record<string, unknown>;
+    const separateContests = await getEventContests(decodedEventId);
+    if (separateContests.length > 0) {
+      const eventLike = {
+        name: String(metaRecord.eventName ?? ''),
+        date: metaRecord.startDate as string | undefined,
+        city: String(metaRecord.city ?? ''),
+        country: String(metaRecord.country ?? ''),
+        discipline: [] as string[],
+        prize: undefined as number | undefined,
+        profileUrl: metaRecord.profileUrl as string | undefined,
+        thumbnailUrl: metaRecord.thumbnailUrl as string | undefined,
+        verified: true,
+      };
+
+      const contestTabs: ContestTabData[] = separateContests.map((contest, idx) => {
+        const label = [
+          disciplineLabel(contest.discipline),
+          labelOf(eventGenderOptions, contest.gender),
+          labelOf(ageCategoryOptions, contest.ageCategory),
+        ].filter(Boolean).join('-') || `Contest ${idx + 1}`;
+
+        const rawResults = [...contest.results]
+          .sort((a, b) => a.rank - b.rank)
+          .map(r => ({
+            rank: r.rank,
+            id: r.id,
+            name: r.name,
+            isaPoints: r.isaPoints,
+            isPending: r.isPending,
+          }));
+
+        return { label, judges: [], results: rawResults };
+      });
+
+      return (
+        <PageLayout>
+          <div className="space-y-6">
+            {isAdmin && (
+              <div className="flex justify-end">
+                <Link
+                  href={`/events/my-events/${encodeURIComponent(decodedEventId)}/edit`}
+                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                >
+                  Edit Event
+                </Link>
+              </div>
+            )}
+            <EventDetailsCard event={eventLike} />
+            <ContestTabs contests={contestTabs} />
+          </div>
+        </PageLayout>
+      );
+    }
+  }
+
+  // Fall through to old-format events (flat ContestData list — pre-migration records)
   const contests = await getContestsData();
   const oldEvent = contests.find(c => c.eventId === decodedEventId);
 
@@ -149,7 +202,7 @@ export default async function EventPage({ params }: EventPageProps) {
     });
 
     return (
-      <PageLayout title="">
+      <PageLayout>
         <div className="space-y-6">
           {isAdmin && (
             <div className="flex justify-end">

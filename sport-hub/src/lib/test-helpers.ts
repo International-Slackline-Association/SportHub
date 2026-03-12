@@ -37,7 +37,7 @@ export class TestHelpers {
       eventName: overrides.eventName || 'Test Event',
       startDate: date,
       endDate: overrides.endDate || date,
-      location: overrides.location || 'Test Location',
+      city: overrides.city,
       country: overrides.country || 'USA',
       contestCount: overrides.contestCount || 0,
       type: 'competition',

@@ -28,12 +28,12 @@ const TextTableFilter = <TData,>({ header }: TableFilterProps<TData>) => {
 const SelectTableFilter = <TData,>({ header, rows }: TableFilterProps<TData>) => {
   const { id, column } = header;
   const columnName = column.columnDef.header?.toString();
+  const explicitOptions = column.columnDef.meta?.filterOptions;
 
-  // Casts option values to string to stay synced with filter table state.
-  // Columns with non-string data will need to cast to string in order for filtering to work.
-  const options = [...new Set(rows.map(row => String(row.getValue(column.id))))].filter(
-    option => option !== undefined
-  );
+  // Use explicit options when provided (e.g. full discipline/size lists from consts).
+  // Otherwise derive unique values from the current data rows.
+  const options: { value: string; label: string }[] = explicitOptions
+    ?? [...new Set(rows.map(row => String(row.getValue(column.id))))].map(v => ({ value: v, label: v }));
 
   return (
     <div className={styles.columnFilter} key={`column-filter-${id}`}>
@@ -42,10 +42,10 @@ const SelectTableFilter = <TData,>({ header, rows }: TableFilterProps<TData>) =>
         id={id}
         name={columnName}
         onChange={e => column.setFilterValue(e.target.value || undefined)}
-        value={String(column.getFilterValue())}
+        value={String(column.getFilterValue() ?? '')}
       >
-        <option value={""}>Select</option>
-        {...options.map(value => (<option key={value} value={value}>{value}</option>))}
+        <option value={""}>All</option>
+        {options.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
       </select>
     </div>
   );

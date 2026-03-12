@@ -8,11 +8,11 @@ import {
   getAllUserProfiles,
 } from './user-query-service';
 import { getEvent, getContest, scanAllEventItems } from './event-contest-service';
-import { MAP_DISCIPLINE_ENUM_TO_NAME, MAP_GENDER_ENUM_TO_NAME, MAP_CONTEST_TYPE_ENUM_TO_NAME } from '@utils/consts';
+import { MAP_DISCIPLINE_ENUM_TO_NAME, MAP_CONTEST_TYPE_ENUM_TO_NAME, MAP_CONTEST_GENDER_ENUM_TO_NAME } from '@utils/consts';
 
 // Reverse lookups: name → numeric enum (for mapping new-format string values back to ContestData numbers)
-const GENDER_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
-  Object.entries(MAP_GENDER_ENUM_TO_NAME).map(([num, name]) => [name, Number(num)])
+const CONTEST_GENDER_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
+  Object.entries(MAP_CONTEST_GENDER_ENUM_TO_NAME).map(([num, name]) => [name, Number(num)])
 );
 const CONTEST_TYPE_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
   Object.entries(MAP_CONTEST_TYPE_ENUM_TO_NAME).map(([num, name]) => [name, Number(num)])
@@ -223,10 +223,7 @@ export async function getEventsData(): Promise<EventMetadataRecord[]> {
   try {
     // Scan with projection to reduce data transfer
     const allItems = await scanAllEventItems({
-      projectionExpression: 'eventId, eventName, sortKey, country, profileUrl, thumbnailUrl, startDate, endDate, #loc',
-      expressionAttributeNames: {
-        '#loc': 'location' // 'location' is a reserved word in DynamoDB
-      }
+      projectionExpression: 'eventId, eventName, sortKey, country, city, profileUrl, thumbnailUrl, startDate, endDate'
     });
 
     if (!allItems || allItems.length === 0) {
@@ -268,9 +265,8 @@ export async function getContestsData(): Promise<ContestData[]> {
     // Covers both old-format Contest:* fields (contestName/athletes) and
     // new-format Contest:* fields (results/contestSize/totalPrizeValue) plus Metadata.
     const allItems = await scanAllEventItems({
-      projectionExpression: 'eventId, sortKey, contestName, contestDate, country, city, discipline, prize, gender, category, profileUrl, thumbnailUrl, athletes, results, contestSize, totalPrizeValue, contestIndex, #loc, #eventName, startDate, #eventStatus, contests',
+      projectionExpression: 'eventId, sortKey, contestName, contestDate, country, city, discipline, prize, gender, category, profileUrl, thumbnailUrl, athletes, results, contestSize, totalPrizeValue, contestIndex, eventName, #eventName, startDate, #eventStatus, contests',
       expressionAttributeNames: {
-        '#loc': 'location',       // reserved word
         '#eventName': 'name',     // reserved word
         '#eventStatus': 'status', // reserved word
       }
@@ -320,13 +316,13 @@ export async function getContestsData(): Promise<ContestData[]> {
         const meta = event as unknown as Record<string, unknown>;
         return {
           eventId: contest.eventId,
-          name: String(meta?.name || meta?.eventName || ''),
+          name: String(meta?.eventName || meta?.name || ''),
           date: String(raw.startDate || meta?.startDate || ''),
           country: String(meta?.country || 'N/A'),
-          city: String(raw.city || meta?.city || meta?.location || ''),
+          city: String(raw.city || meta?.city || ''),
           discipline: String(raw.discipline ?? ''),
-          prize: Number(raw.totalPrizeValue ?? 0),
-          gender: GENDER_NAME_TO_ENUM[String(raw.gender ?? '')] ?? 0,
+          prize: Number(raw.totalPrizeValue ?? raw.prize ?? 0),
+          gender: CONTEST_GENDER_NAME_TO_ENUM[String(raw.gender ?? '')] ?? 0,
           category: CONTEST_TYPE_NAME_TO_ENUM[String(raw.contestSize ?? '')] ?? 0,
           verified: true,
           profileUrl: '',
@@ -336,7 +332,9 @@ export async function getContestsData(): Promise<ContestData[]> {
       }
 
       // Old-format: written by seed/migration (contestName, contestDate, athletes)
-      const participants = (contest.athletes || [])
+      // Uses raw cast since ContestRecord no longer has athletes field
+      const legacyAthletes = (raw.athletes as ContestParticipant[] | undefined) ?? [];
+      const participants = legacyAthletes
         .map((p: ContestParticipant) => {
           const points = parseFloat(p.points || '0');
           return {
@@ -351,14 +349,14 @@ export async function getContestsData(): Promise<ContestData[]> {
 
       return {
         eventId: contest.eventId,
-        name: contest.contestName || '',
+        name: event?.eventName || (raw.contestName as string) || '',
         date: contest.contestDate || '',
-        country: event?.country || contest.country || 'N/A',
-        city: contest.city || event?.location || '',
+        country: event?.country || 'N/A',
+        city: contest.city || event?.city || '',
         discipline: contest.discipline || '',
         prize: contest.prize || 0,
-        gender: contest.gender || 0,
-        category: contest.category || 0,
+        gender: CONTEST_GENDER_NAME_TO_ENUM[String(contest.gender ?? '')] ?? 0,
+        category: 0,
         verified: true,
         profileUrl: contest.profileUrl || '',
         thumbnailUrl: contest.thumbnailUrl || '',
@@ -395,7 +393,7 @@ export async function getContestsData(): Promise<ContestData[]> {
           city: String(meta.city ?? ''),
           discipline: String(contest.discipline ?? ''),
           prize: Number(contest.totalPrizeValue ?? 0),
-          gender: GENDER_NAME_TO_ENUM[String(contest.gender ?? '')] ?? 0,
+          gender: CONTEST_GENDER_NAME_TO_ENUM[String(contest.gender ?? '')] ?? 0,
           category: CONTEST_TYPE_NAME_TO_ENUM[String(contest.contestSize ?? '')] ?? 0,
           verified: false,
           athletes,
@@ -585,7 +583,7 @@ export async function getAthleteContests(athleteId: string): Promise<AthleteCont
     const contests: AthleteContest[] = participations.map(participation => {
       const eventMetadata = eventMetadataMap.get(participation.eventId);
       const contest = contestMap.get(`${participation.eventId}:${participation.contestId}`);
-      const contestSize = contest?.athletes?.length;
+      const contestSize = contest?.results?.length;
 
       return {
         rank: participation.place,

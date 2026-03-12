@@ -19,6 +19,8 @@ declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface ColumnMeta<TData extends RowData, TValue> {
     filterVariant?: "text" | "select";
+    /** Explicit options for select filters. When provided, overrides data-derived options. */
+    filterOptions?: { value: string; label: string }[];
   }
 }
 

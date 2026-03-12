@@ -32,6 +32,7 @@ type EventLike = Partial<EventRecord> & {
   // Admin form shape uses different property names
   date?: string | Date | null;
   city?: string;
+  country?: string;
   name?: string;
   discipline?: string | string[];
   prize?: string | number;
@@ -101,7 +102,7 @@ export const EventDetailsCard = ({ event }: EventDetailsCardProps) => {
 					<LabelValuePair label="Date" value={formatDate(date)} />
 					<LabelValuePair
 						label="Location"
-						value={<Country countryCode={country || "N/A"} label={`${city}, ${countryName}`} />}
+						value={<Country countryCode={country || "N/A"} label={[city, countryName].filter(Boolean).join(', ')} />}
 					/>
 					<LabelValuePair label="Website" value={""} />
 					<LabelValuePair label="Total Event Prize Value" value={prize} />

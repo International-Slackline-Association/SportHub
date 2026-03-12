@@ -17,7 +17,7 @@ export async function createEvent(params: {
   type: 'competition' | 'clinic' | 'meetup';
   startDate: string;
   endDate?: string;
-  location: string;
+  city?: string;
   country: string;
   organizers?: EventOrganizer[];
 }): Promise<EventMetadataRecord> {
@@ -28,7 +28,7 @@ export async function createEvent(params: {
     eventName: params.eventName,
     startDate: params.startDate,
     endDate: params.endDate || params.startDate,
-    location: params.location,
+    city: params.city,
     country: params.country,
     organizers: params.organizers || [],
     contestCount: 0,
@@ -55,12 +55,10 @@ export async function getEvent(eventId: string): Promise<EventMetadataRecord | n
  */
 export async function createContest(params: {
   eventId: string;
-  contestName: string;
   discipline: string;
   contestDate: string;
-  country: string;
-  category?: number;
-  gender?: number;
+  ageCategory?: string;
+  gender?: string;
 }): Promise<ContestRecord> {
   // Get event to determine next contest number
   const event = await getEvent(params.eventId);
@@ -75,14 +73,12 @@ export async function createContest(params: {
     eventId: params.eventId,
     sortKey,
     contestId,
-    contestName: params.contestName,
     discipline: params.discipline,
     contestDate: params.contestDate,
     dateSortKey,
-    country: params.country,
-    category: params.category,
+    ageCategory: params.ageCategory,
     gender: params.gender,
-    athletes: [],
+    results: [],
     judges: [],
     organizers: [],
   };
@@ -170,10 +166,9 @@ export async function updateEvent(
     expressionAttributeValues[':endDate'] = updates.endDate;
   }
 
-  if (updates.location !== undefined) {
-    updateExpressions.push('#location = :location');
-    expressionAttributeNames['#location'] = 'location';
-    expressionAttributeValues[':location'] = updates.location;
+  if (updates.city !== undefined) {
+    updateExpressions.push('city = :city');
+    expressionAttributeValues[':city'] = updates.city;
   }
 
   if (updates.country !== undefined) {

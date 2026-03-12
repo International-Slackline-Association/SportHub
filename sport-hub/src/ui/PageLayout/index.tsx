@@ -4,7 +4,7 @@ import styles from "./styles.module.css";
 import { cn } from "@utils/cn";
 
 export type PageLayoutProps = PropsWithChildren<{
-  title: string;
+  title?: string;
   description?: string;
   heroImage?: {
     src: string;
@@ -29,10 +29,12 @@ export type PageLayoutProps = PropsWithChildren<{
 export const PageLayout = ({ children, title, description, heroImage, overlayText=false }: PageLayoutProps) => {
   return (
     <div className="stack gap-4 flex-1 min-h-0">
-      <section className={cn(styles.pageHeader, overlayText && styles.overlayTextOnImage)}>
-        <h1>{title}</h1>
-        {description && <p>{description}</p>}
-      </section>
+      {(title || description) && (
+        <section className={cn(styles.pageHeader, overlayText && styles.overlayTextOnImage)}>
+          {title && <h1>{title}</h1>}
+          {description && <p>{description}</p>}
+        </section>
+      )}
 
       {heroImage && (
         <figure>
