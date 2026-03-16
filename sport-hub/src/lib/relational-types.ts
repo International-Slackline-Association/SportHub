@@ -178,6 +178,7 @@ export interface ContestRecord extends EventTableRecord {
   // Contest metadata
   gender?: string;         // "MEN_ONLY" | "WOMEN_ONLY" | "MIXED"
   ageCategory?: string;    // e.g. "ALL"
+  contestSize?: string;    // "WORLD_CHAMPIONSHIP" | "WORLD_CUP" | "MASTERS" | "GRAND_SLAM" | "OPEN" | "CHALLENGE"
   prize?: number;
 
   // Media

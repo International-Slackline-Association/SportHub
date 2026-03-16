@@ -12,6 +12,7 @@ import { DISCIPLINE_DATA, MAP_CONTEST_TYPE_ENUM_TO_NAME } from '@utils/consts';
 import { CircleFlag } from 'react-circle-flags';
 import { COUNTRIES, getIocCode, getIso2FromIoc } from '@utils/countries';
 import { contestSizeOptions } from '@ui/Form/commonOptions';
+import { dateFilterFn } from '@ui/Table/TableFilterFields';
 
 const CountryFlagWithName = ({ iocCode, defaultValue="N/A" }: { iocCode: string, defaultValue?: string }) => {
   if (iocCode === 'N/A' || !iocCode) {
@@ -48,6 +49,8 @@ const columns = [
   columnHelper.accessor("date", {
     enableColumnFilter: true,
     header: "Date",
+    meta: { filterVariant: "date" },
+    filterFn: dateFilterFn,
     cell: info => {
       const date = info.getValue();
       try {

@@ -18,9 +18,11 @@ import { TableFilters } from "./TableFilters";
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface ColumnMeta<TData extends RowData, TValue> {
-    filterVariant?: "text" | "select";
+    filterVariant?: "text" | "select" | "date";
     /** Explicit options for select filters. When provided, overrides data-derived options. */
     filterOptions?: { value: string; label: string }[];
+    /** Custom placeholder text for text filters. */
+    filterPlaceholder?: string;
   }
 }
 

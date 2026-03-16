@@ -10,8 +10,9 @@ export const metadata: Metadata = {
 
 export const revalidate = false
 
-export default async function Page() {
-  const rankingsData = await getRankingsData();
+export default async function Page({ searchParams }: { searchParams: Promise<{ discipline?: string }> }) {
+  const { discipline } = await searchParams;
+  const rankingsData = await getRankingsData(undefined, discipline);
 
   return (
     <PageLayout
@@ -20,7 +21,7 @@ export default async function Page() {
     >
       <FeaturedAthleteSection athletes={rankingsData.slice(0, 3)} />
       <section className="p-4 sm:p-0">
-        <RankingsTable initialData={rankingsData} />
+        <RankingsTable initialData={rankingsData} initialDiscipline={discipline} />
       </section>
     </PageLayout>
   )

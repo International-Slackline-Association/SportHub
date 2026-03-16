@@ -12,9 +12,8 @@ import { auth } from '@lib/auth';
 import { getFullUserProfile } from '../../dashboard/actions';
 
 interface EventPageProps {
-  params: Promise<{
-    eventId: string;
-  }>;
+  params: Promise<{ eventId: string }>;
+  searchParams: Promise<{ contest?: string }>;
 }
 
 const labelOf = (opts: { value: string; label: string }[], val: string | undefined) =>
@@ -28,8 +27,9 @@ const disciplineLabel = (val: string | undefined): string => {
 };
 
 
-export default async function EventPage({ params }: EventPageProps) {
+export default async function EventPage({ params, searchParams }: EventPageProps) {
   const { eventId } = await params;
+  const { contest: contestIdParam } = await searchParams;
   const decodedEventId = decodeURIComponent(eventId);
   const session = await auth();
   const isAdmin = session?.user?.role === 'admin';
@@ -47,7 +47,7 @@ export default async function EventPage({ params }: EventPageProps) {
         ? [organizerProfile.name, organizerProfile.surname].filter(Boolean).join(' ') || null
         : null;
       const eventContests = (event.contests as Record<string, unknown>[]);
-      const totalPrize = eventContests.reduce((sum, c) => sum + Number(c.totalPrizeValue ?? 0), 0);
+      const totalPrize = eventContests.reduce((sum, c) => sum + Number(c.totalPrizeValue ?? c.prize ?? 0), 0);
 
       // Build an EventLike-compatible object for EventDetailsCard
       const eventLike = {
@@ -97,7 +97,14 @@ export default async function EventPage({ params }: EventPageProps) {
             };
           });
 
-        return { label, judges, results: rawResults };
+        return {
+          label,
+          gender: contest.gender as string | undefined,
+          contestSize: contest.contestSize as string | undefined,
+          prize: Number(contest.totalPrizeValue ?? contest.prize ?? 0) || undefined,
+          judges,
+          results: rawResults,
+        };
       });
 
       return (
@@ -125,7 +132,10 @@ export default async function EventPage({ params }: EventPageProps) {
                 </Link>
               </p>
             )}
-            <ContestTabs contests={contestTabs} />
+            <ContestTabs
+              contests={contestTabs}
+              initialTab={contestIdParam ? eventContests.findIndex(c => (c as Record<string, unknown>).contestId === contestIdParam) : 0}
+            />
           </div>
         </PageLayout>
       );
@@ -137,13 +147,14 @@ export default async function EventPage({ params }: EventPageProps) {
     const metaRecord = newFormatResult.event as Record<string, unknown>;
     const separateContests = await getEventContests(decodedEventId);
     if (separateContests.length > 0) {
+      const totalPrize = separateContests.reduce((sum, c) => sum + (c.prize ?? 0), 0);
       const eventLike = {
         name: String(metaRecord.eventName ?? ''),
         date: metaRecord.startDate as string | undefined,
         city: String(metaRecord.city ?? ''),
         country: String(metaRecord.country ?? ''),
         discipline: [] as string[],
-        prize: undefined as number | undefined,
+        prize: totalPrize || undefined,
         profileUrl: metaRecord.profileUrl as string | undefined,
         thumbnailUrl: metaRecord.thumbnailUrl as string | undefined,
         verified: true,
@@ -166,7 +177,14 @@ export default async function EventPage({ params }: EventPageProps) {
             isPending: r.isPending,
           }));
 
-        return { label, judges: [], results: rawResults };
+        return {
+          label,
+          gender: contest.gender,
+          contestSize: contest.contestSize,
+          prize: contest.prize,
+          judges: [],
+          results: rawResults,
+        };
       });
 
       return (
@@ -183,7 +201,10 @@ export default async function EventPage({ params }: EventPageProps) {
               </div>
             )}
             <EventDetailsCard event={eventLike} />
-            <ContestTabs contests={contestTabs} />
+            <ContestTabs
+              contests={contestTabs}
+              initialTab={contestIdParam ? separateContests.findIndex(c => c.contestId === contestIdParam) : 0}
+            />
           </div>
         </PageLayout>
       );

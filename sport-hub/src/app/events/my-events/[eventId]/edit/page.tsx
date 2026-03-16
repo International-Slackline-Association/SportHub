@@ -25,7 +25,7 @@ function oldContestToFormValues(c: ContestData): ContestFormValues {
   return {
     discipline: (disciplineKey as ContestFormValues['discipline']) || '' as ContestFormValues['discipline'],
     gender: (MAP_CONTEST_GENDER_ENUM_TO_NAME[c.gender] as ContestFormValues['gender']) || '' as ContestFormValues['gender'],
-    ageCategory: 'SENIOR' as ContestFormValues['ageCategory'],
+    ageCategory: (c.ageCategory as ContestFormValues['ageCategory']) || '' as ContestFormValues['ageCategory'],
     judgingSystem: '' as ContestFormValues['judgingSystem'],
     contestSize: (MAP_CONTEST_TYPE_ENUM_TO_NAME[c.category] as ContestFormValues['contestSize']) || '' as ContestFormValues['contestSize'],
     totalPrizeValue: c.prize || undefined,

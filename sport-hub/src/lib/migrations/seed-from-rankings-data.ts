@@ -32,16 +32,16 @@ interface SeedAthlete {
 // ============================================================================
 
 const EVENTS = [
-  { name: 'ISA World Cup Round 1',     country: 'FR', city: 'Lyon',        start: '2024-03-15', end: '2024-03-17' },
-  { name: 'ISA Masters',               country: 'DE', city: 'Munich',      start: '2024-04-08', end: '2024-04-10' },
-  { name: 'ISA World Cup Round 2',     country: 'US', city: 'Denver',      start: '2024-05-20', end: '2024-05-22' },
-  { name: 'ISA Grand Slam',            country: 'BR', city: 'Rio de Janeiro', start: '2024-06-14', end: '2024-06-16' },
-  { name: 'ISA Challenge Cup',         country: 'CH', city: 'Lausanne',    start: '2024-07-06', end: '2024-07-07' },
-  { name: 'ISA World Cup Round 3',     country: 'JP', city: 'Kyoto',       start: '2024-08-12', end: '2024-08-14' },
-  { name: 'ISA Open',                  country: 'AU', city: 'Melbourne',   start: '2024-09-18', end: '2024-09-20' },
-  { name: 'ISA World Championships',   country: 'ES', city: 'Barcelona',   start: '2024-10-07', end: '2024-10-12' },
-  { name: 'ISA World Cup Final',       country: 'CA', city: 'Vancouver',   start: '2024-11-02', end: '2024-11-04' },
-  { name: 'ISA Season Opener 2025',    country: 'IT', city: 'Lecco',       start: '2025-02-15', end: '2025-02-16' },
+  { name: 'ISA World Cup Round 1',     country: 'FR', city: 'Lyon',           start: '2024-03-15', end: '2024-03-17', contestSize: 'WORLD_CUP' },
+  { name: 'ISA Masters',               country: 'DE', city: 'Munich',         start: '2024-04-08', end: '2024-04-10', contestSize: 'MASTERS' },
+  { name: 'ISA World Cup Round 2',     country: 'US', city: 'Denver',         start: '2024-05-20', end: '2024-05-22', contestSize: 'WORLD_CUP' },
+  { name: 'ISA Grand Slam',            country: 'BR', city: 'Rio de Janeiro', start: '2024-06-14', end: '2024-06-16', contestSize: 'GRAND_SLAM' },
+  { name: 'ISA Challenge Cup',         country: 'CH', city: 'Lausanne',       start: '2024-07-06', end: '2024-07-07', contestSize: 'CHALLENGE' },
+  { name: 'ISA World Cup Round 3',     country: 'JP', city: 'Kyoto',          start: '2024-08-12', end: '2024-08-14', contestSize: 'WORLD_CUP' },
+  { name: 'ISA Open',                  country: 'AU', city: 'Melbourne',      start: '2024-09-18', end: '2024-09-20', contestSize: 'OPEN' },
+  { name: 'ISA World Championships',   country: 'ES', city: 'Barcelona',      start: '2024-10-07', end: '2024-10-12', contestSize: 'WORLD_CHAMPIONSHIP' },
+  { name: 'ISA World Cup Final',       country: 'CA', city: 'Vancouver',      start: '2024-11-02', end: '2024-11-04', contestSize: 'WORLD_CUP' },
+  { name: 'ISA Season Opener 2025',    country: 'IT', city: 'Lecco',          start: '2025-02-15', end: '2025-02-16', contestSize: 'OPEN' },
 ] as const;
 
 // Discipline codes matching the existing ISA-Rankings migration system
@@ -50,8 +50,6 @@ const DISCIPLINES = [
   { code: '2',  label: 'Trickline' },
   { code: '12', label: 'Highline' },
 ] as const;
-
-// Contest category (2 = World Cup / international level)
 
 // ============================================================================
 // ID GENERATION
@@ -286,6 +284,7 @@ export function transformRankingsData(): {
           city: eventDef.city,
           gender: genderCode,
           ageCategory: 'ALL',
+          contestSize: eventDef.contestSize,
           results: selectedAthletes.map(({ athlete, place }) => ({
             rank: place,
             id: athleteIdToUserId.get(athlete.athleteId)!,

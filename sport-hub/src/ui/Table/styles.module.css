@@ -113,6 +113,16 @@
   padding-top: 0.4rem !important;
 }
 
+.dateFilterSelects {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.dateFilterSelects select {
+  flex: 1;
+  min-width: 0;
+}
+
 .columnFilter label {
   line-height: 20px;
   font-size: 14px;

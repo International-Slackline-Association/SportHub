@@ -105,7 +105,7 @@ export const EventDetailsCard = ({ event }: EventDetailsCardProps) => {
 						value={<Country countryCode={country || "N/A"} label={[city, countryName].filter(Boolean).join(', ')} />}
 					/>
 					<LabelValuePair label="Website" value={""} />
-					<LabelValuePair label="Total Event Prize Value" value={prize} />
+					<LabelValuePair label="Total Prize Pool" value={prize != null && prize !== 0 ? `${Number(prize).toLocaleString()} pts` : undefined} />
 					<div className="col-span-full">
 						<LabelValuePair
 							label="Discipline(s)"

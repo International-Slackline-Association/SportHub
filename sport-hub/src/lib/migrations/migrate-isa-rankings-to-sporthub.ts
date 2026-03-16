@@ -186,6 +186,7 @@ interface ContestRecord {
   city?: string;
   gender?: string;
   ageCategory?: string;
+  contestSize?: string;
   prize?: number;
   profileUrl?: string;
   thumbnailUrl?: string;
@@ -706,6 +707,10 @@ async function scanRankings(
  * Step 3: Scan Contests from ISA-Rankings
  */
 const ISA_DISCIPLINE_LABEL: Record<string, string> = { '2': 'Trickline', '12': 'Freestyle Highline' };
+const ISA_CATEGORY_TO_CONTEST_SIZE: Record<number, string> = {
+  0: 'WORLD_CHAMPIONSHIP', 1: 'WORLD_CUP', 2: 'MASTERS',
+  3: 'GRAND_SLAM', 4: 'OPEN', 5: 'CHALLENGE',
+};
 
 interface EventInfo { country: string; city?: string; name: string; }
 
@@ -773,6 +778,7 @@ async function scanContests(): Promise<{ contests: Map<string, ContestRecord>; e
         city,
         gender: mapGender(item.gender as number | undefined),
         ageCategory: 'ALL',
+        contestSize: ISA_CATEGORY_TO_CONTEST_SIZE[item.category as number] ?? undefined,
         prize: item.prize as number | undefined,
         profileUrl: item.profileUrl as string | undefined,
         thumbnailUrl: item.thumbnailUrl as string | undefined,
