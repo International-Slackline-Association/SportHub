@@ -1,3 +1,5 @@
+'use client';
+
 import { AthleteRanking } from "@lib/data-services";
 import { Avatar } from '@ui/Avatar';
 import { CardGrid } from '@ui/Card';

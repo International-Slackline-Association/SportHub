@@ -18,7 +18,7 @@ const clientConfig = {
   region: process.env.AWS_REGION || "us-east-2",
   maxAttempts: 3,
   ...(isLocal ? {
-    endpoint: process.env.DYNAMODB_ENDPOINT || "http://localhost:8000",
+    endpoint: (process.env.DYNAMODB_ENDPOINT || "http://127.0.0.1:8000").replace('localhost', '127.0.0.1'),
     credentials: {
       accessKeyId: "dummy",
       secretAccessKey: "dummy",
