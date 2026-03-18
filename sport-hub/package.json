@@ -26,6 +26,7 @@
     "test:local": "NODE_ENV=development DYNAMODB_LOCAL=true NODE_OPTIONS='--dns-result-order=ipv4first --localstorage-file=/tmp/sport-hub-localstorage.json' next dev",
     "migrate:dry-run": "NODE_OPTIONS=--dns-result-order=ipv4first DYNAMODB_LOCAL=true tsx src/lib/migrations/migrate-isa-rankings-to-sporthub.ts --dry-run",
     "migrate:execute": "NODE_OPTIONS=--dns-result-order=ipv4first DYNAMODB_LOCAL=true tsx src/lib/migrations/migrate-isa-rankings-to-sporthub.ts --execute",
+    "copy:from-aws": "NODE_OPTIONS=--dns-result-order=ipv4first tsx src/lib/migrations/copy-aws-to-local.ts",
     "db:setup:aws": "env $(grep -v '^#' .env.production | xargs) tsx src/lib/db-setup.ts",
     "migrate:aws:dry-run": "env $(grep -v '^#' .env.production | xargs) tsx src/lib/migrations/migrate-isa-rankings-to-sporthub.ts --dry-run",
     "migrate:aws:execute": "env $(grep -v '^#' .env.production | xargs) tsx src/lib/migrations/migrate-isa-rankings-to-sporthub.ts --execute"
