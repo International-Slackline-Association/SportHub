@@ -243,6 +243,7 @@ export async function getFeaturedAthletes(limit: number = 3): Promise<AthleteRan
 
 export interface ContestData {
   eventId: string;
+  contestId?: string;
   name: string;
   date: string;
   country: string;
@@ -349,6 +350,10 @@ export async function getContestsData(): Promise<ContestData[]> {
       const event = metadataMap.get(contest.eventId);
       const raw = contest as unknown as Record<string, unknown>;
 
+      // contestId may not be stored explicitly on form-submitted contests (only in sortKey).
+      // sortKey format: "Contest:{discipline}:{contestId}"
+      const contestId = contest.contestId || contest.sortKey.replace(/^Contest:[^:]+:/, '');
+
       // New-format: written by saveEventContestRecords / updateEventScores
       // Detected by presence of 'results' array (may be empty [])
       if ('results' in raw) {
@@ -366,6 +371,7 @@ export async function getContestsData(): Promise<ContestData[]> {
         const meta = event as unknown as Record<string, unknown>;
         return {
           eventId: contest.eventId,
+          contestId,
           name: String(meta?.eventName || meta?.name || ''),
           date: String(raw.startDate || meta?.startDate || ''),
           country: String(meta?.country || 'N/A'),
@@ -400,6 +406,7 @@ export async function getContestsData(): Promise<ContestData[]> {
 
       return {
         eventId: contest.eventId,
+        contestId,
         name: event?.eventName || (raw.contestName as string) || '',
         date: contest.contestDate || '',
         country: event?.country || 'N/A',
@@ -439,6 +446,7 @@ export async function getContestsData(): Promise<ContestData[]> {
           }));
         submittedContests.push({
           eventId: String(meta.eventId ?? ''),
+          contestId: String(contest.contestId ?? ''),
           name: String(meta.name ?? ''),
           date: String(meta.startDate ?? ''),
           country: String(meta.country ?? 'N/A'),

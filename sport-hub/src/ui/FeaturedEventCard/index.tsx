@@ -59,7 +59,7 @@ export const FeaturedEventSection = ({ events }: { events: ContestData[] }) => {
       <h2 className={pageStyles.sectionTitle}>Featured Events</h2>
       <CardGrid columns={events.length}>
         {events.map(event => (
-          <FeaturedEventCard key={event.eventId} event={event} />
+          <FeaturedEventCard key={event.contestId || `${event.eventId}-${event.discipline}-${event.gender}`} event={event} />
         ))}
       </CardGrid>
     </section>

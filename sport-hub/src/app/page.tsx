@@ -65,7 +65,7 @@ export default async function Home() {
         </div>
         <CardGrid columns={NUM_FEATURED_EVENTS}>
           {featuredContestsData.map(contest => (
-            <FeaturedContestCard key={contest.eventId} contest={contest} />
+            <FeaturedContestCard key={contest.contestId || `${contest.eventId}-${contest.discipline}-${contest.gender}`} contest={contest} />
           ))}
         </CardGrid>
       </section>
