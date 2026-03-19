@@ -3,14 +3,14 @@ import styles from './styles.module.css';
 import { PropsWithChildren } from 'react';
 import { WarningTriangleIcon } from '@ui/Icons';
 
-type ErrorMessageProps = PropsWithChildren<{
+type AlertProps = PropsWithChildren<{
   className?: string;
   showIcon?: boolean;
   size?: "SM" | "MD" | "LG"
   variant?: "error" | "warning" | "info";
 }>;
 
-export const ErrorMessage = ({ className, children, showIcon = true, size="MD", variant="error" }: ErrorMessageProps) => {
+export const Alert = ({ className, children, showIcon = true, size="MD", variant="error" }: AlertProps) => {
 
   return (
     <div className={cn(

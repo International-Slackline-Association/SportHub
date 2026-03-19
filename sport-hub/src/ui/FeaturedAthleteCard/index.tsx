@@ -9,6 +9,7 @@ import { Discipline } from '@ui/Badge';
 import { getCountryByCode } from '@utils/countries';
 import { StackedMediaCard } from '@ui/StackedMediaCard';
 import pageStyles from '../../app/page.module.css';
+import Button from "@ui/Button";
 
 export interface FeaturedAthleteCardProps {
   athlete: AthleteRanking;
@@ -27,6 +28,8 @@ export const FeaturedAthleteCard = ({ athlete }: FeaturedAthleteCardProps) => {
 
   const displayName = fullName || `${name} ${surname || ""}`.trim();
   const abbreviatedName = `${name.toUpperCase().charAt(0)}${surname?.toUpperCase().charAt(0) || ""}`;
+  const href = `/athlete-profile/${userId}`;
+
 
   return (
     <StackedMediaCard
@@ -38,7 +41,6 @@ export const FeaturedAthleteCard = ({ athlete }: FeaturedAthleteCardProps) => {
           image={profileImage}
         />
       }
-      href={`/athlete-profile/${userId}`}
       hoverable
     >
       <div className="stack gap-2 items-center">
@@ -59,6 +61,13 @@ export const FeaturedAthleteCard = ({ athlete }: FeaturedAthleteCardProps) => {
             <Discipline variant={discipline} key={discipline} />
           ))}
         </div>
+        <Button
+          as="link"
+          variant="secondary"
+          href={href}
+        >
+          View Profile
+        </Button>
       </div>
     </StackedMediaCard>
   );

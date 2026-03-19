@@ -37,8 +37,16 @@
 }
 
 /* Featured Contest Card Styles */
-.featuredContestCard {
-  border: solid 1px var(--color-neutral-300);
+.imageWrapper {
+  position: relative;
+  width: auto;;
+  height: 160px;
+  background: var(--color-neutral-100);
+  flex-shrink: 0;
+
+  @media (min-width: 40rem) {
+    height: 200px;
+  }
 }
 
 .content {
@@ -100,12 +108,3 @@
     color: var(--color-neutral-400);
   }
 }
-
-.prize {
-  color: var(--color-red-600);
-
-  svg {
-    color: var(--color-red-600);
-  }
-}
-

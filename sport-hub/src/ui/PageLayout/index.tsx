@@ -10,6 +10,8 @@ export type PageLayoutProps = PropsWithChildren<{
     src: string;
     alt: string;
     caption?: string;
+    blurredBackground?: boolean;
+    objectPosition?: string;
   };
   overlayText?: boolean;
 }>;
@@ -37,18 +39,35 @@ export const PageLayout = ({ children, title, description, heroImage, overlayTex
       )}
 
       {heroImage && (
-        <figure>
-          <Image
-            src={heroImage.src}
-            alt={heroImage.alt}
-            width={3840}
-            height={2560}
-            className="heroImage"
-            style={{ width: '100%', height: 'auto' }}
-            priority
-          />
+        <>
+          <figure className={styles.heroFigure}>
+            {heroImage.blurredBackground && (
+              <div className={styles.heroBackgroundWrapper} aria-hidden="true">
+                <Image
+                  src={heroImage.src}
+                  alt=""
+                  fill
+                  sizes="100vw"
+                  className={styles.heroBackgroundImage}
+                  priority
+                />
+              </div>
+            )}
+            <Image
+              src={heroImage.src}
+              alt={heroImage.alt}
+              fill
+              sizes="100vw"
+              className={styles.heroForegroundImage}
+              style={{
+                objectPosition: heroImage.objectPosition ?? 'center',
+                objectFit: heroImage.blurredBackground ? 'contain' : 'cover'
+              }}
+              priority
+            />
+          </figure>
           {heroImage.caption && <figcaption>{heroImage.caption}</figcaption>}
-        </figure>
+        </>
       )}
 
       {children}

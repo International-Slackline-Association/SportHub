@@ -1,11 +1,13 @@
-import { Card } from '@ui/Card';
 import Button from '@ui/Button';
+import Image from 'next/image';
 import { Badge, BadgeColor, Discipline } from '@ui/Badge';
-import { LocationIcon, CalendarIcon, UsersIcon, TrophyIcon } from '@ui/Icons';
+import { LocationIcon, CalendarIcon, UsersIcon } from '@ui/Icons';
 import styles from './styles.module.css';
 import { getCountryByCode } from '@utils/countries';
-import { cn } from '@utils/cn';
 import { ContestData } from '@lib/data-services';
+import StackedMediaCard from '@ui/StackedMediaCard';
+import { cn } from '@utils/cn';
+
 
 interface FeaturedContestCardProps {
   contest: ContestData;
@@ -22,19 +24,6 @@ const formatDate = (dateStr: string): string => {
     });
   } catch {
     return dateStr;
-  }
-};
-
-const formatPrize = (prize?: number): string => {
-  if (!prize || prize <= 0) return '';
-  try {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0,
-    }).format(prize);
-  } catch {
-    return `$${prize}`;
   }
 };
 
@@ -61,10 +50,8 @@ const FeaturedContestCard = ({ contest }: FeaturedContestCardProps) => {
     city,
     discipline,
     athletes,
-    prize,
     thumbnailUrl,
   } = contest;
-
   const dateObj = new Date(date);
 
   // TODO: Pull from API data when present
@@ -79,17 +66,24 @@ const FeaturedContestCard = ({ contest }: FeaturedContestCardProps) => {
     status = "LIVE";
   }
 
+  const href = `/events/${eventId}`;
+
   return (
-    <Card
-      className={styles.featuredContestCard}
-      image={thumbnailUrl ? {
-        src: thumbnailUrl,
-        alt: name,
-      } : undefined}
-      layout="vertical"
-      shadow="subtle"
+    <StackedMediaCard
+      hoverable
+      media={thumbnailUrl && (
+        <div className={styles.imageWrapper}>
+          <Image
+            alt={name}
+            src={thumbnailUrl}
+            fill
+          />
+        </div>
+      )}
+      mobileDirection="vertical"
+      padding="p-0"
     >
-      <div className={styles.content}>
+      <div className={cn(styles.content, 'px-4')}>
         <div className={styles.titleRow}>
           <h3 className={styles.name}>{name}</h3>
           <Badge color={StatusBadgeColors[status]}>
@@ -110,22 +104,16 @@ const FeaturedContestCard = ({ contest }: FeaturedContestCardProps) => {
             <UsersIcon size={14} />
             <span>{athletes.length}</span>
           </div>
-          {prize && prize > 0 && (
-            <div className={cn(styles.stat, styles.prize)}>
-              <TrophyIcon size={14} />
-              <span>{formatPrize(prize)}</span>
-            </div>
-          )}
         </div>
         <Button
           as="link"
           variant={isUpcoming ? 'primary' : 'default'}
-          href={`/events/${eventId}`}
+          href={href}
         >
           {isUpcoming ? 'Register Now' : 'View Results'}
         </Button>
       </div>
-    </Card>
+    </StackedMediaCard>
   );
 };
 

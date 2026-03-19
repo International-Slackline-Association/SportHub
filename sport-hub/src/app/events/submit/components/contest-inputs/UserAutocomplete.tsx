@@ -6,7 +6,7 @@ import { getIn, useFormikContext } from 'formik';
 import FormikAutocomplete from '@ui/Form/FormikAutocomplete';
 import { UserProfileRecord } from '@lib/relational-types';
 import { Option } from '@ui/Form';
-import { ErrorMessage } from '../ErrorMessage';
+import { Alert } from '@ui/Alert';
 
 const createUserLabel = (user: UserProfileRecord) => `${user.name} ${user.surname} | ${user.userId}`.toLocaleLowerCase();
 
@@ -85,7 +85,7 @@ export default function UserAutocomplete<TFormValues>({
   }
 
   if (isError) {
-    return <ErrorMessage>Error loading users for autocomplete.</ErrorMessage>;
+    return <Alert>Error loading users for autocomplete.</Alert>;
   }
 
   return (

@@ -15,7 +15,7 @@ import styles from './styles.module.css';
 import { saveEvent } from '../actions';
 import { cn } from '@utils/cn';
 import TabbedContestForms from './contest-inputs/TabbedContestForms';
-import { ErrorMessage } from './ErrorMessage';
+import { Alert } from '../../../../ui/Alert';
 import { ReviewEventForm } from './ReviewEventForm';
 import Spinner from '@ui/Spinner';
 
@@ -134,12 +134,12 @@ export default function SubmitEventClient() {
 
             {/*  Validation */}
             {hasValidated && !isValid && (
-              <ErrorMessage
+              <Alert
                 className={cn(styles.borderTop, "justify-end", "gap-1", "pb-4")}
                 size="SM"
               >
                 Please review errors before proceeding.
-              </ErrorMessage>
+              </Alert>
             )}
 
             {/* Form Footer */}

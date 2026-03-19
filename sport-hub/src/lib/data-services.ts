@@ -232,8 +232,8 @@ export async function getRankingsData(year?: string, discipline?: string): Promi
 /**
  * Get featured athletes (top athletes)
  */
-export async function getFeaturedAthletes(limit: number = 3): Promise<AthleteRanking[]> {
-  const rankings = await getRankingsData();
+export async function getFeaturedAthletes(discipline?: string, limit: number = 3): Promise<AthleteRanking[]> {
+  const rankings = await getRankingsData(undefined, discipline);
   return rankings.slice(0, limit);
 }
 

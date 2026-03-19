@@ -3,16 +3,15 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import Table from '@ui/Table';
 import { ContestData } from "@lib/data-services";
-import Button from '@ui/Button';
-import { cn } from '@utils/cn';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
 import { DISCIPLINE_DATA, MAP_CONTEST_TYPE_ENUM_TO_NAME, MAP_CONTEST_GENDER_ENUM_TO_NAME } from '@utils/consts';
 import { CircleFlag } from 'react-circle-flags';
 import { COUNTRIES, getIocCode, getIso2FromIoc } from '@utils/countries';
 import { contestSizeOptions } from '@ui/Form/commonOptions';
 import { dateFilterFn } from '@ui/Table/TableFilterFields';
+import Spinner from '@ui/Spinner';
+import { Alert } from '@ui/Alert';
 
 const CountryFlagWithName = ({ iocCode, defaultValue="N/A" }: { iocCode: string, defaultValue?: string }) => {
   if (iocCode === 'N/A' || !iocCode) {
@@ -59,6 +58,7 @@ const columns = [
         return date;
       }
     },
+    size: 120,
   }),
   columnHelper.accessor((row: ContestData) => getIocCode(row.country), {
     id: "country",
@@ -68,6 +68,7 @@ const columns = [
       <CountryFlagWithName iocCode={info.getValue()} />
     ),
     meta: { filterVariant: 'select' },
+    size: 120,
   }),
   columnHelper.accessor((row: ContestData) => {
     const d = String(row.discipline);
@@ -105,7 +106,8 @@ const columns = [
     meta: { filterVariant: 'select' },
   }),
   columnHelper.accessor("prize", {
-    header: "Prize Value",
+    header: "Total Event Prize Value (€)",
+    size: 72,
   }),
   columnHelper.accessor((row: ContestData) => {
     const key = MAP_CONTEST_TYPE_ENUM_TO_NAME[row.category];
@@ -115,6 +117,7 @@ const columns = [
     enableColumnFilter: true,
     header: "Size",
     meta: { filterVariant: 'select' },
+    size: 120,
   }),
   columnHelper.accessor("athletes", {
     header: "Winner",
@@ -124,7 +127,7 @@ const columns = [
 
       // Find the winner (place "1")
       const winner = athletes.find(athlete => athlete.place === "1");
-      if (!winner) return "No winner";
+      if (!winner) return "TBD";
 
       const displayName = `${winner.name} ${winner.surname || ''}`.trim();
       return (
@@ -136,69 +139,38 @@ const columns = [
         </Link>
       );
     },
+    size: 120,
   }),
   columnHelper.accessor("verified", {
-    header: "Results",
-    cell: info => info.getValue() ? "✅ ISA Verified" : "Unverified",
+    header: "ISA Verified",
+    cell: info => info.getValue() ? "✅" : "",
+    size: 60,
   })
 ];
 
-const SubmitButton = () => {
-  const { data: session } = useSession();
-
-  const canSubmitEvents =
-    session?.user?.role === 'admin' ||
-    session?.user?.userSubTypes?.includes('organizer');
-
-  if (!canSubmitEvents) {
-    return null;
-  }
-
-  return (
-    <Link href="/events/submit">
-      <Button variant="secondary">
-        Submit Event
-      </Button>
-    </Link>
-  );
-};
-
 const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
-  const eventsQuery = useQuery({
+  const { error, data = [], isError, isLoading, isSuccess } = useQuery({
     queryKey: ['events'],
     queryFn: async () => (await fetch('/api/events/contests')).json(),
     initialData,
     staleTime: 60_000,
   });
 
-  if (eventsQuery.isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-64">
+  return (
+    <div className="flex items-center justify-center min-h-64">
+      {isLoading && (
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <Spinner/>
           <p>Loading events...</p>
         </div>
-      </div>
-    );
-  }
-
-  if (eventsQuery.isError) {
-    return (
-      <div className="flex items-center justify-center min-h-64">
-        <div className="text-center text-red-600">
-          <p>Failed to load events data</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <div className={cn("cluster", "items-center", "justify-end", "mb-4")}>
-        <SubmitButton />
-      </div>
-      <Table options={{ columns, data: eventsQuery.data || [] }} title="Events" />
-    </>
+      )}
+      {isError && (
+        <Alert>Error loading events: {error?.message}</Alert>
+      )}
+      {isSuccess && (
+        <Table options={{ columns, data }} />
+      )}
+    </div>
   );
 };
 

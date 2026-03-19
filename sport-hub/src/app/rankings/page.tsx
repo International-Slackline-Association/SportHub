@@ -1,5 +1,5 @@
 import { FeaturedAthleteSection } from '@ui/FeaturedAthleteCard'
-import { getRankingsData } from '@lib/data-services'
+import { getFeaturedAthletes } from '@lib/data-services'
 import PageLayout from '@ui/PageLayout'
 import RankingsTable from './components/RankingsTable'
 import type { Metadata } from 'next'
@@ -13,17 +13,18 @@ export const revalidate = false
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ discipline?: string }> }) {
   const { discipline } = await searchParams;
-  const rankingsData = await getRankingsData(undefined, discipline);
+
+  const athletes = await getFeaturedAthletes(discipline);
 
   return (
     <PageLayout
-      title="Rankings"
       description="View the latest athlete rankings across all disciplines."
-      heroImage={{ src: S3_IMAGES.rankings, alt: 'Rankings hero' }}
+      heroImage={{ src: S3_IMAGES.rankings, alt: 'Rankings hero', objectPosition: 'center 70%' }}
+      title="Rankings"
     >
-      <FeaturedAthleteSection athletes={rankingsData.slice(0, 3)} />
+      <FeaturedAthleteSection athletes={athletes} />
       <section className="p-4 sm:p-0">
-        <RankingsTable initialData={rankingsData} initialDiscipline={discipline} />
+        <RankingsTable initialDiscipline={discipline || ""} />
       </section>
     </PageLayout>
   )

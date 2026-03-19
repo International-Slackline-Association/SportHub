@@ -27,11 +27,12 @@ declare module "@tanstack/react-table" {
 }
 
 type TableProps<TData,> = {
+  extraFilters?: React.ReactNode;
   options: Partial<TableOptions<TData>>;
   title?: string;
 };
 
-const Table = <TData,>({ options, title }: TableProps<TData>) => {
+const Table = <TData,>({ extraFilters, options, title }: TableProps<TData>) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const table = useReactTable({
@@ -61,7 +62,7 @@ const Table = <TData,>({ options, title }: TableProps<TData>) => {
     <div className={styles.tableContainer}>
       <div className={styles.tableTitle}>
         {title && <h3>{title}</h3>}
-        <TableFilters table={table} />
+        <TableFilters extraFilters={extraFilters} table={table} />
       </div>
       <div className={styles.tableWrapper}>
         <table>
