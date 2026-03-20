@@ -7,7 +7,7 @@ import FeaturedContestCard from './components/FeaturedContestCard';
 import { TrophyIcon } from '@ui/Icons';
 import { CardGrid } from '@ui/Card';
 import styles from './page.module.css';
-import { FIGMA_IMAGES } from '@utils/consts';
+import { S3_IMAGES } from '@utils/consts';
 import { getContestsData, getFeaturedAthletes } from '@lib/data-services';
 
 
@@ -35,7 +35,7 @@ export default async function Home() {
       title="Slackline Sport Hub"
       description="Your destination for athlete rankings, events, and world records."
       heroImage={{
-        src: FIGMA_IMAGES.hero,
+        src: S3_IMAGES.hero,
         alt: 'Laax Highline World Championship',
         caption: 'Laax Highline World Championship, 2024',
       }}

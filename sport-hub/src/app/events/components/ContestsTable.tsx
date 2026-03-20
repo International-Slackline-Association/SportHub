@@ -8,7 +8,7 @@ import { cn } from '@utils/cn';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
-import { DISCIPLINE_DATA, MAP_CONTEST_TYPE_ENUM_TO_NAME } from '@utils/consts';
+import { DISCIPLINE_DATA, MAP_CONTEST_TYPE_ENUM_TO_NAME, MAP_CONTEST_GENDER_ENUM_TO_NAME } from '@utils/consts';
 import { CircleFlag } from 'react-circle-flags';
 import { COUNTRIES, getIocCode, getIso2FromIoc } from '@utils/countries';
 import { contestSizeOptions } from '@ui/Form/commonOptions';
@@ -92,6 +92,17 @@ const columns = [
         </div>
       );
     },
+  }),
+  columnHelper.accessor((row: ContestData) => {
+    const key = MAP_CONTEST_GENDER_ENUM_TO_NAME[row.gender];
+    const labels: Record<string, string> = { MIXED: "Mixed", MEN_ONLY: "Men", WOMEN_ONLY: "Women" };
+    return labels[key] ?? key ?? String(row.gender);
+  }, {
+    id: "gender",
+    enableColumnFilter: true,
+    header: "Gender",
+    filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
+    meta: { filterVariant: 'select' },
   }),
   columnHelper.accessor("prize", {
     header: "Prize Value",

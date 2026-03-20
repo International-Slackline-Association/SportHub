@@ -3,6 +3,7 @@ import { getRankingsData } from '@lib/data-services'
 import PageLayout from '@ui/PageLayout'
 import RankingsTable from './components/RankingsTable'
 import type { Metadata } from 'next'
+import { S3_IMAGES } from '@utils/consts'
 
 export const metadata: Metadata = {
   title: 'SportHub - Rankings',
@@ -18,6 +19,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
     <PageLayout
       title="Rankings"
       description="View the latest athlete rankings across all disciplines."
+      heroImage={{ src: S3_IMAGES.rankings, alt: 'Rankings hero' }}
     >
       <FeaturedAthleteSection athletes={rankingsData.slice(0, 3)} />
       <section className="p-4 sm:p-0">

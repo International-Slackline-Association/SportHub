@@ -81,6 +81,7 @@ const desktopColumns = [
   columnHelper.accessor('gender', {
     header: 'Gender',
     enableColumnFilter: true,
+    filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
     cell: info => info.getValue() === 'female' ? 'Women' : info.getValue() === 'male' ? 'Men' : '—',
     meta: {
       filterVariant: 'select',
@@ -148,6 +149,7 @@ const mobileColumns = [
     id: 'gender',
     enableColumnFilter: true,
     header: 'Gender',
+    filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
     cell: () => <></>,
     meta: {
       filterVariant: 'select',
