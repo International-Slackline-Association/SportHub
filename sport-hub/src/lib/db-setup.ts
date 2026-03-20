@@ -283,5 +283,6 @@ if (isMainModule) {
       process.exit(1);
     }
     console.log('✅ All tables ready:', results.success.map(t => getTableName(t)).join(', '));
+    process.exit(0);
   });
 }

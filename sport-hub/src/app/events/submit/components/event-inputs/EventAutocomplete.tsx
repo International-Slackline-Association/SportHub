@@ -57,7 +57,7 @@ export default function EventAutocomplete() {
     const nextFormState = {
       event: {
         name: event.eventName,
-        city: event.location,
+        city: event.city ?? '',
         country: event.country.toLowerCase(),
         startDate: event?.startDate,
         endDate: event?.endDate,

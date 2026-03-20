@@ -35,10 +35,17 @@ if (globalThis.window === undefined && process.env.NODE_ENV !== 'production') {
   })
 }
 
+const cognitoConfigured = !!(
+  process.env.COGNITO_CLIENT_ID &&
+  process.env.COGNITO_CLIENT_SECRET &&
+  process.env.COGNITO_REGION &&
+  process.env.COGNITO_USER_POOL_ID
+)
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   basePath: "/api/auth",
   secret: process.env.AUTH_SECRET,
-  providers: [
+  providers: cognitoConfigured ? [
     Cognito({
       clientId: process.env.COGNITO_CLIENT_ID!,
       clientSecret: process.env.COGNITO_CLIENT_SECRET!,
@@ -50,7 +57,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       }
     })
-  ],
+  ] : [],
   callbacks: {
     async jwt({ token, account, profile }) {
       // Pass Cognito user info to token

@@ -11,7 +11,7 @@ import {
 } from '../../../submit/types';
 import {
   MAP_DISCIPLINE_ENUM_TO_NAME,
-  MAP_GENDER_ENUM_TO_NAME,
+  MAP_CONTEST_GENDER_ENUM_TO_NAME,
   MAP_CONTEST_TYPE_ENUM_TO_NAME,
 } from '@utils/consts';
 import EditEventClient from './EditEventClient';
@@ -24,8 +24,8 @@ function oldContestToFormValues(c: ContestData): ContestFormValues {
   const disciplineKey = MAP_DISCIPLINE_ENUM_TO_NAME[Number(c.discipline)];
   return {
     discipline: (disciplineKey as ContestFormValues['discipline']) || '' as ContestFormValues['discipline'],
-    gender: (MAP_GENDER_ENUM_TO_NAME[c.gender] as ContestFormValues['gender']) || '' as ContestFormValues['gender'],
-    ageCategory: 'SENIOR' as ContestFormValues['ageCategory'],
+    gender: (MAP_CONTEST_GENDER_ENUM_TO_NAME[c.gender] as ContestFormValues['gender']) || '' as ContestFormValues['gender'],
+    ageCategory: (c.ageCategory as ContestFormValues['ageCategory']) || '' as ContestFormValues['ageCategory'],
     judgingSystem: '' as ContestFormValues['judgingSystem'],
     contestSize: (MAP_CONTEST_TYPE_ENUM_TO_NAME[c.category] as ContestFormValues['contestSize']) || '' as ContestFormValues['contestSize'],
     totalPrizeValue: c.prize || undefined,

@@ -1,29 +1,29 @@
 import { FeaturedAthleteSection } from '@ui/FeaturedAthleteCard'
-import { getFeaturedAthletes } from '@lib/data-services'
+import { getRankingsData } from '@lib/data-services'
 import PageLayout from '@ui/PageLayout'
 import RankingsTable from './components/RankingsTable'
 import type { Metadata } from 'next'
+import { S3_IMAGES } from '@utils/consts'
 
 export const metadata: Metadata = {
   title: 'SportHub - Rankings',
 }
 
-// Enable ISR (Incremental Static Regeneration)
-// Revalidate this page every hour (3600 seconds)
-export const revalidate = 3600
+export const revalidate = false
 
-export default async function Page() {
-  // Only fetch featured athletes server-side for SEO
-  const featuredAthletes = await getFeaturedAthletes(4);
+export default async function Page({ searchParams }: { searchParams: Promise<{ discipline?: string }> }) {
+  const { discipline } = await searchParams;
+  const rankingsData = await getRankingsData(undefined, discipline);
 
   return (
     <PageLayout
       title="Rankings"
       description="View the latest athlete rankings across all disciplines."
+      heroImage={{ src: S3_IMAGES.rankings, alt: 'Rankings hero' }}
     >
-      <FeaturedAthleteSection athletes={featuredAthletes.slice(0, 3)} />
+      <FeaturedAthleteSection athletes={rankingsData.slice(0, 3)} />
       <section className="p-4 sm:p-0">
-        <RankingsTable />
+        <RankingsTable initialData={rankingsData} initialDiscipline={discipline} />
       </section>
     </PageLayout>
   )

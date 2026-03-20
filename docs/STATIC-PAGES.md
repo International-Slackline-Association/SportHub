@@ -2,25 +2,34 @@
 
 ## Overview
 
-The `/rankings` and `/events` pages are now **statically generated with ISR (Incremental Static Regeneration)**. This means:
+The `/rankings` page is **statically generated with ISR (Incremental Static Regeneration)**. The `/events` page is **dynamically rendered on each request**, backed by a 10-minute in-memory cache so DynamoDB is not hit on every visit.
 
-✅ **Fast initial page loads** - Pages are pre-rendered at build time
-✅ **Automatic updates** - Pages automatically refresh every hour
-✅ **On-demand updates** - You can manually trigger updates when data changes
-✅ **Better SEO** - Search engines get fully rendered HTML
+✅ **Fast initial page loads** - `/rankings` is pre-rendered at build time
+✅ **Automatic updates** - `/rankings` automatically refreshes every hour; `/events` refreshes from cache every 10 minutes
+✅ **On-demand updates** - Server actions automatically invalidate the cache when scores or status change
+✅ **Better SEO** - Both pages return fully rendered HTML
 
 ## How It Works
 
-### ISR (Incremental Static Regeneration)
+### `/rankings` — ISR (Incremental Static Regeneration)
 
-Both pages use `export const revalidate = 3600` which means:
+`/rankings` uses `export const revalidate = 3600` which means:
 
 1. **First Build**: Page is generated with data from DynamoDB
-2. **User Visits**: Fast - serves the static HTML
+2. **User Visits**: Fast — serves the static HTML
 3. **After 1 Hour**: Next request triggers background regeneration
 4. **User Sees**: Still sees old page immediately (stale-while-revalidate)
 5. **Background**: New version generates with fresh data
 6. **Subsequent Requests**: Serve the new version
+
+### `/events` — Dynamic with In-Memory Cache
+
+`/events` uses `export const dynamic = 'force-dynamic'`, which means:
+
+1. **Every Request**: Page is server-rendered on demand
+2. **In-Memory Cache**: `getContestsData()` caches results for 10 minutes — DynamoDB is only queried after the cache expires or is invalidated
+3. **Cache Invalidation**: Server actions (`updateEventScores`, `updateEventStatus`) call `invalidateContestsCache()` automatically — the table reflects saved results immediately without a hard refresh
+4. **No Build-Time Data Required**: `/events` does not need DynamoDB at build time
 
 ### Static Generation at Build Time
 
@@ -36,10 +45,10 @@ pnpm db:local
 pnpm db:setup
 pnpm db:seed
 
-# 3. Build (will fetch data from local DynamoDB)
+# 3. Build (will fetch data from local DynamoDB for /rankings)
 pnpm build
 
-# Pages are now pre-rendered with data!
+# /rankings is now pre-rendered with data; /events renders dynamically
 ```
 
 #### Production Build (AWS Amplify)
@@ -60,9 +69,11 @@ If there's no data at build time, pages will still build but show empty state.
 
 When you add or update data in DynamoDB, you have two options to refresh the pages:
 
-### Option 1: Automatic Revalidation (Wait 1 Hour)
+### Option 1: Automatic Revalidation (Wait)
 
-Do nothing! Pages will automatically refresh within 1 hour of the next visit.
+Do nothing!
+- `/rankings` automatically refreshes within 1 hour of the next visit.
+- `/events` automatically reflects changes within 10 minutes (in-memory cache TTL), or immediately when scores/status are saved via the admin UI (cache is invalidated by server actions).
 
 ### Option 2: Manual Revalidation (Immediate)
 
@@ -75,7 +86,8 @@ pnpm revalidate:all
 # Revalidate only rankings
 pnpm revalidate:rankings
 
-# Revalidate only events
+# Note: pnpm revalidate:events is no longer needed for score updates —
+# saving scores via the admin UI automatically invalidates the events cache.
 pnpm revalidate:events
 ```
 
@@ -166,7 +178,7 @@ When you run `pnpm build`, you'll see the rendering mode for each page:
 Route (app)                           Size  First Load JS
 ├ ○ /                                  0 B         136 kB   <- Static
 ├ ○ /rankings                      4.84 kB         158 kB   <- Static (ISR)
-├ ○ /events                        4.97 kB         158 kB   <- Static (ISR)
+├ ƒ /events                        4.97 kB         158 kB   <- Dynamic
 ├ ƒ /dashboard                         0 B         136 kB   <- Dynamic
 
 ○  (Static)   prerendered as static content
@@ -176,11 +188,11 @@ Route (app)                           Size  First Load JS
 - `○` = Static (generated at build time)
 - `ƒ` = Dynamic (rendered on each request)
 
-Both `/rankings` and `/events` should show as `○` (Static).
+`/rankings` should show as `○` (Static). `/events` shows as `ƒ` (Dynamic) — this is expected.
 
 ## Troubleshooting
 
-### Pages are marked as Dynamic (ƒ) instead of Static (○)
+### `/rankings` is marked as Dynamic (ƒ) instead of Static (○)
 
 **Cause**: Build couldn't connect to DynamoDB or no data exists.
 
@@ -247,19 +259,19 @@ NEXT_PUBLIC_URL=https://your-app.com
 
 ## Files Modified
 
-1. [/rankings/page.tsx](../sport-hub/src/app/rankings/page.tsx) - Changed from `force-dynamic` to `revalidate = 3600`
-2. [/events/page.tsx](../sport-hub/src/app/events/page.tsx) - Changed from `force-dynamic` to `revalidate = 3600`
-3. [/api/revalidate/route.ts](../sport-hub/src/app/api/revalidate/route.ts) - New on-demand revalidation endpoint
-4. [scripts/revalidate-pages.sh](../sport-hub/scripts/revalidate-pages.sh) - New revalidation helper script
+1. [/rankings/page.tsx](../sport-hub/src/app/rankings/page.tsx) - Uses `revalidate = 3600` (ISR)
+2. [/events/page.tsx](../sport-hub/src/app/events/page.tsx) - Uses `force-dynamic`; cache handled by `SimpleCache` in data-services
+3. [/api/revalidate/route.ts](../sport-hub/src/app/api/revalidate/route.ts) - On-demand revalidation endpoint (for `/rankings`)
+4. [scripts/revalidate-pages.sh](../sport-hub/scripts/revalidate-pages.sh) - Revalidation helper script
 
 ## Summary
 
-### Benefits of Static + ISR
+### Benefits of Static + ISR (`/rankings`) and Dynamic + Cache (`/events`)
 
-- ⚡ **Faster page loads** - Pre-rendered HTML served instantly
-- 🔍 **Better SEO** - Search engines get complete HTML
+- ⚡ **Faster page loads** - `/rankings` pre-rendered HTML served instantly; `/events` cached in-memory (no DB on cache hit)
+- 🔍 **Better SEO** - Both pages return fully rendered HTML
 - 💰 **Lower costs** - Less compute time (pages cached)
-- 🔄 **Fresh data** - Auto-updates every hour + on-demand
+- 🔄 **Fresh data** - `/rankings` auto-updates every hour; `/events` reflects score saves immediately via cache invalidation
 - 📈 **Scalable** - Can handle high traffic
 
 ### When to Revalidate
@@ -267,9 +279,10 @@ NEXT_PUBLIC_URL=https://your-app.com
 | Scenario | Action | Method |
 |----------|--------|--------|
 | Added new athlete | Revalidate now | `pnpm revalidate:rankings` |
-| Added new event | Revalidate now | `pnpm revalidate:events` |
-| Updated scores | Revalidate now | `pnpm revalidate:all` |
-| Minor changes | Wait 1 hour | Automatic |
-| Urgent fix | Revalidate now | `pnpm revalidate:all` |
+| Added new event | Cache auto-expires | Automatic (≤10 min) |
+| Updated scores via admin UI | Automatic | Cache invalidated by server action |
+| Updated scores manually in DB | Cache auto-expires | Automatic (≤10 min) |
+| Minor changes | Wait | Automatic |
+| Urgent `/rankings` fix | Revalidate now | `pnpm revalidate:rankings` |
 
 That's it! Your pages are now static, fast, and automatically stay up to date. 🚀

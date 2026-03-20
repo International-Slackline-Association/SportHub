@@ -18,7 +18,7 @@ const clientConfig = {
   region: process.env.AWS_REGION || "us-east-2",
   maxAttempts: 3,
   ...(isLocal ? {
-    endpoint: process.env.DYNAMODB_ENDPOINT || "http://localhost:8000",
+    endpoint: (process.env.DYNAMODB_ENDPOINT || "http://127.0.0.1:8000").replace('localhost', '127.0.0.1'),
     credentials: {
       accessKeyId: "dummy",
       secretAccessKey: "dummy",
@@ -270,5 +270,7 @@ export const dynamodb = {
   },
 };
 
-// Export client for advanced operations
+// Export raw client for advanced operations
 export { client as dynamoClient };
+// Export document client for callers that need direct SDK command access
+export { ddb as ddbClient };

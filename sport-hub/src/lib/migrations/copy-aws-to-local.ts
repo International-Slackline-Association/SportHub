@@ -7,6 +7,9 @@
 
 import { DynamoDBClient, CreateTableCommand, DeleteTableCommand, DescribeTableCommand, TableDescription, GlobalSecondaryIndexDescription, LocalSecondaryIndexDescription } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, ScanCommand, BatchWriteCommand, ScanCommandInput } from "@aws-sdk/lib-dynamodb";
+import { config } from 'dotenv';
+
+config({ path: '.env.production' });
 
 // Type for DynamoDB items
 type DynamoDBItem = Record<string, unknown>;
@@ -21,7 +24,7 @@ const awsClient = new DynamoDBClient({
 // Local DynamoDB configuration
 const localClient = new DynamoDBClient({
   region: 'us-east-2',
-  endpoint: 'http://localhost:8000',
+  endpoint: 'http://127.0.0.1:8000',
   credentials: {
     accessKeyId: 'dummy',
     secretAccessKey: 'dummy',

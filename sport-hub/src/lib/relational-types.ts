@@ -143,7 +143,7 @@ export interface EventMetadataRecord extends EventTableRecord {
   eventName: string;
   startDate: string;
   endDate: string;
-  location: string;
+  city?: string;
   country: string;
   contestCount: number;
 
@@ -169,17 +169,16 @@ export interface ContestRecord extends EventTableRecord {
   discipline: string;      // For date-discipline-index GSI
 
   // Contest info
-  contestName: string;
   contestDate: string;
   dateSortKey: string;     // For date-discipline-index GSI: contestDate#eventId
 
   // Location
-  country: string;
   city?: string;
 
   // Contest metadata
-  category?: number;       // 1-5 (local to masters)
-  gender?: number;         // 0=all, 1=male, 2=female
+  gender?: string;         // "MEN_ONLY" | "WOMEN_ONLY" | "MIXED"
+  ageCategory?: string;    // e.g. "ALL"
+  contestSize?: string;    // "WORLD_CHAMPIONSHIP" | "WORLD_CUP" | "MASTERS" | "GRAND_SLAM" | "OPEN" | "CHALLENGE"
   prize?: number;
 
   // Media
@@ -188,7 +187,7 @@ export interface ContestRecord extends EventTableRecord {
   infoUrl?: string;
 
   // Participants (denormalized for efficient queries)
-  athletes: ContestParticipant[];
+  results: ContestResult[];
 
   // Judges/Organizers (optional)
   judges?: ContestJudge[];
@@ -208,7 +207,18 @@ export type EventRecord = EventMetadataRecord | ContestRecord;
 // ============================================================================
 
 /**
- * Participant embedded in Contest record
+ * Result embedded in Contest record (new format)
+ */
+export interface ContestResult {
+  rank: number;
+  id?: string;
+  name: string;
+  isaPoints: number;
+  isPending: boolean;
+}
+
+/**
+ * Participant embedded in Contest record (legacy format, kept for reference)
  */
 export interface ContestParticipant {
   userId: string;          // SportHubID

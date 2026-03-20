@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@lib/auth';
-import { dynamodb, USERS_TABLE } from '@lib/dynamodb';
+import { getUser } from '@lib/user-service';
 import { clearRoleCache, getCacheStats } from '@lib/rbac-service';
-import type { UserProfileRecord } from '@lib/relational-types';
 
 /**
  * GET /api/debug-rbac
@@ -21,10 +20,7 @@ export async function GET() {
     }
 
     // Fetch user profile from database (fresh, no cache)
-    const user = await dynamodb.getItem(USERS_TABLE, {
-      userId: session.user.id,
-      sortKey: 'Profile'
-    }) as UserProfileRecord | null;
+    const user = await getUser(session.user.id);
 
     if (!user) {
       return NextResponse.json({
@@ -111,10 +107,7 @@ export async function POST() {
     }
 
     // Fetch user from database
-    const user = await dynamodb.getItem(USERS_TABLE, {
-      userId: session.user.id,
-      sortKey: 'Profile'
-    }) as UserProfileRecord | null;
+    const user = await getUser(session.user.id);
 
     if (!user) {
       return NextResponse.json({

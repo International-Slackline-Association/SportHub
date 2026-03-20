@@ -106,56 +106,6 @@ export async function getUserSubTypes(userId: string): Promise<UserSubType[]> {
 }
 
 /**
- * Update user role in database
- *
- * SECURITY: Verifies that assignedBy user has admin role before allowing update.
- * Throws error if assignedBy is not an admin.
- *
- * @param userId - User ID to update
- * @param newRole - New role to assign
- * @param assignedBy - User ID of admin assigning the role (must have admin role)
- * @throws Error if assignedBy is not an admin or if user not found
- */
-export async function updateUserRole(
-  userId: string,
-  newRole: Role,
-  assignedBy: string
-): Promise<void> {
-  try {
-    // Verify assignedBy user has admin role
-    const assignerRole = await getUserRole(assignedBy);
-    if (assignerRole !== 'admin' && process.env.NODE_ENV === 'production') {
-      throw new Error('Only admins (or local dev) can update user roles');
-    }
-
-    // Get existing user (use composite key)
-    const user = await dynamodb.getItem(USERS_TABLE, { userId, sortKey: 'Profile' }) as UserProfileRecord | null;
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    // Update with new role
-    const updatedUser: UserProfileRecord = {
-      ...user,
-      sortKey: 'Profile',
-      role: newRole,
-      roleAssignedAt: new Date().toISOString(),
-      roleAssignedBy: assignedBy,
-    };
-
-    await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
-
-    // Clear cache to force refresh
-    clearRoleCache(userId);
-
-    console.log(`Role updated for user ${userId}: ${newRole} (assigned by ${assignedBy})`);
-  } catch (error) {
-    console.error('Error updating user role:', error);
-    throw error;
-  }
-}
-
-/**
  * Clear role cache for a specific user
  *
  * Call this after role changes to ensure fresh data

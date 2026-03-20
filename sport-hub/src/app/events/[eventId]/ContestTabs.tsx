@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import ContestSize from '@ui/Badge/ContestSize';
 
 export type ContestJudge = {
   id?: string;
@@ -19,12 +20,21 @@ export type ContestResult = {
 
 export type ContestTabData = {
   label: string;
+  gender?: string;
+  contestSize?: string;
+  prize?: number;
   judges: ContestJudge[];
   results: ContestResult[];
 };
 
-export default function ContestTabs({ contests }: { contests: ContestTabData[] }) {
-  const [active, setActive] = useState(0);
+const CONTEST_GENDER_LABEL: Record<string, string> = {
+  MEN_ONLY: 'Men', WOMEN_ONLY: 'Women', MIXED: 'Mixed',
+};
+
+export default function ContestTabs({ contests, initialTab = 0 }: { contests: ContestTabData[]; initialTab?: number }) {
+  const [active, setActive] = useState(
+    initialTab > 0 && initialTab < contests.length ? initialTab : 0
+  );
   const contest = contests[active];
 
   return (
@@ -48,6 +58,24 @@ export default function ContestTabs({ contests }: { contests: ContestTabData[] }
 
       {/* Tab content */}
       <div className="p-6">
+        {(contest.contestSize || contest.gender || contest.prize) && (
+          <div className="flex flex-wrap gap-3 mb-6 items-center">
+            {contest.contestSize && (
+              <ContestSize variant={contest.contestSize as ContestType} />
+            )}
+            {contest.gender && (
+              <span className="text-sm font-medium text-gray-600">
+                {CONTEST_GENDER_LABEL[contest.gender] ?? contest.gender}
+              </span>
+            )}
+            {contest.prize != null && contest.prize > 0 && (
+              <span className="text-sm font-medium text-gray-600">
+                Prize pool: {contest.prize.toLocaleString()} pts
+              </span>
+            )}
+          </div>
+        )}
+
         {contest.judges.length > 0 && (
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Judges</h3>

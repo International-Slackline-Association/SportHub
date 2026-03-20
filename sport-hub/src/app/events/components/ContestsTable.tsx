@@ -8,10 +8,11 @@ import { cn } from '@utils/cn';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
-import { DISCIPLINE_DATA, MAP_DISCIPLINE_ENUM_TO_NAME, MAP_CONTEST_TYPE_ENUM_TO_NAME } from '@utils/consts';
+import { DISCIPLINE_DATA, MAP_CONTEST_TYPE_ENUM_TO_NAME, MAP_CONTEST_GENDER_ENUM_TO_NAME } from '@utils/consts';
 import { CircleFlag } from 'react-circle-flags';
 import { COUNTRIES, getIocCode, getIso2FromIoc } from '@utils/countries';
 import { contestSizeOptions } from '@ui/Form/commonOptions';
+import { dateFilterFn } from '@ui/Table/TableFilterFields';
 
 const CountryFlagWithName = ({ iocCode, defaultValue="N/A" }: { iocCode: string, defaultValue?: string }) => {
   if (iocCode === 'N/A' || !iocCode) {
@@ -48,6 +49,8 @@ const columns = [
   columnHelper.accessor("date", {
     enableColumnFilter: true,
     header: "Date",
+    meta: { filterVariant: "date" },
+    filterFn: dateFilterFn,
     cell: info => {
       const date = info.getValue();
       try {
@@ -67,12 +70,15 @@ const columns = [
     meta: { filterVariant: 'select' },
   }),
   columnHelper.accessor((row: ContestData) => {
-    const key = MAP_DISCIPLINE_ENUM_TO_NAME[Number(row.discipline)];
-    return DISCIPLINE_DATA[key]?.name ?? String(row.discipline);
+    const d = String(row.discipline);
+    const byKey = DISCIPLINE_DATA[d as keyof typeof DISCIPLINE_DATA];
+    if (byKey) return byKey.name;
+    return Object.values(DISCIPLINE_DATA).find(e => e.enumValue === Number(d))?.name ?? d;
   }, {
     id: "discipline",
     enableColumnFilter: true,
     header: "Discipline",
+    meta: { filterVariant: 'select' },
     cell: info => {
       const disciplineName = info.getValue();
       const data = Object.values(DISCIPLINE_DATA).find(d => d.name === disciplineName);
@@ -87,6 +93,17 @@ const columns = [
       );
     },
   }),
+  columnHelper.accessor((row: ContestData) => {
+    const key = MAP_CONTEST_GENDER_ENUM_TO_NAME[row.gender];
+    const labels: Record<string, string> = { MIXED: "Mixed", MEN_ONLY: "Men", WOMEN_ONLY: "Women" };
+    return labels[key] ?? key ?? String(row.gender);
+  }, {
+    id: "gender",
+    enableColumnFilter: true,
+    header: "Gender",
+    filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
+    meta: { filterVariant: 'select' },
+  }),
   columnHelper.accessor("prize", {
     header: "Prize Value",
   }),
@@ -97,6 +114,7 @@ const columns = [
     id: "size",
     enableColumnFilter: true,
     header: "Size",
+    meta: { filterVariant: 'select' },
   }),
   columnHelper.accessor("athletes", {
     header: "Winner",
@@ -145,10 +163,12 @@ const SubmitButton = () => {
   );
 };
 
-const ContestsTable = () => {
+const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
   const eventsQuery = useQuery({
     queryKey: ['events'],
     queryFn: async () => (await fetch('/api/events/contests')).json(),
+    initialData,
+    staleTime: 60_000,
   });
 
   if (eventsQuery.isLoading) {

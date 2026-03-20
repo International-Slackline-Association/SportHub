@@ -12,11 +12,10 @@ interface DisciplineCardProps {
 const DisciplineCard = ({
   discipline,
 }: DisciplineCardProps) => {
-  const { name, description, Icon } = DISCIPLINE_DATA[discipline];
+  const { name, description, Icon, enumValue } = DISCIPLINE_DATA[discipline];
   return (
     <StackedMediaCard
-      // TODO: Link to rankings disciplines pages when ready
-      // href="www.google.com"
+      href={`/rankings?discipline=${enumValue}`}
       className="h-48"
       media={<Icon />}
       desktopDirection="vertical"

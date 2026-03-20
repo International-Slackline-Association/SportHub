@@ -1,18 +1,19 @@
 // import { UserSubType } from '@types/rbac';
-import { dynamodb, USERS_TABLE, EVENTS_TABLE } from './dynamodb';
 import type { ContestRecord, EventMetadataRecord, ContestParticipant } from './relational-types';
-import { getReferenceUserById, getReferenceUsersBatch } from './reference-db-service';
 import {
   getAthleteProfile as getAthleteProfileOptimized,
   getAthleteParticipations as getAthleteParticipationsOptimized,
-  getAthleteLeaderboard,
-  getAthleteRankings
+  getAthleteRankings,
+  getAllUserProfiles,
+  getAthleteProfilesBatch,
 } from './user-query-service';
-import { MAP_DISCIPLINE_ENUM_TO_NAME, MAP_GENDER_ENUM_TO_NAME, MAP_CONTEST_TYPE_ENUM_TO_NAME } from '@utils/consts';
+import { dynamodb, USERS_TABLE } from './dynamodb';
+import { getEvent, getContest, scanAllEventItems } from './event-contest-service';
+import { MAP_DISCIPLINE_ENUM_TO_NAME, MAP_CONTEST_TYPE_ENUM_TO_NAME, MAP_CONTEST_GENDER_ENUM_TO_NAME } from '@utils/consts';
 
 // Reverse lookups: name → numeric enum (for mapping new-format string values back to ContestData numbers)
-const GENDER_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
-  Object.entries(MAP_GENDER_ENUM_TO_NAME).map(([num, name]) => [name, Number(num)])
+const CONTEST_GENDER_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
+  Object.entries(MAP_CONTEST_GENDER_ENUM_TO_NAME).map(([num, name]) => [name, Number(num)])
 );
 const CONTEST_TYPE_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
   Object.entries(MAP_CONTEST_TYPE_ENUM_TO_NAME).map(([num, name]) => [name, Number(num)])
@@ -83,18 +84,17 @@ export async function getUsers({ subtype }: { subtype: string }): Promise<Partia
   if (cached) return cached;
 
   try {
-    const items = await dynamodb.scanItems(USERS_TABLE);
+    const items = await getAllUserProfiles();
     if (!items || items.length === 0) {
       return [];
     }
 
     const users = items
-      .filter(item => item.sortKey === 'Profile')
       .filter(item => item.name || item.surname || item.athleteSlug)
       .map(userRecord => ({
-        name: userRecord.name || userRecord.athleteSlug || '',
-        surname: userRecord.surname || '',
-        userId: userRecord.userId || '',
+        name: (userRecord.name || userRecord.athleteSlug || '') as string,
+        surname: (userRecord.surname || '') as string,
+        userId: (userRecord.userId || '') as string,
       }));
 
     // Cache the results
@@ -119,6 +119,7 @@ export interface AthleteRanking {
   country: string;
   gender?: 'male' | 'female' | 'other';
   ageCategory?: string;
+  age?: number;
   disciplines: string[];
   points: number;
   profileImage?: string;
@@ -127,81 +128,100 @@ export interface AthleteRanking {
   lastCompetition?: string;
 }
 
+function mapProfileToRanking(profile: Record<string, unknown>, points?: number): AthleteRanking {
+  const name = (profile.name as string) || (profile.athleteSlug as string)?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || '';
+  const surname = (profile.surname as string) || '';
+  const country = (profile.country as string) || '-';
+  const fullName = `${name} ${surname}`.trim();
+  const birthdate = profile.birthdate as string | undefined;
+  const age = (() => {
+    if (!birthdate) return undefined;
+    const birth = new Date(birthdate);
+    const now = new Date();
+    let a = now.getFullYear() - birth.getFullYear();
+    if (now.getMonth() < birth.getMonth() || (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate())) a--;
+    return a;
+  })();
+  return {
+    userId: (profile.userId as string) || '',
+    name,
+    surname,
+    fullName,
+    country,
+    gender: (profile.gender as 'male' | 'female' | undefined) ?? undefined,
+    ageCategory: 'Open',
+    age,
+    disciplines: [],
+    points: points ?? (profile.totalPoints as number) ?? 0,
+    profileImage: (profile.thumbnailUrl as string) || (profile.profileUrl as string) || undefined,
+    contestsParticipated: (profile.contestCount as number) || 0,
+    firstCompetition: (profile.firstCompetition as string) || '',
+    lastCompetition: (profile.lastCompetition as string) || '',
+  };
+}
+
 /**
- * Get all athletes for rankings table
- * OPTIMIZED: Uses getAthleteLeaderboard with GSI query (40x faster than scan)
- * CACHED: Reduces redundant DB calls
- *
- * In production: Batch-fetches names/countries from reference DB (isa-users table)
- * In local dev: Uses athleteSlug field populated by seed data
+ * Aggregate season-specific points from Participation records.
+ * Participation records store per-contest points and contestDate, making them
+ * the authoritative source for season totals (unlike Ranking records which
+ * may store all-time aggregates depending on how they were seeded/migrated).
  */
-export async function getRankingsData(): Promise<AthleteRanking[]> {
-  const cacheKey = 'rankings-data';
+async function getRankingsForYears(years: string[], discipline?: string): Promise<AthleteRanking[]> {
+  const yearsSet = new Set(years);
+
+  // Scan all participation records — filter by contestDate year and discipline client-side
+  const participations = await dynamodb.scanItems(USERS_TABLE, {
+    filterExpression: 'begins_with(sortKey, :pfix)',
+    expressionAttributeValues: { ':pfix': 'Participation:' },
+    projectionExpression: 'userId, #pts, contestDate, discipline',
+    expressionAttributeNames: { '#pts': 'points' },
+  });
+
+  const pointsMap = new Map<string, number>();
+  for (const item of participations) {
+    const contestDate = item.contestDate as string | undefined;
+    if (!contestDate) continue;
+    const year = contestDate.substring(0, 4);
+    if (!yearsSet.has(year)) continue;
+    if (discipline && item.discipline !== discipline) continue;
+
+    const userId = item.userId as string;
+    const pts = parseFloat((item.points as string) || '0');
+    pointsMap.set(userId, (pointsMap.get(userId) ?? 0) + pts);
+  }
+
+  if (pointsMap.size === 0) return [];
+
+  const profilesMap = await getAthleteProfilesBatch([...pointsMap.keys()]);
+
+  return [...pointsMap.entries()]
+    .map(([userId, pts]) => {
+      const profile = profilesMap.get(userId);
+      if (!profile) return null;
+      return mapProfileToRanking(profile as unknown as Record<string, unknown>, pts);
+    })
+    .filter((r): r is AthleteRanking => r !== null)
+    .sort((a, b) => b.points - a.points);
+}
+
+/**
+ * Get athletes for the rankings table, optionally scoped to a specific year.
+ * - year = undefined or 'last3years': aggregate the 3 most recent competition years
+ * - year = '2024' (or any specific year): aggregate that year's Ranking records
+ */
+export async function getRankingsData(year?: string, discipline?: string): Promise<AthleteRanking[]> {
+  const currentYear = new Date().getFullYear();
+  const resolvedYears = (!year || year === 'last3years')
+    ? [String(currentYear), String(currentYear - 1), String(currentYear - 2)]
+    : [year];
+
+  const cacheKey = `rankings-data-${resolvedYears.join(',')}-${discipline ?? 'all'}`;
   const cached = cache.get<AthleteRanking[]>(cacheKey);
   if (cached) return cached;
 
   try {
-    // Use optimized leaderboard query (queries userSubType-index GSI)
-    const { profiles } = await getAthleteLeaderboard(1000); // Get top 1000 athletes
-
-    if (!profiles || profiles.length === 0) {
-      return [];
-    }
-
-    // Batch-fetch names from isa-users (works in both local and production)
-    let referenceUsers = new Map<string, { name: string; surname?: string; country?: string }>();
-    const athleteIds = profiles.map(p => p.isaUsersId).filter((id): id is string => Boolean(id));
-    const refUsersMap = await getReferenceUsersBatch(athleteIds);
-    referenceUsers = new Map(
-      Array.from(refUsersMap.entries()).map(([id, user]) => [
-        id,
-        { name: user.name, surname: user.surname, country: user.country }
-      ])
-    );
-
-    // Add error logging to help diagnose reference DB issues
-    if (referenceUsers.size === 0 && athleteIds.length > 0) {
-      console.error('❌ Reference DB lookup failed. Got 0 users for', athleteIds.length, 'requests');
-      console.error('   Check:');
-      console.error('   - LOCAL_REFERENCE_DB=true in .env.local (for local dev)');
-      console.error('   - Reference DB table "isa-users" exists and has data');
-      console.error('   - DynamoDB Local running on port 8000');
-      console.error('   - Check pnpm db:gui (port 8001) to verify isa-users table');
-    } else {
-      console.log(`📊 Reference DB lookup: Requested ${athleteIds.length}, Got ${referenceUsers.size}`);
-    }
-
-    const rankings = profiles
-      .map((profile): AthleteRanking => {
-        // Priority: SportHub DB name/surname -> reference DB (isa-users) -> athleteSlug fallback
-        // TODO: If SportHub DB name differs from reference DB, we currently prefer SportHub DB.
-        //       A sync mechanism should be implemented to keep both in sync on edits.
-        const refUser = profile.isaUsersId ? referenceUsers.get(profile.isaUsersId) : undefined;
-        const name = profile.name || refUser?.name || profile.athleteSlug?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || '';
-        const surname = profile.surname || refUser?.surname || '';
-        const country = refUser?.country || '-'; // Use '-' for missing country data
-        const fullName = `${name} ${surname}`.trim();
-
-        return {
-          userId: profile.userId || '',
-          name,
-          surname,
-          fullName,
-          country,
-          gender: 'male', // TODO: Default, should be stored in DB
-          ageCategory: 'Open', // TODO: Default, should be stored in DB
-          disciplines: [],
-          points: profile.totalPoints || 0,
-          profileImage: profile.thumbnailUrl || `/static/images/profiles/${name.toLowerCase().replace(/\s+/g, '-')}.jpg`,
-          contestsParticipated: profile.contestCount || 0,
-          firstCompetition: profile.firstCompetition || '',
-          lastCompetition: profile.lastCompetition || ''
-        };
-      })
-      .sort((a, b) => b.points - a.points); // Sort by points descending
-
-    // Cache the results
-    cache.set(cacheKey, rankings, 120000); // Cache for 2 minutes
+    const rankings = await getRankingsForYears(resolvedYears, discipline);
+    cache.set(cacheKey, rankings, 120000);
     return rankings;
   } catch (error) {
     console.error('Error fetching rankings data:', error);
@@ -223,6 +243,7 @@ export async function getFeaturedAthletes(limit: number = 3): Promise<AthleteRan
 
 export interface ContestData {
   eventId: string;
+  contestId?: string;
   name: string;
   date: string;
   country: string;
@@ -230,6 +251,7 @@ export interface ContestData {
   discipline: string;
   prize: number;
   gender: number;
+  ageCategory: string;
   category: number;
   status?: 'upcoming' | 'recent' | 'live'; // TODO: Check with Dylan on adding this attribute
   verified: boolean;
@@ -251,18 +273,15 @@ export async function getEventsData(): Promise<EventMetadataRecord[]> {
 
   try {
     // Scan with projection to reduce data transfer
-    const allItems = await dynamodb.scanItems(EVENTS_TABLE, {
-      projectionExpression: 'eventId, eventName, sortKey, country, profileUrl, thumbnailUrl, startDate, endDate, #loc',
-      expressionAttributeNames: {
-        '#loc': 'location' // 'location' is a reserved word in DynamoDB
-      }
+    const allItems = await scanAllEventItems({
+      projectionExpression: 'eventId, eventName, sortKey, country, city, profileUrl, thumbnailUrl, startDate, endDate'
     });
 
     if (!allItems || allItems.length === 0) {
       return [];
     }
 
-    const eventRecords: EventMetadataRecord[] = allItems.filter(item => item.sortKey === 'Metadata');
+    const eventRecords: EventMetadataRecord[] = allItems.filter(item => item.sortKey === 'Metadata') as unknown as EventMetadataRecord[];
     const sortedEvents = eventRecords.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
 
     // Cache the results (10 min TTL to reduce scan frequency)
@@ -294,11 +313,11 @@ export async function getContestsData(): Promise<ContestData[]> {
 
   try {
     // Scan with projection to reduce data transfer.
-    // Includes both old-format Contest:* fields and new-format Metadata fields (name, status, contests).
-    const allItems = await dynamodb.scanItems(EVENTS_TABLE, {
-      projectionExpression: 'eventId, sortKey, contestName, contestDate, country, city, discipline, prize, gender, category, profileUrl, thumbnailUrl, athletes, #loc, #eventName, startDate, #eventStatus, contests',
+    // Covers both old-format Contest:* fields (contestName/athletes) and
+    // new-format Contest:* fields (results/contestSize/totalPrizeValue) plus Metadata.
+    const allItems = await scanAllEventItems({
+      projectionExpression: 'eventId, sortKey, contestName, contestDate, country, city, discipline, prize, gender, ageCategory, category, profileUrl, thumbnailUrl, athletes, results, contestSize, totalPrizeValue, contestIndex, eventName, #eventName, startDate, #eventStatus, contests',
       expressionAttributeNames: {
-        '#loc': 'location',       // reserved word
         '#eventName': 'name',     // reserved word
         '#eventStatus': 'status', // reserved word
       }
@@ -312,19 +331,67 @@ export async function getContestsData(): Promise<ContestData[]> {
     const metadataMap = new Map<string, EventMetadataRecord>();
     const contestRecords: ContestRecord[] = [];
 
-    allItems.forEach(item => {
-      if (item.sortKey === 'Metadata') { // Capital M in new schema
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (allItems as any[]).forEach(item => {
+      if (item.sortKey === 'Metadata') {
         metadataMap.set(item.eventId, item as EventMetadataRecord);
-      } else if (item.sortKey?.startsWith('Contest:')) { // Contest:{discipline}:{contestId}
+      } else if (item.sortKey?.startsWith('Contest:')) {
         contestRecords.push(item as ContestRecord);
       }
     });
 
-    // Map old-format Contest:* records
+    // Track which events have separate Contest:* records.
+    // For these events, Contest:* records are authoritative (more up-to-date than
+    // the embedded snapshot in Metadata written by updateEventStatus).
+    const eventIdsWithContestRecords = new Set(contestRecords.map(c => c.eventId));
+
+    // Map all Contest:* records — handles both old-format (athletes) and new-format (results)
     const contests: ContestData[] = contestRecords.map(contest => {
       const event = metadataMap.get(contest.eventId);
+      const raw = contest as unknown as Record<string, unknown>;
 
-      const participants = (contest.athletes || []) // New schema uses 'athletes' field
+      // contestId may not be stored explicitly on form-submitted contests (only in sortKey).
+      // sortKey format: "Contest:{discipline}:{contestId}"
+      const contestId = contest.contestId || contest.sortKey.replace(/^Contest:[^:]+:/, '');
+
+      // New-format: written by saveEventContestRecords / updateEventScores
+      // Detected by presence of 'results' array (may be empty [])
+      if ('results' in raw) {
+        const results = (raw.results as Record<string, unknown>[] | undefined) ?? [];
+        const athletes = results
+          .slice()
+          .sort((a, b) => Number(a.rank ?? 999) - Number(b.rank ?? 999))
+          .map(r => ({
+            userId: String(r.id ?? ''),
+            name: String(r.name ?? ''),
+            surname: '',
+            place: String(r.rank ?? ''),
+            points: Number(r.isaPoints ?? 0),
+          }));
+        const meta = event as unknown as Record<string, unknown>;
+        return {
+          eventId: contest.eventId,
+          contestId,
+          name: String(meta?.eventName || meta?.name || ''),
+          date: String(raw.startDate || meta?.startDate || ''),
+          country: String(meta?.country || 'N/A'),
+          city: String(raw.city || meta?.city || ''),
+          discipline: String(raw.discipline ?? ''),
+          prize: Number(raw.totalPrizeValue ?? raw.prize ?? 0),
+          gender: CONTEST_GENDER_NAME_TO_ENUM[String(raw.gender ?? '')] ?? 0,
+          ageCategory: String(raw.ageCategory ?? ''),
+          category: CONTEST_TYPE_NAME_TO_ENUM[String(raw.contestSize ?? '')] ?? 0,
+          verified: true,
+          profileUrl: (meta?.profileUrl as string | undefined) || (raw.profileUrl as string | undefined) || '',
+          thumbnailUrl: (meta?.thumbnailUrl as string | undefined) || (raw.thumbnailUrl as string | undefined) || '',
+          athletes,
+        };
+      }
+
+      // Old-format: written by seed/migration (contestName, contestDate, athletes)
+      // Uses raw cast since ContestRecord no longer has athletes field
+      const legacyAthletes = (raw.athletes as ContestParticipant[] | undefined) ?? [];
+      const participants = legacyAthletes
         .map((p: ContestParticipant) => {
           const points = parseFloat(p.points || '0');
           return {
@@ -339,14 +406,16 @@ export async function getContestsData(): Promise<ContestData[]> {
 
       return {
         eventId: contest.eventId,
-        name: contest.contestName || '',
-        date: contest.contestDate || '', // New schema uses contestDate
-        country: event?.country || contest.country || 'N/A',
-        city: contest.city || event?.location || '',
+        contestId,
+        name: event?.eventName || (raw.contestName as string) || '',
+        date: contest.contestDate || '',
+        country: event?.country || 'N/A',
+        city: contest.city || event?.city || '',
         discipline: contest.discipline || '',
         prize: contest.prize || 0,
-        gender: contest.gender || 0,
-        category: contest.category || 0,
+        gender: CONTEST_GENDER_NAME_TO_ENUM[String(contest.gender ?? '')] ?? 0,
+        ageCategory: String(raw.ageCategory ?? ''),
+        category: 0,
         verified: true,
         profileUrl: contest.profileUrl || '',
         thumbnailUrl: contest.thumbnailUrl || '',
@@ -354,11 +423,14 @@ export async function getContestsData(): Promise<ContestData[]> {
       };
     });
 
-    // Map new-format Metadata records (published events with embedded contests array)
+    // Map published events that only have embedded contests in Metadata
+    // (no separate Contest:* records). Skip events that already have Contest:* records
+    // above — those are authoritative and more up-to-date.
     const submittedContests: ContestData[] = [];
     metadataMap.forEach((rawMeta) => {
       const meta = rawMeta as unknown as Record<string, unknown>;
       if (meta.status !== 'published') return;
+      if (eventIdsWithContestRecords.has(String(meta.eventId ?? ''))) return;
       const embeddedContests = (meta.contests as Record<string, unknown>[] | undefined) ?? [];
       embeddedContests.forEach(contest => {
         const results = (contest.results as Record<string, unknown>[] | undefined) ?? [];
@@ -374,13 +446,15 @@ export async function getContestsData(): Promise<ContestData[]> {
           }));
         submittedContests.push({
           eventId: String(meta.eventId ?? ''),
+          contestId: String(contest.contestId ?? ''),
           name: String(meta.name ?? ''),
           date: String(meta.startDate ?? ''),
           country: String(meta.country ?? 'N/A'),
           city: String(meta.city ?? ''),
           discipline: String(contest.discipline ?? ''),
           prize: Number(contest.totalPrizeValue ?? 0),
-          gender: GENDER_NAME_TO_ENUM[String(contest.gender ?? '')] ?? 0,
+          gender: CONTEST_GENDER_NAME_TO_ENUM[String(contest.gender ?? '')] ?? 0,
+          ageCategory: String(contest.ageCategory ?? ''),
           category: CONTEST_TYPE_NAME_TO_ENUM[String(contest.contestSize ?? '')] ?? 0,
           verified: false,
           athletes,
@@ -426,9 +500,12 @@ export interface AthleteProfile {
 export interface AthleteContest {
   rank: number;
   eventId: string;
+  contestId: string;
   eventName: string;
   contest: string;
   discipline: string;
+  gender?: string;
+  ageCategory?: string;
   points: number;
   contestSize: string;
   dates: string;
@@ -451,8 +528,7 @@ export interface WorldFirst {
  * Get athlete profile by athlete ID
  * OPTIMIZED: Uses composite key (userId + sortKey="Profile") for O(1) lookup
  *
- * In production: Fetches name/email/country from isa-users
- * In local dev: Uses athleteSlug field populated by seed data
+ * Uses name/surname/country from sporthub-users Profile; falls back to athleteSlug.
  */
 export async function getAthleteProfile(athleteId: string): Promise<AthleteProfile | null> {
   try {
@@ -466,25 +542,10 @@ export async function getAthleteProfile(athleteId: string): Promise<AthleteProfi
       return null;
     }
 
-    // Priority: SportHub DB name/surname -> reference DB (isa-users) -> athleteSlug fallback
-    let refName = '';
-    let refSurname = '';
-    let country = 'N/A';
+    let name = profile.name || '';
+    const surname = profile.surname || '';
+    const country = profile.country || 'N/A';
 
-    if (profile.isaUsersId) {
-      const referenceUser = await getReferenceUserById(profile.isaUsersId);
-      if (referenceUser) {
-        refName = referenceUser.name;
-        refSurname = referenceUser.surname || '';
-        country = referenceUser.country || 'N/A';
-      }
-    }
-
-    // SportHub DB fields take priority over reference DB
-    let name = profile.name || refName;
-    const surname = profile.surname || refSurname;
-
-    // Fallback to athleteSlug if no name found anywhere
     if (!name && profile.athleteSlug) {
       name = profile.athleteSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
@@ -562,10 +623,7 @@ export async function getAthleteContests(athleteId: string): Promise<AthleteCont
 
     // Fetch event metadata for unique events
     const uniqueEventIds = [...new Set(participations.map(p => p.eventId))];
-    const eventMetadataPromises = uniqueEventIds.map(eventId =>
-      dynamodb.getItem(EVENTS_TABLE, { eventId, sortKey: 'Metadata' }) as Promise<EventMetadataRecord | null>
-    );
-    const eventMetadataResults = await Promise.all(eventMetadataPromises);
+    const eventMetadataResults = await Promise.all(uniqueEventIds.map(id => getEvent(id)));
     const eventMetadataMap = new Map<string, EventMetadataRecord>();
     eventMetadataResults.forEach(metadata => {
       if (metadata) {
@@ -575,13 +633,9 @@ export async function getAthleteContests(athleteId: string): Promise<AthleteCont
 
     // Fetch contest records to get athlete counts
     // Contest sortKey format: "Contest:{discipline}:{contestId}"
-    const contestPromises = participations.map(p =>
-      dynamodb.getItem(EVENTS_TABLE, {
-        eventId: p.eventId,
-        sortKey: `Contest:${p.discipline}:${p.contestId}`
-      }) as Promise<ContestRecord | null>
+    const contestResults = await Promise.all(
+      participations.map(p => getContest(p.eventId, `Contest:${p.discipline}:${p.contestId}`))
     );
-    const contestResults = await Promise.all(contestPromises);
     const contestMap = new Map<string, ContestRecord>();
     contestResults.forEach(contest => {
       if (contest) {
@@ -593,16 +647,18 @@ export async function getAthleteContests(athleteId: string): Promise<AthleteCont
     const contests: AthleteContest[] = participations.map(participation => {
       const eventMetadata = eventMetadataMap.get(participation.eventId);
       const contest = contestMap.get(`${participation.eventId}:${participation.contestId}`);
-      const contestSize = contest?.athletes?.length;
 
       return {
         rank: participation.place,
         eventId: participation.eventId,
+        contestId: participation.contestId,
         eventName: eventMetadata?.eventName || 'Unknown Event',
         contest: participation.contestName,
         discipline: participation.discipline,
+        gender: contest?.gender,
+        ageCategory: contest?.ageCategory,
         points: parseFloat(participation.points || '0'),
-        contestSize: contestSize ? String(contestSize) : 'Unknown',
+        contestSize: contest?.contestSize || '',
         dates: formatDate(participation.contestDate)
       };
     });

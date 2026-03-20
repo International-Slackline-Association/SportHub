@@ -14,7 +14,6 @@ import type {
   AthleteParticipationRecord,
   EventMetadataRecord,
   ContestRecord,
-  ContestParticipant,
 } from '../relational-types';
 
 // ============================================================================
@@ -33,16 +32,16 @@ interface SeedAthlete {
 // ============================================================================
 
 const EVENTS = [
-  { name: 'ISA World Cup Round 1',     country: 'FR', city: 'Lyon',        start: '2024-03-15', end: '2024-03-17' },
-  { name: 'ISA Masters',               country: 'DE', city: 'Munich',      start: '2024-04-08', end: '2024-04-10' },
-  { name: 'ISA World Cup Round 2',     country: 'US', city: 'Denver',      start: '2024-05-20', end: '2024-05-22' },
-  { name: 'ISA Grand Slam',            country: 'BR', city: 'Rio de Janeiro', start: '2024-06-14', end: '2024-06-16' },
-  { name: 'ISA Challenge Cup',         country: 'CH', city: 'Lausanne',    start: '2024-07-06', end: '2024-07-07' },
-  { name: 'ISA World Cup Round 3',     country: 'JP', city: 'Kyoto',       start: '2024-08-12', end: '2024-08-14' },
-  { name: 'ISA Open',                  country: 'AU', city: 'Melbourne',   start: '2024-09-18', end: '2024-09-20' },
-  { name: 'ISA World Championships',   country: 'ES', city: 'Barcelona',   start: '2024-10-07', end: '2024-10-12' },
-  { name: 'ISA World Cup Final',       country: 'CA', city: 'Vancouver',   start: '2024-11-02', end: '2024-11-04' },
-  { name: 'ISA Season Opener 2025',    country: 'IT', city: 'Lecco',       start: '2025-02-15', end: '2025-02-16' },
+  { name: 'ISA World Cup Round 1',     country: 'FR', city: 'Lyon',           start: '2024-03-15', end: '2024-03-17', contestSize: 'WORLD_CUP' },
+  { name: 'ISA Masters',               country: 'DE', city: 'Munich',         start: '2024-04-08', end: '2024-04-10', contestSize: 'MASTERS' },
+  { name: 'ISA World Cup Round 2',     country: 'US', city: 'Denver',         start: '2024-05-20', end: '2024-05-22', contestSize: 'WORLD_CUP' },
+  { name: 'ISA Grand Slam',            country: 'BR', city: 'Rio de Janeiro', start: '2024-06-14', end: '2024-06-16', contestSize: 'GRAND_SLAM' },
+  { name: 'ISA Challenge Cup',         country: 'CH', city: 'Lausanne',       start: '2024-07-06', end: '2024-07-07', contestSize: 'CHALLENGE' },
+  { name: 'ISA World Cup Round 3',     country: 'JP', city: 'Kyoto',          start: '2024-08-12', end: '2024-08-14', contestSize: 'WORLD_CUP' },
+  { name: 'ISA Open',                  country: 'AU', city: 'Melbourne',      start: '2024-09-18', end: '2024-09-20', contestSize: 'OPEN' },
+  { name: 'ISA World Championships',   country: 'ES', city: 'Barcelona',      start: '2024-10-07', end: '2024-10-12', contestSize: 'WORLD_CHAMPIONSHIP' },
+  { name: 'ISA World Cup Final',       country: 'CA', city: 'Vancouver',      start: '2024-11-02', end: '2024-11-04', contestSize: 'WORLD_CUP' },
+  { name: 'ISA Season Opener 2025',    country: 'IT', city: 'Lecco',          start: '2025-02-15', end: '2025-02-16', contestSize: 'OPEN' },
 ] as const;
 
 // Discipline codes matching the existing ISA-Rankings migration system
@@ -51,9 +50,6 @@ const DISCIPLINES = [
   { code: '2',  label: 'Trickline' },
   { code: '12', label: 'Highline' },
 ] as const;
-
-// Contest category (2 = World Cup / international level)
-const CATEGORY = 2;
 
 // ============================================================================
 // ID GENERATION
@@ -246,7 +242,7 @@ export function transformRankingsData(): {
       eventName: eventDef.name,
       startDate: eventDef.start,
       endDate: eventDef.end,
-      location: eventDef.city,
+      city: eventDef.city,
       country: eventDef.country,
       contestCount,
       type: 'competition',
@@ -254,9 +250,9 @@ export function transformRankingsData(): {
     });
 
     for (const [disciplineIdx, discipline] of DISCIPLINES.entries()) {
-      for (const [gIdx, { genderCode, genderNum, genderLabel, group }] of ([
-        { genderCode: '1', genderNum: 1, genderLabel: 'Men',   group: menAthletes },
-        { genderCode: '2', genderNum: 2, genderLabel: 'Women', group: womenAthletes },
+      for (const [gIdx, { genderCode, genderNum, group }] of ([
+        { genderCode: '1', genderNum: 1, group: menAthletes },
+        { genderCode: '2', genderNum: 2, group: womenAthletes },
       ] as const).entries()) {
         const contestId = generateContestId(eventIdx, discipline.code, genderNum);
 
@@ -271,32 +267,31 @@ export function transformRankingsData(): {
         // Assign places (already sorted by totalPoints desc)
         selectedAthletes.forEach((entry, i) => { entry.place = i + 1; });
 
-        const contestName = `${discipline.label} ${genderLabel} Open`;
         const contestDate = eventDef.start; // contest starts on event start date
 
-        // Build embedded participants for the Contest record
-        const contestParticipants: ContestParticipant[] = selectedAthletes.map(({ athlete, place }) => ({
-          userId: athleteIdToUserId.get(athlete.athleteId)!,
-          name: athlete.name,
-          place: String(place),
-          points: String(contestPoints(athlete)),
-        }));
-
         const dateSortKey = `${contestDate}#${eventId}`;
+
+        const genderCode = genderNum === 1 ? 'MEN_ONLY' : 'WOMEN_ONLY';
+        const participationContestName = `${discipline.label} / ${genderCode} / ALL`;
 
         contests.push({
           eventId,
           sortKey: `Contest:${discipline.code}:${contestId}`,
           contestId,
           discipline: discipline.code,
-          contestName,
           contestDate,
           dateSortKey,
-          country: eventDef.country,
           city: eventDef.city,
-          category: CATEGORY,
-          gender: genderNum,
-          athletes: contestParticipants,
+          gender: genderCode,
+          ageCategory: 'ALL',
+          contestSize: eventDef.contestSize,
+          results: selectedAthletes.map(({ athlete, place }) => ({
+            rank: place,
+            id: athleteIdToUserId.get(athlete.athleteId)!,
+            name: athlete.name,
+            isaPoints: contestPoints(athlete),
+            isPending: false,
+          })),
           createdAt: Date.now(),
         });
 
@@ -312,7 +307,7 @@ export function transformRankingsData(): {
             place,
             points: String(contestPoints(athlete)),
             contestDate,
-            contestName,
+            contestName: participationContestName,
           });
         }
       }

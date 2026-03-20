@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { dynamodb, USERS_TABLE } from '@lib/dynamodb';
 import { auth } from '@lib/auth';
-import { clearRoleCache } from '@lib/rbac-service';
+import { updateUserRoleAndSubTypes } from '@lib/user-service';
 import type { Role, UserSubType } from 'src/types/rbac';
 
 export async function PUT(
@@ -42,34 +41,14 @@ export async function PUT(
       );
     }
 
-    // Get existing user (use composite key)
-    const existingUser = await dynamodb.getItem(USERS_TABLE, { userId: id, sortKey: 'Profile' });
-    if (!existingUser) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+    try {
+      await updateUserRoleAndSubTypes(id, role, userSubTypes, primarySubType, session.user.id);
+    } catch (err) {
+      if (err instanceof Error && err.message === 'User not found') {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      }
+      throw err;
     }
-
-    // Validate primarySubType is in userSubTypes
-    const validPrimarySubType = primarySubType && userSubTypes.includes(primarySubType)
-      ? primarySubType
-      : userSubTypes[0];
-
-    // Update user with new role data
-    const updatedUser = {
-      ...existingUser,
-      role,
-      userSubTypes,
-      primarySubType: validPrimarySubType,
-      roleAssignedAt: new Date().toISOString(),
-      roleAssignedBy: session.user.id,
-    };
-
-    await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
-
-    // Clear role cache for this user
-    clearRoleCache(id);
 
     const isSelf = id === session.user.id;
     return NextResponse.json({

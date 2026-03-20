@@ -9,14 +9,16 @@ interface AvatarProps {
 
 export const Avatar = ({ alt, defaultLabel, image }: AvatarProps) => {
   if (image) {
+    const isDataUrl = image.startsWith('data:');
     return (
       <div className={styles.avatarWrapper}>
         <Image
           alt={alt}
           className={styles.avatar}
-          height={200}
+          fill
+          sizes="(max-width: 640px) 80px, 200px"
           src={image}
-          width={200}
+          unoptimized={isDataUrl}
         />
       </div>
     );

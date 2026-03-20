@@ -1,3 +1,5 @@
+'use client';
+
 import { AthleteRanking } from "@lib/data-services";
 import { Avatar } from '@ui/Avatar';
 import { CardGrid } from '@ui/Card';
@@ -18,7 +20,7 @@ export const FeaturedAthleteCard = ({ athlete }: FeaturedAthleteCardProps) => {
     disciplines,
     fullName,
     name,
-    // profileImage,
+    profileImage,
     surname,
     userId,
   } = athlete;
@@ -33,7 +35,7 @@ export const FeaturedAthleteCard = ({ athlete }: FeaturedAthleteCardProps) => {
         <Avatar
           alt={displayName}
           defaultLabel={abbreviatedName}
-          // image={profileImage} // TODO: Fix when we have images
+          image={profileImage}
         />
       }
       href={`/athlete-profile/${userId}`}
