@@ -1,0 +1,39 @@
+
+.errorSmall {
+  background: none !important;
+  border: none !important;
+  font-weight: bold;
+}
+
+.errorMedium {
+  border-radius: 4px;
+  padding: 12px;
+  text-align: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.errorText {
+  align-items: center;
+  display: flex;
+  flex: row;
+  font-size: 14px !important;
+}
+
+.errorColor {
+  background-color: var(--color-red-50);
+  border: 1px solid var(--color-red-600);
+  color: var(--color-red-600);
+}
+
+.warningColor {
+  background-color: var(--color-yellow-50);
+  border: 1px solid var(--color-yellow-600);
+  color: var(--color-yellow-600);
+}
+
+.infoColor {
+  background-color: var(--color-blue-50);
+  border: 1px solid var(--color-blue-600);
+  color: var(--color-blue-600);
+}

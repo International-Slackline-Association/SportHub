@@ -17,7 +17,7 @@ import { ChevronIcon } from '@ui/Icons';
 import EventAutocomplete from './EventAutocomplete';
 import YouTubePreviewTextField from './YouTubePreviewTextField'
 import FileInputField from './FileInputField';
-import { ErrorMessage } from '../ErrorMessage';
+import { Alert } from '@ui/Alert';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -63,9 +63,9 @@ export default function EventForm() {
   return (
     <div className={styles.eventForm}>
       {isError && (
-        <ErrorMessage>
+        <Alert>
           Event form has errors, please review.
-        </ErrorMessage>
+        </Alert>
       )}
       <section>
         <div className={cn(sharedStyles.formGrid, sharedStyles.sectionContent)}>

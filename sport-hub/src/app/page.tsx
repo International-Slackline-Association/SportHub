@@ -4,7 +4,6 @@ import PageLayout from '@ui/PageLayout';
 import DisciplineCard from './components/DisciplineCard';
 import { FeaturedAthleteSection } from '@ui/FeaturedAthleteCard';
 import FeaturedContestCard from './components/FeaturedContestCard';
-import { TrophyIcon } from '@ui/Icons';
 import { CardGrid } from '@ui/Card';
 import styles from './page.module.css';
 import { S3_IMAGES } from '@utils/consts';
@@ -16,19 +15,22 @@ const NUM_FEATURED_ATHLETES = 3;
 
 const getFeaturedEvents = async () => {
   const allEvents = await getContestsData();
+
   return allEvents
-    // Example criteria, TODO: Check with Tom on actual criteria
-    .filter(event => {
-        const isLessThanOneYearAgo = (new Date().getTime() - new Date(event.date).getTime()) < (365 * 24 * 60 * 60 * 1000);
-        const hasThumbnail = !!event.thumbnailUrl;
-        return isLessThanOneYearAgo && hasThumbnail;
-      })
+    // TODO: Check with Tom on actual criteria
+    // .filter(event => {
+    //     const eventDate = new Date(event.date);
+    //     const isValidDate = !isNaN(eventDate.getTime());
+    //     const isLessThanTwoYearsAgo = isValidDate && (new Date().getTime() - eventDate.getTime()) < (2 * 365 * 24 * 60 * 60 * 1000);
+    //     return isLessThanTwoYearsAgo;
+    //   })
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, NUM_FEATURED_EVENTS);
 };
 
 export default async function Home() {
   const featuredContestsData = await getFeaturedEvents();
-  const featuredAthletesData = await getFeaturedAthletes(NUM_FEATURED_ATHLETES);
+  const featuredAthletesData = await getFeaturedAthletes(undefined, NUM_FEATURED_ATHLETES);
 
   return (
     <PageLayout
@@ -38,6 +40,7 @@ export default async function Home() {
         src: S3_IMAGES.hero,
         alt: 'Laax Highline World Championship',
         caption: 'Laax Highline World Championship, 2024',
+        blurredBackground: true
       }}
     >
       {/* Rankings / Disciplines Section */}
@@ -55,10 +58,7 @@ export default async function Home() {
       {/* Featured Contests Section */}
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
-          <div className={styles.titleWithIcon}>
-            <TrophyIcon size={28} className={styles.trophyIcon} />
-            <h2 className={styles.sectionTitle}>Featured Contests</h2>
-          </div>
+          <h2 className={styles.sectionTitle}>Featured Contests</h2>
           <p className={styles.sectionSubtitle}>
             Stay up to date with the latest competitions and events in the slacklining community.
           </p>

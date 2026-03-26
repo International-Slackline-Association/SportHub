@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
 import { AthleteRanking } from '@lib/data-services';
 import Table from '@ui/Table';
@@ -10,6 +10,10 @@ import Link from 'next/link';
 import { CircleFlag } from 'react-circle-flags';
 import { getIocCode, getIso2FromIoc } from '@utils/countries';
 import { DISCIPLINE_DATA } from '@utils/consts';
+import { useQuery } from '@tanstack/react-query';
+import Spinner from '@ui/Spinner';
+import { Alert } from '@ui/Alert';
+import tableStyles from '@ui/Table/styles.module.css';
 
 const columnHelper = createColumnHelper<AthleteRanking>();
 
@@ -55,7 +59,8 @@ const NameCell = ({ athlete, showCountry=false }: { athlete: AthleteRanking, sho
 const desktopColumns = [
   columnHelper.display({
     header: 'Rank',
-    cell: info => info.table.getRowModel().rows.indexOf(info.row) + 1,
+    cell: info => info.row.index + 1,
+    size: 36,
   }),
   columnHelper.accessor('fullName', {
     enableColumnFilter: true,
@@ -179,92 +184,68 @@ const DISCIPLINE_OPTIONS = [
     .map(d => ({ value: String(d.enumValue), label: d.name })),
 ];
 
-const RankingsTable = ({ initialData = [], initialDiscipline = '' }: { initialData?: AthleteRanking[]; initialDiscipline?: string }) => {
+const RankingsTable = ({ initialDiscipline }: { initialDiscipline?: string }) => {
   const { isDesktop } = useClientMediaQuery();
   const [selectedYear, setSelectedYear] = useState('last3years');
   const [selectedDiscipline, setSelectedDiscipline] = useState(initialDiscipline);
-  const [rankings, setRankings] = useState<AthleteRanking[]>(initialData);
-  const [loading, setLoading] = useState(initialData.length === 0);
-  const [error, setError] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function loadRankings() {
-      setLoading(true);
-      setError(false);
-      try {
-        const params = new URLSearchParams();
-        if (selectedYear !== 'last3years') params.set('year', selectedYear);
-        if (selectedDiscipline) params.set('discipline', selectedDiscipline);
-        const url = `/api/rankings${params.size ? '?' + params.toString() : ''}`;
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        const data = await response.json();
-        if (!cancelled) setRankings(data);
-      } catch (err) {
-        console.error('Error loading rankings:', err);
-        if (!cancelled) setError(true);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    loadRankings();
-    return () => { cancelled = true; };
-  }, [selectedYear, selectedDiscipline]);
+  const { data = [], error, isError, isLoading, isSuccess } = useQuery({
+    queryKey: ['rankings', selectedYear, selectedDiscipline],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedYear !== 'last3years') params.set('year', selectedYear);
+      if (selectedDiscipline) params.set('discipline', selectedDiscipline);
+      const url = `/api/rankings${params.size ? '?' + params.toString() : ''}`;
+      return (await fetch(url)).json();
+    },
+  });
 
   return (
-    <div>
-      <div className="flex flex-wrap items-center gap-4 mb-4 p-4 sm:p-0">
-        <div className="flex items-center gap-2">
-          <label htmlFor="rankings-year" className="text-sm font-medium text-gray-700 whitespace-nowrap">
-            Season
-          </label>
-          <select
-            id="rankings-year"
-            value={selectedYear}
-            onChange={e => setSelectedYear(e.target.value)}
-            className="border border-gray-300 rounded px-2 py-1 text-sm"
-          >
-            {YEAR_OPTIONS.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
+    <div className="flex items-center justify-center min-h-64">
+      {isLoading && (
+        <div className="text-center">
+          <Spinner/>
+          <p>Loading rankings...</p>
         </div>
-        <div className="flex items-center gap-2">
-          <label htmlFor="rankings-discipline" className="text-sm font-medium text-gray-700 whitespace-nowrap">
-            Discipline
-          </label>
-          <select
-            id="rankings-discipline"
-            value={selectedDiscipline}
-            onChange={e => setSelectedDiscipline(e.target.value)}
-            className="border border-gray-300 rounded px-2 py-1 text-sm"
-          >
-            {DISCIPLINE_OPTIONS.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center min-h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p>Loading rankings...</p>
-          </div>
-        </div>
-      ) : error ? (
-        <div className="flex items-center justify-center min-h-64">
-          <div className="text-center text-red-600">
-            <p>Failed to load rankings data</p>
-          </div>
-        </div>
-      ) : (
-        <Table options={{ columns: isDesktop ? desktopColumns : mobileColumns, data: rankings }} title="Rankings" />
+      )}
+      {isError && (
+        <Alert>Failed to load rankings data: {error?.message}</Alert>
+      )}
+      {isSuccess && (
+        <Table
+          extraFilters={
+            <>
+              <div className={tableStyles.columnFilter}>
+                <label htmlFor="rankings-year">Season</label>
+                <select
+                  id="rankings-year"
+                  value={selectedYear}
+                  onChange={e => setSelectedYear(e.target.value)}
+                >
+                  {YEAR_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className={tableStyles.columnFilter}>
+                <label htmlFor="rankings-discipline">Discipline</label>
+                <select
+                  id="rankings-discipline"
+                  value={selectedDiscipline}
+                  onChange={e => setSelectedDiscipline(e.target.value)}
+                >
+                  {DISCIPLINE_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+            </>
+          }
+          options={{
+            columns: isDesktop ? desktopColumns : mobileColumns,
+            data,
+          }}
+        />
       )}
     </div>
   );

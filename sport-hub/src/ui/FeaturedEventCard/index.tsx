@@ -7,6 +7,7 @@ import { cn } from '@utils/cn';
 import { getCountryByCode } from '@utils/countries';
 import { StackedMediaCard } from '@ui/StackedMediaCard';
 import pageStyles from '../../app/page.module.css';
+import Button from "@ui/Button";
 
 export interface FeaturedEventCardProps {
   event: ContestData;
@@ -21,7 +22,7 @@ export const FeaturedEventCard = ({ event }: FeaturedEventCardProps) => {
     profileUrl,
     thumbnailUrl,
   } = event;
-
+  const href = `/events/${eventId}`;
   return (
     <StackedMediaCard
       className="p-4"
@@ -32,7 +33,7 @@ export const FeaturedEventCard = ({ event }: FeaturedEventCardProps) => {
           image={profileUrl || thumbnailUrl}
         />
       }
-      href={`/events/${eventId}`}
+      href={href}
       hoverable
     >
       <div className="stack gap-2 items-center">
@@ -48,6 +49,13 @@ export const FeaturedEventCard = ({ event }: FeaturedEventCardProps) => {
           </div>
         )}
         <Discipline variant={discipline} key={discipline} />
+        <Button
+          as="link"
+          variant="secondary"
+          href={href}
+        >
+          View Event
+        </Button>
       </div>
     </StackedMediaCard>
   );

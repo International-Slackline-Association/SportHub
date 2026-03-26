@@ -59,10 +59,11 @@ const FilterIcon = ({ className = "" }: { className?: string }) => (
 );
 
 type TableFiltersProps<TData,> = {
+  extraFilters?: React.ReactNode;
   table: Table<TData>;
 };
 
-export const TableFilters = <TData,>({ table }: TableFiltersProps<TData>) => {
+export const TableFilters = <TData,>({ extraFilters, table }: TableFiltersProps<TData>) => {
   const { isDesktop } = useClientMediaQuery();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -74,6 +75,7 @@ export const TableFilters = <TData,>({ table }: TableFiltersProps<TData>) => {
   if (isDesktop) {
     return (
       <div className={cn(styles.tableFilters, "cluster")}>
+        {extraFilters}
         {
           ...filterableHeaders.map((header) => (
             <TableFilterFields header={header} key={header.id} rows={prefilteredRows} />
@@ -90,15 +92,16 @@ export const TableFilters = <TData,>({ table }: TableFiltersProps<TData>) => {
         aria-expanded={menuOpen}
         aria-controls="filter-menu"
         aria-label="Open filter menu"
-        className={cn(!menuOpen && "mb-2")}
         onClick={() => setMenuOpen(!menuOpen)}
         variant="secondary"
+        size="small"
       >
         <FilterIcon className={styles.filterIcon} />
         <span className="pl-2">{menuOpen ? "Hide Filters" : "Show Filters"}</span>
       </Button>
-      <div className={[styles.tableFilters, "py-4", menuOpen && styles.accordionOpen, !menuOpen && styles.accordionClose].filter(Boolean).join(" ")}>
+      <div className={cn(styles.tableFilters, menuOpen && styles.accordionOpen, !menuOpen && styles.accordionClose, "mt-4")}>
         <div className={cn(styles.tableFilters, "stack")}>
+          {extraFilters}
           {
             ...filterableHeaders.map((header) => (
               <TableFilterFields header={header} key={header.id} rows={prefilteredRows} />

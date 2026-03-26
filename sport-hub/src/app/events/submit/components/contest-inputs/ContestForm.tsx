@@ -11,7 +11,7 @@ import { useState } from 'react';
 import Button from '@ui/Button';
 import sharedStyles from '../styles.module.css';
 import styles from './styles.module.css';
-import { ErrorMessage } from '../ErrorMessage';
+import { Alert } from '@ui/Alert';
 import { getContestNameFromForm } from './TabbedContestForms';
 
 type Props = {
@@ -82,7 +82,7 @@ export default function ContestForm({ contestIdx, onRemove, onDuplicate }: Props
     <>
       <section className={cn("stack", "gap-4", "my-4", sharedStyles.sectionContent)}>
         {contestIsTouched && contestHasErrors && (
-          <ErrorMessage>{errorMessage}</ErrorMessage>
+          <Alert>{errorMessage}</Alert>
         )}
         <div className={cn(styles.contestFormHeader)}>
           <h3>{getContestNameFromForm(values, contestIdx)}</h3>

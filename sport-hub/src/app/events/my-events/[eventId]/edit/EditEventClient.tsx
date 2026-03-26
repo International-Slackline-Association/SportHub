@@ -14,7 +14,7 @@ import styles from '../../../submit/components/styles.module.css';
 import { updateEvent } from '../../../submit/actions';
 import { cn } from '@utils/cn';
 import TabbedContestForms from '../../../submit/components/contest-inputs/TabbedContestForms';
-import { ErrorMessage } from '../../../submit/components/ErrorMessage';
+import { Alert } from '@ui/Alert';
 import { ReviewEventForm } from '../../../submit/components/ReviewEventForm';
 import Spinner from '@ui/Spinner';
 
@@ -106,12 +106,12 @@ export default function EditEventClient({ eventId, initialValues }: Props) {
             {activeTab === 'REVIEW' && <ReviewEventForm />}
 
             {hasValidated && !isValid && (
-              <ErrorMessage
+              <Alert
                 className={cn(styles.borderTop, 'justify-end', 'gap-1', 'pb-4')}
                 size="SM"
               >
                 Please review errors before proceeding.
-              </ErrorMessage>
+              </Alert>
             )}
 
             <div className={cn(styles.formActions)}>

@@ -10,6 +10,7 @@ export interface StackedMediaCardProps {
   href?: string;
   media: ReactNode;
   mobileDirection?: 'horizontal' | 'vertical';
+  padding?: string | number;
   onClick?: () => void;
 }
 
@@ -26,6 +27,7 @@ export const StackedMediaCard = ({
   href,
   media,
   mobileDirection = 'horizontal',
+  padding = 'p-4',
   onClick,
 }: StackedMediaCardProps) => {
   const cardClassName = cn(
@@ -33,6 +35,7 @@ export const StackedMediaCard = ({
     hoverable && styles.hoverable,
     styles[`desktop-${desktopDirection}`],
     styles[`mobile-${mobileDirection}`],
+    padding,
     className
   );
 
