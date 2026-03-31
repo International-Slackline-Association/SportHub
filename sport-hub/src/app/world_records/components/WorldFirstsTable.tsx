@@ -21,10 +21,14 @@ const desktopColumns = [
     header: 'World First Type',
     enableColumnFilter: true,
     meta: { filterVariant: 'select' },
-    size: 80,
+    size: 40,
   }),
   columnHelper.accessor('specs', {
     header: 'Specs',
+    size: 80,
+  }),
+  columnHelper.accessor('description', {
+    header: 'Description',
     size: 80,
   }),
   columnHelper.accessor('name', {
@@ -66,23 +70,29 @@ const mobileColumns = [
     id: 'worldFirst',
     header: 'World First',
     cell: info => {
-      const { date, typeOfFirst, specs, name, country, gender } = info.row.original;
+      const { date, description, typeOfFirst, specs, name, country, gender } = info.row.original;
       return (
         <div className="stack">
-          <span className="text-xs text-gray-400">{date || '—'}</span>
-          <div className="stack" style={{ gap: '0.1rem' }}>
-            <span className="font-medium">{typeOfFirst || '—'}</span>
-            <span className="text-sm text-gray-600">{specs || '—'}</span>
+          <div className="cluster items-center justify-between text-gray-400">
+            <span className="text-xs">{date || '—'}</span>
+            <div className="cluster gap-2 items-center text-sm">
+              <span>{typeOfFirst || '—'}</span>
+              <span>{specs || '—'}</span>
+            </div>
           </div>
-          <div className="stack" style={{ gap: '0.1rem' }}>
+
+          <div className="cluster items-center justify-between">
             <span className="font-medium">
-            {info.row.original.athleteUserId
-              ? <Link href={`/athlete-profile/${info.row.original.athleteUserId}`} className="text-blue-600 hover:underline">{name || '—'}</Link>
-              : name || '—'
-            }
-          </span>
+              {info.row.original.athleteUserId
+                ? <Link href={`/athlete-profile/${info.row.original.athleteUserId}`} className="text-blue-600 hover:underline">{name || '—'}</Link>
+                : name || '—'
+              }
+            </span>
+            <span>{description}</span>
+          </div>
+          <div className="cluster gap-2 items-center">
             <CountryFlag country={country} />
-            <span className="text-xs text-gray-500">{textToTitleCase(gender)}</span>
+            <span className="text-xs text-gray-400" style={{ paddingTop: 2 }}>{textToTitleCase(gender)}</span>
           </div>
         </div>
       );

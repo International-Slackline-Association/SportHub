@@ -1,26 +1,28 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { WorldRecord } from '@lib/data-services';
 import Table from '@ui/Table';
+import { CountryFlag } from '@ui/CountryFlag';
+import { textToTitleCase } from '@utils/strings';
 
 const columnHelper = createColumnHelper<WorldRecord>();
 const columns = [
-  columnHelper.accessor("recordType", {
-    header: "Record Type",
+  columnHelper.accessor('date', {
+    header: 'Date',
+    enableSorting: true,
   }),
-  columnHelper.accessor("specs", {
-    header: "Specs",
+  columnHelper.accessor('recordType', {
+    header: 'Record Type',
   }),
-  columnHelper.accessor("name", {
-    header: "Name",
+  columnHelper.accessor('specs', {
+    header: 'Specs',
   }),
-  columnHelper.accessor("country", {
-    header: "Country",
+  columnHelper.accessor('country', {
+    header: 'Country',
+    cell: info => <CountryFlag country={info.getValue()} />,
   }),
-  columnHelper.accessor("gender", {
-    header: "Gender",
-  }),
-  columnHelper.accessor("date", {
-    header: "Date",
+  columnHelper.accessor('gender', {
+    header: 'Gender',
+    cell: info => textToTitleCase(info.getValue()),
   }),
 ];
 
@@ -32,7 +34,7 @@ const AthleteWorldRecordsTable = ({ worldRecords }: AthleteWorldRecordsTableProp
   return (
     <div className="mb-8">
       <h3>World Records</h3>
-      <Table options={{ columns, data: worldRecords }} />
+      <Table options={{ columns, data: worldRecords, initialState: { sorting: [{ id: 'date', desc: true }] } }} />
     </div>
   );
 };

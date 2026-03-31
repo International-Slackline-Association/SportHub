@@ -70,20 +70,22 @@ const mobileColumns = [
       const { date, recordType, specs, name, country, gender } = info.row.original;
       return (
         <div className="stack">
-          <span className="text-xs text-gray-400">{date || '—'}</span>
-          <div className="stack" style={{ gap: '0.1rem' }}>
-            <span className="font-medium">{recordType || '—'}</span>
-            <span className="text-sm text-gray-600">{specs || '—'}</span>
-          </div>
-          <div className="stack" style={{ gap: '0.1rem' }}>
-            <span className="font-medium">
-            {info.row.original.athleteUserId
-              ? <Link href={`/athlete-profile/${info.row.original.athleteUserId}`} className="text-blue-600 hover:underline">{name || '—'}</Link>
-              : name || '—'
-            }
-          </span>
-            <CountryFlag country={country} />
-            <span className="text-xs text-gray-500">{textToTitleCase(gender)}</span>
+          <span className="text-xs text-gray-400">{date}</span>
+          <span className="font-medium pb-2">{recordType}</span>
+          <div className="cluster justify-between items-end gap-2">
+            <div className="stack">
+              <span className="font-medium">
+                {info.row.original.athleteUserId
+                  ? <Link href={`/athlete-profile/${info.row.original.athleteUserId}`} className="text-blue-600 hover:underline">{name || '—'}</Link>
+                  : name || '—'
+                }
+              </span>
+              <div className="cluster gap-2 items-center">
+                <CountryFlag country={country} />
+                <span className="text-xs text-gray-400" style={{ paddingTop: 2 }}>{textToTitleCase(gender)}</span>
+              </div>
+            </div>
+            <span className="text-md">{specs}</span>
           </div>
         </div>
       );

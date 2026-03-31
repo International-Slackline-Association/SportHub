@@ -513,25 +513,27 @@ export interface AthleteContest {
 }
 
 export interface WorldRecord {
-  lineType: string;    // e.g. "Highline", "Trickline"
-  recordType: string;  // e.g. "Longest", "Highest"
-  specs: string;       // e.g. "200m / 80m height"
-  name: string;        // Athlete name
-  country: string;     // Country name from sheet
-  gender: Gender;      // "MEN" | "WOMEN" | "ALL" | "OTHER"
-  eventName: string;   // Competition / location where set
-  date: string;        // DD/MM/YYYY
+  lineType: string;       // e.g. "Highline", "Trickline"
+  recordType: string;     // e.g. "Longest", "Highest"
+  specs: string;          // e.g. "200m / 80m height"
+  name: string;           // Athlete name
+  country: string;        // Country name from sheet
+  gender: Gender;         // "MEN" | "WOMEN" | "ALL" | "OTHER"
+  eventName: string;      // Competition / location where set
+  date: string;           // DD/MM/YYYY
+  athleteUserId?: string; // Resolved SportHub userId (when ISA Email matches a profile)
 }
 
 export interface WorldFirst {
-  description: string;  // "description of world first"
+  description: string;    // "description of world first"
   specs: string;
   name: string;
-  gender: Gender;       // "MEN" | "WOMEN" | "ALL" | "OTHER"
-  date: string;         // DD/MM/YYYY
-  country: string;      // Country name from sheet
-  typeOfFirst: string;  // "type of first"
-  lineType: string;     // "type of line"
+  gender: Gender;         // "MEN" | "WOMEN" | "ALL" | "OTHER"
+  date: string;           // DD/MM/YYYY
+  country: string;        // Country name from sheet
+  typeOfFirst: string;    // "type of first"
+  lineType: string;       // "type of line"
+  athleteUserId?: string; // Resolved SportHub userId (when ISA Email matches a profile)
 }
 
 /**
@@ -680,22 +682,38 @@ export async function getAthleteContests(athleteId: string): Promise<AthleteCont
   }
 }
 
+/** Build a lowercase-email → userId map from all user profiles (used for sheet joins). */
+// async function buildEmailToUserIdMap(): Promise<Map<string, string>> {
+//   const profiles = await getAllUserProfiles();
+//   const map = new Map<string, string>();
+//   for (const p of profiles) {
+//     const email = (p.email as string | undefined)?.toLowerCase().trim();
+//     const userId = p.userId as string | undefined;
+//     if (email && userId) map.set(email, userId);
+//   }
+//   return map;
+// }
+
 export async function getWorldRecords(): Promise<WorldRecord[]> {
   const cacheKey = `world-records`;
   const cached = cache.get<WorldRecord[]>(cacheKey);
   if (cached) return cached;
 
   try {
-    const items = await getWorldRecordsSheet();
+    const [items, emailToUserId = new Map<string, string>()] = await Promise.all([
+      getWorldRecordsSheet(),
+      // buildEmailToUserIdMap(),
+    ]);
 
-    if (!items || items.length === 0) {
-      return [];
-    }
+    if (!items || items.length === 0) return [];
 
-    // Cache the results
-    cache.set(cacheKey, items, 86400000); // Cache for 1 day
+    const records: WorldRecord[] = items.map(item => ({
+      ...item,
+      athleteUserId: item.athleteEmail ? emailToUserId.get(item.athleteEmail) : undefined,
+    }));
 
-    return items;
+    cache.set(cacheKey, records, 86400000); // Cache for 1 day
+    return records;
   } catch (error) {
     console.error('Error fetching world records:', error);
     return [];
@@ -708,20 +726,36 @@ export async function getWorldFirsts(): Promise<WorldFirst[]> {
   if (cached) return cached;
 
   try {
-    const items = await getWorldFirstsSheet();
+    const [items, emailToUserId = new Map<string, string>()] = await Promise.all([
+      getWorldFirstsSheet(),
+      // buildEmailToUserIdMap(),
+    ]);
 
-    if (!items || items.length === 0) {
-      return [];
-    }
+    if (!items || items.length === 0) return [];
 
-    console.log('[getWorldFirsts] Fetched', items.length, 'world firsts');
+    const firsts: WorldFirst[] = items.map(item => ({
+      ...item,
+      athleteUserId: item.athleteEmail ? emailToUserId.get(item.athleteEmail) : undefined,
+    }));
 
-    cache.set(cacheKey, items, 86400000); // Cache for 1 day
-    return items;
+    cache.set(cacheKey, firsts, 86400000); // Cache for 1 day
+    return firsts;
   } catch (error) {
     console.error('Error fetching world firsts:', error);
     return [];
   }
+}
+
+/** Filter world records to those belonging to a specific athlete (by userId). */
+export async function getAthleteWorldRecords(athleteId: string): Promise<WorldRecord[]> {
+  const all = await getWorldRecords();
+  return all.filter(r => r.athleteUserId === athleteId);
+}
+
+/** Filter world firsts to those belonging to a specific athlete (by userId). */
+export async function getAthleteWorldFirsts(athleteId: string): Promise<WorldFirst[]> {
+  const all = await getWorldFirsts();
+  return all.filter(r => r.athleteUserId === athleteId);
 }
 
 // ===========================================

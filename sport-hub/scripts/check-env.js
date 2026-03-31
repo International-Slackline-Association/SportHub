@@ -26,6 +26,12 @@ const amplifyVars = [
   'AWS_APP_ID',                  // Amplify app ID (auto-set)
 ];
 
+const googleSheetsVars = [
+  'GOOGLE_SERVICE_ACCOUNT_EMAIL',
+  'GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY',
+  'ISA_CERTIFICATES_SPREADSHEET_ID',
+];
+
 // Unnecessary variables - Amplify provides these or they're not needed
 const unnecessaryVars = [
   { name: 'AWS_ACCESS_KEY_ID', reason: 'Amplify provides via IAM role' },
@@ -78,6 +84,14 @@ optionalVars.forEach(varName => {
 
 console.log('\nAmplify-Specific Variables:');
 amplifyVars.forEach(varName => {
+  const value = process.env[varName];
+  const isPresent = !!value;
+  const displayValue = value || 'NOT SET';
+  console.log(`${isPresent ? '✅' : 'ℹ️ '} ${varName}: ${displayValue}`);
+});
+
+console.log('\nGoogle Sheets Specific Variables:');
+googleSheetsVars.forEach(varName => {
   const value = process.env[varName];
   const isPresent = !!value;
   const displayValue = value || 'NOT SET';
