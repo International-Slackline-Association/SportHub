@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
-import { WorldRecord } from '@lib/data-services';
+import { WorldFirst } from '@lib/data-services';
 import Table from '@ui/Table';
 import tableStyles from '@ui/Table/styles.module.css';
 import { useClientMediaQuery } from '@utils/useClientMediaQuery';
@@ -10,22 +10,22 @@ import { CountryFlag } from '@ui/CountryFlag';
 import { textToTitleCase } from '@utils/strings';
 import Link from 'next/link';
 
-const columnHelper = createColumnHelper<WorldRecord>();
+const columnHelper = createColumnHelper<WorldFirst>();
 
 const desktopColumns = [
   columnHelper.accessor('date', {
     header: 'Date',
     size: 40,
   }),
-  columnHelper.accessor('recordType', {
-    header: 'Record Type',
+  columnHelper.accessor('typeOfFirst', {
+    header: 'World First Type',
     enableColumnFilter: true,
     meta: { filterVariant: 'select' },
-    size: 160,
+    size: 80,
   }),
   columnHelper.accessor('specs', {
     header: 'Specs',
-    size: 120,
+    size: 80,
   }),
   columnHelper.accessor('name', {
     header: 'Name',
@@ -62,17 +62,16 @@ const desktopColumns = [
 ];
 
 const mobileColumns = [
-  // Single stacked column: date / record type + specs / name + flag + gender
   columnHelper.display({
-    id: 'worldRecord',
-    header: 'World Record',
+    id: 'worldFirst',
+    header: 'World First',
     cell: info => {
-      const { date, recordType, specs, name, country, gender } = info.row.original;
+      const { date, typeOfFirst, specs, name, country, gender } = info.row.original;
       return (
         <div className="stack">
           <span className="text-xs text-gray-400">{date || '—'}</span>
           <div className="stack" style={{ gap: '0.1rem' }}>
-            <span className="font-medium">{recordType || '—'}</span>
+            <span className="font-medium">{typeOfFirst || '—'}</span>
             <span className="text-sm text-gray-600">{specs || '—'}</span>
           </div>
           <div className="stack" style={{ gap: '0.1rem' }}>
@@ -89,9 +88,9 @@ const mobileColumns = [
       );
     },
   }),
-  // Hidden filter-only columns so recordType/country/gender filters still work on mobile
-  columnHelper.accessor('recordType', {
-    header: 'Record Type',
+  // Hidden filter-only columns so typeOfFirst/country/gender filters still work on mobile
+  columnHelper.accessor('typeOfFirst', {
+    header: 'World First Type',
     enableColumnFilter: true,
     meta: { filterVariant: 'select' },
   }),
@@ -113,11 +112,11 @@ const mobileColumns = [
   }),
 ];
 
-type WorldRecordsTableProps = {
-  data: WorldRecord[];
+type WorldFirstsTableProps = {
+  data: WorldFirst[];
 };
 
-const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
+const WorldFirstsTable = ({ data }: WorldFirstsTableProps) => {
   const { isDesktop } = useClientMediaQuery();
   const [selectedLineType, setSelectedLineType] = useState('');
 
@@ -127,19 +126,17 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
   }, [data]);
 
   const filteredData = useMemo(() => {
-    return data.filter(row => {
-      if (selectedLineType && row.lineType !== selectedLineType) return false;
-      return true;
-    });
+    if (!selectedLineType) return data;
+    return data.filter(row => row.lineType === selectedLineType);
   }, [data, selectedLineType]);
 
   return (
     <Table
       extraFilters={
         <div className={tableStyles.columnFilter}>
-          <label htmlFor="wr-line-type">Type of Line</label>
+          <label htmlFor="wf-line-type">Type of Line</label>
           <select
-            id="wr-line-type"
+            id="wf-line-type"
             value={selectedLineType}
             onChange={e => setSelectedLineType(e.target.value)}
           >
@@ -156,15 +153,14 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
         initialState: {
           sorting: [{ id: 'date', desc: true }],
           columnVisibility: {
-            country: !!isDesktop,
-            recordType: !!isDesktop,
-            gender: !!isDesktop,
-          }
-        }
+            country:     !!isDesktop,
+            typeOfFirst: !!isDesktop,
+            gender:      !!isDesktop,
+          },
+        },
       }}
     />
   );
 };
 
-export default WorldRecordsTable;
-
+export default WorldFirstsTable;

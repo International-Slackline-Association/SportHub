@@ -19,7 +19,7 @@ const CONTEST_TYPE_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
   Object.entries(MAP_CONTEST_TYPE_ENUM_TO_NAME).map(([num, name]) => [name, Number(num)])
 );
 import { UserRecord } from './relational-types';
-import { getWorldRecordsSheet } from './google-sheets';
+import { getWorldRecordsSheet, getWorldFirstsSheet } from './google-sheets';
 
 // PERFORMANCE OPTIMIZATION: Simple in-memory cache with TTL
 interface CacheEntry<T> {
@@ -524,9 +524,14 @@ export interface WorldRecord {
 }
 
 export interface WorldFirst {
-  achievement: string;
-  location: string;
-  date: string;
+  description: string;  // "description of world first"
+  specs: string;
+  name: string;
+  gender: Gender;       // "MEN" | "WOMEN" | "ALL" | "OTHER"
+  date: string;         // DD/MM/YYYY
+  country: string;      // Country name from sheet
+  typeOfFirst: string;  // "type of first"
+  lineType: string;     // "type of line"
 }
 
 /**
@@ -688,7 +693,7 @@ export async function getWorldRecords(): Promise<WorldRecord[]> {
     }
 
     // Cache the results
-    cache.set(cacheKey, items, 120000); // Cache for 2 minutes
+    cache.set(cacheKey, items, 86400000); // Cache for 1 day
 
     return items;
   } catch (error) {
@@ -697,18 +702,26 @@ export async function getWorldRecords(): Promise<WorldRecord[]> {
   }
 }
 
-/**
- * Get world firsts (placeholder - should be stored in separate table)
- */
 export async function getWorldFirsts(): Promise<WorldFirst[]> {
-  // Placeholder - in a real app, this would query a world firsts table
-  return [
-    {
-      achievement: "First double backflip on highline",
-      location: "Grand Canyon, USA",
-      date: "10/04/2023"
+  const cacheKey = `world-firsts`;
+  const cached = cache.get<WorldFirst[]>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const items = await getWorldFirstsSheet();
+
+    if (!items || items.length === 0) {
+      return [];
     }
-  ];
+
+    console.log('[getWorldFirsts] Fetched', items.length, 'world firsts');
+
+    cache.set(cacheKey, items, 86400000); // Cache for 1 day
+    return items;
+  } catch (error) {
+    console.error('Error fetching world firsts:', error);
+    return [];
+  }
 }
 
 // ===========================================
