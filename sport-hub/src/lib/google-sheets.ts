@@ -1,0 +1,91 @@
+
+
+import { auth, sheets } from '@googleapis/sheets';
+
+const SPREADSHEET_ID = process.env.ISA_CERTIFICATES_SPREADSHEET_ID!;
+
+const authClient = new auth.GoogleAuth({
+  credentials: {
+    client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL!,
+    private_key: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY!.replace(/\\n/g, '\n'),
+  },
+  scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+});
+
+const WORLD_RECORDS_SHEET = 'World Records';
+
+export interface WorldRecordRow {
+  lineType: string;    // e.g. "Highline", "Trickline"
+  recordType: string;  // e.g. "Longest", "Highest"
+  specs: string;
+  name: string;
+  country: string;
+  gender: Gender;      // mapped from "category" column
+  eventName: string;   // competition / location where set
+  date: string;
+}
+
+const toGender = (raw: string): Gender => {
+  switch (raw?.toLowerCase().trim()) {
+    case 'men': case 'male': case 'm': return 'MEN';
+    case 'women': case 'female': case 'f': case 'w': return 'WOMEN';
+    case 'mixed': case 'all': return 'ALL';
+    default: return 'OTHER';
+  }
+};
+
+const toFormattedDate = (raw: string): string => {
+  if (!raw) return '';
+  // DD/MM/YYYY or DD.MM.YYYY — normalise dots to slashes and return
+  if (/^\d{2}[./]\d{2}[./]\d{4}$/.test(raw)) return raw.replace(/\./g, '/');
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return raw;
+  return d.toLocaleDateString('en-GB'); // DD/MM/YYYY
+};
+
+/** Parse DD/MM/YYYY (or DD.MM.YYYY after normalisation) to a comparable timestamp. */
+const parseDateForSort = (formatted: string): number => {
+  const m = formatted.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return 0;
+  return new Date(`${m[3]}-${m[2]}-${m[1]}`).getTime();
+};
+
+export const getWorldRecordsSheet = async (): Promise<WorldRecordRow[]> => {
+  const client = sheets({ version: 'v4', auth: authClient });
+
+  const response = await client.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: WORLD_RECORDS_SHEET,
+  });
+
+  const rows = response.data.values ?? [];
+  if (rows.length < 2) return [];
+
+  const [headers, ...dataRows] = rows;
+
+  const idx = (name: string) =>
+    headers.findIndex((h: string) => h?.toLowerCase().trim() === name.toLowerCase());
+
+  const lineTypeIdx   = idx('line type') !== -1 ? idx('line type') : idx('type of line');
+  const recordTypeIdx = idx('record type');
+  const specsIdx      = idx('specs');
+  const nameIdx       = idx('name');
+  const countryIdx    = idx('country of athlete') !== -1 ? idx('country of athlete') : idx('country');
+  const genderIdx     = idx('category');
+  const eventNameIdx  = idx('event name') !== -1 ? idx('event name') : idx('event');
+  const dateIdx       = idx('date');
+
+  return dataRows
+    .filter((row: string[]) => row.some(cell => cell?.trim()))
+    .map((row: string[]): WorldRecordRow => ({
+      lineType:   row[lineTypeIdx]   ?? '',
+      recordType: row[recordTypeIdx] ?? '',
+      specs:      row[specsIdx]      ?? '',
+      name:       row[nameIdx]       ?? '',
+      country:    row[countryIdx]    ?? '',
+      gender:     toGender(row[genderIdx] ?? ''),
+      eventName:  row[eventNameIdx]  ?? '',
+      date:       toFormattedDate(row[dateIdx] ?? ''),
+    }))
+    .sort((a, b) => parseDateForSort(b.date) - parseDateForSort(a.date)); // newest first
+};

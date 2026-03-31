@@ -4,17 +4,23 @@ import Table from '@ui/Table';
 
 const columnHelper = createColumnHelper<WorldRecord>();
 const columns = [
-  columnHelper.accessor("record", {
-    header: "Record",
+  columnHelper.accessor("recordType", {
+    header: "Record Type",
   }),
-  columnHelper.accessor("location", {
-    header: "Location",
+  columnHelper.accessor("specs", {
+    header: "Specs",
+  }),
+  columnHelper.accessor("name", {
+    header: "Name",
+  }),
+  columnHelper.accessor("country", {
+    header: "Country",
+  }),
+  columnHelper.accessor("gender", {
+    header: "Gender",
   }),
   columnHelper.accessor("date", {
     header: "Date",
-  }),
-  columnHelper.accessor("value", {
-    header: "Value",
   }),
 ];
 

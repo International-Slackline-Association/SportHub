@@ -9,11 +9,13 @@ import {
   TableOptions,
   flexRender,
   RowData,
-  ColumnFiltersState
+  ColumnFiltersState,
+  VisibilityState,
 } from "@tanstack/react-table";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import styles from "./styles.module.css";
 import { TableFilters } from "./TableFilters";
+import { useClientMediaQuery } from "@utils/useClientMediaQuery";
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -34,6 +36,21 @@ type TableProps<TData,> = {
 
 const Table = <TData,>({ extraFilters, options, title }: TableProps<TData>) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const { isDesktop } = useClientMediaQuery();
+
+  // Automatically hide columns declared with size: 0 (used for filter-only columns)
+  const autoColumnVisibility = useMemo<VisibilityState>(() => {
+    const hidden: VisibilityState = {};
+    for (const col of options?.columns ?? []) {
+      if (col.size === 0) {
+        const id =
+          (col as { id?: string }).id ??
+          (col as { accessorKey?: unknown }).accessorKey as string | undefined;
+        if (id) hidden[id] = false;
+      }
+    }
+    return { ...hidden, ...options?.initialState?.columnVisibility };
+  }, [options?.columns, options?.initialState?.columnVisibility]);
 
   const table = useReactTable({
     defaultColumn: {
@@ -47,6 +64,7 @@ const Table = <TData,>({ extraFilters, options, title }: TableProps<TData>) => {
     },
     state: {
       columnFilters,
+      columnVisibility: autoColumnVisibility,
     },
     ...options,
     columns: options?.columns || [],
@@ -70,7 +88,7 @@ const Table = <TData,>({ extraFilters, options, title }: TableProps<TData>) => {
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <th key={header.id} colSpan={header.colSpan} style={{ width: `${header.getSize()}px` }}>
+                  <th key={header.id} colSpan={header.colSpan} style={isDesktop ? { width: `${header.getSize()}px` } : undefined}>
                     {header.isPlaceholder
                       ? null
                       : flexRender(

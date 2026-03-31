@@ -19,6 +19,7 @@ const CONTEST_TYPE_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
   Object.entries(MAP_CONTEST_TYPE_ENUM_TO_NAME).map(([num, name]) => [name, Number(num)])
 );
 import { UserRecord } from './relational-types';
+import { getWorldRecordsSheet } from './google-sheets';
 
 // PERFORMANCE OPTIMIZATION: Simple in-memory cache with TTL
 interface CacheEntry<T> {
@@ -512,10 +513,14 @@ export interface AthleteContest {
 }
 
 export interface WorldRecord {
-  record: string;
-  location: string;
-  date: string;
-  value: string;
+  lineType: string;    // e.g. "Highline", "Trickline"
+  recordType: string;  // e.g. "Longest", "Highest"
+  specs: string;       // e.g. "200m / 80m height"
+  name: string;        // Athlete name
+  country: string;     // Country name from sheet
+  gender: Gender;      // "MEN" | "WOMEN" | "ALL" | "OTHER"
+  eventName: string;   // Competition / location where set
+  date: string;        // DD/MM/YYYY
 }
 
 export interface WorldFirst {
@@ -670,20 +675,26 @@ export async function getAthleteContests(athleteId: string): Promise<AthleteCont
   }
 }
 
-/**
- * TODO
- * Get world records (placeholder - should be stored in separate table)
- */
 export async function getWorldRecords(): Promise<WorldRecord[]> {
-  // Placeholder - in a real app, this would query a world records table
-  return [
-    {
-      record: "Longest highline walk",
-      location: "Alps, Switzerland",
-      date: "15/08/2024",
-      value: "2.5km"
+  const cacheKey = `world-records`;
+  const cached = cache.get<WorldRecord[]>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const items = await getWorldRecordsSheet();
+
+    if (!items || items.length === 0) {
+      return [];
     }
-  ];
+
+    // Cache the results
+    cache.set(cacheKey, items, 120000); // Cache for 2 minutes
+
+    return items;
+  } catch (error) {
+    console.error('Error fetching world records:', error);
+    return [];
+  }
 }
 
 /**

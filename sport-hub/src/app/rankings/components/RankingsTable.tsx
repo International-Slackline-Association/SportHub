@@ -7,30 +7,15 @@ import Table from '@ui/Table';
 import { ageCategoryFilterFn } from '@ui/Table/TableFilterFields';
 import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import Link from 'next/link';
-import { CircleFlag } from 'react-circle-flags';
-import { getIocCode, getIso2FromIoc } from '@utils/countries';
+import { getIocCode } from '@utils/countries';
 import { DISCIPLINE_DATA } from '@utils/consts';
 import { useQuery } from '@tanstack/react-query';
 import Spinner from '@ui/Spinner';
 import { Alert } from '@ui/Alert';
 import tableStyles from '@ui/Table/styles.module.css';
+import { CountryFlagFromIoc } from '@ui/CountryFlag';
 
 const columnHelper = createColumnHelper<AthleteRanking>();
-
-const CountryFlagWithName = ({ iocCode, defaultValue="N/A" }: { iocCode: string, defaultValue?: string }) => {
-  if (iocCode === 'N/A' || !iocCode) {
-    return <span className="text-gray-500">{defaultValue}</span>;
-  }
-
-  const iso2 = getIso2FromIoc(iocCode);
-
-  return (
-    <div className="flex items-center gap-2" title={iocCode}>
-      <CircleFlag countryCode={iso2} height={22} width={22} />
-      <span className="text-sm text-gray-600">{iocCode}</span>
-    </div>
-  );
-};
 
 const NameCell = ({ athlete, showCountry=false }: { athlete: AthleteRanking, showCountry?: boolean }) => {
   const displayName = athlete.fullName || athlete.name || `${athlete.name} ${athlete.surname || ''}`;
@@ -44,7 +29,7 @@ const NameCell = ({ athlete, showCountry=false }: { athlete: AthleteRanking, sho
         >
           {displayName}
         </Link>
-        <CountryFlagWithName iocCode={getIocCode(athlete.country)} defaultValue="" />
+        <CountryFlagFromIoc iocCode={getIocCode(athlete.country)} defaultValue="" />
     </div>
     );
   }
@@ -101,7 +86,7 @@ const desktopColumns = [
     enableColumnFilter: true,
     header: 'Country',
     cell: info => (
-      <CountryFlagWithName iocCode={info.getValue()} />
+      <CountryFlagFromIoc iocCode={info.getValue()} />
     ),
     meta: { filterVariant: 'select' },
   }),
