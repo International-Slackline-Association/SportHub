@@ -4,13 +4,21 @@ import { auth, sheets } from '@googleapis/sheets';
 
 const SPREADSHEET_ID = process.env.ISA_CERTIFICATES_SPREADSHEET_ID!;
 
-const authClient = new auth.GoogleAuth({
-  credentials: {
-    client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL!,
-    private_key: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY!.replace(/\\n/g, '\n'),
-  },
-  scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
-});
+// Lazy-initialised so a bad/missing key throws at call time (catchable) rather
+// than at module load time (which causes an uncatchable 500 on every page import).
+let _authClient: InstanceType<typeof auth.GoogleAuth> | null = null;
+const getAuthClient = () => {
+  if (!_authClient) {
+    _authClient = new auth.GoogleAuth({
+      credentials: {
+        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+        private_key: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      },
+      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+    });
+  }
+  return _authClient;
+};
 
 const WORLD_RECORDS_SHEET = 'World Records';
 const WORLD_FIRSTS_SHEET  = 'World Firsts';
@@ -65,7 +73,7 @@ export interface WorldFirstRow {
 }
 
 export const getWorldFirstsSheet = async (): Promise<WorldFirstRow[]> => {
-  const client = sheets({ version: 'v4', auth: authClient });
+  const client = sheets({ version: 'v4', auth: getAuthClient() });
 
   const response = await client.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -109,7 +117,7 @@ export const getWorldFirstsSheet = async (): Promise<WorldFirstRow[]> => {
 };
 
 export const getWorldRecordsSheet = async (): Promise<WorldRecordRow[]> => {
-  const client = sheets({ version: 'v4', auth: authClient });
+  const client = sheets({ version: 'v4', auth: getAuthClient() });
 
   const response = await client.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
