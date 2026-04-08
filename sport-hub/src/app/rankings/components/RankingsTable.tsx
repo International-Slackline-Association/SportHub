@@ -13,46 +13,58 @@ import { useQuery } from '@tanstack/react-query';
 import Spinner from '@ui/Spinner';
 import { Alert } from '@ui/Alert';
 import tableStyles from '@ui/Table/styles.module.css';
-import { CountryFlagFromIoc } from '@ui/CountryFlag';
+import { CountryFlag } from '@ui/CountryFlag';
 
 const columnHelper = createColumnHelper<AthleteRanking>();
 
-const NameCell = ({ athlete, showCountry=false }: { athlete: AthleteRanking, showCountry?: boolean }) => {
+const NameCell = ({ athlete }: { athlete: AthleteRanking }) => {
   const displayName = athlete.fullName || athlete.name || `${athlete.name} ${athlete.surname || ''}`;
-
-  if (showCountry) {
-    return (
-      <div className="stack">
-        <Link
-          className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
-          href={`/athlete-profile/${athlete.userId}`}
-        >
-          {displayName}
-        </Link>
-        <CountryFlagFromIoc iocCode={getIocCode(athlete.country)} defaultValue="" />
-    </div>
-    );
-  }
-
   return (
-    <Link href={`/athlete-profile/${athlete.userId}`}>
+    <Link
+      className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+      href={`/athlete-profile/${athlete.userId}`}
+    >
       {displayName}
     </Link>
   );
 };
 
-const desktopColumns = [
+const columns = [
+  // Shared Columns
   columnHelper.display({
+    id: 'rank',
     header: 'Rank',
     cell: info => info.row.index + 1,
-    size: 36,
   }),
+  columnHelper.accessor('points', {
+    header: 'Points',
+  }),
+  // Mobile: single stacked column
+  columnHelper.display({
+    id: 'athlete',
+    header: 'Athlete',
+    cell: info => {
+      const { age, gender, country } = info.row.original;
+      const genderLabel = gender === 'female' ? 'Women' : gender === 'male' ? 'Men' : '—';
+      return (
+        <div className="stack gap-2">
+          <div className="cluster gap-2 items-center">
+            <NameCell athlete={info.row.original} />
+            <span className="text-xs text-gray-400">{age ?? '—'}</span>
+          </div>
+          <div className="cluster gap-2 items-center">
+            <CountryFlag country={country} defaultValue="" />
+            <span className="text-xs text-gray-400" style={{ paddingTop: 2 }}>{genderLabel}</span>
+          </div>
+        </div>
+      );
+    },
+  }),
+  // Desktop-only columns
   columnHelper.accessor('fullName', {
     enableColumnFilter: true,
     header: 'Name',
-    cell: info => (
-      <NameCell athlete={info.row.original} />
-    ),
+    cell: info => <NameCell athlete={info.row.original} />,
     meta: { filterVariant: 'text', filterPlaceholder: 'Enter athlete name' },
   }),
   columnHelper.accessor('age', {
@@ -85,70 +97,8 @@ const desktopColumns = [
     id: 'country',
     enableColumnFilter: true,
     header: 'Country',
-    cell: info => (
-      <CountryFlagFromIoc iocCode={info.getValue()} />
-    ),
+    cell: info => <CountryFlag country={info.getValue()} />,
     meta: { filterVariant: 'select' },
-  }),
-  columnHelper.accessor('points', {
-    header: 'Points',
-  }),
-];
-
-const mobileColumns = [
-  columnHelper.display({
-    cell: info => info.table.getRowModel().rows.indexOf(info.row) + 1,
-    header: '',
-    id: "rank",
-    size: 36,
-  }),
-  columnHelper.accessor('fullName', {
-    enableColumnFilter: true,
-    header: 'Name',
-    cell: info => (
-      <NameCell athlete={info.row.original} showCountry />
-    ),
-    meta: { filterVariant: 'text', filterPlaceholder: 'Enter athlete name' },
-  }),
-  columnHelper.accessor('points', {
-    header: 'Points',
-  }),
-  columnHelper.accessor('age', {
-    header: 'Age',
-    cell: info => info.getValue() ?? '—',
-    enableColumnFilter: true,
-    filterFn: ageCategoryFilterFn,
-    meta: {
-      filterVariant: 'select',
-      filterOptions: [
-        { value: 'youth', label: 'Youth (< 18)' },
-        { value: 'senior', label: 'Senior (35+)' },
-      ],
-    },
-  }),
-  // Temporary workaround to include country filter for mobile view
-  columnHelper.accessor((row: AthleteRanking) => getIocCode(row.country), {
-    id: 'country',
-    enableColumnFilter: true,
-    header: 'Country',
-    cell: () => <></>,
-    meta: { filterVariant: 'select' },
-    size: 0
-  }),
-  columnHelper.accessor('gender', {
-    id: 'gender',
-    enableColumnFilter: true,
-    header: 'Gender',
-    filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
-    cell: () => <></>,
-    meta: {
-      filterVariant: 'select',
-      filterOptions: [
-        { value: 'male', label: 'Men' },
-        { value: 'female', label: 'Women' },
-      ],
-    },
-    size: 0,
   }),
 ];
 
@@ -184,6 +134,10 @@ const RankingsTable = ({ initialDiscipline }: { initialDiscipline?: string }) =>
       return (await fetch(url)).json();
     },
   });
+
+  // Adjust rank and points column width based on device
+  columns[0].size = isDesktop ? 36 : 48;
+  columns[1].size = isDesktop ? 36 : 60;
 
   return (
     <div className="flex items-center justify-center min-h-64">
@@ -227,8 +181,20 @@ const RankingsTable = ({ initialDiscipline }: { initialDiscipline?: string }) =>
             </>
           }
           options={{
-            columns: isDesktop ? desktopColumns : mobileColumns,
+            columns,
             data,
+            initialState: {
+              columnOrder: isDesktop
+                ? ['rank', 'fullName', 'age', 'gender', 'country', 'points']
+                : ['rank', 'athlete', 'points'],
+              columnVisibility: {
+                athlete:  !isDesktop,
+                fullName: !!isDesktop,
+                age:      !!isDesktop,
+                gender:   !!isDesktop,
+                country:  !!isDesktop,
+              },
+            },
           }}
         />
       )}

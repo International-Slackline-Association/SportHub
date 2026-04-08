@@ -12,20 +12,12 @@ import Link from 'next/link';
 
 const columnHelper = createColumnHelper<WorldFirst>();
 
-const desktopColumns = [
-  columnHelper.accessor('date', {
-    header: 'Date',
-    size: 40,
-  }),
+const sharedColumns = [
   columnHelper.accessor('typeOfFirst', {
     header: 'World First Type',
     enableColumnFilter: true,
     meta: { filterVariant: 'select' },
     size: 40,
-  }),
-  columnHelper.accessor('specs', {
-    header: 'Specs',
-    size: 80,
   }),
   columnHelper.accessor('description', {
     header: 'Description',
@@ -33,21 +25,11 @@ const desktopColumns = [
     meta: { filterVariant: 'autocomplete' },
     size: 80,
   }),
-  columnHelper.accessor('name', {
-    header: 'Name',
-    cell: info => {
-      const userId = info.row.original.athleteUserId;
-      return userId
-        ? <Link href={`/athlete-profile/${userId}`} className="text-blue-600 hover:underline">{info.getValue()}</Link>
-        : <>{info.getValue()}</>;
-    },
-    size: 80,
-  }),
   columnHelper.accessor('country', {
     id: 'country',
     header: 'Country',
     enableColumnFilter: true,
-    cell: info => <CountryFlag country={info.getValue()} />,
+    cell: info => <CountryFlag country={info.getValue()} defaultValue="" />,
     meta: { filterVariant: 'select' },
     size: 80,
   }),
@@ -67,7 +49,8 @@ const desktopColumns = [
   }),
 ];
 
-const mobileColumns = [
+const columns = [
+  // Mobile: single stacked column
   columnHelper.display({
     id: 'worldFirst',
     header: 'World First',
@@ -76,57 +59,44 @@ const mobileColumns = [
       return (
         <div className="stack">
           <div className="cluster items-center justify-between text-gray-400">
-            <span className="text-xs">{date || '—'}</span>
+            <span className="text-xs">{date}</span>
             <div className="cluster gap-2 items-center text-sm">
-              <span>{typeOfFirst || '—'}</span>
-              <span>{specs || '—'}</span>
+              <span>{typeOfFirst}</span>
+              <span>{specs}</span>
             </div>
           </div>
-
           <div className="cluster items-center justify-between">
             <span className="font-medium">
               {info.row.original.athleteUserId
-                ? <Link href={`/athlete-profile/${info.row.original.athleteUserId}`} className="text-blue-600 hover:underline">{name || '—'}</Link>
-                : name || '—'
+                ? <Link href={`/athlete-profile/${info.row.original.athleteUserId}`} className="text-blue-600 hover:underline">{name}</Link>
+                : name
               }
             </span>
             <span>{description}</span>
           </div>
           <div className="cluster gap-2 items-center">
-            <CountryFlag country={country} />
+            <CountryFlag country={country} defaultValue="" />
             <span className="text-xs text-gray-400" style={{ paddingTop: 2 }}>{textToTitleCase(gender)}</span>
           </div>
         </div>
       );
     },
   }),
-  // Hidden filter-only columns so typeOfFirst/description/country/gender filters still work on mobile
-  columnHelper.accessor('description', {
-    header: 'Description',
-    enableColumnFilter: true,
-    meta: { filterVariant: 'autocomplete' },
-  }),
-  columnHelper.accessor('typeOfFirst', {
-    header: 'World First Type',
-    enableColumnFilter: true,
-    meta: { filterVariant: 'select' },
-  }),
-  columnHelper.accessor('country', {
-    header: 'Country',
-    enableColumnFilter: true,
-    meta: { filterVariant: 'select' },
-  }),
-  columnHelper.accessor('gender', {
-    header: 'Gender',
-    enableColumnFilter: true,
-    meta: {
-      filterVariant: 'select',
-      filterOptions: [
-        { value: 'MEN',   label: 'Men' },
-        { value: 'WOMEN', label: 'Women' },
-      ],
+  // Desktop-only columns
+  columnHelper.accessor('date', { header: 'Date', size: 40 }),
+  columnHelper.accessor('specs', { header: 'Specs', size: 80 }),
+  columnHelper.accessor('name', {
+    header: 'Name',
+    cell: info => {
+      const userId = info.row.original.athleteUserId;
+      return userId
+        ? <Link href={`/athlete-profile/${userId}`} className="text-blue-600 hover:underline">{info.getValue()}</Link>
+        : <>{info.getValue()}</>;
     },
+    size: 80,
   }),
+  // Shared filterable columns
+  ...sharedColumns,
 ];
 
 type WorldFirstsTableProps = {
@@ -165,14 +135,20 @@ const WorldFirstsTable = ({ data }: WorldFirstsTableProps) => {
         </div>
       }
       options={{
-        columns: isDesktop ? desktopColumns : mobileColumns,
+        columns,
         data: filteredData,
         initialState: {
-          sorting: [{ id: 'date', desc: true }],
+          columnOrder: isDesktop
+            ? ['date', 'typeOfFirst', 'specs', 'description', 'name', 'country', 'gender']
+            : ['worldFirst', 'typeOfFirst', 'description', 'country', 'gender'],
           columnVisibility: {
-            country:     !!isDesktop,
-            description: !!isDesktop,
+            worldFirst:  !isDesktop,
+            date:        !!isDesktop,
+            specs:       !!isDesktop,
+            name:        !!isDesktop,
             typeOfFirst: !!isDesktop,
+            description: !!isDesktop,
+            country:     !!isDesktop,
             gender:      !!isDesktop,
           },
         },

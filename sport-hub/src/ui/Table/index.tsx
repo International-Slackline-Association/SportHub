@@ -15,7 +15,6 @@ import {
 import { useMemo, useState } from "react";
 import styles from "./styles.module.css";
 import { TableFilters } from "./TableFilters";
-import { useClientMediaQuery } from "@utils/useClientMediaQuery";
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -36,7 +35,6 @@ type TableProps<TData,> = {
 
 const Table = <TData,>({ extraFilters, options, title }: TableProps<TData>) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const { isDesktop } = useClientMediaQuery();
 
   // Automatically hide columns declared with size: 0 (used for filter-only columns)
   const autoColumnVisibility = useMemo<VisibilityState>(() => {
@@ -65,6 +63,7 @@ const Table = <TData,>({ extraFilters, options, title }: TableProps<TData>) => {
     state: {
       columnFilters,
       columnVisibility: autoColumnVisibility,
+      ...(options?.initialState?.columnOrder && { columnOrder: options.initialState.columnOrder }),
     },
     ...options,
     columns: options?.columns || [],
@@ -88,7 +87,7 @@ const Table = <TData,>({ extraFilters, options, title }: TableProps<TData>) => {
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <th key={header.id} colSpan={header.colSpan} style={isDesktop ? { width: `${header.getSize()}px` } : undefined}>
+                  <th key={header.id} colSpan={header.colSpan} style={{ width: `${header.getSize()}px` }}>
                     {header.isPlaceholder
                       ? null
                       : flexRender(

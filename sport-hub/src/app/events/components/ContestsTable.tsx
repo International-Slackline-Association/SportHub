@@ -12,6 +12,8 @@ import { contestSizeOptions } from '@ui/Form/commonOptions';
 import { dateFilterFn } from '@ui/Table/TableFilterFields';
 import Spinner from '@ui/Spinner';
 import { Alert } from '@ui/Alert';
+import { useClientMediaQuery } from '@utils/useClientMediaQuery';
+import { CountryFlag } from '@ui/CountryFlag';
 
 const CountryFlagWithName = ({ iocCode, defaultValue="N/A" }: { iocCode: string, defaultValue?: string }) => {
   if (iocCode === 'N/A' || !iocCode) {
@@ -32,6 +34,50 @@ const CountryFlagWithName = ({ iocCode, defaultValue="N/A" }: { iocCode: string,
 
 const columnHelper = createColumnHelper<ContestData>();
 const columns = [
+  // Mobile: single stacked column
+  columnHelper.display({
+    id: 'event',
+    header: 'Event',
+    cell: info => {
+      const { name, date, category, country, discipline, athletes, eventId } = info.row.original;
+      const d = String(discipline);
+      const disciplineData = DISCIPLINE_DATA[d as keyof typeof DISCIPLINE_DATA]
+        ?? Object.values(DISCIPLINE_DATA).find(e => e.enumValue === Number(d));
+      const contestType = MAP_CONTEST_TYPE_ENUM_TO_NAME[category];
+      const size = contestSizeOptions.find(o => o.value === contestType)?.label ?? String(category);
+      const winner = athletes?.find(a => a.place === '1');
+      const winnerName = winner ? `${winner.name} ${winner.surname || ''}`.trim() : null;
+      const genderKey = MAP_CONTEST_GENDER_ENUM_TO_NAME[info.row.original.gender];
+      const genderLabel = ({ MIXED: 'Mixed', MEN_ONLY: 'Men', WOMEN_ONLY: 'Women' } as Record<string, string>)[genderKey] ?? genderKey;
+      let formattedDate = date;
+      try { formattedDate = new Date(date).toLocaleDateString('en-GB'); } catch { /* keep raw */ }
+      return (
+        <div className="stack gap-1">
+          <div className="cluster justify-between items-center text-gray-400 mb-2">
+            <span className="text-xs">{formattedDate}</span>
+            {disciplineData && (
+              <div className="cluster gap-1 items-center text-xs">
+                <disciplineData.Icon height={16} width={16} />
+                <span>{disciplineData.name}</span>
+                <span>{size}</span>
+              </div>
+            )}
+          </div>
+          <Link href={`/events/${eventId}`} className="text-blue-600 hover:underline font-medium">
+            {name}
+          </Link>
+          <div className="cluster justify-start items-center gap-2">
+            {winner && (
+              <Link href={`/athlete-profile/${winner?.userId}`} className="text-blue-600 hover:underline">
+                {winnerName}
+              </Link>
+            )}
+            <CountryFlag country={country} />
+            <span className="text-xs text-gray-400" style={{ paddingTop: 2 }}>{genderLabel}</span>          </div>
+        </div>
+      );
+    },
+  }),
   columnHelper.accessor("name", {
     enableColumnFilter: true,
     header: "Event Name",
@@ -149,6 +195,7 @@ const columns = [
 ];
 
 const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
+  const { isDesktop } = useClientMediaQuery();
   const { error, data = [], isError, isLoading, isSuccess } = useQuery({
     queryKey: ['events'],
     queryFn: async () => (await fetch('/api/events/contests')).json(),
@@ -168,7 +215,27 @@ const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
         <Alert>Error loading events: {error?.message}</Alert>
       )}
       {isSuccess && (
-        <Table options={{ columns, data }} />
+        <Table options={{
+          columns,
+          data,
+          initialState: {
+            columnOrder: isDesktop
+              ? ['name', 'date', 'country', 'discipline', 'gender', 'prize', 'size', 'athletes', 'verified']
+              : ['event'],
+            columnVisibility: {
+              event:      !isDesktop,
+              name:       !!isDesktop,
+              date:       !!isDesktop,
+              country:    !!isDesktop,
+              discipline: !!isDesktop,
+              gender:     !!isDesktop,
+              prize:      !!isDesktop,
+              size:       !!isDesktop,
+              athletes:   !!isDesktop,
+              verified:   !!isDesktop,
+            },
+          },
+        }} />
       )}
     </div>
   );

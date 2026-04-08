@@ -12,30 +12,12 @@ import Link from 'next/link';
 
 const columnHelper = createColumnHelper<WorldRecord>();
 
-const desktopColumns = [
-  columnHelper.accessor('date', {
-    header: 'Date',
-    size: 40,
-  }),
+const sharedColumns = [
   columnHelper.accessor('recordType', {
     header: 'Record Type',
     enableColumnFilter: true,
     meta: { filterVariant: 'autocomplete' },
     size: 160,
-  }),
-  columnHelper.accessor('specs', {
-    header: 'Specs',
-    size: 120,
-  }),
-  columnHelper.accessor('name', {
-    header: 'Name',
-    cell: info => {
-      const userId = info.row.original.athleteUserId;
-      return userId
-        ? <Link href={`/athlete-profile/${userId}`} className="text-blue-600 hover:underline">{info.getValue()}</Link>
-        : <>{info.getValue()}</>;
-    },
-    size: 80,
   }),
   columnHelper.accessor('country', {
     id: 'country',
@@ -59,10 +41,10 @@ const desktopColumns = [
     },
     size: 40,
   }),
-];
+] as const;
 
-const mobileColumns = [
-  // Single stacked column: date / record type + specs / name + flag + gender
+const columns = [
+  // Mobile: single stacked column
   columnHelper.display({
     id: 'worldRecord',
     header: 'World Record',
@@ -91,28 +73,21 @@ const mobileColumns = [
       );
     },
   }),
-  // Hidden filter-only columns so recordType/country/gender filters still work on mobile
-  columnHelper.accessor('recordType', {
-    header: 'Record Type',
-    enableColumnFilter: true,
-    meta: { filterVariant: 'autocomplete' },
-  }),
-  columnHelper.accessor('country', {
-    header: 'Country',
-    enableColumnFilter: true,
-    meta: { filterVariant: 'select' },
-  }),
-  columnHelper.accessor('gender', {
-    header: 'Gender',
-    enableColumnFilter: true,
-    meta: {
-      filterVariant: 'select',
-      filterOptions: [
-        { value: 'MEN',   label: 'Men' },
-        { value: 'WOMEN', label: 'Women' },
-      ],
+  // Desktop-only columns
+  columnHelper.accessor('date', { header: 'Date', size: 40 }),
+  columnHelper.accessor('specs', { header: 'Specs', size: 120 }),
+  columnHelper.accessor('name', {
+    header: 'Name',
+    cell: info => {
+      const userId = info.row.original.athleteUserId;
+      return userId
+        ? <Link href={`/athlete-profile/${userId}`} className="text-blue-600 hover:underline">{info.getValue()}</Link>
+        : <>{info.getValue()}</>;
     },
+    size: 80,
   }),
+  // Shared filterable columns
+  ...sharedColumns,
 ];
 
 type WorldRecordsTableProps = {
@@ -153,15 +128,22 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
         </div>
       }
       options={{
-        columns: isDesktop ? desktopColumns : mobileColumns,
+        columns,
         data: filteredData,
         initialState: {
           sorting: [{ id: 'date', desc: true }],
+          columnOrder: isDesktop
+            ? ['date', 'recordType', 'specs', 'name', 'country', 'gender']
+            : ['worldRecord', 'recordType', 'country', 'gender'],
           columnVisibility: {
-            country: !!isDesktop,
-            recordType: !!isDesktop,
-            gender: !!isDesktop,
-          }
+            worldRecord: !isDesktop,
+            date:        !!isDesktop,
+            specs:       !!isDesktop,
+            name:        !!isDesktop,
+            recordType:  !!isDesktop,
+            country:     !!isDesktop,
+            gender:      !!isDesktop,
+          },
         }
       }}
     />
