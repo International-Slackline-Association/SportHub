@@ -33,14 +33,11 @@ export default async function Home() {
   let featuredAthletesData: Awaited<ReturnType<typeof getFeaturedAthletes>> = [];
   let debugError: string | null = null;
 
-  console.log("HOME PAGE render");
-
   try {
     [featuredContestsData, featuredAthletesData] = await Promise.all([
       getFeaturedEvents(),
       getFeaturedAthletes(undefined, NUM_FEATURED_ATHLETES),
     ]);
-    console.log("SUCCESS loading data in home");
   } catch (err) {
     console.error('[Home] data fetch failed:', err);
     debugError = err instanceof Error ? `${err.message}\n${err.stack}` : String(err);

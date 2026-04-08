@@ -1,5 +1,6 @@
 import { Column, Row } from "@tanstack/react-table";
 import styles from "./styles.module.css";
+import Autocomplete from "@ui/Form/Autocomplete";
 
 type TableFilterProps<TData,> = {
   column: Column<TData, unknown>;
@@ -157,6 +158,28 @@ const DateTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
   );
 };
 
+const AutocompleteTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
+  const id = column.id;
+  const columnName = column.columnDef.header?.toString();
+  const explicitOptions = column.columnDef.meta?.filterOptions;
+
+  const options: { value: string; label: string }[] = explicitOptions
+    ?? [...new Set(rows.map(row => String(row.getValue(column.id))))].sort().map(v => ({ value: v, label: v }));
+
+  return (
+    <div className={styles.columnFilter} key={`column-filter-${id}`}>
+      <label htmlFor={id}>{columnName}</label>
+      <Autocomplete
+        id={id}
+        value={String(column.getFilterValue() ?? '')}
+        onChange={(v) => column.setFilterValue(v || undefined)}
+        options={options}
+        placeholder="All"
+      />
+    </div>
+  );
+};
+
 const TableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
   const filterVariant = column.columnDef?.meta?.filterVariant;
 
@@ -166,6 +189,10 @@ const TableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
 
   if (filterVariant === "date") {
     return <DateTableFilter column={column} rows={rows} />;
+  }
+
+  if (filterVariant === "autocomplete") {
+    return <AutocompleteTableFilter column={column} rows={rows} />;
   }
 
   return <SelectTableFilter column={column} rows={rows} />;

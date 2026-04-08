@@ -29,6 +29,8 @@ const desktopColumns = [
   }),
   columnHelper.accessor('description', {
     header: 'Description',
+    enableColumnFilter: true,
+    meta: { filterVariant: 'autocomplete' },
     size: 80,
   }),
   columnHelper.accessor('name', {
@@ -98,7 +100,12 @@ const mobileColumns = [
       );
     },
   }),
-  // Hidden filter-only columns so typeOfFirst/country/gender filters still work on mobile
+  // Hidden filter-only columns so typeOfFirst/description/country/gender filters still work on mobile
+  columnHelper.accessor('description', {
+    header: 'Description',
+    enableColumnFilter: true,
+    meta: { filterVariant: 'autocomplete' },
+  }),
   columnHelper.accessor('typeOfFirst', {
     header: 'World First Type',
     enableColumnFilter: true,
@@ -164,6 +171,7 @@ const WorldFirstsTable = ({ data }: WorldFirstsTableProps) => {
           sorting: [{ id: 'date', desc: true }],
           columnVisibility: {
             country:     !!isDesktop,
+            description: !!isDesktop,
             typeOfFirst: !!isDesktop,
             gender:      !!isDesktop,
           },

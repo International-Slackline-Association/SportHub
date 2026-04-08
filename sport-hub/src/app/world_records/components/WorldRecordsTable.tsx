@@ -20,7 +20,7 @@ const desktopColumns = [
   columnHelper.accessor('recordType', {
     header: 'Record Type',
     enableColumnFilter: true,
-    meta: { filterVariant: 'select' },
+    meta: { filterVariant: 'autocomplete' },
     size: 160,
   }),
   columnHelper.accessor('specs', {
@@ -95,7 +95,7 @@ const mobileColumns = [
   columnHelper.accessor('recordType', {
     header: 'Record Type',
     enableColumnFilter: true,
-    meta: { filterVariant: 'select' },
+    meta: { filterVariant: 'autocomplete' },
   }),
   columnHelper.accessor('country', {
     header: 'Country',

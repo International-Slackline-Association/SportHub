@@ -20,7 +20,7 @@ import { useClientMediaQuery } from "@utils/useClientMediaQuery";
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface ColumnMeta<TData extends RowData, TValue> {
-    filterVariant?: "text" | "select" | "date";
+    filterVariant?: "text" | "select" | "date" | "autocomplete";
     /** Explicit options for select filters. When provided, overrides data-derived options. */
     filterOptions?: { value: string; label: string }[];
     /** Custom placeholder text for text filters. */
