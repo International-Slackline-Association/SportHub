@@ -67,18 +67,18 @@ export const TableFilters = <TData,>({ extraFilters, table }: TableFiltersProps<
   const { isDesktop } = useClientMediaQuery();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const filterableHeaders = table.getFlatHeaders().filter(header => header.column.getCanFilter());
+  const filterableColumns = table.getAllFlatColumns().filter(col => col.getCanFilter());
   const prefilteredRows = table.getPreFilteredRowModel().rows;
 
-  if (!filterableHeaders.length) return null;
+  if (!filterableColumns.length) return null;
 
   if (isDesktop) {
     return (
       <div className={cn(styles.tableFilters, "cluster")}>
         {extraFilters}
         {
-          ...filterableHeaders.map((header) => (
-            <TableFilterFields header={header} key={header.id} rows={prefilteredRows} />
+          ...filterableColumns.map((col) => (
+            <TableFilterFields column={col} key={col.id} rows={prefilteredRows} />
           ))
         }
         <Button className={styles.resetButton} onClick={() => table.resetColumnFilters()} variant="ghost">Reset</Button>
@@ -103,8 +103,8 @@ export const TableFilters = <TData,>({ extraFilters, table }: TableFiltersProps<
         <div className={cn(styles.tableFilters, "stack")}>
           {extraFilters}
           {
-            ...filterableHeaders.map((header) => (
-              <TableFilterFields header={header} key={header.id} rows={prefilteredRows} />
+            ...filterableColumns.map((col) => (
+              <TableFilterFields column={col} key={col.id} rows={prefilteredRows} />
             ))
           }
         </div>

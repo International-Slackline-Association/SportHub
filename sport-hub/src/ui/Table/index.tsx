@@ -9,16 +9,17 @@ import {
   TableOptions,
   flexRender,
   RowData,
-  ColumnFiltersState
+  ColumnFiltersState,
+  VisibilityState,
 } from "@tanstack/react-table";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import styles from "./styles.module.css";
 import { TableFilters } from "./TableFilters";
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface ColumnMeta<TData extends RowData, TValue> {
-    filterVariant?: "text" | "select" | "date";
+    filterVariant?: "text" | "select" | "date" | "autocomplete";
     /** Explicit options for select filters. When provided, overrides data-derived options. */
     filterOptions?: { value: string; label: string }[];
     /** Custom placeholder text for text filters. */
@@ -35,6 +36,20 @@ type TableProps<TData,> = {
 const Table = <TData,>({ extraFilters, options, title }: TableProps<TData>) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
+  // Automatically hide columns declared with size: 0 (used for filter-only columns)
+  const autoColumnVisibility = useMemo<VisibilityState>(() => {
+    const hidden: VisibilityState = {};
+    for (const col of options?.columns ?? []) {
+      if (col.size === 0) {
+        const id =
+          (col as { id?: string }).id ??
+          (col as { accessorKey?: unknown }).accessorKey as string | undefined;
+        if (id) hidden[id] = false;
+      }
+    }
+    return { ...hidden, ...options?.initialState?.columnVisibility };
+  }, [options?.columns, options?.initialState?.columnVisibility]);
+
   const table = useReactTable({
     defaultColumn: {
       enableColumnFilter: false,
@@ -47,6 +62,8 @@ const Table = <TData,>({ extraFilters, options, title }: TableProps<TData>) => {
     },
     state: {
       columnFilters,
+      columnVisibility: autoColumnVisibility,
+      ...(options?.initialState?.columnOrder && { columnOrder: options.initialState.columnOrder }),
     },
     ...options,
     columns: options?.columns || [],

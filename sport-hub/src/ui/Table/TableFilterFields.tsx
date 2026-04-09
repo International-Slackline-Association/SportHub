@@ -1,8 +1,9 @@
-import { Header, Row } from "@tanstack/react-table";
+import { Column, Row } from "@tanstack/react-table";
 import styles from "./styles.module.css";
+import Autocomplete from "@ui/Form/Autocomplete";
 
 type TableFilterProps<TData,> = {
-  header: Header<TData, unknown>;
+  column: Column<TData, unknown>;
   rows: Row<TData>[];
 }
 
@@ -57,8 +58,8 @@ const MONTHS = [
   { value: '11', label: 'Nov' }, { value: '12', label: 'Dec' },
 ];
 
-const TextTableFilter = <TData,>({ header }: TableFilterProps<TData>) => {
-  const { id, column } = header;
+const TextTableFilter = <TData,>({ column }: TableFilterProps<TData>) => {
+  const id = column.id;
   const columnName = column.columnDef?.header?.toString() || "";
   const placeholder = column.columnDef.meta?.filterPlaceholder ?? `Enter ${columnName.toLowerCase()}`;
 
@@ -77,15 +78,15 @@ const TextTableFilter = <TData,>({ header }: TableFilterProps<TData>) => {
   );
 };
 
-const SelectTableFilter = <TData,>({ header, rows }: TableFilterProps<TData>) => {
-  const { id, column } = header;
+const SelectTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
+  const id = column.id;
   const columnName = column.columnDef.header?.toString();
   const explicitOptions = column.columnDef.meta?.filterOptions;
 
   // Use explicit options when provided (e.g. full discipline/size lists from consts).
   // Otherwise derive unique values from the current data rows.
   const options: { value: string; label: string }[] = explicitOptions
-    ?? [...new Set(rows.map(row => String(row.getValue(column.id))))].map(v => ({ value: v, label: v }));
+    ?? [...new Set(rows.map(row => String(row.getValue(column.id))))].sort().map(v => ({ value: v, label: v }));
 
   return (
     <div className={styles.columnFilter} key={`column-filter-${id}`}>
@@ -103,8 +104,8 @@ const SelectTableFilter = <TData,>({ header, rows }: TableFilterProps<TData>) =>
   );
 };
 
-const DateTableFilter = <TData,>({ header, rows }: TableFilterProps<TData>) => {
-  const { id, column } = header;
+const DateTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
+  const id = column.id;
   const columnName = column.columnDef.header?.toString() || "";
   const filterValue = (column.getFilterValue() as DateFilterValue) ?? {};
 
@@ -157,18 +158,44 @@ const DateTableFilter = <TData,>({ header, rows }: TableFilterProps<TData>) => {
   );
 };
 
-const TableFilter = <TData,>({ header, rows }: TableFilterProps<TData>) => {
-  const filterVariant = header.column.columnDef?.meta?.filterVariant;
+const AutocompleteTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
+  const id = column.id;
+  const columnName = column.columnDef.header?.toString();
+  const explicitOptions = column.columnDef.meta?.filterOptions;
+
+  const options: { value: string; label: string }[] = explicitOptions
+    ?? [...new Set(rows.map(row => String(row.getValue(column.id))))].sort().map(v => ({ value: v, label: v }));
+
+  return (
+    <div className={styles.columnFilter} key={`column-filter-${id}`}>
+      <label htmlFor={id}>{columnName}</label>
+      <Autocomplete
+        id={id}
+        value={String(column.getFilterValue() ?? '')}
+        onChange={(v) => column.setFilterValue(v || undefined)}
+        options={options}
+        placeholder="All"
+      />
+    </div>
+  );
+};
+
+const TableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
+  const filterVariant = column.columnDef?.meta?.filterVariant;
 
   if (filterVariant === "text") {
-    return <TextTableFilter header={header} rows={rows} />;
+    return <TextTableFilter column={column} rows={rows} />;
   }
 
   if (filterVariant === "date") {
-    return <DateTableFilter header={header} rows={rows} />;
+    return <DateTableFilter column={column} rows={rows} />;
   }
 
-  return <SelectTableFilter header={header} rows={rows} />;
+  if (filterVariant === "autocomplete") {
+    return <AutocompleteTableFilter column={column} rows={rows} />;
+  }
+
+  return <SelectTableFilter column={column} rows={rows} />;
 };
 
 export default TableFilter;

@@ -29,8 +29,19 @@ const getFeaturedEvents = async () => {
 };
 
 export default async function Home() {
-  const featuredContestsData = await getFeaturedEvents();
-  const featuredAthletesData = await getFeaturedAthletes(undefined, NUM_FEATURED_ATHLETES);
+  let featuredContestsData: Awaited<ReturnType<typeof getFeaturedEvents>> = [];
+  let featuredAthletesData: Awaited<ReturnType<typeof getFeaturedAthletes>> = [];
+  let debugError: string | null = null;
+
+  try {
+    [featuredContestsData, featuredAthletesData] = await Promise.all([
+      getFeaturedEvents(),
+      getFeaturedAthletes(undefined, NUM_FEATURED_ATHLETES),
+    ]);
+  } catch (err) {
+    console.error('[Home] data fetch failed:', err);
+    debugError = err instanceof Error ? `${err.message}\n${err.stack}` : String(err);
+  }
 
   return (
     <PageLayout
@@ -43,6 +54,13 @@ export default async function Home() {
         blurredBackground: true
       }}
     >
+      {/* TEMPORARY: surface server errors in production for debugging */}
+      {debugError && (
+        <pre style={{ background: '#fee', color: '#900', padding: '1rem', whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '0.75rem' }}>
+          {debugError}
+        </pre>
+      )}
+
       {/* Rankings / Disciplines Section */}
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Rankings</h2>

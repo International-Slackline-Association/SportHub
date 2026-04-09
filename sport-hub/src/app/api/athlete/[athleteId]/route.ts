@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAthleteProfile, getAthleteContests, getWorldRecords, getWorldFirsts } from '@lib/data-services';
+import { getAthleteProfile, getAthleteContests, getAthleteWorldRecords, getAthleteWorldFirsts } from '@lib/data-services';
 
 export async function GET(
   request: NextRequest,
@@ -17,8 +17,8 @@ export async function GET(
     const [profile, contests, worldRecords, worldFirsts] = await Promise.all([
       getAthleteProfile(decodedAthleteId),
       getAthleteContests(decodedAthleteId),
-      getWorldRecords(),
-      getWorldFirsts()
+      getAthleteWorldRecords(decodedAthleteId),
+      getAthleteWorldFirsts(decodedAthleteId),
     ]);
 
     if (!profile) {
