@@ -201,6 +201,7 @@ main {
     /* Ensure main content is centered when viewport is wider than minimum */
     margin: 0 auto;
     max-width: min(87.5rem, 95vw); /* Responsive maximum width */
+    min-width: stretch;
     padding: 2.5rem 2.5rem 3.75rem; /* Convert to rem units */
   }
 }

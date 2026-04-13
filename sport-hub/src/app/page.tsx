@@ -1,12 +1,11 @@
 export const dynamic = 'force-dynamic';
 
 import PageLayout from '@ui/PageLayout';
-import DisciplineCard from './components/DisciplineCard';
 import { FeaturedAthleteSection } from '@ui/FeaturedAthleteCard';
 import FeaturedContestCard from './components/FeaturedContestCard';
 import { CardGrid } from '@ui/Card';
 import styles from './page.module.css';
-import { S3_IMAGES } from '@utils/consts';
+import { DisciplineHeroSection } from './components/DisciplineHeroSection';
 import { getContestsData, getFeaturedAthletes } from '@lib/data-services';
 
 
@@ -47,31 +46,10 @@ export default async function Home() {
     <PageLayout
       title="Slackline Sport Hub"
       description="Your destination for athlete rankings, events, and world records."
-      heroImage={{
-        src: S3_IMAGES.hero,
-        alt: 'Laax Highline World Championship',
-        caption: 'Laax Highline World Championship, 2024',
-        blurredBackground: true
-      }}
     >
-      {/* TEMPORARY: surface server errors in production for debugging */}
-      {debugError && (
-        <pre style={{ background: '#fee', color: '#900', padding: '1rem', whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '0.75rem' }}>
-          {debugError}
-        </pre>
-      )}
 
-      {/* Rankings / Disciplines Section */}
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Rankings</h2>
-        <CardGrid columns={5}>
-          <DisciplineCard discipline="FREESTYLE_HIGHLINE" />
-          <DisciplineCard discipline="TRICKLINE" />
-          <DisciplineCard discipline="SPEED_HIGHLINE" />
-          <DisciplineCard discipline="SPEED_SHORT" />
-          <DisciplineCard discipline="RIGGING" />
-        </CardGrid>
-      </section>
+      {/* Hero + Rankings/Disciplines — client component handles crossfade on hover */}
+      <DisciplineHeroSection />
 
       {/* Featured Contests Section */}
       <section className={styles.section}>
