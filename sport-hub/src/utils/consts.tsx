@@ -54,7 +54,7 @@ export const S3_IMAGES = {
     'https://s3.eu-central-1.amazonaws.com/images.isa-rankings.org/public/sporthub/slackline-photos/speedline-sprint-07.JPG',
   ],
   RIGGING: [
-    'https://s3.eu-central-1.amazonaws.com/images.isa-rankings.org/public/sporthub/slackline-photos/organizers-laax2024-jonas-03.jpg',
+    'https://s3.eu-central-1.amazonaws.com/images.isa-rankings.org/public/sporthub/slackline-photos/world-records-05.JPG',
     'https://s3.eu-central-1.amazonaws.com/images.isa-rankings.org/public/sporthub/slackline-photos/world-records-07.JPG'
   ],
   WORLD_RECORDS: [

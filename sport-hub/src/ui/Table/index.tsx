@@ -10,6 +10,7 @@ import {
   flexRender,
   RowData,
   ColumnFiltersState,
+  SortingState,
   VisibilityState,
 } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
@@ -35,6 +36,7 @@ type TableProps<TData,> = {
 
 const Table = <TData,>({ extraFilters, options, title }: TableProps<TData>) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   // Automatically hide columns declared with size: 0 (used for filter-only columns)
   const autoColumnVisibility = useMemo<VisibilityState>(() => {
@@ -62,6 +64,7 @@ const Table = <TData,>({ extraFilters, options, title }: TableProps<TData>) => {
     },
     state: {
       columnFilters,
+      sorting,
       columnVisibility: autoColumnVisibility,
       ...(options?.initialState?.columnOrder && { columnOrder: options.initialState.columnOrder }),
     },
@@ -69,6 +72,7 @@ const Table = <TData,>({ extraFilters, options, title }: TableProps<TData>) => {
     columns: options?.columns || [],
     data: options?.data || [],
     onColumnFiltersChange: setColumnFilters,
+    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -87,13 +91,27 @@ const Table = <TData,>({ extraFilters, options, title }: TableProps<TData>) => {
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <th key={header.id} colSpan={header.colSpan} style={{ width: `${header.getSize()}px` }}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
+                  <th
+                    key={header.id}
+                    colSpan={header.colSpan}
+                    style={{ width: `${header.getSize()}px` }}
+                    className={header.column.getCanSort() ? styles.sortableHeader : undefined}
+                    onClick={header.column.getCanSort() ? header.column.getToggleSortingHandler() : undefined}
+                  >
+                    {header.isPlaceholder ? null : (
+                      <div className={styles.headerContent}>
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.column.getCanSort() && (
+                          <span className={styles.sortIndicator}>
+                            {header.column.getIsSorted() === 'asc'
+                              ? '↑'
+                              : header.column.getIsSorted() === 'desc'
+                              ? '↓'
+                              : '↕'}
+                          </span>
                         )}
+                      </div>
+                    )}
                   </th>
                 ))}
               </tr>
