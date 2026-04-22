@@ -34,6 +34,7 @@
 
 /* Content section (right on mobile, bottom on desktop) */
 .content {
+  text-align: center;
   @media (min-width: 40rem) {
     text-align: center;
     width: 100%;
@@ -47,7 +48,6 @@
     justify-content: center;
 
     .media {
-      width: 100%;
       margin-bottom: 1rem;
       margin-right: 0rem;
     }

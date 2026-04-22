@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import PageLayout from '@ui/PageLayout'
-import { randomS3Image } from '@utils/consts'
+import { randomS3Image } from '@utils/images'
 
 export const metadata: Metadata = {
   title: 'SportHub - Judging',
@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default async function Page() {
   return (
-    <PageLayout title="Judging" heroImage={{ src: randomS3Image('JUDGING'), alt: 'Judging hero' }}>
+    <PageLayout title="Judging" heroImage={randomS3Image('JUDGING')}>
       <section className="p-4 sm:p-0">
         <p>Judging content will be implemented here.</p>
       </section>

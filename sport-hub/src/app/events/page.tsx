@@ -3,7 +3,7 @@ import ContestsTable from "./components/ContestsTable";
 import { getContestsData } from "@lib/data-services";
 import PageLayout from "@ui/PageLayout";
 import { FeaturedEventSection } from "@ui/FeaturedEventCard";
-import { randomS3Image } from "@utils/consts";
+import { randomS3Image } from "@utils/images";
 
 export const metadata: Metadata = {
   title: 'SportHub - Events',
@@ -18,7 +18,7 @@ export default async function Page() {
     <PageLayout
       title="Events"
       description="View the latest events and competitions across all disciplines."
-      heroImage={{ src: randomS3Image('EVENTS'), alt: 'Events hero' }}
+      heroImage={randomS3Image('EVENTS')}
     >
       <FeaturedEventSection events={contestsData.slice(0,3)} />
 
