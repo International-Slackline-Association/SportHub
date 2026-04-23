@@ -1,12 +1,11 @@
 export const dynamic = 'force-dynamic';
 
 import PageLayout from '@ui/PageLayout';
-import DisciplineCard from './components/DisciplineCard';
-import { FeaturedAthleteSection } from '@ui/FeaturedAthleteCard';
+import { FeaturedAthleteCard } from '@ui/FeaturedAthleteCard';
 import FeaturedContestCard from './components/FeaturedContestCard';
 import { CardGrid } from '@ui/Card';
 import styles from './page.module.css';
-import { S3_IMAGES } from '@utils/consts';
+import { DisciplineHeroSection } from './components/DisciplineHeroSection';
 import { getContestsData, getFeaturedAthletes } from '@lib/data-services';
 
 
@@ -39,39 +38,18 @@ export default async function Home() {
       getFeaturedAthletes(undefined, NUM_FEATURED_ATHLETES),
     ]);
   } catch (err) {
-    console.error('[Home] data fetch failed:', err);
     debugError = err instanceof Error ? `${err.message}\n${err.stack}` : String(err);
+    console.error('[Home] data fetch failed:', err, debugError);
   }
 
   return (
     <PageLayout
       title="Slackline Sport Hub"
       description="Your destination for athlete rankings, events, and world records."
-      heroImage={{
-        src: S3_IMAGES.hero,
-        alt: 'Laax Highline World Championship',
-        caption: 'Laax Highline World Championship, 2024',
-        blurredBackground: true
-      }}
     >
-      {/* TEMPORARY: surface server errors in production for debugging */}
-      {debugError && (
-        <pre style={{ background: '#fee', color: '#900', padding: '1rem', whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '0.75rem' }}>
-          {debugError}
-        </pre>
-      )}
 
-      {/* Rankings / Disciplines Section */}
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Rankings</h2>
-        <CardGrid columns={5}>
-          <DisciplineCard discipline="FREESTYLE_HIGHLINE" />
-          <DisciplineCard discipline="TRICKLINE" />
-          <DisciplineCard discipline="SPEED_HIGHLINE" />
-          <DisciplineCard discipline="SPEED_SHORT" />
-          <DisciplineCard discipline="RIGGING" />
-        </CardGrid>
-      </section>
+      {/* Hero + Rankings/Disciplines — client component handles crossfade on hover */}
+      <DisciplineHeroSection />
 
       {/* Featured Contests Section */}
       <section className={styles.section}>
@@ -81,15 +59,44 @@ export default async function Home() {
             Stay up to date with the latest competitions and events in the slacklining community.
           </p>
         </div>
-        <CardGrid columns={NUM_FEATURED_EVENTS}>
+
+        <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory sm:hidden">
           {featuredContestsData.map(contest => (
-            <FeaturedContestCard key={contest.contestId || `${contest.eventId}-${contest.discipline}-${contest.gender}`} contest={contest} />
+            <div key={contest.contestId || `${contest.eventId}-${contest.discipline}-${contest.gender}`} className="min-w-72 shrink-0 snap-start">
+              <FeaturedContestCard contest={contest} />
+            </div>
           ))}
-        </CardGrid>
+        </div>
+
+        <div className="hidden sm:block">
+          <CardGrid columns={NUM_FEATURED_EVENTS}>
+            {featuredContestsData.map(contest => (
+              <FeaturedContestCard key={contest.contestId || `${contest.eventId}-${contest.discipline}-${contest.gender}`} contest={contest} />
+            ))}
+          </CardGrid>
+        </div>
       </section>
 
       {/* Featured Athletes Section */}
-      <FeaturedAthleteSection athletes={featuredAthletesData.slice(0, 3)} />
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Featured Athletes</h2>
+
+        <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory sm:hidden">
+          {featuredAthletesData.slice(0, 3).map(athlete => (
+            <div key={athlete.userId} className="min-w-72 shrink-0 snap-start">
+              <FeaturedAthleteCard athlete={athlete} />
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden sm:block">
+          <CardGrid columns={NUM_FEATURED_ATHLETES}>
+            {featuredAthletesData.slice(0, 3).map(athlete => (
+              <FeaturedAthleteCard key={athlete.userId} athlete={athlete}/>
+            ))}
+          </CardGrid>
+        </div>
+      </section>
     </PageLayout>
   );
 }

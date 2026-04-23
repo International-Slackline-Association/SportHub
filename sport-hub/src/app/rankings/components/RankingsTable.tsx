@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { createColumnHelper } from '@tanstack/react-table';
 import { AthleteRanking } from '@lib/data-services';
 import Table from '@ui/Table';
@@ -34,7 +35,10 @@ const columns = [
   columnHelper.display({
     id: 'rank',
     header: 'Rank',
-    cell: info => info.row.index + 1,
+    cell: info => {
+      const rowIndex = info.table.getRowModel().rows.findIndex(row => row.id === info.row.id);
+      return rowIndex + 1;
+    },
   }),
   columnHelper.accessor('points', {
     header: 'Points',
@@ -79,6 +83,7 @@ const columns = [
         { value: 'senior', label: 'Senior (35+)' },
       ],
     },
+    size: 36,
   }),
   columnHelper.accessor('gender', {
     header: 'Gender',
@@ -87,11 +92,13 @@ const columns = [
     cell: info => info.getValue() === 'female' ? 'Women' : info.getValue() === 'male' ? 'Men' : '—',
     meta: {
       filterVariant: 'select',
+      filterNoAll: true,
       filterOptions: [
-        { value: 'male', label: 'Men' },
         { value: 'female', label: 'Women' },
+        { value: 'male', label: 'Men' },
       ],
     },
+    size: 60,
   }),
   columnHelper.accessor((row: AthleteRanking) => getIocCode(row.country), {
     id: 'country',
@@ -99,6 +106,7 @@ const columns = [
     header: 'Country',
     cell: info => <CountryFlag country={info.getValue()} />,
     meta: { filterVariant: 'select' },
+    size: 60,
   }),
 ];
 
@@ -112,17 +120,41 @@ const YEAR_OPTIONS = [
   }),
 ];
 
-const DISCIPLINE_OPTIONS = [
-  { value: '', label: 'All Disciplines' },
-  ...Object.values(DISCIPLINE_DATA)
-    .filter(d => d.enumValue !== 0)
-    .map(d => ({ value: String(d.enumValue), label: d.name })),
-];
+const DISCIPLINE_OPTIONS = Object.values(DISCIPLINE_DATA)
+  .filter(d => d.enumValue !== 0)
+  .map(d => ({ value: String(d.enumValue), label: d.name }));
+
+const randomDiscipline = () => {
+  const opts = DISCIPLINE_OPTIONS;
+  return opts[Math.floor(Math.random() * opts.length)].value;
+};
 
 const RankingsTable = ({ initialDiscipline }: { initialDiscipline?: string }) => {
   const { isDesktop } = useClientMediaQuery();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [selectedYear, setSelectedYear] = useState('last3years');
-  const [selectedDiscipline, setSelectedDiscipline] = useState(initialDiscipline);
+  const [selectedDiscipline, setSelectedDiscipline] = useState(
+    () => initialDiscipline || randomDiscipline()
+  );
+
+  // On mount: if no discipline was in the URL, reflect the randomly chosen one
+  useEffect(() => {
+    if (!initialDiscipline) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('discipline', selectedDiscipline);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleDisciplineChange = (value: string) => {
+    setSelectedDiscipline(value);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('discipline', value);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   const { data = [], error, isError, isLoading, isSuccess } = useQuery({
     queryKey: ['rankings', selectedYear, selectedDiscipline],
@@ -171,7 +203,7 @@ const RankingsTable = ({ initialDiscipline }: { initialDiscipline?: string }) =>
                 <select
                   id="rankings-discipline"
                   value={selectedDiscipline}
-                  onChange={e => setSelectedDiscipline(e.target.value)}
+                  onChange={e => handleDisciplineChange(e.target.value)}
                 >
                   {DISCIPLINE_OPTIONS.map(opt => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -184,6 +216,7 @@ const RankingsTable = ({ initialDiscipline }: { initialDiscipline?: string }) =>
             columns,
             data,
             initialState: {
+              columnFilters: [{ id: 'gender', value: 'female' }],
               columnOrder: isDesktop
                 ? ['rank', 'fullName', 'age', 'gender', 'country', 'points']
                 : ['rank', 'athlete', 'points'],

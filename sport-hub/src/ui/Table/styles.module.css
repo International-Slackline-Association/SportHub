@@ -18,6 +18,26 @@
   font-size: 0.875rem;
 }
 
+.sortableHeader {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortableHeader:hover {
+  background: var(--color-neutral-200);
+}
+
+.headerContent {
+  align-items: center;
+  display: flex;
+  gap: 0.25rem;
+  justify-content: space-between;
+}
+
+.sortIndicator {
+  flex-shrink: 0;
+}
+
 .tableContainer th,
 .tableContainer td {
   border: 0.5px solid #D4D4D8;

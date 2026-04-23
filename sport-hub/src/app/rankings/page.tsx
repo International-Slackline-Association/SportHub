@@ -1,9 +1,11 @@
+import { Suspense } from 'react'
 import { FeaturedAthleteSection } from '@ui/FeaturedAthleteCard'
 import { getFeaturedAthletes } from '@lib/data-services'
 import PageLayout from '@ui/PageLayout'
 import RankingsTable from './components/RankingsTable'
 import type { Metadata } from 'next'
-import { S3_IMAGES } from '@utils/consts'
+import { randomS3ImageForDiscipline } from '@utils/images'
+import Spinner from '@ui/Spinner'
 
 export const metadata: Metadata = {
   title: 'SportHub - Rankings',
@@ -19,12 +21,14 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
   return (
     <PageLayout
       description="View the latest athlete rankings across all disciplines."
-      heroImage={{ src: S3_IMAGES.rankings, alt: 'Rankings hero', objectPosition: 'center 70%' }}
+      heroImage={randomS3ImageForDiscipline(discipline)}
       title="Rankings"
     >
       <FeaturedAthleteSection athletes={athletes} />
       <section className="p-4 sm:p-0">
-        <RankingsTable initialDiscipline={discipline || ""} />
+        <Suspense fallback={<div className="flex justify-center min-h-64 items-center"><Spinner /></div>}>
+          <RankingsTable initialDiscipline={discipline || ""} />
+        </Suspense>
       </section>
     </PageLayout>
   )
