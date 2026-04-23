@@ -48,7 +48,7 @@ export const S3_IMAGES: Record<string, HeroImage[]> = {
       alt: 'Podium celebration with athletes'
     },
     {
-      src: `${S3_BASE_URL}/celebrations-podium-02.jpg`,
+      src: `${S3_BASE_URL}/celebrations-podium-02.JPG`,
       alt: 'Competition podium moment'
     },
   ],

@@ -1,0 +1,21 @@
+.groupedContestRow td {
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+}
+
+.groupedContestRow:hover td {
+  background-color: var(--color-neutral-100);
+}
+
+.groupStart td {
+  border-top-color: #D4D4D8;
+}
+
+.groupEnd td {
+  border-bottom-color: #D4D4D8;
+}
+
+.groupMiddle td,
+.groupEnd td {
+  border-top-color: transparent;
+}

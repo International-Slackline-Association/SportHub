@@ -70,7 +70,6 @@ const FeaturedContestCard = ({ contest }: FeaturedContestCardProps) => {
 
   return (
     <StackedMediaCard
-      hoverable
       media={thumbnailUrl && (
         <div className={styles.imageWrapper}>
           <Image

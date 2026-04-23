@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import PageLayout from '@ui/PageLayout';
-import { FeaturedAthleteSection } from '@ui/FeaturedAthleteCard';
+import { FeaturedAthleteCard } from '@ui/FeaturedAthleteCard';
 import FeaturedContestCard from './components/FeaturedContestCard';
 import { CardGrid } from '@ui/Card';
 import styles from './page.module.css';
@@ -38,8 +38,8 @@ export default async function Home() {
       getFeaturedAthletes(undefined, NUM_FEATURED_ATHLETES),
     ]);
   } catch (err) {
-    console.error('[Home] data fetch failed:', err);
     debugError = err instanceof Error ? `${err.message}\n${err.stack}` : String(err);
+    console.error('[Home] data fetch failed:', err, debugError);
   }
 
   return (
@@ -59,15 +59,44 @@ export default async function Home() {
             Stay up to date with the latest competitions and events in the slacklining community.
           </p>
         </div>
-        <CardGrid columns={NUM_FEATURED_EVENTS}>
+
+        <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory sm:hidden">
           {featuredContestsData.map(contest => (
-            <FeaturedContestCard key={contest.contestId || `${contest.eventId}-${contest.discipline}-${contest.gender}`} contest={contest} />
+            <div key={contest.contestId || `${contest.eventId}-${contest.discipline}-${contest.gender}`} className="min-w-72 shrink-0 snap-start">
+              <FeaturedContestCard contest={contest} />
+            </div>
           ))}
-        </CardGrid>
+        </div>
+
+        <div className="hidden sm:block">
+          <CardGrid columns={NUM_FEATURED_EVENTS}>
+            {featuredContestsData.map(contest => (
+              <FeaturedContestCard key={contest.contestId || `${contest.eventId}-${contest.discipline}-${contest.gender}`} contest={contest} />
+            ))}
+          </CardGrid>
+        </div>
       </section>
 
       {/* Featured Athletes Section */}
-      <FeaturedAthleteSection athletes={featuredAthletesData.slice(0, 3)} />
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Featured Athletes</h2>
+
+        <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory sm:hidden">
+          {featuredAthletesData.slice(0, 3).map(athlete => (
+            <div key={athlete.userId} className="min-w-72 shrink-0 snap-start">
+              <FeaturedAthleteCard athlete={athlete} />
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden sm:block">
+          <CardGrid columns={NUM_FEATURED_ATHLETES}>
+            {featuredAthletesData.slice(0, 3).map(athlete => (
+              <FeaturedAthleteCard key={athlete.userId} athlete={athlete}/>
+            ))}
+          </CardGrid>
+        </div>
+      </section>
     </PageLayout>
   );
 }

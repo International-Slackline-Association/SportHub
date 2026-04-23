@@ -88,6 +88,8 @@ const SelectTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) =>
   const options: { value: string; label: string }[] = explicitOptions
     ?? [...new Set(rows.map(row => String(row.getValue(column.id))))].sort().map(v => ({ value: v, label: v }));
 
+  const noAll = column.columnDef.meta?.filterNoAll;
+
   return (
     <div className={styles.columnFilter} key={`column-filter-${id}`}>
       <label htmlFor={id}>{columnName}</label>
@@ -97,7 +99,7 @@ const SelectTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) =>
         onChange={e => column.setFilterValue(e.target.value || undefined)}
         value={String(column.getFilterValue() ?? '')}
       >
-        <option value={""}>All</option>
+        {!noAll && <option value={""}>All</option>}
         {options.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
       </select>
     </div>

@@ -33,29 +33,32 @@ export const FeaturedAthleteCard = ({ athlete }: FeaturedAthleteCardProps) => {
 
   return (
     <StackedMediaCard
-      className="p-4"
+      className="px-4 pt-8"
       media={
         <Avatar
           alt={displayName}
           defaultLabel={abbreviatedName}
           image={profileImage}
+          size="small"
         />
       }
-      hoverable
+      desktopDirection="horizontal"
+      mobileDirection="vertical"
     >
-      <div className="stack gap-2 items-center">
-        <h3>{fullName}</h3>
-        {country && (
-          <div className={cn("cluster", "gap-2")}>
-            <CircleFlag
-              countryCode={country.toLowerCase()}
-              height={16}
-              width={16}
-            />
-            <span>{getCountryByCode(country)?.name}</span>
-          </div>
-        )}
-
+      <div className="stack gap-1 items-center">
+        <div className="flex flex-row items-center gap-2">
+          <h3>{fullName}</h3>
+          {country && (
+            <div className={cn("cluster", "gap-2")}>
+              <CircleFlag
+                countryCode={country.toLowerCase()}
+                height={16}
+                width={16}
+              />
+              <span>{getCountryByCode(country)?.name}</span>
+            </div>
+          )}
+        </div>
         <div className={cn("contents", "flex-row", "gap-2", "sm:flex")}>
           {disciplines.map((discipline) => (
             <Discipline variant={discipline} key={discipline} />

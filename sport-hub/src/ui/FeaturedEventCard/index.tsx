@@ -1,5 +1,5 @@
 import { ContestData } from "@lib/data-services";
-import { Avatar } from '@ui/Avatar';
+import Image from 'next/image';
 import { CardGrid } from '@ui/Card';
 import { Discipline } from '@ui/Badge';
 import { CircleFlag } from 'react-circle-flags';
@@ -8,7 +8,7 @@ import { getCountryByCode } from '@utils/countries';
 import { StackedMediaCard } from '@ui/StackedMediaCard';
 import pageStyles from '../../app/page.module.css';
 import Button from "@ui/Button";
-
+import styles from '../../app/components/styles.module.css';
 export interface FeaturedEventCardProps {
   event: ContestData;
 }
@@ -19,7 +19,6 @@ export const FeaturedEventCard = ({ event }: FeaturedEventCardProps) => {
     eventId,
     discipline,
     name,
-    profileUrl,
     thumbnailUrl,
   } = event;
   const href = `/events/${eventId}`;
@@ -27,11 +26,13 @@ export const FeaturedEventCard = ({ event }: FeaturedEventCardProps) => {
     <StackedMediaCard
       className="p-4"
       media={
-        <Avatar
-          alt={name}
-          defaultLabel={name}
-          image={profileUrl || thumbnailUrl}
-        />
+        <div className={styles.imageWrapper}>
+          <Image
+            alt={name}
+            src={thumbnailUrl || ''}
+            fill
+          />
+        </div>
       }
       href={href}
       hoverable
