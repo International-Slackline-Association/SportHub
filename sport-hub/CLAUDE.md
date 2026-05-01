@@ -1,47 +1,121 @@
-# SportHub - Project Information for Claude
+# SportHub - Developer Reference for Claude
 
 ## Project Overview
-SportHub is a Next.js application for sports management and athlete profiles, built with React 19 and TypeScript.
+ISA SportHub is a Next.js application for sports management and athlete profiles, built with React 19 and TypeScript. Features static page generation with ISR, AWS Amplify hosting, Google Sheets integration, and comprehensive DynamoDB tooling.
 
 ## Tech Stack
 - **Framework**: Next.js 15.3 with App Router
 - **Runtime**: React 19 with TypeScript 5
 - **Styling**: Tailwind CSS 4.0
-- **Package Manager**: pnpm
-- **Database**: AWS DynamoDB
+- **Package Manager**: pnpm (run all commands from `sport-hub/`)
+- **Database**: AWS DynamoDB (local dev + remote production)
+- **Authentication**: NextAuth v5 (beta) with AWS Cognito
+- **External Data**: Google Sheets API (world records, world firsts)
 - **Build Tool**: Turbopack
+- **Hosting**: AWS Amplify
 
 ## Key Dependencies
-- `@aws-sdk/client-dynamodb` - AWS DynamoDB integration
-- `@tanstack/react-table` - Data table functionality
-- `recharts` - Data visualization
+- `@aws-sdk/client-dynamodb` + `@aws-sdk/lib-dynamodb` - DynamoDB client
+- `@googleapis/sheets` - Google Sheets API (world records/firsts data)
+- `next-auth` v5 beta - Authentication
+- `@tanstack/react-query` - Client-side data fetching
+- `@tanstack/react-table` - Data tables
+- `recharts` - Charts and data visualization
+- `formik` + `yup` - Form management and validation
 - `class-variance-authority` - Component variants
-- `clsx` & `tailwind-merge` - Utility classes
+- `clsx` + `tailwind-merge` - Utility class merging
+- `react-circle-flags` - Country flag components
+- `react-social-icons` - Social media icons
 
 ## Project Structure
+
 ```
-src/
-├── app/                    # Next.js App Router pages
-│   ├── athlete-profile/    # Athlete profile pages
-│   ├── rankings/          # Rankings and leaderboards
-│   ├── events/            # Event management
-│   ├── world_records/     # World records display
-│   ├── judging/           # Judging interfaces
-│   ├── partners/          # Partner management
-│   ├── demo/              # Component demo page
-│   └── api/               # API routes
-├── ui/                    # Reusable UI components
-│   ├── Button/            # Button components
-│   ├── Badge/             # Badge components
-│   ├── Table/             # Data table components
-│   ├── Navigation/        # Navigation components
-│   ├── ProfileCard/       # Profile display components
-│   ├── PageLayout/        # Standard page layout component
-│   └── ...
-├── lib/                   # Library code and utilities
-├── utils/                 # Utility functions
-├── types/                 # TypeScript type definitions
-└── mocks/                 # Mock data for development
+sport-hub/
+├── src/
+│   ├── app/                    # Next.js App Router pages & API routes
+│   │   ├── admin/              # Admin pages (event-approval)
+│   │   ├── api/                # API routes
+│   │   │   ├── auth/           # NextAuth endpoints
+│   │   │   ├── athlete/        # Athlete API
+│   │   │   ├── events/         # Events API
+│   │   │   ├── rankings/       # Rankings API
+│   │   │   ├── revalidate/     # On-demand ISR revalidation
+│   │   │   ├── users/          # Users API
+│   │   │   └── test-local/     # Local DB test endpoints
+│   │   ├── athlete-profile/    # Athlete profile pages
+│   │   ├── auth/               # Sign-in / auth error pages
+│   │   ├── contact/            # Contact page
+│   │   ├── dashboard/          # User dashboard
+│   │   ├── events/             # Events list (STATIC + ISR)
+│   │   │   ├── [eventId]/      # Individual event page
+│   │   │   ├── my-events/      # User's events
+│   │   │   └── submit/         # Submit new event
+│   │   ├── faq/                # FAQ page
+│   │   ├── judging/            # Judging interfaces
+│   │   ├── partners/           # Partner/sponsor management
+│   │   ├── rankings/           # Rankings leaderboard (STATIC + ISR)
+│   │   ├── unauthorized/       # 403 page
+│   │   ├── world_records/      # World records display (Google Sheets)
+│   │   ├── demo/               # UI component showcase
+│   │   ├── test_LOCAL/         # Local DynamoDB test UI
+│   │   ├── test_SSR/           # SSR tests
+│   │   └── test_CSR/           # CSR tests
+│   ├── ui/                     # Reusable UI components
+│   │   ├── Alert/
+│   │   ├── Avatar/
+│   │   ├── Badge/
+│   │   ├── Button/
+│   │   ├── Card/
+│   │   ├── CountryFlag/
+│   │   ├── Drawer/
+│   │   ├── EventDetailsCard/
+│   │   ├── FeaturedAthleteCard/
+│   │   ├── FeaturedEventCard/
+│   │   ├── Footer/
+│   │   ├── Form/
+│   │   ├── Icons/
+│   │   ├── LabelValuePair/
+│   │   ├── Modal/
+│   │   ├── Navigation/
+│   │   ├── PageLayout/         # Standard page wrapper (REQUIRED for all pages)
+│   │   ├── SocialMediaLinks/
+│   │   ├── SortableList/
+│   │   ├── Spinner/
+│   │   ├── StackedMediaCard/
+│   │   ├── Tab/
+│   │   ├── Table/
+│   │   ├── Tooltip/
+│   │   ├── UserForm/
+│   │   └── UserMenu/
+│   ├── lib/                    # Library code
+│   │   ├── auth.ts             # NextAuth config
+│   │   ├── authorization.ts    # Auth helper utilities (getCurrentUser, requireRole, etc.)
+│   │   ├── contest-participation-service.ts
+│   │   ├── data-services.ts    # Main data access layer
+│   │   ├── db-setup.ts         # DynamoDB table initialization
+│   │   ├── dynamodb.ts         # DynamoDB client setup
+│   │   ├── event-contest-service.ts
+│   │   ├── google-sheets.ts    # Google Sheets client (world records/firsts)
+│   │   ├── isa-rankings-service.ts
+│   │   ├── onboarding.ts       # User onboarding flow
+│   │   ├── rbac-service.ts     # Role-based access control
+│   │   ├── reference-db-service.ts  # isa-users identity table
+│   │   ├── relational-types.ts
+│   │   ├── user-query-service.ts
+│   │   ├── user-service.ts
+│   │   └── migrations/
+│   │       ├── seed-local-db.ts                       # DatabaseSeeder class
+│   │       ├── seed-from-rankings-data.ts             # Seed transformer
+│   │       └── migrate-isa-rankings-to-sporthub.ts    # Live AWS migration
+│   ├── utils/                  # Utility functions
+│   ├── types/                  # TypeScript type definitions
+│   └── mocks/                  # Mock data
+│       └── data-exports/
+│           └── rankings-seed-data.json  # Anonymised seed data (200 athletes)
+├── scripts/
+│   ├── sync-dynamodb.ts        # Local ↔ remote DB sync tool
+│   └── revalidate-pages.sh     # ISR revalidation helper
+└── public/                     # Static assets
 ```
 
 ## Path Aliases
@@ -52,299 +126,55 @@ src/
 - `@lib/*` → `src/lib/*`
 
 ## Development Commands
-- `pnpm dev` - Start development server with Turbopack
-- `pnpm build` - Build production application with Turbopack
-- `pnpm start` - Start production server
-- `pnpm lint` - Run ESLint
 
-## Environment
-- Development runs on http://localhost:3000
-- Uses AWS DynamoDB for data persistence
-- Environment variables configured in `.env`
-
-## Key Features
-- Athlete profile management
-- Sports rankings and leaderboards
-- Event management system
-- World records tracking
-- Partner management
-- Data visualization with charts
-- Responsive design with Tailwind CSS
-- Server-side and client-side rendering support
-
-## Testing & Development
-- Test pages available at `/test_SSR` and `/test_CSR`
-- Demo page at `/demo` showcases UI components
-- Mock data available in `src/mocks/`
-
-## Local DynamoDB Testing
-
-### Quick Start
-1. **Start Local DynamoDB**: `pnpm db:local`
-2. **Seed with Mock Data**: `pnpm db:seed`
-3. **Start Development**: `pnpm test:local`
-4. **Visit Test Page**: http://localhost:3000/test_LOCAL
-
-### Available Commands
-- `pnpm db:local` - Start local DynamoDB container
-- `pnpm db:setup` - Create required tables
-- `pnpm db:seed` - Seed with mock contest/athlete data
-- `pnpm db:reset` - Clear and reseed all data
-- `pnpm db:clear` - Clear all data only
-- `pnpm db:count` - Show record counts in all tables
-- `pnpm db:gui` - Launch DynamoDB Admin GUI on port 8001
-- `pnpm db:stop` - Stop DynamoDB container
-- `pnpm db:clean` - Remove container and volumes
-- `pnpm test:local` - Start dev server with local DB config
-- `pnpm migrate:dry-run` - Dry run ISA-Rankings migration (local)
-- `pnpm migrate:execute` - Execute ISA-Rankings migration (local)
-- `pnpm db:setup:aws` - Create tables on AWS (uses `.env.production`)
-- `pnpm migrate:aws:dry-run` - Dry run ISA-Rankings migration on AWS
-- `pnpm migrate:aws:execute` - Execute ISA-Rankings migration on AWS
-
-### Environment Configuration
-
-**Local Testing** (`.env.local`):
-```env
-DYNAMODB_LOCAL=true
-DYNAMODB_ENDPOINT=http://localhost:8000
-AWS_REGION=us-east-2
-AWS_ACCESS_KEY_ID=dummy
-AWS_SECRET_ACCESS_KEY=dummy
-NODE_ENV=development
+### Development
+```bash
+pnpm dev              # Start dev server with Turbopack (localhost:3000)
+pnpm build            # Production build with Turbopack
+pnpm start            # Start production server
+pnpm lint             # Run ESLint
+pnpm test:local       # Dev server with local DynamoDB
 ```
 
-**Development with AWS** (`.env`):
-```env
-# DynamoDB
-AWS_REGION=us-east-2
-AWS_ACCESS_KEY_ID=your_actual_key
-AWS_SECRET_ACCESS_KEY=your_actual_secret
-NODE_ENV=development
-
-# Reference Database
-REFERENCE_DB_TABLE=isa-users
-REFERENCE_DB_REGION=eu-central-1
-LOCAL_REFERENCE_DB=false  # Set true to use local reference DB
-
-# ISA-Rankings (optional - for migrations)
-ISA_RANKINGS_TABLE=ISA-Rankings
-ISA_RANKINGS_REGION=eu-central-1
-
-# Authentication (Cognito + NextAuth)
-COGNITO_CLIENT_ID=your_client_id
-COGNITO_CLIENT_SECRET=your_client_secret
-COGNITO_REGION=eu-central-1
-COGNITO_USER_POOL_ID=your_pool_id
-AUTH_SECRET=your_nextauth_secret
-AUTH_URL=http://localhost:3000
-NEXTAUTH_URL=http://localhost:3000
+### Database Management
+```bash
+pnpm db:local         # Start local DynamoDB container (Docker)
+pnpm db:setup         # Create required tables
+pnpm db:seed          # Seed from rankings-seed-data.json (200 athletes, 40 contests)
+pnpm db:reset         # Clear and reseed data
+pnpm db:clear         # Clear all data
+pnpm db:count         # Show record counts per table
+pnpm db:gui           # DynamoDB Admin GUI on port 8001
+pnpm db:stop          # Stop DynamoDB container
+pnpm db:clean         # Remove container and volumes
 ```
 
-### Test Pages
-- `/test_LOCAL` - Comprehensive local DynamoDB testing (setup, seed, query, clear)
-- `/test_SSR` - Server-side rendering tests with DynamoDB
-- `/test_CSR` - Client-side rendering tests
-- RBAC testing is integrated into `/test_SSR` and `/test_CSR` pages
-- `/demo` - UI component showcase
-
-**Access Control**: Test pages are restricted to development environments only via `canAccessTestAPI()` middleware.
-
-### Mock Data
-The system includes comprehensive mock data from `src/mocks/contests_with_athletes.json`:
-- **Athletes**: Converted to users with aggregated statistics
-- **Contests**: Sports competitions with detailed information
-- **Performance Records**: Individual athlete results per contest
-
-### Database Schema - Hierarchical Sort Key Design
-
-#### Users Table
-**Primary Key**: userId (partition), sortKey (sort)
-**GSI**: userSubType-index, discipline-rankings-index
-
-**Record Types** (distinguished by sortKey):
-- `Profile` - User profile metadata (role, points, contestCount)
-  - Links to isa-users table via isaUsersId for identity data
-- `Ranking:{type}:{year}:{discipline}:{gender}:{ageCategory}` - Individual rankings
-- `Participation:{contestId}` - Contest results
-
-**Example Profile Record**:
-```typescript
-{
-  userId: "SportHubID:12345",
-  sortKey: "Profile",
-  isaUsersId: "ISA_FBE8B254",      // Link to reference DB
-  role: "athlete",
-  primarySubType: "athlete",
-  totalPoints: 1250,
-  contestCount: 15,
-  createdAt: 1705320000
-}
+### Sync to Production
+```bash
+pnpm sync:compare     # Compare local vs remote schemas
+pnpm sync:all         # Sync all data to remote
+pnpm sync:recreate    # Recreate remote table (DESTRUCTIVE)
 ```
 
-**Example Ranking Record**:
-```typescript
-{
-  userId: "SportHubID:12345",
-  sortKey: "Ranking:1:2024:12:1:0",  // Type:Year:Discipline:Gender:AgeCategory
-  rankingType: "1",                  // 1=prize money, 2=points
-  year: "2024",
-  discipline: "12",                  // Surfing
-  gender: "1",                       // Male
-  ageCategory: "0",                  // Open
-  points: "1250",
-  gsiSortKey: "0000001250#SportHubID:12345"  // For discipline-rankings-index
-}
+### Static Page Revalidation
+```bash
+pnpm revalidate:all       # Revalidate all static pages
+pnpm revalidate:rankings  # Revalidate /rankings
+pnpm revalidate:events    # Revalidate /events
 ```
 
-#### Events Table
-**Primary Key**: eventId (partition), sortKey (sort)
-**GSI**: contestId-index, date-discipline-index
-
-**Record Types**:
-- `Metadata` - Event-level information (name, location, dates)
-- `Contest:{discipline}:{contestId}` - Contest with embedded participants
-
-**Example Event Metadata**:
-```typescript
-{
-  eventId: "Event:a3637f",
-  sortKey: "Metadata",
-  eventName: "World Surfing Games 2024",
-  startDate: "2024-06-01",
-  endDate: "2024-06-07",
-  location: "El Salvador",
-  contestCount: 8
-}
+### AWS Migrations
+```bash
+pnpm migrate:dry-run      # Dry-run ISA-Rankings migration (local)
+pnpm migrate:execute      # Execute ISA-Rankings migration (local)
+pnpm migrate:aws:dry-run  # Dry-run on live AWS
+pnpm migrate:aws:execute  # Execute on live AWS
 ```
 
-**Example Contest Record**:
-```typescript
-{
-  eventId: "Event:a3637f",
-  sortKey: "Contest:12:c5f8a2",
-  contestId: "c5f8a2",
-  discipline: "12",
-  contestName: "Men's Open Final",
-  contestDate: "2024-06-05",
-  athletes: [
-    { userId: "SportHubID:12345", name: "John Doe", place: "1", points: "100" },
-    // ... more athletes
-  ]
-}
-```
+## Layout Standards — REQUIRED
 
-## Reference Database Pattern
+Every page MUST use `PageLayout` for consistent width/spacing:
 
-SportHub uses a **reference database separation pattern** to manage user identity:
-
-### isa-users Table (eu-central-1)
-**Purpose**: Centralized user identity storage (name, email, phone, country)
-**Access**: Via `src/lib/reference-db-service.ts`
-**User IDs**: Custom format `ISA_XXXXXXXX` (e.g., `ISA_FBE8B254`)
-
-**Record Structure**:
-```typescript
-{
-  PK: "user:ISA_FBE8B254",
-  SK_GSI: "userDetails",
-  GSI_SK: "email:user@example.com",
-  cognitoSub: "uuid-from-cognito",
-  name: "John",
-  surname: "Doe",
-  email: "user@example.com",
-  country: "USA",
-  // ... other identity fields
-}
-```
-
-### Benefits
-- **Single source of truth**: User identity data stored once, referenced everywhere
-- **Reduces duplication**: App database only stores app-specific data (points, rankings)
-- **Cross-region support**: Identity can be queried from any region
-- **Separation of concerns**: Identity vs. application data clearly separated
-
-### User Onboarding Flow
-1. User authenticates via AWS Cognito
-2. JWT callback (`src/lib/auth.ts`) checks if user exists in isa-users
-3. If new user → creates record in isa-users (generates custom ID)
-4. Creates corresponding record in app users table with isaUsersId link
-5. Returns custom user ID in session
-
-### Local Development Mode
-- Uses `athleteSlug` field for display names (from ISA-Rankings migration)
-- Set `LOCAL_REFERENCE_DB=true` to use local reference database
-- Identity data optionally stored in user profile for offline development
-
-## Query Patterns & Performance
-
-### Optimized Query Patterns
-All queries use composite keys or GSI lookups - **NO TABLE SCANS** in hot paths:
-
-1. **Athlete Profile**: Direct GetItem with `userId` + `sortKey="Profile"` (~10ms)
-2. **Athlete Rankings**: Query with `begins_with(sortKey, "Ranking:")` (~30ms)
-3. **Athlete Participations**: Query with `begins_with(sortKey, "Participation:")` (~30ms)
-4. **Discipline Leaderboard**: Query `discipline-rankings-index` GSI (~50ms)
-5. **Athlete Leaderboard**: Query `userSubType-index` GSI (~50ms)
-6. **Event Contests**: Query with `begins_with(sortKey, "Contest:")` (~20ms)
-
-### Batch Operations
-- **BatchGetItem**: Used for fetching multiple user profiles or identities
-- **Performance**: 10x faster than sequential GetItem calls
-- **Limit**: 100 items per request (auto-chunked in service layer)
-- **Usage**: `getReferenceUsersBatch()`, `getAthleteProfilesBatch()`, `getISAAthletesBatch()`
-
-### Caching Strategy
-- **RBAC Roles**: 5-minute TTL (prevents repeated reference DB calls)
-- **Rankings Data**: 2-minute TTL (balances freshness vs. performance)
-- **Contests Data**: 10-minute TTL with projection expressions
-- **Event List**: 5-minute TTL for admin endpoints
-
-### Performance Benchmarks
-- **Direct key lookup** (GetItem): ~10ms
-- **GSI query** with limit 100: ~50ms
-- **Hierarchical query** with pagination: ~20-30ms
-- **BatchGetItem** (100 items): ~80ms vs. ~800ms sequential
-- **Table scan** (AVOID): 300-2000ms depending on table size
-
-### Query Examples
-
-**Get athlete profile with rankings**:
-```typescript
-// Single query for profile
-const profile = await getAthleteProfile("SportHubID:12345");
-
-// Single query for all rankings (hierarchical filter)
-const rankings = await getAthleteRankings("SportHubID:12345", {
-  type: "1",      // Prize money rankings
-  year: "2024"    // 2024 season only
-});
-// Returns only matching records via begins_with(sortKey, "Ranking:1:2024:")
-```
-
-**Get discipline leaderboard**:
-```typescript
-// Query GSI - returns top 100 athletes sorted by points
-const topAthletes = await getTopAthletesByDiscipline("12", 100, {
-  year: "2024",
-  gender: "1"
-});
-// Uses discipline-rankings-index GSI with gsiSortKey for sorting
-```
-
-### Testing Workflow
-1. Start local DynamoDB: `pnpm db:local`
-2. Initialize tables: `pnpm db:setup` (or use web interface)
-3. Seed with data: `pnpm db:seed` (loads ~2000+ records)
-4. Test operations via `/test_LOCAL` web interface
-5. Clean up: `pnpm db:clear` or `pnpm db:reset`
-
-## Layout Standards
-
-### Page Layout Consistency
-All pages must use consistent width and spacing patterns to ensure visual consistency across the site.
-
-**Required Pattern for All Pages:**
 ```tsx
 import PageLayout from '@ui/PageLayout';
 
@@ -353,36 +183,140 @@ export default function YourPage() {
     <PageLayout
       title="Your Page Title"
       description="Optional description"
-      heroImage={{ // Optional
+      heroImage={{ // optional
         src: "/static/images/hero-image.jpg",
         alt: "Alt text",
         caption: "Optional caption"
       }}
     >
       <section className="p-4 sm:p-0">
-        {/* Your main content sections */}
+        {/* page content */}
       </section>
     </PageLayout>
   );
 }
 ```
 
-**Key Layout Rules:**
-- Every page MUST use the `PageLayout` component or follow the exact same structure
-- All content sections MUST use `className="p-4 sm:p-0"` for responsive padding
-- This ensures consistent content width across all pages
-- Mobile: 1rem padding, Desktop: relies on main layout's 2.5rem padding
-- Tables automatically constrain to consistent widths with `table-layout: fixed`
+**Rules:**
+- All pages MUST use `PageLayout`
+- All content sections MUST use `className="p-4 sm:p-0"`
+- Mobile: 1rem padding; Desktop: relies on layout's 2.5rem padding
+- Tables use `table-layout: fixed` to constrain width
 
-**DO NOT:**
-- Create pages with inconsistent padding or width patterns
-- Use different container structures that break width consistency
-- Allow tables to expand beyond the standard content width
+**Never** use custom container structures that break width consistency.
 
-## Notes
-- Project uses ES modules (`"type": "module"`)
-- Strict TypeScript configuration enabled
-- Font optimization with Open Sans
-- Incremental builds enabled
-- Local DynamoDB data persists between restarts
-- Mock data includes real contest results and athlete names
+## Static Pages with ISR
+
+`/rankings` and `/events` are statically generated with ISR (`revalidate = 3600`).
+
+- Build time: pre-rendered from DynamoDB
+- Auto-revalidates every 1 hour
+- Manual revalidation: `pnpm revalidate:*` or via `/api/revalidate`
+- After data changes in production: always run `pnpm revalidate:all`
+
+Build output: pages should show `○` (Static), not `ƒ` (Dynamic).
+
+## Google Sheets Integration
+
+`/world_records` fetches data from Google Sheets via `src/lib/google-sheets.ts`.
+
+- **Sheets**: "World Records" and "World Firsts" tabs
+- **Auth**: Google service account (lazy-initialized, throws at call time not import time)
+- **Required env vars**: `ISA_CERTIFICATES_SPREADSHEET_ID`, `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`
+
+## Database Schema
+
+### Users Table (`sporthub-users` / `sporthub-users-dev`)
+**Primary Key**: `userId` (partition) + `sortKey` (sort)
+**GSI**: `userSubType-index`, `discipline-rankings-index`
+
+Sort key patterns:
+- `Profile` — user profile metadata, links to `isa-users` via `isaUsersId`
+- `Ranking:{type}:{year}:{discipline}:{gender}:{ageCategory}` — ranking records
+- `Participation:{contestId}` — contest results
+
+### Events Table (`sporthub-events` / `sporthub-events-dev`)
+**Primary Key**: `eventId` (partition) + `sortKey` (sort)
+**GSI**: `contestId-index`, `date-discipline-index`
+
+Sort key patterns:
+- `Metadata` — event-level info (name, location, dates)
+- `Contest:{discipline}:{contestId}` — contest with embedded participants
+
+### Reference DB (`isa-users`, eu-central-1)
+Centralized user identity (name, email, country). Accessed via `reference-db-service.ts`. Kept separate from application data — app table stores only app-specific fields (points, rankings) and links via `isaUsersId`.
+
+## Authentication & RBAC
+
+- NextAuth v5 (beta) with AWS Cognito provider
+- Auth config: `src/lib/auth.ts`
+- Authorization helpers: `src/lib/authorization.ts` (`getCurrentUser`, `requireRole`, `requirePermission`)
+- RBAC service: `src/lib/rbac-service.ts`
+- Roles: `admin`, `athlete`, `judge`, `organizer`
+- Protected routes via middleware; test pages restricted to dev only via `canAccessTestAPI()`
+
+## Environment Configuration
+
+### Local (`.env.local`)
+```env
+DYNAMODB_LOCAL=true
+DYNAMODB_ENDPOINT=http://localhost:8000
+AWS_REGION=us-east-2
+AWS_ACCESS_KEY_ID=dummy
+AWS_SECRET_ACCESS_KEY=dummy
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your_secret
+LOCAL_REFERENCE_DB=false
+```
+
+### Production (`.env.production` / Amplify console)
+```env
+AWS_REGION=us-east-2
+AWS_ACCESS_KEY_ID=your_key
+AWS_SECRET_ACCESS_KEY=your_secret
+COGNITO_CLIENT_ID=your_client_id
+COGNITO_CLIENT_SECRET=your_client_secret
+COGNITO_ISSUER=https://cognito-idp.eu-central-1.amazonaws.com/your_pool_id
+AUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=https://your-app.com
+REVALIDATE_SECRET=your_revalidation_secret
+NEXT_PUBLIC_URL=https://your-app.com
+REFERENCE_DB_TABLE=isa-users
+REFERENCE_DB_REGION=eu-central-1
+ISA_CERTIFICATES_SPREADSHEET_ID=your_sheet_id
+GOOGLE_SERVICE_ACCOUNT_EMAIL=your_sa@project.iam.gserviceaccount.com
+GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n..."
+```
+
+## Local Development Workflow
+
+```bash
+# 1. Start local database
+pnpm db:local
+
+# 2. Setup and seed
+pnpm db:setup
+pnpm db:seed   # Loads ~200 athletes, 40 contests from rankings-seed-data.json
+
+# 3. Start dev server
+pnpm dev       # or pnpm test:local for local DB mode
+
+# 4. Test interface
+open http://localhost:3000/test_LOCAL
+```
+
+## Test Pages
+- `/test_LOCAL` — DynamoDB test UI (setup, seed, query, stats)
+- `/test_SSR` — Server-side rendering tests
+- `/test_CSR` — Client-side rendering tests
+- `/demo` — UI component showcase
+- All test pages restricted to `NODE_ENV=development` via `canAccessTestAPI()`
+
+## Important Notes
+
+- Project uses ES modules (`"type": "module"` in package.json)
+- Strict TypeScript enabled
+- Local DynamoDB data persists between restarts in `sport-hub/dynamodb-data/`
+- No table scans in hot paths — all queries use composite keys or GSI lookups
+- `sync:export` and `sync:import` commands in README refer to `sync:all` in the actual package.json
+- Seed data (`rankings-seed-data.json`) is anonymised — no real personal data committed

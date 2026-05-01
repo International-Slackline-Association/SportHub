@@ -85,7 +85,6 @@ All queries use composite keys or GSI lookups - **NO TABLE SCANS**:
 - **[Static Pages Guide](docs/STATIC-PAGES.md)** - ISR, revalidation, and static page management
 - **[Database Sync Guide](docs/DATABASE-SYNC.md)** - Syncing local to remote DynamoDB
 - **[Authentication Setup](docs/AUTH_SETUP.md)** - Setting up Cognito authentication
-- **[Claude Code Guide](docs/CLAUDE.md)** - Working with Claude Code AI assistant
 
 ### API Reference
 - **[Data Services](docs/api/data-services.md)** - Data service layer API

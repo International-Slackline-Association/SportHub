@@ -1,3 +1,5 @@
 # Claude customization files
 .claude/
+.mcp.json
+
 .DS_Store
