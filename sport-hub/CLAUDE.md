@@ -1,5 +1,16 @@
 # SportHub - Developer Reference for Claude
 
+## Session Start Protocol
+
+At the start of every new session, before doing anything else, search MemPalace for recent SportHub context:
+
+```
+mempalace_search: "SportHub recent decisions architecture"
+mempalace_search: "SportHub <current task or topic if known>"
+```
+
+Use the `sporthub` wing and `sessions` wing. This surfaces prior decisions, solved problems, and architectural context so you don't start from scratch or re-ask questions already answered.
+
 ## Project Overview
 ISA SportHub is a Next.js application for sports management and athlete profiles, built with React 19 and TypeScript. Features static page generation with ISR, AWS Amplify hosting, Google Sheets integration, and comprehensive DynamoDB tooling.
 
