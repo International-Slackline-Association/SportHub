@@ -91,8 +91,11 @@ All queries use composite keys or GSI lookups - **NO TABLE SCANS**:
 - **[User Query Service](docs/api/user-query-service.md)** - User query functions
 - **[Reference DB Service](docs/api/reference-db-service.md)** - Reference DB operations
 
-### App-Specific
-- **[Developer Reference](sport-hub/CLAUDE.md)** - SportHub app developer guide
+### AI / Developer Setup
+- **[Claude AI Setup](docs/claude-setup.md)** - MemPalace, Obsidian MCP, Ruflo plugins, and lean CLAUDE.md setup
+- **[Claude Reference (archived)](docs/claude-md-reference.md)** - Full project reference migrated into MemPalace
+- **[Obsidian Wiki Setup](docs/WIKI.md)** - Vault structure, Local REST API plugin, MCP config
+- **[Developer Reference](sport-hub/CLAUDE.md)** - Active CLAUDE.md (minimal, backed by MemPalace)
 
 ## Local Database Development
 
@@ -159,10 +162,12 @@ http://localhost:3000/test_LOCAL
 
 ```
 docs/              # Documentation
+├── claude-setup.md          # Claude Code AI setup guide (MemPalace, Obsidian, plugins)
+├── claude-md-reference.md   # Full project reference (archived from CLAUDE.md)
+├── WIKI.md                  # Obsidian vault setup
 ├── STATIC-PAGES.md
 ├── SYNC-DATABASE.md
 ├── SYNC-TOOL.md
-├── CLAUDE.md
 └── etc...
 sport-hub/
 ├── src/
