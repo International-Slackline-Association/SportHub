@@ -98,11 +98,13 @@ export async function updateUserProfile(
  * Only stores app-specific data. Identity data is in reference DB.
  *
  * @param userId - SportHub user ID (SportHubID:xxx format)
+ * @param opts.email - Required. Stored so getUserByEmail works on subsequent logins.
+ * @param opts.isaUsersId - Optional. ISA_XXXXXXXX reference link (only for ISA athletes).
  * @returns Newly created user record
  */
 export async function createUser(
   userId: string,
-  opts?: { email?: string; isaUsersId?: string }
+  opts: { email: string; isaUsersId?: string }
 ): Promise<UserProfileRecord> {
   const newUser: UserProfileRecord = {
     userId,
