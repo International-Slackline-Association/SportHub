@@ -1,71 +1,86 @@
-# SportHub Documentation
+# SportHub Docs
 
-Developer reference hub. The root `README.md` covers quick start and commands — this covers everything else.
+Developer reference hub. The root [`README.md`](../README.md) covers quick start, commands, and project structure — this covers architecture, tooling, and how to onboard.
 
 ---
 
 ## Documentation Index
 
-### Architecture
-- [Authentication & Authorization](./AUTHENTICATION.md) — Cognito + NextAuth + RBAC, onboarding flow, ID model
-- [Reference DB Pattern](./architecture/reference-db-pattern.md) — isa-users (read-only) vs sporthub-users separation
-- [RBAC System](./RBAC.md) — Roles, permissions, protection layers
+### Architecture & Auth
+| Doc | What's in it |
+|-----|-------------|
+| [AUTHENTICATION.md](./AUTHENTICATION.md) | Cognito + NextAuth flow, onboarding, `sportHubUserId` vs `isaUsersId`, RBAC |
+| [architecture/reference-db-pattern.md](./architecture/reference-db-pattern.md) | Why isa-users is read-only, two-DB pattern, ID model deep-dive |
+| [RBAC.md](./RBAC.md) | Roles, permissions, protection layers |
 
 ### Database
-- [Database Schema](./schema/database-schema.md) — Table definitions, sort key patterns, GSIs
-- [Query Patterns](./schema/query-patterns.md) — Query examples, access patterns, performance
-- [Database Sync](./DATABASE-SYNC.md) — Local ↔ remote DynamoDB sync tool
-- [DB Setup](./db-setup.md) — Table creation and local Docker setup
+| Doc | What's in it |
+|-----|-------------|
+| [schema/database-schema.md](./schema/database-schema.md) | Table definitions, sort key patterns, GSI specs |
+| [schema/query-patterns.md](./schema/query-patterns.md) | Access patterns, query examples, performance benchmarks |
+| [db-setup.md](./db-setup.md) | Local Docker setup, table creation |
+| [DATABASE-SYNC.md](./DATABASE-SYNC.md) | Local ↔ remote sync tool, all workflows |
 
-### Deployment
-- [Amplify Deployment](./AMPLIFY_DEPLOYMENT.md) — AWS Amplify setup and CI/CD
-- [Static Pages & ISR](./STATIC-PAGES.md) — Static generation, revalidation, build output
+### Deployment & Ops
+| Doc | What's in it |
+|-----|-------------|
+| [AMPLIFY_DEPLOYMENT.md](./AMPLIFY_DEPLOYMENT.md) | AWS Amplify CI/CD, env vars, build config |
+| [STATIC-PAGES.md](./STATIC-PAGES.md) | ISR, on-demand revalidation, build output |
+| [AUTH_SETUP.md](./AUTH_SETUP.md) | Cognito user pool setup, env var reference |
 
 ### API Reference
-- [Data Services](./api/data-services.md) — Main data access layer
-- [Reference DB Service](./api/reference-db-service.md) — isa-users read operations
+| Doc | What's in it |
+|-----|-------------|
+| [api/data-services.md](./api/data-services.md) | Main data access layer functions |
 
-### Setup
-- [Auth Setup](./AUTH_SETUP.md) — Cognito user pool, env vars, NextAuth config
+### AI / Developer Tooling
+| Doc | What's in it |
+|-----|-------------|
+| [claude-setup.md](./claude-setup.md) | **Start here on a new machine** — installs MemPalace, Obsidian MCP, context-mode, all plugins |
+| [WIKI.md](./WIKI.md) | Obsidian vault structure, Local REST API plugin, MCP config |
+| [claude-md-reference.md](./claude-md-reference.md) | Archived full project reference — human-readable backup of what lives in MemPalace |
 
 ---
 
-## AI Tooling
+## AI Tooling — How It Works
 
-SportHub uses Claude Code with persistent memory to maintain context across sessions. Three systems work together:
+Three systems keep Claude productive without a bloated `CLAUDE.md`:
 
-| Tool | Purpose | Config |
-|------|---------|--------|
-| `sport-hub/CLAUDE.md` | Project rules, DB schema, commands — loaded into every Claude session | Committed to repo |
-| MemPalace | Long-term semantic memory — decisions, architecture, solved problems | `mempalace.yaml` at repo root |
-| context-mode | In-session context compression — prevents large outputs flooding the window | Claude Code plugin |
-
-### How CLAUDE.md Should Stay Lean
-
-`sport-hub/CLAUDE.md` is loaded verbatim into every Claude session. **Keep it as an index, not a library.**
-
-Rules:
-- **Commands and aliases only** — no prose explanations. If a workflow needs a paragraph, it belongs in `docs/` with a link from CLAUDE.md.
-- **No implementation details** — code patterns, function signatures, and architecture decisions belong in MemPalace or `docs/`, not CLAUDE.md.
-- **No duplication** — if it's in a doc file, point to that file. Don't copy-paste it into CLAUDE.md.
-- **Session start protocol at the top** — the MemPalace search block is load-bearing; don't remove it.
-
-When CLAUDE.md grows past ~150 lines, audit it: anything that isn't a command, path alias, or schema key belongs elsewhere.
-
-### MemPalace
-
-Memories are stored in the `sporthub` wing with rooms: `backend`, `documentation`, `scripts`, `general`.
-
-Searching:
 ```
-mempalace_search: "topic keywords"   # semantic search
-wing: sporthub                        # scope to this project
+sport-hub/CLAUDE.md          ← loaded every session (keep lean — rules + pointers only)
+         │
+         └─ session start: search MemPalace ──→ sporthub wing
+                                                 (decisions, architecture, solved problems)
+         └─ long-form reference ──────────────→ docs/ (this folder)
+         └─ ideas / research ─────────────────→ Obsidian vault
 ```
 
-Adding a memory (via Claude):
-```
-mempalace_add_drawer wing=sporthub room=backend content="..."
-```
+### CLAUDE.md — keep it lean
+
+`sport-hub/CLAUDE.md` is injected verbatim into every Claude session. It should stay under ~150 lines.
+
+**What belongs in CLAUDE.md:**
+- Session start protocol (MemPalace search block — do not remove)
+- `pnpm` commands and path aliases
+- DB schema key patterns (sort keys, GSI names)
+- Layout rules and critical constraints
+
+**What does NOT belong in CLAUDE.md:**
+- Architecture explanations → `docs/`
+- Implementation details → MemPalace or source comments
+- Anything already in a doc file → link to it, don't copy it
+
+When CLAUDE.md grows past ~150 lines, audit it. Move prose to `docs/`, file decisions into MemPalace, and leave only the lookup-table content.
+
+### MemPalace — project memory
+
+All architectural decisions, solved problems, and non-obvious context live in the `sporthub` MemPalace wing. Claude queries it automatically at session start.
+
+Rooms: `backend` (auth, DB, services) · `documentation` · `scripts` · `general`
+
+To search: `mempalace_search: "SportHub <topic>" wing=sporthub`
+
+To file a new memory: tell Claude *"remember this"* or *"save this to MemPalace"* and it will file it to the right room.
 
 ---
 
@@ -73,64 +88,36 @@ mempalace_add_drawer wing=sporthub room=backend content="..."
 
 ### 1. Project
 
-```bash
-git clone <repo>
-cd SportHub/sport-hub
-pnpm install
+See root [README.md](../README.md) for `pnpm install` + local DB quickstart.
 
-# Copy and fill env vars
-cp .env.local.example .env.local
+### 2. Claude AI Tooling
 
-# Start local DB and seed
-pnpm db:local
-pnpm db:setup
-pnpm db:seed
+Follow **[docs/claude-setup.md](./claude-setup.md)** — it covers:
+- MemPalace install + MCP server registration
+- Obsidian + Local REST API plugin + MCP config
+- context-mode install
+- All Claude Code plugin installs (official + Ruflo + memory plugins)
+- Verification steps
 
-pnpm dev
-```
+### 3. Seed MemPalace
 
-### 2. Claude Code + Plugins
+After installing MemPalace on a new machine, the `sporthub` wing needs to be populated. Two options:
 
-Install Claude Code and the two project plugins:
-
-```bash
-# Claude Code CLI
-npm install -g @anthropic-ai/claude-code
-
-# context-mode — in-session context compression
-# (follow install steps at https://github.com/dwarvesf/context-mode or run /ctx-upgrade inside Claude Code)
-
-# MemPalace — persistent semantic memory
-npx mempalace init
-```
-
-### 3. Seed MemPalace from Existing Context
-
-The `mempalace.yaml` at the repo root defines the palace structure. To populate it with project knowledge on a new machine, ask Claude to mine the existing codebase and docs:
-
+**Option A — mine from codebase (recommended):**
 ```
 /mempalace:mine
 ```
+Claude will crawl `sport-hub/src/` and `docs/` and file structured memories automatically.
 
-Then manually trigger a context search to confirm it loaded:
+**Option B — manually reseed from key docs:**
+Ask Claude:
+> "Read docs/AUTHENTICATION.md and docs/architecture/reference-db-pattern.md and file the key architecture decisions into MemPalace under sporthub/backend."
 
+**Verify the palace is warm:**
 ```
-mempalace_search: "SportHub authentication architecture"
+mempalace_search: "SportHub authentication sportHubUserId"
 ```
-
-Key memories already filed under `sporthub/backend`:
-- Authentication architecture + ID model (`sportHubUserId` vs `isaUsersId`)
-- isa-users read-only constraint + onboarding flow
-
-If those return results, the palace is warm. If not, re-run `/mempalace:mine` or ask Claude to re-file them from `docs/AUTHENTICATION.md` and `docs/architecture/reference-db-pattern.md`.
-
-### 4. Verify Claude Setup
-
-Open Claude Code in the `SportHub/sport-hub` directory. On the first message it should:
-1. Search MemPalace for recent SportHub context (per the session start protocol in `CLAUDE.md`)
-2. Have access to all project commands and schema from `CLAUDE.md`
-
-If MemPalace searches return nothing, follow step 3 above.
+If that returns the auth architecture drawer, you're good. If not, re-run option A or B.
 
 ---
 
@@ -138,7 +125,7 @@ If MemPalace searches return nothing, follow step 3 above.
 
 - Architecture decisions → `docs/architecture/`
 - API references → `docs/api/`
-- Schemas and query patterns → `docs/schema/`
-- Setup/ops guides → `docs/` root
-- Code-level comments → source files only, never duplicate in docs
-- Keep CLAUDE.md lean — see [AI Tooling](#ai-tooling) above
+- Schema and query patterns → `docs/schema/`
+- Setup and ops guides → `docs/` root
+- Solved problems and non-obvious decisions → MemPalace (not docs)
+- Do not duplicate content between CLAUDE.md and docs — link, don't copy

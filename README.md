@@ -4,33 +4,25 @@
 
 # ISA SportHub
 
-Next.js application for sports management, athlete profiles, and competition rankings.
+Next.js application for sports management, athlete profiles, and competition rankings — built for the International Slackline Association.
 
 ## Tech Stack
 
-| | |
-|---|---|
-| Framework | Next.js 15.3 — App Router |
-| Runtime | React 19 + TypeScript 5 |
-| Styling | Tailwind CSS 4.0 |
-| Package Manager | pnpm (run all commands from `sport-hub/`) |
-| Database | AWS DynamoDB + local Docker dev |
-| Auth | NextAuth v5 + AWS Cognito |
-| Hosting | AWS Amplify |
+- **Framework**: Next.js 15.3 · App Router · Turbopack
+- **Runtime**: React 19 · TypeScript 5
+- **Styling**: Tailwind CSS 4.0
+- **Database**: AWS DynamoDB (local Docker + remote AWS)
+- **Auth**: NextAuth v5 + AWS Cognito
+- **Hosting**: AWS Amplify
+- **Package Manager**: pnpm — run all commands from `sport-hub/`
 
 ## Quick Start
 
 ```bash
 cd sport-hub
-
-# Install dependencies
 pnpm install
-
-# Start local database
 pnpm db:local && pnpm db:setup && pnpm db:seed
-
-# Start dev server
-pnpm dev
+pnpm test:local
 # → http://localhost:3000
 ```
 
@@ -38,48 +30,12 @@ pnpm dev
 
 ```
 SportHub/
-├── sport-hub/        # Next.js application
-│   ├── src/
-│   │   ├── app/      # Pages & API routes (App Router)
-│   │   ├── ui/       # Reusable components
-│   │   ├── lib/      # Services, auth, DB clients
-│   │   ├── types/    # TypeScript definitions
-│   │   └── mocks/    # Seed data
-│   └── CLAUDE.md     # AI developer reference (see docs/README.md)
-├── docs/             # Architecture, API reference, guides
-└── mempalace.yaml    # AI memory palace config
-```
-
-## Path Aliases (sport-hub/src)
-
-`@ui/*` · `@utils/*` · `@types/*` · `@mocks/*` · `@lib/*`
-
-## Common Commands
-
-```bash
-# Dev
-pnpm dev              # Turbopack dev server
-pnpm build            # Production build
-pnpm lint
-
-# Database
-pnpm db:local         # Start DynamoDB container
-pnpm db:setup         # Create tables
-pnpm db:seed          # Load 200 athletes / 40 contests
-pnpm db:reset         # Clear + reseed
-pnpm db:gui           # Admin UI → localhost:8001
-
-# Production sync
-pnpm sync:compare     # Diff local vs remote
-pnpm sync:all         # Push to remote
-pnpm sync:recreate    # Recreate remote (destructive)
-
-# ISR revalidation
-pnpm revalidate:all
+├── sport-hub/          # Next.js application (src/, scripts/, public/)
+├── docs/               # Architecture, API reference, setup guides
+│   └── README.md       # ← start here for everything beyond quick start
+└── mempalace.yaml      # AI memory palace config (sporthub wing)
 ```
 
 ## Documentation
 
-All architecture decisions, API references, and developer guides live in [`docs/`](docs/README.md).
-
-Start there for: database schema, auth setup, deployment, AI tooling, and new machine onboarding.
+Everything else — architecture, database schema, auth, deployment, AI tooling, new machine setup — is in **[`docs/`](docs/README.md)**.
