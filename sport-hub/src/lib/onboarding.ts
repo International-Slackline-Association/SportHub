@@ -1,52 +1,45 @@
 /**
  * User Onboarding
  *
- * Ensures users exist in both reference DB and app DB after Cognito authentication
+ * Creates a sporthub-users entry for Cognito users who don't have one yet.
+ * isa-users is read-only — all Cognito users are guaranteed to exist there already.
  */
 
-import { createUser, userExists } from './user-service';
-import { getReferenceUserByCognitoSub, createReferenceUser } from './reference-db-service';
+import { createUser, generateSportHubId } from './user-service';
+import { getReferenceUserByEmail } from './reference-db-service';
 
 /**
- * Ensure user exists in both reference DB and app DB after Cognito authentication
+ * Ensure a Cognito user has a sporthub-users record.
  *
- * Called during JWT callback to create user records if they don't exist
+ * Called during JWT callback when getUserByEmail returns null (no existing record).
+ * Looks up the user's ISA_xxx ID from the read-only isa-users reference DB by email,
+ * then creates a sporthub-users Profile if one doesn't exist.
  *
- * @param cognitoUserId - Cognito user ID (sub claim)
- * @param email - User email from Cognito
- * @param name - User name from Cognito (may be email if name not available)
- * @returns Custom user ID from reference DB
+ * @param cognitoUserId - Cognito sub (used for error context only)
+ * @param email - User email from Cognito token
+ * @returns SportHubID:xxx — the new sporthub-users PK
  */
 export async function ensureUserExists(
   cognitoUserId: string,
   email: string,
-  name: string
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _name: string
 ): Promise<string> {
-  try {
-    // Step 1: Check if user exists in reference DB
-    let referenceUser = await getReferenceUserByCognitoSub(cognitoUserId);
+  // All Cognito users are guaranteed to exist in isa-users — look up their ISA ID by email
+  const referenceUser = await getReferenceUserByEmail(email);
 
-    if (!referenceUser) {
-      // Create user in reference DB with generated custom ID
-      console.log(`Creating new reference user for Cognito sub: ${cognitoUserId}`);
-      referenceUser = await createReferenceUser(cognitoUserId, email, name);
-    }
-
-    // Step 2: Check if user exists in app DB using custom ID
-    const customUserId = referenceUser.userId;
-    const appUserExists = await userExists(customUserId);
-
-    if (!appUserExists) {
-      // Create user in app DB with custom ID from reference DB
-      console.log(`Creating new app user record for ${customUserId}`);
-      await createUser(customUserId);
-    }
-
-    return customUserId;
-  } catch (error) {
-    console.error('Error ensuring user exists:', error);
-    // Don't throw - allow authentication to continue even if DB write fails
-    // User will be created on next login attempt
-    throw error;
+  if (!referenceUser) {
+    throw new Error(`[Onboarding] No isa-users entry found for Cognito user ${cognitoUserId} (${email}). All Cognito users must exist in isa-users.`);
   }
+
+  const isaUsersId = referenceUser.userId;  // ISA_XXXXXXXX — reference link to isa-users
+
+  // Generate a fresh SportHub ID as the sporthub-users PK (distinct from isaUsersId)
+  // getUserByEmail in auth.ts already confirmed this user has no sporthub record
+  const sportHubId = generateSportHubId();
+
+  await createUser(sportHubId, { email, isaUsersId });
+  console.log(`[Onboarding] Created ${sportHubId} (isaUsersId: ${isaUsersId}) for ${email}`);
+
+  return sportHubId;
 }
