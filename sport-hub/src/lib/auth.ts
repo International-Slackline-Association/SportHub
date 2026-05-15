@@ -1,7 +1,7 @@
 import NextAuth from "next-auth"
 import Cognito from "next-auth/providers/cognito"
 import { getUserRole, getUserPermissions, getUserSubTypes } from './rbac-service'
-import { ensureUserExists } from './onboarding'
+import { ensureUserExists, enrichUserFromReferenceDb } from './onboarding'
 import { getUserByEmail } from './user-service'
 import type { Role, Permission, UserSubType } from '../types/rbac'
 
@@ -79,6 +79,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               // Use existing user's SportHub ID (sporthub-users partition key)
               token.sportHubUserId = existingUser.userId;
               console.log(`[Auth] Found existing user by email: ${existingUser.userId}`);
+
+              // Back-fill isaUsersId + reference DB fields if missing (migrated users
+              // who were created before the isa-users link was established)
+              if (!existingUser.isaUsersId) {
+                enrichUserFromReferenceDb(existingUser, token.email as string).catch(err =>
+                  console.warn('[Auth] Non-fatal: could not enrich user from isa-users:', err)
+                );
+              }
             } else {
               // New user — create sporthub record, returns SportHubID:xxx
               const sportHubUserId = await ensureUserExists(

@@ -5,8 +5,9 @@
  * isa-users is read-only — all Cognito users are guaranteed to exist there already.
  */
 
-import { createUser, generateSportHubId } from './user-service';
+import { createUser, generateSportHubId, updateUserData } from './user-service';
 import { getReferenceUserByEmail } from './reference-db-service';
+import type { UserProfileRecord } from './relational-types';
 
 /**
  * Ensure a Cognito user has a sporthub-users record.
@@ -42,4 +43,43 @@ export async function ensureUserExists(
   console.log(`[Onboarding] Created ${sportHubId} (isaUsersId: ${isaUsersId}) for ${email}`);
 
   return sportHubId;
+}
+
+/**
+ * Back-fill missing reference DB fields on an existing sporthub-users Profile.
+ *
+ * Called non-blocking during login when a user's Profile is missing isaUsersId —
+ * i.e. they were migrated from ISA-Rankings before the isa-users link was established,
+ * or their record pre-dates the current onboarding flow.
+ *
+ * Only writes fields that are absent in the existing record (never overwrites).
+ *
+ * @param existingUser - Current sporthub-users Profile record
+ * @param email - User email from Cognito token (used to look up isa-users)
+ */
+export async function enrichUserFromReferenceDb(
+  existingUser: UserProfileRecord,
+  email: string
+): Promise<void> {
+  const referenceUser = await getReferenceUserByEmail(email);
+  if (!referenceUser) {
+    console.warn(`[Onboarding] enrichUserFromReferenceDb: no isa-users entry for ${email}`);
+    return;
+  }
+
+  // Build update — only include fields not already set on the existing record
+  const updates: Partial<UserProfileRecord> = {};
+
+  if (!existingUser.isaUsersId)  updates.isaUsersId  = referenceUser.userId;
+  if (!existingUser.name)        updates.name        = referenceUser.name;
+  if (!existingUser.surname)     updates.surname     = referenceUser.surname ?? undefined;
+  if (!existingUser.country)     updates.country     = referenceUser.country ?? undefined;
+  if (!existingUser.city)        updates.city        = referenceUser.city    ?? undefined;
+  if (!existingUser.gender)      updates.gender      = referenceUser.gender  ?? undefined;
+  if (!existingUser.birthdate)   updates.birthdate   = referenceUser.birthDate ?? undefined;
+
+  if (Object.keys(updates).length === 0) return;
+
+  await updateUserData(existingUser.userId, updates);
+  console.log(`[Onboarding] Enriched ${existingUser.userId} from isa-users:`, Object.keys(updates));
 }
