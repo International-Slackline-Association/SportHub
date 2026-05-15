@@ -6,7 +6,7 @@
  */
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand, QueryCommand, PutCommand, UpdateCommand, BatchGetCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, GetCommand, QueryCommand, UpdateCommand, BatchGetCommand } from "@aws-sdk/lib-dynamodb";
 
 // Reference table configuration
 const REFERENCE_TABLE = process.env.REFERENCE_DB_TABLE || 'isa-users';
@@ -171,47 +171,6 @@ export async function getReferenceUserByEmail(email: string): Promise<ReferenceU
 }
 
 /**
- * Create user in reference database
- *
- * Called when a new user signs up and doesn't exist in reference DB yet
- *
- * @param cognitoSub - Cognito UUID
- * @param email - User email
- * @param name - User name
- * @returns Newly created user identity with generated custom ID
- */
-export async function createReferenceUser(
-  cognitoSub: string,
-  email: string,
-  name: string
-): Promise<ReferenceUserIdentity> {
-  // Generate custom user ID (format: ISA_XXXXXXXX)
-  const customId = generateCustomUserId();
-  const pk = `user:${customId}`;
-
-  const record: ReferenceDBRecord = {
-    PK: pk,
-    SK_GSI: 'userDetails',
-    GSI_SK: `email:${email}`,
-    cognitoSub,
-    cognitoUsername: cognitoSub,
-    name,
-    createdDateTime: new Date().toISOString(),
-  };
-
-  const command = new PutCommand({
-    TableName: REFERENCE_TABLE,
-    Item: record,
-  });
-
-  await referenceDdb.send(command);
-
-  console.log(`Created reference user: ${customId} (${email})`);
-
-  return mapToIdentity(record);
-}
-
-/**
  * Map reference DB record to identity object
  */
 function mapToIdentity(record: ReferenceDBRecord): ReferenceUserIdentity {
@@ -234,18 +193,6 @@ function mapToIdentity(record: ReferenceDBRecord): ReferenceUserIdentity {
     birthDate: record.birthDate,
     createdDateTime: record.createdDateTime,
   };
-}
-
-/**
- * Generate custom user ID in format ISA_XXXXXXXX
- */
-function generateCustomUserId(): string {
-  // Generate 8 random hex characters (uppercase)
-  const randomHex = Array.from({ length: 8 }, () =>
-    Math.floor(Math.random() * 16).toString(16).toUpperCase()
-  ).join('');
-
-  return `ISA_${randomHex}`;
 }
 
 /**

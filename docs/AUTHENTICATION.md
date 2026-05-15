@@ -17,7 +17,7 @@ SportHub uses **AWS Cognito** for authentication via **NextAuth v5 (Beta)** with
 │   NextAuth v5   │  ─── Session management (JWT, 30-day)
 │   (auth.ts)     │  ─── Runs onboarding on first login
 └────────┬────────┘
-         │ customUserId (ISA_xxx)
+         │ sportHubUserId (SportHubID:xxx)
          ▼
 ┌────────────────────────────────────────────────┐
 │  isa-users  (eu-central-1)   READ-ONLY         │
@@ -37,7 +37,7 @@ SportHub uses **AWS Cognito** for authentication via **NextAuth v5 (Beta)** with
 - **Authentication** = Cognito (who you are)
 - **Authorization** = sporthub-users RBAC (what you can do)
 - **Identity** = isa-users (read-only ISA athlete data)
-- **Session** = JWT with `customUserId` + role embedded
+- **Session** = JWT with `sportHubUserId` + role embedded
 
 ### User ID Formats
 - `ISA_XXXXXXXX` — new users and Cognito-onboarded users (8 random hex, uppercase)
@@ -189,7 +189,7 @@ src/
 │   ├── reference-db-service.ts # READ-ONLY isa-users access (identity lookup)
 │   └── user-service.ts        # createUser, getUserByEmail, updateUserProfile
 ├── types/
-│   ├── auth.ts                # NextAuth type extensions (customUserId, role, etc.)
+│   ├── auth.ts                # NextAuth type extensions (sportHubUserId, role, etc.)
 │   └── rbac.ts                # Role, Permission, UserSubType types
 └── middleware.ts              # Route protection
 ```

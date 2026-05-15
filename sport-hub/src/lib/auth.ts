@@ -68,26 +68,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.idToken = account.id_token
 
         // Link Cognito user to sporthub-users record
-        // First check if user already exists by email (handles migrated SportHubID users)
-        // If not found, create via ensureUserExists (generates ISA_xxx ID)
+        // Check by email first (covers migrated users and previously onboarded users)
+        // If not found, create a new sporthub record via ensureUserExists
         if (token.sub && token.email) {
           try {
             // First, check if user already exists in sporthub-users by email
             const existingUser = await getUserByEmail(token.email as string);
 
             if (existingUser) {
-              // Use existing user's ID (could be SportHubID:xxx or ISA_xxx)
-              token.customUserId = existingUser.userId;
+              // Use existing user's SportHub ID (sporthub-users partition key)
+              token.sportHubUserId = existingUser.userId;
               console.log(`[Auth] Found existing user by email: ${existingUser.userId}`);
             } else {
-              // New user - create via reference DB flow
-              const customUserId = await ensureUserExists(
+              // New user — create sporthub record, returns SportHubID:xxx
+              const sportHubUserId = await ensureUserExists(
                 token.sub,
                 token.email as string,
                 token.email as string  // Use email as name fallback
               );
-              token.customUserId = customUserId;
-              console.log(`[Auth] Created new user via onboarding: ${customUserId}`);
+              token.sportHubUserId = sportHubUserId;
+              console.log(`[Auth] Created new user via onboarding: ${sportHubUserId}`);
             }
           } catch (error) {
             console.error('Error in user lookup/onboarding:', error);
@@ -95,13 +95,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         }
 
-        // Load user role, permissions, and sub-types from database using custom ID
-        // The database uses custom ID (SportHubID:xxx or ISA_xxx) as partition key
-        if (token.customUserId) {
+        // Load RBAC from sporthub-users using the SportHub user ID
+        if (token.sportHubUserId) {
           try {
-            const role = await getUserRole(token.customUserId as string)
-            const permissions = await getUserPermissions(token.customUserId as string)
-            const userSubTypes = await getUserSubTypes(token.customUserId as string)
+            const role = await getUserRole(token.sportHubUserId as string)
+            const permissions = await getUserPermissions(token.sportHubUserId as string)
+            const userSubTypes = await getUserSubTypes(token.sportHubUserId as string)
             token.role = role
             token.permissions = permissions
             token.userSubTypes = userSubTypes
@@ -113,7 +112,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.userSubTypes = []
           }
         } else {
-          // No custom ID available - default to user role
+          // No SportHub ID — onboarding failed, default to base role
           token.role = 'user'
           token.permissions = []
           token.userSubTypes = []
@@ -124,9 +123,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       // Pass token data to session
       if (token) {
-        // Use custom user ID as the primary ID - matches database partition key
-        // Could be SportHubID:xxx (migrated users) or ISA_xxx (new users)
-        session.user.id = (token.customUserId as string) || (token.sub as string)
+        // Use SportHub user ID as the primary session ID (SportHubID:xxx)
+        // Falls back to Cognito sub if onboarding failed
+        session.user.id = (token.sportHubUserId as string) || (token.sub as string)
         session.user.cognitoSub = token.sub as string  // Keep Cognito sub for debugging
         session.user.email = token.email as string
         // Note: name and image not available without profile scope from Cognito

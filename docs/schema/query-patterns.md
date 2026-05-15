@@ -328,7 +328,7 @@ const contests = await dynamodb.queryItems(
 
 ## Reference Database Patterns
 
-### 12. Get User Identity by Custom ID
+### 12. Get User Identity by ISA ID (`isaUsersId`)
 
 **Use Case**: Fetch user name/email for display
 

@@ -97,7 +97,7 @@ export async function updateUserProfile(
  * Create new user (for onboarding)
  * Only stores app-specific data. Identity data is in reference DB.
  *
- * @param customUserId - Custom user ID from reference DB (e.g., "ISA_FBE8B254")
+ * @param userId - SportHub user ID (SportHubID:xxx format)
  * @returns Newly created user record
  */
 export async function createUser(
@@ -121,7 +121,7 @@ export async function createUser(
   };
 
   await dynamodb.putItem(USERS_TABLE, newUser as unknown as Record<string, unknown>);
-  console.log(`Created new user: ${customUserId}`);
+  console.log(`Created new user: ${userId}`);
   return newUser;
 }
 
@@ -190,7 +190,7 @@ export async function saveUserProfile(user: UserProfileRecord): Promise<void> {
 /**
  * Create a user with a full profile (admin/form use case)
  *
- * Unlike the onboarding `createUser(customUserId)`, this accepts all profile
+ * Unlike the onboarding `createUser(userId)`, this accepts all profile
  * fields at creation time (e.g. from an admin form).
  *
  * @param userId - User ID to assign
