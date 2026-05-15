@@ -16,6 +16,7 @@ export const SocialMediaLinks = ({ avatarDefaultLabel, profileImage, links }: So
         alt={`${avatarDefaultLabel} image`}
         defaultLabel={avatarDefaultLabel || ""}
         image={profileImage}
+        size="medium"
       />
       {/* TODO: create share bottom drawer for socials & profile link for mobile */}
       {links && <SocialTags socials={links} />}

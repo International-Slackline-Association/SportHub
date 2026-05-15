@@ -43,13 +43,7 @@ const columns = [
   }),
   columnHelper.accessor((row) => contestLabel(row), {
     id: "contestLabel",
-    enableColumnFilter: true,
     header: "Contest",
-    filterFn: "includesString",
-    meta: {
-      filterVariant: "text",
-      filterPlaceholder: "Enter contest name",
-    },
     cell: (info) => {
       const row = info.row.original;
       return (
@@ -99,7 +93,7 @@ const columns = [
   }),
   columnHelper.accessor("dates", {
     enableColumnFilter: true,
-    header: "Dates",
+    header: "Date",
     meta: { filterVariant: "date" },
     filterFn: dateFilterFn,
   }),
@@ -111,10 +105,7 @@ type AthleteContestsTableProps = {
 
 const AthleteContestsTable = ({ contests }: AthleteContestsTableProps) => {
   return (
-    <div className="mb-8">
-      <h3>Contests</h3>
-      <Table options={{ columns, data: contests }} />
-    </div>
+    <Table options={{ columns, data: contests }} />
   );
 };
 

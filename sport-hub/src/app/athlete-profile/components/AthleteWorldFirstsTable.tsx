@@ -32,10 +32,7 @@ type AthleteWorldFirstsTableProps = {
 
 const AthleteWorldFirstsTable = ({ worldFirsts }: AthleteWorldFirstsTableProps) => {
   return (
-    <div className="mb-8">
-      <h3>World Firsts</h3>
-      <Table options={{ columns, data: worldFirsts, initialState: { sorting: [{ id: 'date', desc: true }] } }} />
-    </div>
+    <Table options={{ columns, data: worldFirsts, initialState: { sorting: [{ id: 'date', desc: true }] } }} />
   );
 };
 

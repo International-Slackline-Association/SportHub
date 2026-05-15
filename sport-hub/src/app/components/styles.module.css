@@ -39,12 +39,13 @@
 /* Featured Contest Card Styles */
 .imageWrapper {
   position: relative;
-  width: auto;;
+  width: 320px;
   height: 160px;
   background: var(--color-neutral-100);
   flex-shrink: 0;
 
   @media (min-width: 40rem) {
+    width: 400px;
     height: 200px;
   }
 }

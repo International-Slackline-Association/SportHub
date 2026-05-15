@@ -2,17 +2,12 @@ import { PropsWithChildren } from "react";
 import Image from "next/image";
 import styles from "./styles.module.css";
 import { cn } from "@utils/cn";
+import type { HeroImage } from "@utils/images";
 
 export type PageLayoutProps = PropsWithChildren<{
   title?: string;
   description?: string;
-  heroImage?: {
-    src: string;
-    alt: string;
-    caption?: string;
-    blurredBackground?: boolean;
-    objectPosition?: string;
-  };
+  heroImage?: HeroImage;
   overlayText?: boolean;
 }>;
 
@@ -49,6 +44,10 @@ export const PageLayout = ({ children, title, description, heroImage, overlayTex
                   fill
                   sizes="100vw"
                   className={styles.heroBackgroundImage}
+                  style={{
+                    objectPosition: heroImage.objectPosition ?? 'center',
+                    transform: `scale(${heroImage.backgroundZoom ?? 1})`,
+                  }}
                   priority
                 />
               </div>

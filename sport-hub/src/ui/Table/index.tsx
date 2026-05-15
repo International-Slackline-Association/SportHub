@@ -9,7 +9,9 @@ import {
   TableOptions,
   flexRender,
   RowData,
+  Row,
   ColumnFiltersState,
+  SortingState,
   VisibilityState,
 } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
@@ -24,17 +26,31 @@ declare module "@tanstack/react-table" {
     filterOptions?: { value: string; label: string }[];
     /** Custom placeholder text for text filters. */
     filterPlaceholder?: string;
+    /** When true, hides the blank "All" option in select filters. */
+    filterNoAll?: boolean;
   }
 }
+
+export type RowClassContext<TData> = {
+  row: Row<TData>;
+  index: number;
+  rows: Row<TData>[];
+  allRows: Row<TData>[];
+  globalIndex: number;
+};
 
 type TableProps<TData,> = {
   extraFilters?: React.ReactNode;
   options: Partial<TableOptions<TData>>;
   title?: string;
+  rowClassName?: (context: RowClassContext<TData>) => string | undefined;
 };
 
-const Table = <TData,>({ extraFilters, options, title }: TableProps<TData>) => {
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+const Table = <TData,>({ extraFilters, options, title, rowClassName }: TableProps<TData>) => {
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
+    options?.initialState?.columnFilters ?? []
+  );
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   // Automatically hide columns declared with size: 0 (used for filter-only columns)
   const autoColumnVisibility = useMemo<VisibilityState>(() => {
@@ -62,6 +78,7 @@ const Table = <TData,>({ extraFilters, options, title }: TableProps<TData>) => {
     },
     state: {
       columnFilters,
+      sorting,
       columnVisibility: autoColumnVisibility,
       ...(options?.initialState?.columnOrder && { columnOrder: options.initialState.columnOrder }),
     },
@@ -69,11 +86,15 @@ const Table = <TData,>({ extraFilters, options, title }: TableProps<TData>) => {
     columns: options?.columns || [],
     data: options?.data || [],
     onColumnFiltersChange: setColumnFilters,
+    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   });
+
+  const visibleRows = table.getRowModel().rows;
+  const allRows = table.getPrePaginationRowModel().rows;
 
   return (
     <div className={styles.tableContainer}>
@@ -87,21 +108,35 @@ const Table = <TData,>({ extraFilters, options, title }: TableProps<TData>) => {
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <th key={header.id} colSpan={header.colSpan} style={{ width: `${header.getSize()}px` }}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
+                  <th
+                    key={header.id}
+                    colSpan={header.colSpan}
+                    style={{ width: `${header.getSize()}px` }}
+                    className={header.column.getCanSort() ? styles.sortableHeader : undefined}
+                    onClick={header.column.getCanSort() ? header.column.getToggleSortingHandler() : undefined}
+                  >
+                    {header.isPlaceholder ? null : (
+                      <div className={styles.headerContent}>
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.column.getCanSort() && (
+                          <span className={styles.sortIndicator}>
+                            {header.column.getIsSorted() === 'asc'
+                              ? '↑'
+                              : header.column.getIsSorted() === 'desc'
+                              ? '↓'
+                              : '↕'}
+                          </span>
                         )}
+                      </div>
+                    )}
                   </th>
                 ))}
               </tr>
             ))}
           </thead>
           <tbody>
-            {table.getRowModel().rows.map((row) => (
-                <tr key={row.id}>
+            {visibleRows.map((row, index, rows) => (
+                <tr key={row.id} className={rowClassName?.({ row, index, rows, allRows, globalIndex: allRows.findIndex(r => r.id === row.id) })}>
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}

@@ -1,7 +1,7 @@
 "use client"
 
 import { createColumnHelper } from '@tanstack/react-table';
-import Table from '@ui/Table';
+import Table, { RowClassContext } from '@ui/Table';
 import { ContestData } from "@lib/data-services";
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
@@ -14,6 +14,50 @@ import Spinner from '@ui/Spinner';
 import { Alert } from '@ui/Alert';
 import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import { CountryFlag } from '@ui/CountryFlag';
+import styles from './ContestsTable.module.css';
+
+const normalizeGroupField = (value: string | null | undefined) =>
+  String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+
+const normalizeGroupDate = (value: string | null | undefined) => {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+
+  const parsedDate = new Date(raw);
+  if (!Number.isNaN(parsedDate.getTime())) {
+    return parsedDate.toISOString().slice(0, 10);
+  }
+
+  return normalizeGroupField(raw);
+};
+
+const buildContestGroupKey = (contest: ContestData) => {
+  const eventName = normalizeGroupField(contest.name);
+  const country = normalizeGroupField(contest.country);
+  const date = normalizeGroupDate(contest.date);
+
+  return `${eventName}|${country}|${date}`;
+};
+
+const getRowClassName = ({ row, allRows, globalIndex }: RowClassContext<ContestData>) => {
+  const currentKey = buildContestGroupKey(row.original);
+  const previousKey = globalIndex > 0 ? buildContestGroupKey(allRows[globalIndex - 1].original) : '';
+  const nextKey = globalIndex < allRows.length - 1 ? buildContestGroupKey(allRows[globalIndex + 1].original) : '';
+
+  const hasSiblingInGroup = previousKey === currentKey || nextKey === currentKey;
+  if (!hasSiblingInGroup) return undefined;
+
+  const isGroupStart = previousKey !== currentKey;
+  const isGroupEnd = nextKey !== currentKey;
+  return [
+    styles.groupedContestRow,
+    isGroupStart ? styles.groupStart : styles.groupMiddle,
+    isGroupEnd ? styles.groupEnd : '',
+  ].filter(Boolean).join(' ');
+};
 
 const CountryFlagWithName = ({ iocCode, defaultValue="N/A" }: { iocCode: string, defaultValue?: string }) => {
   if (iocCode === 'N/A' || !iocCode) {
@@ -215,27 +259,30 @@ const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
         <Alert>Error loading events: {error?.message}</Alert>
       )}
       {isSuccess && (
-        <Table options={{
-          columns,
-          data,
-          initialState: {
-            columnOrder: isDesktop
-              ? ['name', 'date', 'country', 'discipline', 'gender', 'prize', 'size', 'athletes', 'verified']
-              : ['event'],
-            columnVisibility: {
-              event:      !isDesktop,
-              name:       !!isDesktop,
-              date:       !!isDesktop,
-              country:    !!isDesktop,
-              discipline: !!isDesktop,
-              gender:     !!isDesktop,
-              prize:      !!isDesktop,
-              size:       !!isDesktop,
-              athletes:   !!isDesktop,
-              verified:   !!isDesktop,
+        <Table
+          rowClassName={getRowClassName}
+          options={{
+            columns,
+            data,
+            initialState: {
+              columnOrder: isDesktop
+                ? ['name', 'date', 'country', 'discipline', 'gender', 'prize', 'size', 'athletes', 'verified']
+                : ['event'],
+              columnVisibility: {
+                event:      !isDesktop,
+                name:       !!isDesktop,
+                date:       !!isDesktop,
+                country:    !!isDesktop,
+                discipline: !!isDesktop,
+                gender:     !!isDesktop,
+                prize:      !!isDesktop,
+                size:       !!isDesktop,
+                athletes:   !!isDesktop,
+                verified:   !!isDesktop,
+              },
             },
-          },
-        }} />
+          }}
+        />
       )}
     </div>
   );

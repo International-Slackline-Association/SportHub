@@ -7,13 +7,6 @@ import {
 } from "@ui/Icons";
 import { JSX } from "react";
 
-export const S3_IMAGES = {
-  hero: 'https://images.isa-rankings.org/public/sporthub/hero.jpg',
-  events: 'https://images.isa-rankings.org/public/sporthub/events_hero.jpg',
-  rankings: 'https://images.isa-rankings.org/public/sporthub/freestyle_hero.jpg',
-  judging: 'https://images.isa-rankings.org/public/sporthub/judging_hero.jpg',
-  worldRecords: 'https://images.isa-rankings.org/public/sporthub/world_record_hero.jpg',
-};
 
 type IconProps = {
   height?: number;
