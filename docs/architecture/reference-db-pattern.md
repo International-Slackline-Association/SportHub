@@ -47,7 +47,7 @@ The reference DB is now contacted only on paths that genuinely require it:
 
 | Path | Reason |
 |------|--------|
-| `onboarding.ts` (JWT callback) | Create record on first login; fetch `customUserId` |
+| `onboarding.ts` (JWT callback) | First login: read `isaUsersId` from isa-users, create sporthub-users record |
 | Migration scripts | Map athletes to ISA IDs |
 | `dashboard/actions.ts` `updateProfile()` | Sync edited identity fields back (non-fatal, wrapped in try/catch) |
 
@@ -114,7 +114,7 @@ All other paths — rankings, athlete profiles, event participants, dashboard di
 
 **Region**: eu-central-1
 **Primary Key**:
-- Partition Key: `PK` - Format: `user:{customUserId}`
+- Partition Key: `PK` - Format: `user:{isaUsersId}` (e.g. `user:ISA_FBE8B254`)
 - Sort Key: `SK_GSI` - Value: `"userDetails"`
 
 **GSI (Email Lookup)**:
@@ -149,12 +149,12 @@ All other paths — rankings, athlete profiles, event participants, dashboard di
 }
 ```
 
-### Custom User ID Format
+### ISA User ID Format (`isaUsersId`)
 
 - Format: `ISA_XXXXXXXX` (e.g., `ISA_FBE8B254`)
 - 8 random hexadecimal characters (uppercase)
 - Prefix: `ISA_` (International Slackline Association)
-- Example: `ISA_FBE8B254`, `ISA_ABC12345`
+- Stored in sporthub-users as `isaUsersId` — optional, only present for ISA athletes
 
 ## User Onboarding Flow
 
@@ -170,49 +170,40 @@ sequenceDiagram
 
     User->>Cognito: Sign up with email/password
     Cognito->>User: Return cognitoSub (UUID)
-    User->>App: First login (JWT with cognitoSub)
-    App->>ReferenceDB: Check if user exists (by cognitoSub)
-    alt User not found
-        App->>ReferenceDB: Create user record
-        ReferenceDB->>App: Return customUserId (ISA_XXXXXXXX)
-        App->>AppDB: Create user profile
+    User->>App: First login (JWT with cognitoSub + email)
+    App->>AppDB: getUserByEmail — check existing sporthub record
+    alt No sporthub record found
+        App->>ReferenceDB: getReferenceUserByEmail — read isaUsersId (READ-ONLY)
+        ReferenceDB->>App: Return isaUsersId (ISA_XXXXXXXX)
+        App->>App: Generate sportHubUserId (SportHubID:xxx)
+        App->>AppDB: Create Profile {sportHubUserId, isaUsersId, email}
         AppDB->>App: Profile created
-    else User found
-        ReferenceDB->>App: Return existing customUserId
+    else Existing sporthub record found
+        AppDB->>App: Return existing sportHubUserId
     end
-    App->>User: Return session with customUserId
+    App->>User: Return session with sportHubUserId
 ```
 
 ### Implementation
 
 **1. JWT Callback** (`src/lib/auth.ts`):
 ```typescript
-async jwt({ token, user }) {
-  if (user && token.sub) {
-    // Check if user exists in reference DB
-    let identity = await getReferenceUserByCognitoSub(token.sub);
+async jwt({ token, account, profile }) {
+  if (account && profile) {
+    token.sub = profile.sub;
+    token.email = profile.email;
 
-    if (!identity) {
-      // New user - create in reference DB
-      identity = await createReferenceUser(
-        token.sub,                    // cognitoSub
-        user.email || 'unknown',
-        user.name || 'Unknown User'
-      );
+    // Check for existing sporthub record by email
+    const existingUser = await getUserByEmail(token.email);
 
-      // Create app profile
-      await createUserProfile({
-        userId: `SportHubID:${generateId()}`,
-        isaUsersId: identity.userId,  // Link to reference DB
-        role: 'athlete',
-        // ... other fields
-      });
+    if (existingUser) {
+      token.sportHubUserId = existingUser.userId;  // SportHubID:xxx
+    } else {
+      // New user — read isaUsersId from isa-users (READ-ONLY), create sporthub record
+      const sportHubUserId = await ensureUserExists(token.sub, token.email, token.email);
+      token.sportHubUserId = sportHubUserId;  // SportHubID:xxx
     }
-
-    // Add custom user ID to token
-    token.customUserId = identity.userId;
   }
-
   return token;
 }
 ```
@@ -220,12 +211,22 @@ async jwt({ token, user }) {
 **2. Session Callback**:
 ```typescript
 async session({ session, token }) {
-  if (token.customUserId) {
-    session.user.customUserId = token.customUserId;
-    session.user.id = token.customUserId;  // Use custom ID instead of cognitoSub
-  }
+  session.user.id = (token.sportHubUserId as string) || (token.sub as string);
   return session;
 }
+```
+
+**3. `onboarding.ts` — `ensureUserExists`**:
+```typescript
+// isa-users is READ-ONLY — look up isaUsersId by email
+const referenceUser = await getReferenceUserByEmail(email);  // → ISA_XXXXXXXX
+const isaUsersId = referenceUser.userId;
+
+// Generate a fresh SportHub ID as the sporthub-users PK
+const sportHubId = generateSportHubId();  // → SportHubID:xxx
+
+await createUser(sportHubId, { email, isaUsersId });
+return sportHubId;
 ```
 
 ## Service Layer
@@ -236,10 +237,10 @@ async session({ session, token }) {
 
 **Key Functions**:
 
-1. **Get User by Custom ID**:
+1. **Get User by ISA ID (`isaUsersId`)**:
 ```typescript
 const identity = await getReferenceUserById('ISA_FBE8B254');
-// Returns: { userId, cognitoSub, name, email, country, ... }
+// Returns: { userId: 'ISA_FBE8B254', cognitoSub, name, email, country, ... }
 ```
 
 2. **Get User by Cognito Sub**:
@@ -336,8 +337,7 @@ await addParticipation({
 const identity = await getReferenceUserByEmail('john@example.com');
 
 if (identity) {
-  // Find app profile by custom ID
-  // Query users table where isaUsersId = identity.userId
+  // Find app profile by isaUsersId (ISA_XXXXXXXX)
   const profile = await getAthleteProfileByIsaUserId(identity.userId);
 }
 ```
@@ -378,22 +378,18 @@ This connects to local DynamoDB at `http://localhost:8000` instead of remote eu-
 
 1. Create `isa-users` table
 2. Migrate existing identity data from `users` table
-3. Generate custom IDs for existing users
+3. Link existing sporthub users to their `isaUsersId` from isa-users
 
 ```typescript
-// Migration script
+// Migration script — isa-users is READ-ONLY, only populate isaUsersId link
 for (const user of existingUsers) {
-  const customId = generateCustomUserId();  // ISA_XXXXXXXX
+  const identity = await getReferenceUserByEmail(user.email);
 
-  await createReferenceUser(
-    user.cognitoSub,
-    user.email,
-    user.name
-  );
-
-  await updateUserProfile(user.userId, {
-    isaUsersId: customId
-  });
+  if (identity) {
+    await updateUserProfile(user.userId, {
+      isaUsersId: identity.userId  // ISA_XXXXXXXX
+    });
+  }
 }
 ```
 
@@ -492,15 +488,11 @@ const identities = await getReferenceUsersBatch(userIds);  // ✅ Fast (10x)
 
 ```typescript
 describe('Reference DB Service', () => {
-  it('should create user with custom ID', async () => {
-    const identity = await createReferenceUser(
-      'cognito-sub-123',
-      'test@example.com',
-      'Test User'
-    );
+  it('should fetch user isaUsersId by email', async () => {
+    const identity = await getReferenceUserByEmail('test@example.com');
 
-    expect(identity.userId).toMatch(/^ISA_[A-F0-9]{8}$/);
-    expect(identity.email).toBe('test@example.com');
+    expect(identity?.userId).toMatch(/^ISA_[A-F0-9]{8}$/);  // isaUsersId format
+    expect(identity?.email).toBe('test@example.com');
   });
 
   it('should batch fetch identities', async () => {
@@ -519,29 +511,21 @@ Test the full onboarding flow:
 1. User signs up via Cognito
 2. JWT callback creates reference DB record
 3. App profile created with `isaUsersId` link
-4. Session includes custom user ID
+4. Session includes `sportHubUserId` (SportHubID:xxx)
 
 ## Troubleshooting
 
-### User Not Found in Reference DB
+### User Not Found in Reference DB (isa-users)
 
-**Symptom**: Auth fails, user can't log in
-**Cause**: User exists in Cognito but not in reference DB
+**Symptom**: Auth fails with `[Onboarding] No isa-users entry found` error
+**Cause**: User exists in Cognito but not in isa-users
 
-**Fix**:
+**Note**: isa-users is READ-ONLY — records are managed by the ISA identity team, not by SportHub. If a Cognito user is missing from isa-users, contact the ISA team to add them. Users without an isa-users entry will not be able to log in until one is created.
+
 ```typescript
-// Check if user exists
-const identity = await getReferenceUserByCognitoSub(cognitoSub);
-
-if (!identity) {
-  // Create missing user
-  const newIdentity = await createReferenceUser(
-    cognitoSub,
-    email,
-    name
-  );
-  console.log('Created missing user:', newIdentity.userId);
-}
+// Verify the user exists in isa-users by email
+const identity = await getReferenceUserByEmail(email);
+console.log('isa-users entry:', identity?.userId);  // should be ISA_XXXXXXXX
 ```
 
 ### Stale Cache

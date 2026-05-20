@@ -5,6 +5,20 @@
  */
 
 import { dynamodb, USERS_TABLE } from './dynamodb';
+
+/**
+ * Generate a unique SportHub user ID.
+ * Format: SportHubID:xxxxxxxx (8 random lowercase alphanumeric chars)
+ * Matches the format used in the ISA-Rankings migration script.
+ */
+export function generateSportHubId(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let id = '';
+  for (let i = 0; i < 8; i++) {
+    id += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return `SportHubID:${id}`;
+}
 import type { UserProfileRecord } from './relational-types';
 import { updateReferenceUser } from './reference-db-service';
 import { clearRoleCache } from './rbac-service';
@@ -83,28 +97,33 @@ export async function updateUserProfile(
  * Create new user (for onboarding)
  * Only stores app-specific data. Identity data is in reference DB.
  *
- * @param customUserId - Custom user ID from reference DB (e.g., "ISA_FBE8B254")
+ * @param userId - SportHub user ID (SportHubID:xxx format)
+ * @param opts.email - Required. Stored so getUserByEmail works on subsequent logins.
+ * @param opts.isaUsersId - Optional. ISA_XXXXXXXX reference link (only for ISA athletes).
  * @returns Newly created user record
  */
 export async function createUser(
-  customUserId: string
+  userId: string,
+  opts: { email: string; isaUsersId?: string }
 ): Promise<UserProfileRecord> {
   const newUser: UserProfileRecord = {
-    userId: customUserId,       // Custom ID from reference DB
-    sortKey: 'Profile',         // Composite key
-    role: 'user',               // Default role
-    userSubTypes: ['athlete'],  // Default sub-types
-    primarySubType: 'athlete',  // Default primary type for GSI
-    createdAt: Date.now(),      // Timestamp
+    userId,
+    sortKey: 'Profile',
+    role: 'user',
+    userSubTypes: ['athlete'],
+    primarySubType: 'athlete',
+    createdAt: Date.now(),
     totalPoints: 0,
     contestCount: 0,
     profileCompleted: false,
     roleAssignedAt: new Date().toISOString(),
     roleAssignedBy: 'system',
+    ...(opts?.isaUsersId && { isaUsersId: opts.isaUsersId }),
+    ...(opts?.email && { email: opts.email }),
   };
 
   await dynamodb.putItem(USERS_TABLE, newUser as unknown as Record<string, unknown>);
-  console.log(`Created new user: ${customUserId}`);
+  console.log(`Created new user: ${userId}`);
   return newUser;
 }
 
@@ -173,7 +192,7 @@ export async function saveUserProfile(user: UserProfileRecord): Promise<void> {
 /**
  * Create a user with a full profile (admin/form use case)
  *
- * Unlike the onboarding `createUser(customUserId)`, this accepts all profile
+ * Unlike the onboarding `createUser(userId)`, this accepts all profile
  * fields at creation time (e.g. from an admin form).
  *
  * @param userId - User ID to assign

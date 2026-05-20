@@ -7,7 +7,7 @@ declare module "next-auth" {
    */
   interface Session {
     user: {
-      id: string                     // Custom user ID (ISA_xxx format) - matches database partition key
+      id: string                     // SportHub user ID (SportHubID:xxx) — sporthub-users partition key. isaUsersId is the optional ISA identity link.
       cognitoSub?: string            // Cognito UUID (for debugging/reference)
       role: Role                     // User's role: 'user' | 'admin'
       permissions?: Permission[]     // Granular permissions based on role

@@ -209,10 +209,10 @@ Quick reference:
 See [`reference-db-service.md`](reference-db-service.md) for complete reference database API.
 
 Quick reference:
-- `getReferenceUserById(userId)` - Get identity by custom ID
-- `getReferenceUserByEmail(email)` - Get identity by email
-- `getReferenceUsersBatch(userIds)` - Batch get identities
-- `createReferenceUser(cognitoSub, email, name)` - Create new user
+- `getReferenceUserById(isaUsersId)` - Get identity by ISA ID (`ISA_XXXXXXXX`)
+- `getReferenceUserByEmail(email)` - Get identity by email (used in onboarding)
+- `getReferenceUsersBatch(isaUserIds)` - Batch get identities
+- ~~`createReferenceUser`~~ — removed; isa-users is READ-ONLY
 
 ## Caching
 

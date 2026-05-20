@@ -35,7 +35,7 @@ function final_step {
         # echo "DEBUG: JSON Payload:"
         # echo "$JSON_PAYLOAD"
 
-        curl -X POST 'https://discord.com/api/webhooks/1370639745574633584/BkzMi0ab620jq_NUagF4LGR6i3OzvkayadLxgd0rLhTTDG1ekkrxTYRcA5VKBNiiw7Q5' \
+        curl -X POST "$POST_BUILD_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -d "{\"content\":\"$STATUS_STR\"}"
     fi

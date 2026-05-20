@@ -2,390 +2,230 @@
 
 ## Overview
 
-SportHub uses **AWS Cognito** for authentication via **NextAuth v5 (Beta)** with OIDC, and implements a custom **Role-Based Access Control (RBAC)** system stored in DynamoDB for authorization.
+SportHub uses **AWS Cognito** for authentication via **NextAuth v5 (Beta)** with OIDC, and implements a custom **Role-Based Access Control (RBAC)** system stored in DynamoDB.
 
 ## Architecture
 
 ```
-┌─────────────┐
-│ AWS Cognito │ ──── Authentication (OIDC)
-└─────────────┘
-       │
-       ▼
-┌─────────────┐
-│  NextAuth   │ ──── Session Management (JWT)
-└─────────────┘
-       │
-       ▼
-┌─────────────┐
-│  DynamoDB   │ ──── User Roles & Permissions
-└─────────────┘
+┌─────────────────┐
+│   AWS Cognito   │  ─── Authentication (OIDC / JWT)
+│  (user pool)    │  ─── All authorized users managed here
+└────────┬────────┘
+         │ sub, email
+         ▼
+┌─────────────────┐
+│   NextAuth v5   │  ─── Session management (JWT, 30-day)
+│   (auth.ts)     │  ─── Runs onboarding on first login
+└────────┬────────┘
+         │ sportHubUserId (SportHubID:xxx)
+         ▼
+┌────────────────────────────────────────────────┐
+│  isa-users  (eu-central-1)   READ-ONLY         │
+│  ISA athlete identity: name, email, country    │
+│  Primary key: user:{ISA_xxx} / userDetails     │
+└────────────────────────────────────────────────┘
+         │ ISA_xxx ID
+         ▼
+┌────────────────────────────────────────────────┐
+│  sporthub-users  (us-east-2)                   │
+│  App data: role, points, rankings, profile     │
+│  PK: userId (ISA_xxx) / sortKey (Profile, ...) │
+└────────────────────────────────────────────────┘
 ```
 
 ### Key Principles
-- **Authentication** = Who you are (Cognito handles this)
-- **Authorization** = What you can do (DynamoDB + RBAC handles this)
-- **Session** = JWT with role embedded (30-day expiry)
-- **Defense in Depth** = 3 layers (Middleware → Page → Server Action)
+- **Authentication** = Cognito (who you are)
+- **Authorization** = sporthub-users RBAC (what you can do)
+- **Identity** = isa-users (read-only ISA athlete data)
+- **Session** = JWT with `sportHubUserId` + role embedded
+
+### User ID Formats
+- `ISA_XXXXXXXX` — new users and Cognito-onboarded users (8 random hex, uppercase)
+- `SportHubID:xxxxx` — legacy migrated users from ISA-Rankings
+
+---
+
+## Login Flow (JWT Callback)
+
+Every login runs through `src/lib/auth.ts` → `jwt()` callback:
+
+```
+1. getUserByEmail(email)        → sporthub-users scan
+   Found? → use existing userId (migrated or previously onboarded user)
+
+2. Not found → ensureUserExists(cognitoSub, email)  [onboarding.ts]
+   a. getReferenceUserByEmail(email) → isa-users (READ-ONLY, guaranteed to find user)
+   b. userExists(ISA_xxx)            → sporthub-users check
+   c. If not exists: createUser(ISA_xxx, { email }) → create Profile record
+
+3. Load RBAC: getUserRole() + getUserPermissions() + getUserSubTypes()
+   → stored in JWT token → passed to session
+```
+
+**isa-users is never written to.** All Cognito users are guaranteed to have an isa-users entry before they ever log in.
+
+---
 
 ## User Roles
 
-### Available Roles
-
 | Role    | Description                                   | Permissions                           |
 |---------|-----------------------------------------------|---------------------------------------|
-| `user`  | Default role for all users                    | View public content, edit own profile |
-| `admin` | Full system access                            | All permissions including event creation, user management |
+| `user`  | Default role for all authenticated users      | View public content, edit own profile |
+| `admin` | Full system access                            | All permissions                       |
 
-### Role Assignment
-- **Default**: New users automatically get `user` role
-- **Admin Assignment**: Only via test pages (`/test_SSR`, `/test_CSR`) in development or by existing admins in production
-- **Session Update**: Role changes require re-login to take effect in session
+New users are assigned `role: 'user'` and `userSubTypes: ['athlete']` by default.
+
+### User Sub-Types (classification, not authorization)
+- `athlete` — default
+- `judge`
+- `organizer`
+
+---
 
 ## Permissions
 
-Permissions use the format `resource:action`. Only **restricted operations** require permissions.
+Format: `resource:action`. Only restricted operations require permissions.
 
-### Admin Permissions
-- `events:create` - Create new events
-- `events:edit` - Edit existing events
-- `events:delete` - Delete events
-- `users:manage` - Manage user roles and profiles
-- `rankings:edit` - Edit rankings data
-- `admin:access` - Access admin dashboard
+| Permission       | Description                 |
+|------------------|-----------------------------|
+| `events:create`  | Create new events           |
+| `events:edit`    | Edit existing events        |
+| `events:delete`  | Delete events               |
+| `users:manage`   | Manage user roles/profiles  |
+| `rankings:edit`  | Edit rankings data          |
+| `admin:access`   | Access admin dashboard      |
 
-### Public Access (No Permissions Required)
-- View events
-- View rankings
-- View athlete profiles
-- View public pages
+Public access (no permissions required): events, rankings, athlete profiles.
 
-## Implementation
+---
 
-### 1. Database Schema
+## sporthub-users Profile Record
 
-User records in DynamoDB include RBAC fields:
+Created on first login for new Cognito users:
 
 ```typescript
-interface UserRecord {
-  userId: string;              // Cognito user ID
-  role: 'user' | 'admin';      // Primary role
-  roleAssignedAt?: string;     // ISO timestamp
-  roleAssignedBy?: string;     // Who assigned the role
-
-  // User data
-  name: string;
-  email: string;
-  country?: string;
-
-  // Index signature for DynamoDB
-  [key: string]: unknown;
+{
+  userId: 'ISA_A1B2C3D4',    // from isa-users reference DB
+  sortKey: 'Profile',
+  role: 'user',
+  userSubTypes: ['athlete'],
+  primarySubType: 'athlete',
+  email: 'user@example.com', // stored for getUserByEmail lookup on subsequent logins
+  totalPoints: 0,
+  contestCount: 0,
+  profileCompleted: false,
+  createdAt: <timestamp>,
+  roleAssignedAt: <ISO string>,
+  roleAssignedBy: 'system',
 }
 ```
 
-### 2. Session Extension
+---
 
-The JWT session includes role information:
+## Authorization Functions (`src/lib/authorization.ts`)
 
+| Function | Purpose |
+|----------|---------|
+| `requireAuth()` | Require any authentication (redirects to /auth/signin) |
+| `requireRole(role)` | Require specific role |
+| `requireAdmin()` | Require admin role |
+| `hasRole(role)` | Boolean check |
+| `canEditUser(userId)` | Ownership OR admin check |
+| `getCurrentUser()` | Returns session user (pure session read, no DB call) |
+
+---
+
+## Protection Layers
+
+Three layers of defense:
+
+**Layer 1 — Middleware** (`src/middleware.ts`): Edge-level route protection.
+
+**Layer 2 — Page components**:
 ```typescript
-// src/lib/auth.ts
-async jwt({ token, account, profile }) {
-  if (account && profile && token.sub) {
-    const role = await getUserRole(token.sub);
-    token.role = role;
-  }
-  return token;
-}
-
-async session({ session, token }) {
-  session.user.role = token.role as Role;
-  return session;
-}
-```
-
-### 3. Authorization Functions
-
-Located in `src/lib/authorization.ts`:
-
-```typescript
-// Require authentication
-await requireAuth();
-
-// Require specific role
-await requireRole('admin');
-
-// Shorthand for admin
-await requireAdmin();
-
-// Check if user has role (returns boolean)
-const isAdmin = await hasRole('admin');
-
-// Check ownership or admin
-const authResult = await canEditUser(targetUserId);
-if (!authResult.authorized) {
-  throw new Error('Unauthorized');
-}
-
-// Get current user
-const user = await getCurrentUser();
-```
-
-### 4. Protection Layers
-
-#### Layer 1: Middleware
-```typescript
-// src/middleware.ts
-// Routes like /admin/* are protected at the edge
-```
-
-#### Layer 2: Page Components
-```typescript
-// src/app/admin/page.tsx
 export default async function AdminPage() {
   await requireAdmin();
-  // ... page content
+  // ...
 }
 ```
 
-#### Layer 3: Server Actions
+**Layer 3 — Server Actions**:
 ```typescript
-// src/app/admin/submit/event/actions.ts
 export async function saveEvent(data: EventData) {
   await requireAdmin();
-  // ... save logic
+  // ...
 }
 ```
 
-## User Dashboard
+---
 
-Users can manage their profile at `/dashboard`:
+## Role Caching
 
-### Features
-- **Edit Profile**: Name, email, country
-- **Country Selection**: Dropdown with flag icons
-- **Role Display**: Shows current role badge
-- **Auto-Creation**: Users created automatically on first profile edit
+Roles are cached in `rbac-service.ts` with a 5-minute TTL to reduce DynamoDB calls. Role changes require re-login to take effect in the session JWT.
 
-### Profile Editing
-```typescript
-// Server action with authorization
-export async function updateProfile(userId: string, data: ProfileUpdateData) {
-  const authResult = await canEditUser(userId);
-
-  if (!authResult.authorized) {
-    return { success: false, error: 'Unauthorized' };
-  }
-
-  // Update profile...
-}
-```
+---
 
 ## Test Pages
 
-All test pages (`/test_SSR`, `/test_CSR`, `/test_LOCAL`) and test API routes (`/api/test-local/*`, `/api/test-runtime`) are protected:
+| Page | Purpose |
+|------|---------|
+| `/test_LOCAL` | DynamoDB test UI |
+| `/test_SSR` | SSR tests + role management |
+| `/test_CSR` | CSR tests + role management |
 
-- **Development**: Accessible by any authenticated user
-- **Production**: Only accessible by admin users
+Access: any authenticated user in dev; admin-only in production.
 
-### Test Page Access
-```typescript
-// src/lib/test-page-access.ts
-export async function requireTestPageAccess() {
-  if (process.env.NODE_ENV === 'development') {
-    return; // Allow in dev
-  }
-
-  const session = await auth();
-  if (session?.user.role !== 'admin') {
-    redirect('/unauthorized');
-  }
-}
-```
-
-### RBAC Testing
-Role management is available via `/test_SSR` and `/test_CSR` test pages:
-- View current session role
-- See all users and their roles
-- Promote users to admin
-- Demote admins to user
-- Detect role/session mismatches
-
-## Security Considerations
-
-### JWT Security
-- **Tamper-proof**: Role stored in signed JWT
-- **HTTP-only cookies**: Prevents XSS attacks
-- **30-day expiry**: Automatic session timeout
-- **Role caching**: 5-minute TTL reduces DB calls
-
-### Authorization Checks
-- **Always verify ownership**: Users can only edit their own data
-- **Admin bypass**: Admins can edit any user's data
-- **Audit trail**: Track who assigned roles and when
-- **Triple verification**: Middleware, page, and action layers
-
-### Best Practices
-```typescript
-// ✅ Good: Check authorization before operations
-const authResult = await canEditUser(userId);
-if (!authResult.authorized) {
-  return { success: false, error: authResult.reason };
-}
-
-// ❌ Bad: Trust client-side data
-if (session.user.role === 'admin') {
-  // Client could manipulate this
-}
-
-// ✅ Good: Server-side verification
-await requireAdmin(); // Verifies server-side
-```
-
-## Common Patterns
-
-### Protecting a Page
-```typescript
-import { requireAdmin } from '@lib/authorization';
-
-export default async function MyAdminPage() {
-  await requireAdmin();
-
-  return <div>Admin content</div>;
-}
-```
-
-### Protecting a Server Action
-```typescript
-import { canEditUser } from '@lib/authorization';
-
-export async function updateResource(userId: string, data: any) {
-  const authResult = await canEditUser(userId);
-
-  if (!authResult.authorized) {
-    return { success: false, error: 'Unauthorized' };
-  }
-
-  // Perform update...
-  return { success: true };
-}
-```
-
-### Conditional UI
-```typescript
-import { getCurrentUser } from '@lib/authorization';
-
-export default async function Dashboard() {
-  const user = await getCurrentUser();
-
-  return (
-    <div>
-      {user?.role === 'admin' && <AdminPanel />}
-      <UserContent />
-    </div>
-  );
-}
-```
-
-## API Reference
-
-### Authorization Functions
-
-| Function | Purpose | Returns |
-|----------|---------|---------|
-| `requireAuth()` | Require any authentication | `Promise<void>` (throws or redirects) |
-| `requireRole(role)` | Require specific role | `Promise<void>` (throws or redirects) |
-| `requireAdmin()` | Require admin role | `Promise<void>` (throws or redirects) |
-| `hasRole(role)` | Check if user has role | `Promise<boolean>` |
-| `canEditUser(userId)` | Check ownership or admin | `Promise<AuthorizationResult>` |
-| `getCurrentUser()` | Get current session user | `Promise<User \| null>` |
-
-### Test Page Functions
-
-| Function | Purpose | Returns |
-|----------|---------|---------|
-| `requireTestPageAccess()` | Protect test pages | `Promise<void>` (redirects if unauthorized) |
-| `canAccessTestAPI()` | Check API access | `Promise<{allowed: boolean, status?: number}>` |
+---
 
 ## File Locations
 
 ```
 src/
 ├── lib/
-│   ├── auth.ts                    # NextAuth configuration
-│   ├── authorization.ts           # Authorization utilities
-│   ├── rbac-service.ts           # Role service with caching
-│   └── test-page-access.ts       # Test page protection
+│   ├── auth.ts                # NextAuth config + JWT callback + onboarding trigger
+│   ├── authorization.ts       # requireAuth, requireAdmin, canEditUser, getCurrentUser
+│   ├── onboarding.ts          # ensureUserExists — creates sporthub-users on first login
+│   ├── rbac-service.ts        # getUserRole, getUserPermissions (with 5-min cache)
+│   ├── reference-db-service.ts # READ-ONLY isa-users access (identity lookup)
+│   └── user-service.ts        # createUser, getUserByEmail, updateUserProfile
 ├── types/
-│   ├── auth.ts                   # NextAuth type extensions
-│   └── rbac.ts                   # RBAC type definitions
-├── app/
-│   ├── dashboard/
-│   │   ├── page.tsx              # User dashboard
-│   │   ├── actions.ts            # Profile update actions
-│   │   └── components/
-│   │       ├── ProfileSection.tsx
-│   │       └── ProfileEditForm.tsx
-│   └── unauthorized/
-│       └── page.tsx              # Access denied page
-└── middleware.ts                 # Route protection
+│   ├── auth.ts                # NextAuth type extensions (sportHubUserId, role, etc.)
+│   └── rbac.ts                # Role, Permission, UserSubType types
+└── middleware.ts              # Route protection
 ```
 
-## Migration
+---
 
-If upgrading from a system without RBAC:
+## Environment Variables
 
-1. **Add RBAC fields to existing users**:
-   ```bash
-   pnpm migrate:rbac
-   ```
+| Variable | Purpose |
+|----------|---------|
+| `COGNITO_CLIENT_ID` | Cognito app client ID |
+| `COGNITO_CLIENT_SECRET` | Cognito app client secret |
+| `COGNITO_REGION` | Cognito region (e.g. `eu-central-1`) |
+| `COGNITO_USER_POOL_ID` | Cognito user pool ID |
+| `AUTH_SECRET` | NextAuth secret |
+| `REFERENCE_DB_TABLE` | isa-users table name (default: `isa-users`) |
+| `REFERENCE_DB_REGION` | isa-users region (default: `eu-central-1`) |
+| `LOCAL_REFERENCE_DB` | `true` = use local DynamoDB for reference DB (dev only) |
 
-2. **Manually promote admins**:
-   - Visit `/test_SSR` or `/test_CSR` in development
-   - Promote specific users to admin role
-   - Have them sign out and sign back in
-
-3. **Verify migration**:
-   - Check all users have `role` field
-   - Test admin access to protected routes
-   - Verify regular users cannot access admin pages
+---
 
 ## Troubleshooting
 
-### Role mismatch after update
-**Problem**: Database shows `admin` but session shows `user`
+**Role mismatch after update**: Sign out and sign back in to refresh JWT.
 
-**Solution**: Sign out and sign back in to refresh JWT token
+**New user has no sporthub account after login**: Check server logs for `[Onboarding]` errors. The isa-users lookup by email may be failing — verify `REFERENCE_DB_TABLE` and `REFERENCE_DB_REGION` env vars, and that the `GSI` index exists on isa-users.
 
-### Test pages not accessible in production
-**Expected behavior**: Only admins can access test pages in production
+**`session.user.role` is undefined**: User may not have a sporthub-users Profile record. Check `getUserByEmail` returns a result for their email.
 
-**Solution**: Promote your user to admin via another admin's `/test_SSR` page
+**Test pages not accessible in production**: Only admins can access test pages in prod. Promote your user via another admin's `/test_SSR` page.
 
-### Unauthorized error on dashboard
-**Problem**: Cannot edit own profile
-
-**Solution**: Check that `canEditUser()` is comparing correct user IDs
-
-### Session doesn't include role
-**Problem**: `session.user.role` is undefined
-
-**Solution**:
-1. Check `src/lib/auth.ts` JWT callback loads role
-2. Verify user exists in DynamoDB with role field
-3. Clear cookies and re-authenticate
+---
 
 ## Future Enhancements
 
-- [ ] **Organizer role**: Allow event organizers to create their own events
-- [ ] **Fine-grained permissions**: More granular permission checks
-- [ ] **User sub-types**: Activate judge/organizer/athlete classifications
-- [ ] **Temporary permissions**: Time-limited role assignments
-- [ ] **Multi-role support**: Users with multiple roles simultaneously
-- [ ] **Audit logging**: Track all role changes and access attempts
-- [ ] **Permission caching**: Cache user permissions separately from roles
-
-## Resources
-
-- [NextAuth.js Documentation](https://next-auth.js.org/)
-- [AWS Cognito Documentation](https://docs.aws.amazon.com/cognito/)
-- [RBAC Implementation Plan](./RBAC.md)
+- [ ] Organizer/judge role activation
+- [ ] Fine-grained permission checks
+- [ ] Audit logging for role changes
+- [ ] Email GSI on sporthub-users (replace scan in `getUserByEmail`)

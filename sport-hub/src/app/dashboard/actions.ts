@@ -53,19 +53,18 @@ export async function updateProfile(userId: string, data?: ProfileUpdateData) {
     // Get current user profile data
     const currentUser = await getUser(userId) as UserProfileRecord | undefined;
 
-    // If user doesn't exist, create them (handles users who signed in before migration)
+    // If user doesn't exist, create them (handles users who signed in before onboarding was wired)
     if (!currentUser) {
-      console.log(`User ${userId} not found in database, creating new record`);
+      const email = session?.user?.email;
+      if (!email) {
+        return { success: false, error: 'Cannot create profile: no email in session' };
+      }
 
-      await createUser(userId);
+      console.log(`User ${userId} not found in database, creating new record`);
+      await createUser(userId, { email });
       revalidatePath('/dashboard');
 
-      console.log(`Created new user record for ${userId}`);
-
-      return {
-        success: true,
-        message: 'Profile created successfully',
-      };
+      return { success: true, message: 'Profile created successfully' };
     }
 
     // Update existing user with ONLY allowed fields (prevent role escalation)
