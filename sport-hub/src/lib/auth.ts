@@ -42,7 +42,7 @@ const cognitoConfigured = !!(
   process.env.COGNITO_USER_POOL_ID
 )
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+export const { handlers, signIn, signOut, auth, unstable_update } = NextAuth({
   basePath: "/api/auth",
   secret: process.env.AUTH_SECRET,
   providers: cognitoConfigured ? [
@@ -59,7 +59,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     })
   ] : [],
   callbacks: {
-    async jwt({ token, account, profile }) {
+    async jwt({ token, account, profile, trigger }) {
+      // Re-fetch subtypes when session is explicitly updated (e.g. after becomeOrganizer)
+      if (trigger === 'update' && token.sportHubUserId) {
+        try {
+          const userSubTypes = await getUserSubTypes(token.sportHubUserId as string);
+          token.userSubTypes = userSubTypes;
+        } catch {
+          // non-fatal — keep existing subtypes in token
+        }
+        return token;
+      }
+
       // Pass Cognito user info to token
       if (account && profile) {
         token.sub = profile.sub ?? undefined
