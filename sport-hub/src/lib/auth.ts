@@ -91,10 +91,14 @@ export const { handlers, signIn, signOut, auth, unstable_update } = NextAuth({
               token.sportHubUserId = existingUser.userId;
               console.log(`[Auth] Found existing user by email: ${existingUser.userId}`);
 
-              // Back-fill isaUsersId + reference DB fields if missing (migrated users
-              // who were created before the isa-users link was established)
-              if (!existingUser.isaUsersId) {
-                enrichUserFromReferenceDb(existingUser, token.email as string).catch(err =>
+              // Back-fill any missing reference DB fields (isaUsersId, name, country, etc.)
+              // on every login until all fields are populated. enrichUserFromReferenceDb
+              // is a no-op when nothing is missing. Must be awaited — fire-and-forget is
+              // killed before completion in serverless runtimes.
+              const needsEnrichment = !existingUser.isaUsersId || !existingUser.name
+                || !existingUser.country || !existingUser.gender || !existingUser.birthdate;
+              if (needsEnrichment) {
+                await enrichUserFromReferenceDb(existingUser, token.email as string).catch(err =>
                   console.warn('[Auth] Non-fatal: could not enrich user from isa-users:', err)
                 );
               }
