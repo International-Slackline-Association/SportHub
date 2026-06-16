@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useState, useCallback, useRef } from 'react';
+import { Fragment, useState, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { CardGrid } from '@ui/Card';
 import { StackedMediaCard } from '@ui/StackedMediaCard';
@@ -18,29 +18,124 @@ const DISCIPLINES: DisciplineKey[] = [
   'RIGGING',
 ];
 
+const defaultHeroImage = S3_IMAGES.WORLD_RECORDS[0];
+
+type HeroImageLayerProps = {
+  hero: HeroImage;
+  opacity: number;
+  zIndex: number;
+  priority?: boolean;
+};
+
+function HeroImage({ hero, opacity, zIndex, priority = false }: HeroImageLayerProps) {
+  return (
+    <div
+      aria-hidden="true"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        opacity,
+        transition: 'opacity 0.5s ease',
+        zIndex,
+        overflow: 'hidden',
+        backgroundColor: '#fff',
+        pointerEvents: 'none',
+      }}
+    >
+      {hero.blurredBackground && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            overflow: 'hidden',
+          }}
+        >
+          <Image
+            src={hero.src}
+            alt=""
+            fill
+            sizes="100vw"
+            priority={priority}
+            style={{
+              objectFit: 'cover',
+              objectPosition: hero.objectPosition ?? 'center',
+              filter: 'blur(24px)',
+            }}
+          />
+        </div>
+      )}
+      <Image
+        suppressHydrationWarning
+        src={hero.src}
+        alt={hero.alt}
+        fill
+        sizes="100vw"
+        priority={priority}
+        style={{
+          objectFit: hero.blurredBackground ? 'contain' : 'cover',
+          objectPosition: hero.objectPosition ?? 'center',
+        }}
+      />
+    </div>
+  );
+}
+
 /**
  * Renders the hero image + discipline cards together as a client component,
  * so hovering a discipline card crossfades the hero to a matching photo.
  */
 export function DisciplineHeroSection() {
-  // A/B crossfade: two images stacked; we alternate which one is "on top".
-  const activeSlotRef = useRef<'a' | 'b'>('a');
-  const [heroImages, setHeroImages] = useState<{ a: HeroImage; b: HeroImage }>(() => {
-    const initial = randomS3Image();
-    return { a: initial, b: initial };
-  });
-  const [topSlot, setTopSlot] = useState<'a' | 'b'>('a');
+  const transitionIdRef = useRef(0);
+  const transitionTimeoutRef = useRef<number | null>(null);
+  const [currentHero, setCurrentHero] = useState<HeroImage>(randomS3Image());
+  const [nextHero, setNextHero] = useState<HeroImage | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (transitionTimeoutRef.current) {
+        window.clearTimeout(transitionTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const transitionTo = useCallback((heroImage: HeroImage) => {
-    const nextSlot = activeSlotRef.current === 'a' ? 'b' : 'a';
+    const transitionId = ++transitionIdRef.current;
 
-    // Preload src into the hidden slot, then fade it in
-    setHeroImages(prev => ({ ...prev, [nextSlot]: heroImage }));
+    if (transitionTimeoutRef.current) {
+      window.clearTimeout(transitionTimeoutRef.current);
+      transitionTimeoutRef.current = null;
+    }
 
-    requestAnimationFrame(() => {
-      activeSlotRef.current = nextSlot;
-      setTopSlot(nextSlot);
-    });
+    setNextHero(null);
+    setIsTransitioning(false);
+
+    const preload = new window.Image();
+    preload.onload = () => {
+      if (transitionIdRef.current !== transitionId) return;
+
+      setNextHero(heroImage);
+
+      window.requestAnimationFrame(() => {
+        if (transitionIdRef.current !== transitionId) return;
+
+        setIsTransitioning(true);
+
+        transitionTimeoutRef.current = window.setTimeout(() => {
+          if (transitionIdRef.current !== transitionId) return;
+
+          setCurrentHero(heroImage);
+          setNextHero(null);
+          setIsTransitioning(false);
+          transitionTimeoutRef.current = null;
+        }, 500);
+      });
+    };
+    preload.onerror = () => {
+      if (transitionIdRef.current !== transitionId) return;
+      // Ignore preload failures and keep the current hero image.
+    };
+    preload.src = heroImage.src;
   }, []);
 
   const handleMouseEnter = useCallback((discipline: DisciplineKey) => {
@@ -60,53 +155,25 @@ export function DisciplineHeroSection() {
           overflow: 'hidden',
           position: 'relative',
           width: '100%',
+          backgroundColor: '#000',
         }}
       >
-        {(['a', 'b'] as const).map(slot => (
-          <Fragment key={slot}>
-            {heroImages[slot].blurredBackground && (
-              <div
-                aria-hidden="true"
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  opacity: topSlot === slot ? 1 : 0,
-                  transition: 'opacity 0.5s ease',
-                  zIndex: topSlot === slot ? 0 : -1,
-                  overflow: 'hidden',
-                }}
-              >
-                <Image
-                  src={heroImages[slot].src}
-                  alt=""
-                  fill
-                  sizes="100vw"
-                  priority={slot === 'a'}
-                  style={{
-                    objectFit: 'cover',
-                    objectPosition: heroImages[slot].objectPosition ?? 'center',
-                    filter: 'blur(18px)',
-                    transform: `scale(${heroImages[slot].backgroundZoom ?? 1})`,
-                  }}
-                />
-              </div>
-            )}
-            <Image
-              src={heroImages[slot].src}
-              alt={heroImages[slot].alt}
-              fill
-              sizes="100vw"
-              priority={slot === 'a'}
-              style={{
-                objectFit: heroImages[slot].blurredBackground ? 'contain' : 'cover',
-                objectPosition: heroImages[slot].objectPosition ?? 'center',
-                opacity: topSlot === slot ? 1 : 0,
-                transition: 'opacity 0.5s ease',
-                zIndex: topSlot === slot ? 1 : 0,
-              }}
-            />
-          </Fragment>
-        ))}
+        <HeroImage
+          key={`current-hero-${currentHero.src}`}
+          hero={currentHero}
+          opacity={isTransitioning ? 0 : 1}
+          zIndex={1}
+          priority
+        />
+        {nextHero && (
+          <HeroImage
+            key={`next-hero-${nextHero.src}`}
+            hero={nextHero}
+            opacity={isTransitioning ? 1 : 0}
+            zIndex={2}
+            priority
+          />
+        )}
       </figure>
 
       {/* Rankings / Disciplines Section */}
