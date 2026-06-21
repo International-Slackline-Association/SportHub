@@ -3,7 +3,6 @@ export type HeroImage = {
   alt: string;
   caption?: string;
   blurredBackground?: boolean;
-  backgroundZoom?: number;
   objectPosition?: string;
 };
 

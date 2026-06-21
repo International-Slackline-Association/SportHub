@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { CardGrid } from '@ui/Card';
 import { StackedMediaCard } from '@ui/StackedMediaCard';
@@ -17,8 +17,6 @@ const DISCIPLINES: DisciplineKey[] = [
   'SPEED_SHORT',
   'RIGGING',
 ];
-
-const defaultHeroImage = S3_IMAGES.WORLD_RECORDS[0];
 
 type HeroImageLayerProps = {
   hero: HeroImage;
