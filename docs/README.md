@@ -19,7 +19,7 @@ Developer reference hub. The root [`README.md`](../README.md) covers quick start
 | [schema/database-schema.md](./schema/database-schema.md) | Table definitions, sort key patterns, GSI specs |
 | [schema/query-patterns.md](./schema/query-patterns.md) | Access patterns, query examples, performance benchmarks |
 | [db-setup.md](./db-setup.md) | Local Docker setup, table creation |
-| [DATABASE-SYNC.md](./DATABASE-SYNC.md) | Local ↔ remote sync tool, all workflows |
+| [DATABASE-SYNC.md](./DATABASE-SYNC.md) | Local ↔ remote sync: push local → AWS (`sync:*`) and pull AWS dev → local (`copy:sporthub-from-aws`) |
 
 ### Deployment & Ops
 | Doc | What's in it |

@@ -26,6 +26,14 @@ pnpm test:local
 # → http://localhost:3000
 ```
 
+Prefer real dev data over the synthetic seed? Pull the AWS dev tables down into
+your local DynamoDB instead of `pnpm db:seed`:
+
+```bash
+pnpm db:local        # start local DynamoDB
+pnpm copy:sporthub-from-aws   # copy sporthub-users-dev / sporthub-events-dev → local (needs AWS creds)
+```
+
 ## Project Structure
 
 ```

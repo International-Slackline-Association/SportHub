@@ -1,6 +1,7 @@
 # DynamoDB Sync Tool
 
-Complete guide for syncing your local DynamoDB database to remote AWS DynamoDB.
+Complete guide for moving data between your local DynamoDB and remote AWS DynamoDB —
+**push** local → remote (`sync:*`) and **pull** remote dev → local (`copy:sporthub-from-aws`).
 
 > **Note**: After syncing data to remote, remember to revalidate static pages! See [STATIC-PAGES.md](./STATIC-PAGES.md).
 
@@ -40,6 +41,7 @@ This syncs ALL tables to remote. Creates tables if they don't exist.
 | `pnpm sync:compare` | Compare all local and remote table schemas |
 | `pnpm sync:all` | Sync all tables to remote (creates if needed) |
 | `pnpm sync:recreate` | Delete and recreate all remote tables (DESTRUCTIVE) |
+| `pnpm copy:sporthub-from-aws` | Copy remote dev tables **down** into local DynamoDB (see below) |
 
 ## Prerequisites
 
@@ -106,6 +108,54 @@ pnpm sync:compare
 # 2. Recreate remote tables
 pnpm sync:recreate
 ```
+
+## Download from AWS to Local
+
+Everything above **pushes** local data up to AWS. To go the other way — pull the
+remote dev data **down** into your local DynamoDB — use `copy:sporthub-from-aws`. This is
+handy when you want to develop against real(ish) data instead of the synthetic
+`pnpm db:seed` set.
+
+```bash
+pnpm db:local        # local DynamoDB must be running
+pnpm copy:sporthub-from-aws   # copy AWS dev tables → local
+```
+
+It copies:
+
+- `sporthub-users-dev`  → `local-sporthub-users`
+- `sporthub-events-dev` → `local-sporthub-events`
+
+### Handling existing local tables
+
+If a local target table **doesn't exist**, it's created from the AWS schema and
+populated. If it **already exists**, you're prompted per table:
+
+| Choice | What it does |
+|--------|--------------|
+| `d` — delete & recreate | Drops the local table and rebuilds it from the AWS schema, then imports — a clean copy with no stale rows |
+| `i` — idempotent copy | Keeps the table and overwrites items in place (upsert). Rows with matching keys are replaced; local-only rows are left behind |
+| `s` — skip | Leaves the table untouched |
+
+### Non-interactive flags
+
+For scripts / CI, pass a flag to skip the prompt:
+
+```bash
+pnpm copy:sporthub-from-aws --delete       # always drop & recreate existing tables
+pnpm copy:sporthub-from-aws --idempotent   # always upsert into existing tables
+pnpm copy:sporthub-from-aws --yes          # non-interactive, defaults to idempotent
+pnpm copy:sporthub-from-aws --help         # usage
+```
+
+### Prerequisites
+
+- **Local DynamoDB running**: `pnpm db:local`
+- **AWS credentials**: set in `.env.production` (or via `aws configure`) — same
+  credentials used by the `sync:*` commands above. Source region defaults to
+  `us-east-2` (override with `AWS_REGION`).
+
+After copying, verify with `pnpm db:count` and run the app with `pnpm test:local`.
 
 ## How It Works
 
@@ -232,7 +282,8 @@ See [STATIC-PAGES.md](./STATIC-PAGES.md) for complete ISR documentation.
 
 ## Files
 
-- `sport-hub/scripts/sync-dynamodb.ts` - Main sync tool
+- `sport-hub/scripts/sync-dynamodb.ts` - Main sync tool (local → remote)
+- `sport-hub/src/lib/migrations/copy-sporthub-to-local.ts` - Download tool (remote dev → local)
 - `sport-hub/data-exports/` - Export directory (created automatically)
 - `docs/DATABASE-SYNC.md` - This guide
 
