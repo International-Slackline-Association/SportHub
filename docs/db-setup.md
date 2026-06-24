@@ -42,6 +42,22 @@ AWS_ACCESS_KEY_ID=dummy AWS_SECRET_ACCESS_KEY=dummy aws dynamodb list-tables --e
 | `pnpm db:stop` | Stop DynamoDB container |
 | `pnpm db:clean` | Remove container and all data |
 | `pnpm test:local` | Start dev server with local DB config |
+| `pnpm copy:sporthub-from-aws` | Copy the AWS dev tables down into local DynamoDB (alternative to seeding — see below) |
+
+### Populate with real dev data (instead of seeding)
+
+If you'd rather work against the actual AWS dev data than the synthetic seed,
+pull `sporthub-users-dev` / `sporthub-events-dev` down into your local tables:
+
+```bash
+pnpm db:local        # start local DynamoDB
+pnpm copy:sporthub-from-aws   # copy AWS dev → local-sporthub-users / local-sporthub-events
+```
+
+Requires AWS credentials in `.env.production` (or `aws configure`). If a local
+table already exists you'll be prompted to **delete & recreate** it (clean copy)
+or do an **idempotent copy** (overwrite items in place). See
+[DATABASE-SYNC.md](./DATABASE-SYNC.md#download-from-aws-to-local) for details.
 
 ## Manual Command Line Setup
 

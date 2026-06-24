@@ -3,6 +3,7 @@
 .mcp.json
 
 .DS_Store
+.vscode/
 
 # MemPalace per-project files (issue #185)
 mempalace.yaml

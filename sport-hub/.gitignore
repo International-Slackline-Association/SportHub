@@ -56,3 +56,12 @@ AWSCLIV2.pkg
 
 # database sync
 sport-hub/src/mocks/data-exports/isa-rankings-export.json
+
+# vscode
+*/.vscode\
+
+# vim
+*/.swp
+
+# pnpm
+pnpm-workspace.yaml

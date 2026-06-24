@@ -1,8 +1,9 @@
 'use server';
 
-import { auth } from '@lib/auth';
+import { auth, unstable_update } from '@lib/auth';
 import { canEditUser } from '@lib/authorization';
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import type { UserProfileRecord } from '@lib/relational-types';
 import type { UserSubType } from '../../types/rbac';
 import { clearRoleCache } from '@lib/rbac-service';
@@ -214,28 +215,38 @@ export async function getFullUserProfile(userId: string) {
 export async function becomeOrganizer(): Promise<void> {
   const session = await auth();
   if (!session?.user?.id) {
-    throw new Error('Not authenticated');
+    redirect('/auth/signin?error=SessionRequired');
   }
 
-  const userId = session.user.id;
+  // TypeScript narrowing: redirect() throws, so session is non-null here
+  const userId = (session!).user.id;
 
-  const currentUser = await getUser(userId) as UserProfileRecord | undefined;
+  try {
+    const currentUser = (await getUser(userId)) as UserProfileRecord | undefined;
 
-  if (!currentUser) {
-    throw new Error('Profile not found. Please save your profile first.');
+    if (!currentUser) {
+      redirect('/dashboard?error=profile-not-found');
+    }
+
+    const currentSubTypes = (currentUser.userSubTypes || []) as UserSubType[];
+    if (currentSubTypes.includes('organizer')) {
+      redirect('/dashboard');
+    }
+
+    const updatedUser = {
+      ...currentUser,
+      userSubTypes: [...currentSubTypes, 'organizer'] as UserSubType[],
+      primarySubType: 'organizer' as UserSubType,
+      lastProfileUpdate: Date.now(),
+    } as UserProfileRecord;
+
+    await saveUserProfile(updatedUser);
+    clearRoleCache(userId);
+    await unstable_update({});
+    revalidatePath('/dashboard');
+  } catch (error) {
+    if ((error as { digest?: string }).digest?.startsWith('NEXT_REDIRECT')) throw error;
+    console.error('[becomeOrganizer] Failed:', error);
+    redirect('/dashboard?error=organizer-failed');
   }
-
-  const currentSubTypes = (currentUser.userSubTypes || []) as UserSubType[];
-  if (currentSubTypes.includes('organizer')) return;
-
-  const updatedUser: UserProfileRecord = {
-    ...currentUser,
-    userSubTypes: [...currentSubTypes, 'organizer'] as UserSubType[],
-    primarySubType: 'organizer',
-    lastProfileUpdate: Date.now(),
-  };
-
-  await saveUserProfile(updatedUser);
-  clearRoleCache(userId);
-  revalidatePath('/dashboard');
 }
