@@ -7,34 +7,47 @@ import { getCountryByCode } from '@utils/countries';
 import { ContestData } from '@lib/data-services';
 import StackedMediaCard from '@ui/StackedMediaCard';
 import { cn } from '@utils/cn';
+import { MAP_GENDER_ENUM_TO_NAME } from '@utils/consts';
+import { textToTitleCase } from '@utils/strings';
 
 
 interface FeaturedContestCardProps {
   contest: ContestData;
 }
 
-const formatDate = (dateStr: string): string => {
-  if (!dateStr) return '';
-  try {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  } catch {
-    return dateStr;
+const formatDate = (startDate: Date, endDate: Date): string => {
+  const isSameYear = startDate.getFullYear() === endDate.getFullYear();
+  const isSameMonth = startDate.getMonth() === endDate.getMonth();
+  const isSameDay = startDate.toDateString() === endDate.toDateString();
+  const monthDayFormat: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric' }; // August 18
+  const monthDayYearFormat: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric', year: 'numeric' }; // August 18, 2020
+
+  // No range, display single date: August 18, 2020
+  if (isSameDay && isSameMonth && isSameYear) {
+    return startDate.toLocaleDateString('en-US', monthDayYearFormat);
   }
+
+  // Display range: August 18 - 20, 2020
+  if (isSameMonth && isSameYear) {
+    return startDate.toLocaleDateString('en-US', monthDayFormat) +
+      ` - ${endDate.getDate()}, ${endDate.getFullYear()}`;
+  }
+
+  // Display range: August 18 - September 5, 2020
+  if (isSameYear) {
+    return startDate.toLocaleDateString('en-US', monthDayFormat) +
+      ` - ${endDate.toLocaleDateString('en-US', monthDayYearFormat)}`;
+  }
+
+  // Display range: August 18, 2020 - February 5, 2021
+  return startDate.toLocaleDateString('en-US', monthDayYearFormat) +
+    ` - ${endDate.toLocaleDateString('en-US', monthDayYearFormat)}`;
 };
 
 const StatusBadgeColors: Record<string, BadgeColor> = {
   UPCOMING: "GREEN",
   LIVE: "RED",
   RECENT: "NEUTRAL",
-};
-
-const isSameDate = (date1: Date, date2: Date): boolean => {
-  return date1.toDateString() === date2.toDateString();
 };
 
 /**
@@ -45,19 +58,20 @@ const FeaturedContestCard = ({ contest }: FeaturedContestCardProps) => {
   const {
     eventId,
     name,
-    date,
+    startDate,
+    endDate,
     country,
     city,
     discipline,
-    athletes,
     thumbnailUrl,
   } = contest;
-  const dateObj = new Date(date);
+
+  const startDateObj = new Date(startDate);
+  const endDateObj = new Date(endDate || startDate);
 
   // TODO: Pull from API data when present
-  const isUpcoming = dateObj > new Date();
-  // const isRecent = dateObj < Date.now(); // TODO: Use for status indicator
-  const isLive = isSameDate(dateObj, new Date());
+  const isUpcoming = startDateObj > new Date();
+  const isLive = startDateObj <= new Date() && endDateObj >= new Date();
 
   let status = "RECENT";
   if (isUpcoming) {
@@ -74,8 +88,9 @@ const FeaturedContestCard = ({ contest }: FeaturedContestCardProps) => {
         <div className={styles.imageWrapper}>
           <Image
             alt={name}
-            src={thumbnailUrl}
             fill
+            src={thumbnailUrl}
+            style={{ objectFit: 'contain' }}
           />
         </div>
       )}
@@ -95,14 +110,10 @@ const FeaturedContestCard = ({ contest }: FeaturedContestCardProps) => {
         </div>
         <div className={styles.metaItem}>
           <CalendarIcon size={14} />
-          <span>{formatDate(date)}</span>
+          <span>{formatDate(startDateObj, endDateObj)}</span>
         </div>
         <div className={styles.statsRow}>
           <Discipline variant={discipline} />
-          <div className={styles.stat}>
-            <UsersIcon size={14} />
-            <span>{athletes.length}</span>
-          </div>
         </div>
         <Button
           as="link"

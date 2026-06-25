@@ -234,8 +234,14 @@ export async function getRankingsData(year?: string, discipline?: string): Promi
  * Get featured athletes (top athletes)
  */
 export async function getFeaturedAthletes(discipline?: string, limit: number = 3): Promise<AthleteRanking[]> {
-  const rankings = await getRankingsData(undefined, discipline);
-  return rankings.slice(0, limit);
+  let rankings = await getRankingsData(undefined, discipline);
+  
+  return rankings
+    .filter((athlete) => {
+      const isProfileComplete = athlete.name && athlete.surname && athlete.country && athlete.profileImage;
+      return isProfileComplete;
+    })
+    .slice(0, limit);
 }
 
 // ===========================================
@@ -246,7 +252,8 @@ export interface ContestData {
   eventId: string;
   contestId?: string;
   name: string;
-  date: string;
+  startDate: string;
+  endDate?: string;
   country: string;
   city?: string;
   discipline: string;
@@ -267,6 +274,10 @@ export interface ContestData {
   }>;
 }
 
+export const sortByDateRangeDesc = (a: ContestData | EventMetadataRecord, b: ContestData | EventMetadataRecord) => {
+  return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
+};
+
 export async function getEventsData(): Promise<EventMetadataRecord[]> {
   const cacheKey = 'events-data';
   const cached = cache.get<EventMetadataRecord[]>(cacheKey);
@@ -283,7 +294,7 @@ export async function getEventsData(): Promise<EventMetadataRecord[]> {
     }
 
     const eventRecords: EventMetadataRecord[] = allItems.filter(item => item.sortKey === 'Metadata') as unknown as EventMetadataRecord[];
-    const sortedEvents = eventRecords.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+    const sortedEvents = eventRecords.sort(sortByDateRangeDesc);
 
     // Cache the results (10 min TTL to reduce scan frequency)
     cache.set(cacheKey, sortedEvents, 600000); // Cache for 10 minutes (was 3 min)
@@ -329,13 +340,13 @@ export async function getContestsData(): Promise<ContestData[]> {
     }
 
     // Separate metadata and contests using sortKey
-    const metadataMap = new Map<string, EventMetadataRecord>();
+    const eventRecords = new Map<string, EventMetadataRecord>();
     const contestRecords: ContestRecord[] = [];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (allItems as any[]).forEach(item => {
       if (item.sortKey === 'Metadata') {
-        metadataMap.set(item.eventId, item as EventMetadataRecord);
+        eventRecords.set(item.eventId, item as EventMetadataRecord);
       } else if (item.sortKey?.startsWith('Contest:')) {
         contestRecords.push(item as ContestRecord);
       }
@@ -348,7 +359,7 @@ export async function getContestsData(): Promise<ContestData[]> {
 
     // Map all Contest:* records — handles both old-format (athletes) and new-format (results)
     const contests: ContestData[] = contestRecords.map(contest => {
-      const event = metadataMap.get(contest.eventId);
+      const event = eventRecords.get(contest.eventId);
       const raw = contest as unknown as Record<string, unknown>;
 
       // contestId may not be stored explicitly on form-submitted contests (only in sortKey).
@@ -374,7 +385,8 @@ export async function getContestsData(): Promise<ContestData[]> {
           eventId: contest.eventId,
           contestId,
           name: String(meta?.eventName || meta?.name || ''),
-          date: String(raw.startDate || meta?.startDate || ''),
+          startDate: String(raw.startDate || meta?.startDate || ''),
+          endDate: String(raw.endDate || meta?.endDate || ''),
           country: String(meta?.country || 'N/A'),
           city: String(raw.city || meta?.city || ''),
           discipline: String(raw.discipline ?? ''),
@@ -409,7 +421,8 @@ export async function getContestsData(): Promise<ContestData[]> {
         eventId: contest.eventId,
         contestId,
         name: event?.eventName || (raw.contestName as string) || '',
-        date: contest.contestDate || '',
+        startDate: contest.contestDate || '',
+        endDate: contest.contestDate || '',
         country: event?.country || 'N/A',
         city: contest.city || event?.city || '',
         discipline: contest.discipline || '',
@@ -428,7 +441,7 @@ export async function getContestsData(): Promise<ContestData[]> {
     // (no separate Contest:* records). Skip events that already have Contest:* records
     // above — those are authoritative and more up-to-date.
     const submittedContests: ContestData[] = [];
-    metadataMap.forEach((rawMeta) => {
+    eventRecords.forEach((rawMeta) => {
       const meta = rawMeta as unknown as Record<string, unknown>;
       if (meta.status !== 'published') return;
       if (eventIdsWithContestRecords.has(String(meta.eventId ?? ''))) return;
@@ -449,7 +462,8 @@ export async function getContestsData(): Promise<ContestData[]> {
           eventId: String(meta.eventId ?? ''),
           contestId: String(contest.contestId ?? ''),
           name: String(meta.name ?? ''),
-          date: String(meta.startDate ?? ''),
+          startDate: String(meta.startDate ?? ''),
+          endDate: String(meta.endDate ?? ''),
           country: String(meta.country ?? 'N/A'),
           city: String(meta.city ?? ''),
           discipline: String(contest.discipline ?? ''),
@@ -463,7 +477,7 @@ export async function getContestsData(): Promise<ContestData[]> {
       });
     });
 
-    const sortedContests = [...contests, ...submittedContests].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const sortedContests = [...contests, ...submittedContests].sort(sortByDateRangeDesc);
 
     // Cache the results (10 min TTL to reduce scan frequency)
     cache.set(cacheKey, sortedContests, 600000); // Cache for 10 minutes (was 3 min)

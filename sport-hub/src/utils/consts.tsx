@@ -66,13 +66,13 @@ export const DISCIPLINE_DATA: Record<Discipline, DisciplineUIData> = {
   SPEED_SHORT: {
     enumValue: 7,
     name: 'Speedline Short',
-    description: 'Sprint competitions',
+    description: 'Racing over ground',
     Icon: (iconProps: IconProps) => <SpeedShortIcon {...iconProps} />
   },
   SPEED_HIGHLINE: {
     enumValue: 8,
-    name: 'Speedline Highline',
-    description: 'Racing on exposed heights',
+    name: 'Speed Highline',
+    description: 'Racing at height',
     Icon: (iconProps: IconProps) => <SpeedHighlineIcon {...iconProps} />
   },
   ENDURANCE: {
