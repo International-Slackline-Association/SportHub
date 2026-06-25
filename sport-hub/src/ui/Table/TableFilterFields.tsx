@@ -1,6 +1,7 @@
 import { Column, Row } from "@tanstack/react-table";
 import styles from "./styles.module.css";
 import Autocomplete from "@ui/Form/Autocomplete";
+import { COUNTRIES } from "@utils/countries";
 
 type TableFilterProps<TData,> = {
   column: Column<TData, unknown>;
@@ -106,6 +107,31 @@ const SelectTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) =>
   );
 };
 
+const CountryTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
+  const id = column.id;
+  const columnName = column.columnDef.header?.toString();
+
+  const options: { value: string; label: string }[] = 
+    [...new Set(rows.map(row => String(row.getValue(column.id))))]
+    .map(countryIoc => ({ value: countryIoc, label: COUNTRIES.find(c => c.ioc === countryIoc)?.name || countryIoc }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+
+  return (
+    <div className={styles.columnFilter} key={`column-filter-${id}`}>
+      <label htmlFor={id}>{columnName}</label>
+      <select
+        id={id}
+        name={columnName}
+        onChange={e => column.setFilterValue(e.target.value || undefined)}
+        value={String(column.getFilterValue() ?? '')}
+      >
+        <option value={""}>All</option>
+        {options.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
+      </select>
+    </div>
+  );
+};
+
 const DateTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
   const id = column.id;
   const columnName = column.columnDef.header?.toString() || "";
@@ -195,6 +221,10 @@ const TableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
 
   if (filterVariant === "autocomplete") {
     return <AutocompleteTableFilter column={column} rows={rows} />;
+  }
+
+  if (filterVariant === "country") {
+    return <CountryTableFilter column={column} rows={rows} />;
   }
 
   return <SelectTableFilter column={column} rows={rows} />;

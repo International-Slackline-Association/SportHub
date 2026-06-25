@@ -32,13 +32,8 @@ const NameCell = ({ athlete }: { athlete: AthleteRanking }) => {
 
 const columns = [
   // Shared Columns
-  columnHelper.display({
-    id: 'rank',
+  columnHelper.accessor("rank", {
     header: 'Rank',
-    cell: info => {
-      const rowIndex = info.table.getRowModel().rows.findIndex(row => row.id === info.row.id);
-      return rowIndex + 1;
-    },
   }),
   columnHelper.accessor('points', {
     header: 'Points',
@@ -105,7 +100,7 @@ const columns = [
     enableColumnFilter: true,
     header: 'Country',
     cell: info => <CountryFlag country={info.getValue()} />,
-    meta: { filterVariant: 'select' },
+    meta: { filterVariant: 'country' },
     size: 60,
   }),
 ];
@@ -120,9 +115,28 @@ const YEAR_OPTIONS = [
   }),
 ];
 
-const DISCIPLINE_OPTIONS = Object.values(DISCIPLINE_DATA)
-  .filter(d => d.enumValue !== 0)
-  .map(d => ({ value: String(d.enumValue), label: d.name }));
+// TODO: These don't cover all disciplines selectable when creating events and competitions.
+// Check with Tom if we want to group them or take a different approach to not overlook them.
+const SELECTABLE_DISCIPLINES: Discipline[] = [
+  // 'TRICKLINE',
+  // 'TRICKLINE_JIB_AND_STATIC',
+  'TRICKLINE_AERIAL',
+  // 'TRICKLINE_TRANSFER',
+  'FREESTYLE_HIGHLINE',
+  // 'FREESTYLE',
+  'SPEED_SHORT',
+  'SPEED_HIGHLINE',
+  'RIGGING',
+  // 'SPEEED',
+  // 'ENDURANCE',
+  // 'BLIND',
+  // 'WALKING',
+];
+
+const DISCIPLINE_OPTIONS = SELECTABLE_DISCIPLINES.map(discipline => ({
+  value: DISCIPLINE_DATA[discipline].enumValue,
+  label: DISCIPLINE_DATA[discipline].name,
+}));
 
 const randomDiscipline = () => {
   const opts = DISCIPLINE_OPTIONS;
@@ -141,9 +155,10 @@ const RankingsTable = ({ initialDiscipline }: { initialDiscipline?: string }) =>
 
   // On mount: if no discipline was in the URL, reflect the randomly chosen one
   useEffect(() => {
-    if (!initialDiscipline) {
+    const isInitialDisciplineInvalid = !DISCIPLINE_OPTIONS.some(opt => String(opt.value) === String(selectedDiscipline));
+    if (!initialDiscipline || isInitialDisciplineInvalid) {
       const params = new URLSearchParams(searchParams.toString());
-      params.set('discipline', selectedDiscipline);
+      params.set('discipline', String(selectedDiscipline));
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -161,7 +176,7 @@ const RankingsTable = ({ initialDiscipline }: { initialDiscipline?: string }) =>
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedYear !== 'last3years') params.set('year', selectedYear);
-      if (selectedDiscipline) params.set('discipline', selectedDiscipline);
+      if (selectedDiscipline) params.set('discipline', String(selectedDiscipline));
       const url = `/api/rankings${params.size ? '?' + params.toString() : ''}`;
       return (await fetch(url)).json();
     },

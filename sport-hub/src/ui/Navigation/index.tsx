@@ -25,7 +25,7 @@ const navItems: LinkType[] = [
     },
     {
         href: "/events",
-        name: "Events",
+        name: "Competitions",
     },
     {
         href: "/judging",

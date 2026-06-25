@@ -20,7 +20,7 @@ export const SocialMediaLinks = ({ avatarDefaultLabel, profileImage, links }: So
       />
       {/* TODO: create share bottom drawer for socials & profile link for mobile */}
       {links && <SocialTags socials={links} />}
-      <ClipBoardButton>Copy Profile Link</ClipBoardButton>
+      <ClipBoardButton>Copy Link</ClipBoardButton>
     </div>
   );
 };

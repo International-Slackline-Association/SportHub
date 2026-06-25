@@ -8,11 +8,9 @@ import { DISCIPLINE_DATA } from '@utils/consts';
 import { S3_IMAGES, randomS3Image, type HeroImage } from '@utils/images';
 import styles from '../page.module.css';
 
-type DisciplineKey = 'FREESTYLE_HIGHLINE' | 'TRICKLINE' | 'SPEED_HIGHLINE' | 'SPEED_SHORT' | 'RIGGING';
-
-const DISCIPLINES: DisciplineKey[] = [
+const DISCIPLINES: Discipline[] = [
   'FREESTYLE_HIGHLINE',
-  'TRICKLINE',
+  'TRICKLINE_AERIAL',
   'SPEED_HIGHLINE',
   'SPEED_SHORT',
   'RIGGING',
@@ -136,7 +134,7 @@ export function DisciplineHeroSection() {
     preload.src = heroImage.src;
   }, []);
 
-  const handleMouseEnter = useCallback((discipline: DisciplineKey) => {
+  const handleMouseEnter = useCallback((discipline: Discipline) => {
     const pool = S3_IMAGES[discipline];
     transitionTo(pool[Math.floor(Math.random() * pool.length)]);
   }, [transitionTo]);

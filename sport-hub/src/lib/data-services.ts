@@ -127,6 +127,7 @@ export interface AthleteRanking {
   contestsParticipated?: number;
   firstCompetition?: string;
   lastCompetition?: string;
+  rank?: number;
 }
 
 function mapProfileToRanking(profile: Record<string, unknown>, points?: number): AthleteRanking {
@@ -195,7 +196,7 @@ async function getRankingsForYears(years: string[], discipline?: string): Promis
 
   const profilesMap = await getAthleteProfilesBatch([...pointsMap.keys()]);
 
-  return [...pointsMap.entries()]
+  const rankings = [...pointsMap.entries()]
     .map(([userId, pts]) => {
       const profile = profilesMap.get(userId);
       if (!profile) return null;
@@ -203,6 +204,19 @@ async function getRankingsForYears(years: string[], discipline?: string): Promis
     })
     .filter((r): r is AthleteRanking => r !== null)
     .sort((a, b) => b.points - a.points);
+
+  const mensRankings = rankings.filter(r => r.gender === 'male');
+  const womensRankings = rankings.filter(r => r.gender === 'female');
+
+  mensRankings.forEach((r, idx) => {
+    r.rank = idx + 1;
+  });
+
+  womensRankings.forEach((r, idx) => {
+    r.rank = idx + 1;
+  });
+
+  return [...womensRankings, ...mensRankings];
 }
 
 /**
@@ -288,11 +302,11 @@ export async function getEventsData(): Promise<EventMetadataRecord[]> {
     const allItems = await scanAllEventItems({
       projectionExpression: 'eventId, eventName, sortKey, country, city, profileUrl, thumbnailUrl, startDate, endDate'
     });
-
+    console.log("All Items:", allItems.slice(4));
     if (!allItems || allItems.length === 0) {
       return [];
     }
-
+    
     const eventRecords: EventMetadataRecord[] = allItems.filter(item => item.sortKey === 'Metadata') as unknown as EventMetadataRecord[];
     const sortedEvents = eventRecords.sort(sortByDateRangeDesc);
 

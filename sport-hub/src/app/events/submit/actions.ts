@@ -14,7 +14,6 @@ import {
   scanAllEventItems,
   deleteEvent as deleteEventFromService,
 } from '@lib/event-contest-service';
-import { uploadFileToS3 } from '@lib/s3-service';
 
 // Generate unique event ID
 function generateEventId(): string {
@@ -601,7 +600,3 @@ export async function createPendingUserFromEvent(
     throw error;
   }
 }
-
-export async function uploadEventImage(file: File) {
-  return await uploadFileToS3(file);
-};
