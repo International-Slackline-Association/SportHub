@@ -137,8 +137,6 @@ interface EventTableRecord {
  * One per event - contains event-level information
  */
 export interface EventMetadataRecord extends EventTableRecord {
-  sortKey: "Metadata";
-
   // Event info
   eventName: string;
   startDate: string;
@@ -162,8 +160,6 @@ export interface EventMetadataRecord extends EventTableRecord {
  * Multiple per event - one for each contest in the event
  */
 export interface ContestRecord extends EventTableRecord {
-  sortKey: string;         // "Contest:{discipline}:{contestId}"
-
   // Contest identification
   contestId: string;       // For contestId-index GSI
   discipline: string;      // For date-discipline-index GSI

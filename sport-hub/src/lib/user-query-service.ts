@@ -286,7 +286,7 @@ export async function getUsersPaginated(options: {
  * Get all user Profile records (full scan, no pagination)
  * Used by data-services for building user lists
  */
-export async function getAllUserProfiles(): Promise<Record<string, unknown>[]> {
+export async function getAllUserProfiles(): Promise<UserProfileRecord[]> {
   const items = await dynamodb.scanItems(USERS_TABLE, {
     filterExpression: 'sortKey = :sk',
     expressionAttributeValues: { ':sk': 'Profile' },

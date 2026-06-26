@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import ContestSize from '@ui/Badge/ContestSize';
+import ResultsTable from './ResultsTable';
+import { TabGroup } from '@ui/Tab';
+import Card from '@ui/Card';
 
 export type ContestJudge = {
   id?: string;
@@ -32,29 +35,22 @@ const CONTEST_GENDER_LABEL: Record<string, string> = {
 };
 
 export default function ContestTabs({ contests, initialTab = 0 }: { contests: ContestTabData[]; initialTab?: number }) {
-  const [active, setActive] = useState(
-    initialTab > 0 && initialTab < contests.length ? initialTab : 0
-  );
-  const contest = contests[active];
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const contest = contests[activeTab];
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      {/* Tab bar */}
-      <div className="flex overflow-x-auto border-b border-gray-200">
-        {contests.map((c, idx) => (
-          <button
-            key={idx}
-            onClick={() => setActive(idx)}
-            className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors cursor-pointer ${
-              active === idx
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            {c.label}
-          </button>
-        ))}
-      </div>
+    <Card>
+      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Contests</h3>
+
+      <TabGroup
+        activeTab={String(activeTab)}
+        onTabChange={(tabId: string) => setActiveTab(Number(tabId))}
+        tabs={contests.map((c, idx) => ({
+          id: String(idx),
+          label: c.label,
+        }))}
+        variant="secondary"
+      />
 
       {/* Tab content */}
       <div className="p-6">
@@ -107,38 +103,18 @@ export default function ContestTabs({ contests, initialTab = 0 }: { contests: Co
 
         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Results</h3>
         {contest.results.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-3">Place</th>
-                  <th className="text-left p-3">Athlete</th>
-                  <th className="text-right p-3">Points</th>
-                </tr>
-              </thead>
-              <tbody>
-                {contest.results.map((r, ri) => (
-                  <tr key={ri} className="border-b hover:bg-gray-50">
-                    <td className="p-3 font-semibold">{r.rank}</td>
-                    <td className="p-3">
-                      {!r.isPending && r.id ? (
-                        <Link href={`/athlete-profile/${r.id}`} className="text-blue-600 hover:underline">
-                          {r.name}
-                        </Link>
-                      ) : (
-                        <span className={r.isPending ? 'italic text-amber-700' : ''}>{r.name}</span>
-                      )}
-                    </td>
-                    <td className="p-3 text-right">{r.isaPoints}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ResultsTable
+            data={contest.results.map(result => ({
+              userId: result.id ?? '',
+              name: result.name,
+              place: String(result.rank),
+              points: result.isaPoints,
+            }))}
+          />
         ) : (
           <p className="text-gray-500">No results available</p>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

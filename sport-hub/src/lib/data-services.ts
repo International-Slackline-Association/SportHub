@@ -127,6 +127,7 @@ export interface AthleteRanking {
   contestsParticipated?: number;
   firstCompetition?: string;
   lastCompetition?: string;
+  rank?: number;
 }
 
 function mapProfileToRanking(profile: Record<string, unknown>, points?: number): AthleteRanking {
@@ -195,7 +196,7 @@ async function getRankingsForYears(years: string[], discipline?: string): Promis
 
   const profilesMap = await getAthleteProfilesBatch([...pointsMap.keys()]);
 
-  return [...pointsMap.entries()]
+  const rankings = [...pointsMap.entries()]
     .map(([userId, pts]) => {
       const profile = profilesMap.get(userId);
       if (!profile) return null;
@@ -203,6 +204,19 @@ async function getRankingsForYears(years: string[], discipline?: string): Promis
     })
     .filter((r): r is AthleteRanking => r !== null)
     .sort((a, b) => b.points - a.points);
+
+  const mensRankings = rankings.filter(r => r.gender === 'male');
+  const womensRankings = rankings.filter(r => r.gender === 'female');
+
+  mensRankings.forEach((r, idx) => {
+    r.rank = idx + 1;
+  });
+
+  womensRankings.forEach((r, idx) => {
+    r.rank = idx + 1;
+  });
+
+  return [...womensRankings, ...mensRankings];
 }
 
 /**
@@ -235,7 +249,13 @@ export async function getRankingsData(year?: string, discipline?: string): Promi
  */
 export async function getFeaturedAthletes(discipline?: string, limit: number = 3): Promise<AthleteRanking[]> {
   const rankings = await getRankingsData(undefined, discipline);
-  return rankings.slice(0, limit);
+  
+  return rankings
+    .filter((athlete) => {
+      const isProfileComplete = athlete.name && athlete.surname && athlete.country && athlete.profileImage;
+      return isProfileComplete;
+    })
+    .slice(0, limit);
 }
 
 // ===========================================
@@ -246,7 +266,8 @@ export interface ContestData {
   eventId: string;
   contestId?: string;
   name: string;
-  date: string;
+  startDate: string;
+  endDate?: string;
   country: string;
   city?: string;
   discipline: string;
@@ -267,6 +288,10 @@ export interface ContestData {
   }>;
 }
 
+export const sortByDateRangeDesc = (a: ContestData | EventMetadataRecord, b: ContestData | EventMetadataRecord) => {
+  return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
+};
+
 export async function getEventsData(): Promise<EventMetadataRecord[]> {
   const cacheKey = 'events-data';
   const cached = cache.get<EventMetadataRecord[]>(cacheKey);
@@ -277,13 +302,13 @@ export async function getEventsData(): Promise<EventMetadataRecord[]> {
     const allItems = await scanAllEventItems({
       projectionExpression: 'eventId, eventName, sortKey, country, city, profileUrl, thumbnailUrl, startDate, endDate'
     });
-
+    console.log("All Items:", allItems.slice(4));
     if (!allItems || allItems.length === 0) {
       return [];
     }
-
+    
     const eventRecords: EventMetadataRecord[] = allItems.filter(item => item.sortKey === 'Metadata') as unknown as EventMetadataRecord[];
-    const sortedEvents = eventRecords.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+    const sortedEvents = eventRecords.sort(sortByDateRangeDesc);
 
     // Cache the results (10 min TTL to reduce scan frequency)
     cache.set(cacheKey, sortedEvents, 600000); // Cache for 10 minutes (was 3 min)
@@ -329,13 +354,13 @@ export async function getContestsData(): Promise<ContestData[]> {
     }
 
     // Separate metadata and contests using sortKey
-    const metadataMap = new Map<string, EventMetadataRecord>();
+    const eventRecords = new Map<string, EventMetadataRecord>();
     const contestRecords: ContestRecord[] = [];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (allItems as any[]).forEach(item => {
       if (item.sortKey === 'Metadata') {
-        metadataMap.set(item.eventId, item as EventMetadataRecord);
+        eventRecords.set(item.eventId, item as EventMetadataRecord);
       } else if (item.sortKey?.startsWith('Contest:')) {
         contestRecords.push(item as ContestRecord);
       }
@@ -348,7 +373,7 @@ export async function getContestsData(): Promise<ContestData[]> {
 
     // Map all Contest:* records — handles both old-format (athletes) and new-format (results)
     const contests: ContestData[] = contestRecords.map(contest => {
-      const event = metadataMap.get(contest.eventId);
+      const event = eventRecords.get(contest.eventId);
       const raw = contest as unknown as Record<string, unknown>;
 
       // contestId may not be stored explicitly on form-submitted contests (only in sortKey).
@@ -374,7 +399,8 @@ export async function getContestsData(): Promise<ContestData[]> {
           eventId: contest.eventId,
           contestId,
           name: String(meta?.eventName || meta?.name || ''),
-          date: String(raw.startDate || meta?.startDate || ''),
+          startDate: String(raw.startDate || meta?.startDate || ''),
+          endDate: String(raw.endDate || meta?.endDate || ''),
           country: String(meta?.country || 'N/A'),
           city: String(raw.city || meta?.city || ''),
           discipline: String(raw.discipline ?? ''),
@@ -409,7 +435,8 @@ export async function getContestsData(): Promise<ContestData[]> {
         eventId: contest.eventId,
         contestId,
         name: event?.eventName || (raw.contestName as string) || '',
-        date: contest.contestDate || '',
+        startDate: contest.contestDate || '',
+        endDate: contest.contestDate || '',
         country: event?.country || 'N/A',
         city: contest.city || event?.city || '',
         discipline: contest.discipline || '',
@@ -428,7 +455,7 @@ export async function getContestsData(): Promise<ContestData[]> {
     // (no separate Contest:* records). Skip events that already have Contest:* records
     // above — those are authoritative and more up-to-date.
     const submittedContests: ContestData[] = [];
-    metadataMap.forEach((rawMeta) => {
+    eventRecords.forEach((rawMeta) => {
       const meta = rawMeta as unknown as Record<string, unknown>;
       if (meta.status !== 'published') return;
       if (eventIdsWithContestRecords.has(String(meta.eventId ?? ''))) return;
@@ -449,7 +476,8 @@ export async function getContestsData(): Promise<ContestData[]> {
           eventId: String(meta.eventId ?? ''),
           contestId: String(contest.contestId ?? ''),
           name: String(meta.name ?? ''),
-          date: String(meta.startDate ?? ''),
+          startDate: String(meta.startDate ?? ''),
+          endDate: String(meta.endDate ?? ''),
           country: String(meta.country ?? 'N/A'),
           city: String(meta.city ?? ''),
           discipline: String(contest.discipline ?? ''),
@@ -463,7 +491,7 @@ export async function getContestsData(): Promise<ContestData[]> {
       });
     });
 
-    const sortedContests = [...contests, ...submittedContests].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const sortedContests = [...contests, ...submittedContests].sort(sortByDateRangeDesc);
 
     // Cache the results (10 min TTL to reduce scan frequency)
     cache.set(cacheKey, sortedContests, 600000); // Cache for 10 minutes (was 3 min)
@@ -522,6 +550,7 @@ export interface WorldRecord {
   eventName: string;      // Competition / location where set
   date: string;           // DD/MM/YYYY
   athleteUserId?: string; // Resolved SportHub userId (when ISA Email matches a profile)
+  links?: string[];
 }
 
 export interface WorldFirst {
@@ -534,6 +563,7 @@ export interface WorldFirst {
   typeOfFirst: string;    // "type of first"
   lineType: string;       // "type of line"
   athleteUserId?: string; // Resolved SportHub userId (when ISA Email matches a profile)
+  links?: string[];
 }
 
 /**
@@ -544,6 +574,7 @@ export interface WorldFirst {
  */
 export async function getAthleteProfile(athleteId: string): Promise<AthleteProfile | null> {
   try {
+    console.log('getAthleteProfile', athleteId)
     // Fetch profile, reference user, and rankings in parallel
     const [profile, rankingRecords] = await Promise.all([
       getAthleteProfileOptimized(athleteId),
@@ -682,17 +713,15 @@ export async function getAthleteContests(athleteId: string): Promise<AthleteCont
   }
 }
 
+
 /** Build a lowercase-email → userId map from all user profiles (used for sheet joins). */
-// async function buildEmailToUserIdMap(): Promise<Map<string, string>> {
-//   const profiles = await getAllUserProfiles();
-//   const map = new Map<string, string>();
-//   for (const p of profiles) {
-//     const email = (p.email as string | undefined)?.toLowerCase().trim();
-//     const userId = p.userId as string | undefined;
-//     if (email && userId) map.set(email, userId);
-//   }
-//   return map;
-// }
+const buildEmailToUserIdMap = async () =>
+  (await getAllUserProfiles()).reduce((map, { email, userId }) => {
+    if (email && userId) {
+      map.set(email.toLocaleLowerCase().trim(), userId);
+    }
+    return map;
+  }, new Map<string, string>());
 
 export async function getWorldRecords(): Promise<WorldRecord[]> {
   const cacheKey = `world-records`;
@@ -700,20 +729,20 @@ export async function getWorldRecords(): Promise<WorldRecord[]> {
   if (cached) return cached;
 
   try {
-    const [items, emailToUserId = new Map<string, string>()] = await Promise.all([
+    const [worldRecords, emailToUserId] = await Promise.all([
       getWorldRecordsSheet(),
-      // buildEmailToUserIdMap(),
+      buildEmailToUserIdMap(),
     ]);
 
-    if (!items || items.length === 0) return [];
+    if (!worldRecords || worldRecords.length === 0) return [];
 
-    const records: WorldRecord[] = items.map(item => ({
-      ...item,
-      athleteUserId: item.athleteEmail ? emailToUserId.get(item.athleteEmail) : undefined,
+    const recordsWithUserIds: WorldRecord[] = worldRecords.map(worldRecord => ({
+      ...worldRecord,
+      athleteUserId: emailToUserId.get(worldRecord.athleteEmail),
     }));
 
-    cache.set(cacheKey, records, 86400000); // Cache for 1 day
-    return records;
+    cache.set(cacheKey, recordsWithUserIds, 86400000); // Cache for 1 day
+    return recordsWithUserIds;
   } catch (error) {
     console.error('Error fetching world records:', error);
     return [];
@@ -726,20 +755,20 @@ export async function getWorldFirsts(): Promise<WorldFirst[]> {
   if (cached) return cached;
 
   try {
-    const [items, emailToUserId = new Map<string, string>()] = await Promise.all([
+    const [worldFirsts, emailToUserId] = await Promise.all([
       getWorldFirstsSheet(),
-      // buildEmailToUserIdMap(),
+      buildEmailToUserIdMap(),
     ]);
 
-    if (!items || items.length === 0) return [];
+    if (!worldFirsts || worldFirsts.length === 0) return [];
 
-    const firsts: WorldFirst[] = items.map(item => ({
-      ...item,
-      athleteUserId: item.athleteEmail ? emailToUserId.get(item.athleteEmail) : undefined,
+    const firstsWithUserIds: WorldFirst[] = worldFirsts.map(worldRecord => ({
+      ...worldRecord,
+      athleteUserId: emailToUserId.get(worldRecord.athleteEmail),
     }));
 
-    cache.set(cacheKey, firsts, 86400000); // Cache for 1 day
-    return firsts;
+    cache.set(cacheKey, firstsWithUserIds, 86400000); // Cache for 1 day
+    return firstsWithUserIds;
   } catch (error) {
     console.error('Error fetching world firsts:', error);
     return [];

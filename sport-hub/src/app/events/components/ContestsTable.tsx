@@ -15,6 +15,9 @@ import { Alert } from '@ui/Alert';
 import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import { CountryFlag } from '@ui/CountryFlag';
 import styles from './ContestsTable.module.css';
+import { formatDateRange } from '@utils/dates';
+import { TrophyIcon } from '@ui/Icons';
+import { snakeCaseToTitleCase } from '@utils/strings';
 
 const normalizeGroupField = (value: string | null | undefined) =>
   String(value ?? '')
@@ -37,7 +40,7 @@ const normalizeGroupDate = (value: string | null | undefined) => {
 const buildContestGroupKey = (contest: ContestData) => {
   const eventName = normalizeGroupField(contest.name);
   const country = normalizeGroupField(contest.country);
-  const date = normalizeGroupDate(contest.date);
+  const date = normalizeGroupDate(contest.startDate);
 
   return `${eventName}|${country}|${date}`;
 };
@@ -83,7 +86,7 @@ const columns = [
     id: 'event',
     header: 'Event',
     cell: info => {
-      const { name, date, category, country, discipline, athletes, eventId } = info.row.original;
+      const { name, startDate, endDate, category, country, discipline, athletes, eventId } = info.row.original;
       const d = String(discipline);
       const disciplineData = DISCIPLINE_DATA[d as keyof typeof DISCIPLINE_DATA]
         ?? Object.values(DISCIPLINE_DATA).find(e => e.enumValue === Number(d));
@@ -93,8 +96,7 @@ const columns = [
       const winnerName = winner ? `${winner.name} ${winner.surname || ''}`.trim() : null;
       const genderKey = MAP_CONTEST_GENDER_ENUM_TO_NAME[info.row.original.gender];
       const genderLabel = ({ MIXED: 'Mixed', MEN_ONLY: 'Men', WOMEN_ONLY: 'Women' } as Record<string, string>)[genderKey] ?? genderKey;
-      let formattedDate = date;
-      try { formattedDate = new Date(date).toLocaleDateString('en-GB'); } catch { /* keep raw */ }
+      const formattedDate = formatDateRange(new Date(startDate), new Date(endDate || startDate));
       return (
         <div className="stack gap-1">
           <div className="cluster justify-between items-center text-gray-400 mb-2">
@@ -135,18 +137,14 @@ const columns = [
       </Link>
     ),
   }),
-  columnHelper.accessor("date", {
+  columnHelper.accessor("startDate", {
     enableColumnFilter: true,
     header: "Date",
     meta: { filterVariant: "date" },
     filterFn: dateFilterFn,
     cell: info => {
-      const date = info.getValue();
-      try {
-        return new Date(date).toLocaleDateString('en-GB');
-      } catch {
-        return date;
-      }
+      const { startDate, endDate } = info.row.original;
+      return formatDateRange(new Date(startDate), new Date(endDate || startDate));
     },
     size: 120,
   }),
@@ -157,7 +155,7 @@ const columns = [
     cell: info => (
       <CountryFlagWithName iocCode={info.getValue()} />
     ),
-    meta: { filterVariant: 'select' },
+    meta: { filterVariant: 'country' },
     size: 120,
   }),
   columnHelper.accessor((row: ContestData) => {
@@ -201,13 +199,30 @@ const columns = [
   }),
   columnHelper.accessor((row: ContestData) => {
     const key = MAP_CONTEST_TYPE_ENUM_TO_NAME[row.category];
-    return contestSizeOptions.find(o => o.value === key)?.label ?? String(row.category);
+    return contestSizeOptions.find(o => o.value === key)?.value ?? String(row.category);
   }, {
     id: "size",
     enableColumnFilter: true,
     header: "Size",
-    meta: { filterVariant: 'select' },
-    size: 120,
+    cell: info => {
+      const contestSize = info.getValue();
+      const numTrophies = Number(contestSizeOptions.findIndex((option) => option.value == contestSize));
+      return (
+        <div className="cluster">
+          {Array.from({ length: numTrophies }, (_, index) => (
+            <TrophyIcon key={index} />
+          ))}
+        </div>
+      );
+    },
+    meta: {
+      filterOptions: Object.entries(MAP_CONTEST_TYPE_ENUM_TO_NAME).map(([value, label]) => ({
+        value,
+        label: snakeCaseToTitleCase(label),
+      })),
+      filterVariant: 'select'
+    },
+    size: 60,
   }),
   columnHelper.accessor("athletes", {
     header: "Winner",
@@ -266,12 +281,12 @@ const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
             data,
             initialState: {
               columnOrder: isDesktop
-                ? ['name', 'date', 'country', 'discipline', 'gender', 'prize', 'size', 'athletes', 'verified']
+                ? ['name', 'startDate', 'country', 'discipline', 'gender', 'prize', 'size', 'athletes', 'verified']
                 : ['event'],
               columnVisibility: {
                 event:      !isDesktop,
                 name:       !!isDesktop,
-                date:       !!isDesktop,
+                startDate:  !!isDesktop,
                 country:    !!isDesktop,
                 discipline: !!isDesktop,
                 gender:     !!isDesktop,

@@ -13,7 +13,7 @@ interface AthleteProfilePageProps {
 export default async function AthleteProfilePage({ params }: AthleteProfilePageProps) {
   const { athleteId } = await params;
   const decodedAthleteId = decodeURIComponent(athleteId);
-
+  console.log(athleteId, decodedAthleteId);
   // Fetch only profile data server-side for immediate display
   const profile = await getAthleteProfile(decodedAthleteId);
 

@@ -3,7 +3,6 @@ export type HeroImage = {
   alt: string;
   caption?: string;
   blurredBackground?: boolean;
-  backgroundZoom?: number;
   objectPosition?: string;
 };
 
@@ -204,6 +203,7 @@ export const S3_IMAGES: Record<string, HeroImage[]> = {
  * When no group is provided, selects from all groups combined.
  */
 export function randomS3Image(group?: keyof typeof S3_IMAGES): HeroImage {
+  console.log("randomS3Image", group);
   const pool = group ? S3_IMAGES[group] : Object.values(S3_IMAGES).flat();
   return pool[Math.floor(Math.random() * pool.length)];
 }

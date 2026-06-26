@@ -44,7 +44,7 @@ const Button = ({
   }
 
   return (
-    <button className={classNameCombined} {...props}>
+    <button className={classNameCombined} type="button" {...props}>
       {children}
     </button>
   );

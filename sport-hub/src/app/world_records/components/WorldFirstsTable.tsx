@@ -9,6 +9,9 @@ import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import { CountryFlag } from '@ui/CountryFlag';
 import { textToTitleCase } from '@utils/strings';
 import Link from 'next/link';
+import { countryCellFormatter, linkCellFormatter, nameCellFormatter } from './cellFormatters';
+
+const linkClassName = "underline text-blue-600 hover:text-blue-800 visited:text-purple-600";
 
 const columnHelper = createColumnHelper<WorldFirst>();
 
@@ -29,7 +32,7 @@ const sharedColumns = [
     id: 'country',
     header: 'Country',
     enableColumnFilter: true,
-    cell: info => <CountryFlag country={info.getValue()} defaultValue="" />,
+    cell: countryCellFormatter,
     meta: { filterVariant: 'select' },
     size: 80,
   }),
@@ -55,7 +58,7 @@ const columns = [
     id: 'worldFirst',
     header: 'World First',
     cell: info => {
-      const { date, description, typeOfFirst, specs, name, country, gender } = info.row.original;
+      const { date, description, typeOfFirst, specs, name, country, gender, links } = info.row.original;
       return (
         <div className="stack">
           <div className="cluster items-center justify-between text-gray-400">
@@ -68,7 +71,7 @@ const columns = [
           <div className="cluster items-center justify-between">
             <span className="font-medium">
               {info.row.original.athleteUserId
-                ? <Link href={`/athlete-profile/${info.row.original.athleteUserId}`} className="text-blue-600 hover:underline">{name}</Link>
+                ? <Link href={`/athlete-profile/${info.row.original.athleteUserId}`} className={linkClassName}>{name}</Link>
                 : name
               }
             </span>
@@ -77,6 +80,15 @@ const columns = [
           <div className="cluster gap-2 items-center">
             <CountryFlag country={country} defaultValue="" />
             <span className="text-xs text-gray-400" style={{ paddingTop: 2 }}>{textToTitleCase(gender)}</span>
+          </div>
+          <div className="cluster gap-2 text-xs">
+            {links?.map((link, idx) => 
+              link && (
+                <Link className={linkClassName} href={link} key={`link_${idx}`} target="_newtab">
+                  Link {idx + 1}
+                </Link>
+              )
+            )}
           </div>
         </div>
       );
@@ -87,13 +99,13 @@ const columns = [
   columnHelper.accessor('specs', { header: 'Specs', size: 80 }),
   columnHelper.accessor('name', {
     header: 'Name',
-    cell: info => {
-      const userId = info.row.original.athleteUserId;
-      return userId
-        ? <Link href={`/athlete-profile/${userId}`} className="text-blue-600 hover:underline">{info.getValue()}</Link>
-        : <>{info.getValue()}</>;
-    },
+    cell: nameCellFormatter,
     size: 80,
+  }),
+  columnHelper.accessor('links', {
+    header: "Links",
+    cell: linkCellFormatter,
+    size: 40,
   }),
   // Shared filterable columns
   ...sharedColumns,

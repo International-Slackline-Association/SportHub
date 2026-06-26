@@ -41,9 +41,10 @@ export default function YouTubePreviewTextField() {
   const youtubeId = extractYouTubeId(displayUrl || '');
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    if (youtubeId) {
+    const newYoutubeId = extractYouTubeId(e.target.value);
+    if (newYoutubeId) {
       // Try high quality thumbnail first, falls back to default if not available
-      setDisplayUrl(`https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`);
+      setDisplayUrl(`https://img.youtube.com/vi/${newYoutubeId}/maxresdefault.jpg`);
     } else {
       setDisplayUrl("");
     }
@@ -51,24 +52,7 @@ export default function YouTubePreviewTextField() {
   };
 
   return (
-    <div className="stack">
-      {thumbnailUrl && (
-        <div style={{ marginBottom: '16px' }}>
-          <Image
-            alt="YouTube video thumbnail"
-            className={styles.youtubeThumbnail}
-            width={1280}
-            height={720}
-            onError={(e) => {
-              // Fallback to standard quality thumbnail if maxres fails
-              if (youtubeId && e.currentTarget.src.includes('maxresdefault')) {
-                e.currentTarget.src = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
-              }
-            }}
-            src={thumbnailUrl}
-          />
-        </div>
-      )}
+    <div className="stack gap-2">
       <FormikTextField
         id="event.youtubeVideo"
         name="event.youtubeVideo"
@@ -76,6 +60,21 @@ export default function YouTubePreviewTextField() {
         placeholder="https://www.youtube.com/watch?v=example"
         onBlur={handleBlur}
       />
+      {displayUrl && (
+        <Image
+          alt="YouTube video thumbnail"
+          className={styles.youtubeThumbnail}
+          width={1280}
+          height={720}
+          onError={(e) => {
+            // Fallback to standard quality thumbnail if maxres fails
+            if (youtubeId && e.currentTarget.src.includes('maxresdefault')) {
+              e.currentTarget.src = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+            }
+          }}
+          src={displayUrl}
+        />
+      )}
     </div>
   );
 };

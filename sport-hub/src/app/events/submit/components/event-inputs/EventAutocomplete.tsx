@@ -25,7 +25,7 @@ export default function EventAutocomplete() {
     queryFn: async () => (await fetch('/api/events')).json(),
     enabled: debounced.length >= 3,
     select: (data) => data.filter((ev: EventMetadataRecord) =>
-      ev.eventName.toLowerCase().includes(debounced.toLowerCase())
+      ev.eventName && ev?.eventName.toLowerCase().includes(debounced.toLowerCase())
     ),
   });
 
@@ -83,7 +83,7 @@ export default function EventAutocomplete() {
       isError={isError}
       label="Event Name"
       options={events?.map(({ eventId, eventName }: EventMetadataRecord) => ({
-        label: eventName,
+        label: eventName || "",
         value: eventId
       })) || []}
       // Prevent the field from being set to eventId; we'll set name + other fields ourselves

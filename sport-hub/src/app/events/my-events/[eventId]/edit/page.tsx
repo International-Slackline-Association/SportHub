@@ -29,8 +29,8 @@ function oldContestToFormValues(c: ContestData): ContestFormValues {
     judgingSystem: '' as ContestFormValues['judgingSystem'],
     contestSize: (MAP_CONTEST_TYPE_ENUM_TO_NAME[c.category] as ContestFormValues['contestSize']) || '' as ContestFormValues['contestSize'],
     totalPrizeValue: c.prize || undefined,
-    startDate: c.date,
-    endDate: c.date,
+    startDate: c.startDate,
+    endDate: c.endDate,
     judges: [],
     results: c.athletes
       .sort((a, b) => (parseInt(a.place) || 999) - (parseInt(b.place) || 999))
@@ -111,8 +111,8 @@ export default async function EditEventPage({ params }: Props) {
         name: first.name,
         city: first.city || '',
         country: first.country,
-        startDate: first.date,
-        endDate: first.date,
+        startDate: first.startDate,
+        endDate: first.endDate || '',
         website: '',
         disciplines: uniqueDisciplines,
         socialMedia: {},

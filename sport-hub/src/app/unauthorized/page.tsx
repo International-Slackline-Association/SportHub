@@ -12,8 +12,8 @@ export default async function UnauthorizedPage({
 
   return (
     <PageLayout
-      title="Access Denied"
-      description="You don't have permission to access this resource"
+      title=""
+      description=""
     >
       <div className="p-4 sm:p-0">
         <div className="max-w-2xl mx-auto bg-white shadow rounded-lg p-8 text-center">

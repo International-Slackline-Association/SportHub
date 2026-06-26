@@ -290,7 +290,7 @@ export async function saveEventContestRecords(
  */
 export async function scanAllEventItems(
   options?: Parameters<typeof dynamodb.scanItems>[1]
-): Promise<Record<string, unknown>[]> {
+): Promise<EventMetadataRecord[]> {
   return (await dynamodb.scanItems(EVENTS_TABLE, options)) || [];
 }
 
