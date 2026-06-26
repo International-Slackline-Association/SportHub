@@ -550,6 +550,7 @@ export interface WorldRecord {
   eventName: string;      // Competition / location where set
   date: string;           // DD/MM/YYYY
   athleteUserId?: string; // Resolved SportHub userId (when ISA Email matches a profile)
+  links?: string[];
 }
 
 export interface WorldFirst {
@@ -562,6 +563,7 @@ export interface WorldFirst {
   typeOfFirst: string;    // "type of first"
   lineType: string;       // "type of line"
   athleteUserId?: string; // Resolved SportHub userId (when ISA Email matches a profile)
+  links?: string[];
 }
 
 /**
@@ -572,6 +574,7 @@ export interface WorldFirst {
  */
 export async function getAthleteProfile(athleteId: string): Promise<AthleteProfile | null> {
   try {
+    console.log('getAthleteProfile', athleteId)
     // Fetch profile, reference user, and rankings in parallel
     const [profile, rankingRecords] = await Promise.all([
       getAthleteProfileOptimized(athleteId),
@@ -710,17 +713,15 @@ export async function getAthleteContests(athleteId: string): Promise<AthleteCont
   }
 }
 
+
 /** Build a lowercase-email → userId map from all user profiles (used for sheet joins). */
-// async function buildEmailToUserIdMap(): Promise<Map<string, string>> {
-//   const profiles = await getAllUserProfiles();
-//   const map = new Map<string, string>();
-//   for (const p of profiles) {
-//     const email = (p.email as string | undefined)?.toLowerCase().trim();
-//     const userId = p.userId as string | undefined;
-//     if (email && userId) map.set(email, userId);
-//   }
-//   return map;
-// }
+const buildEmailToUserIdMap = async () =>
+  (await getAllUserProfiles()).reduce((map, { email, userId }) => {
+    if (email && userId) {
+      map.set(email.toLocaleLowerCase().trim(), userId);
+    }
+    return map;
+  }, new Map<string, string>());
 
 export async function getWorldRecords(): Promise<WorldRecord[]> {
   const cacheKey = `world-records`;
@@ -728,20 +729,20 @@ export async function getWorldRecords(): Promise<WorldRecord[]> {
   if (cached) return cached;
 
   try {
-    const [items, emailToUserId = new Map<string, string>()] = await Promise.all([
+    const [worldRecords, emailToUserId] = await Promise.all([
       getWorldRecordsSheet(),
-      // buildEmailToUserIdMap(),
+      buildEmailToUserIdMap(),
     ]);
 
-    if (!items || items.length === 0) return [];
+    if (!worldRecords || worldRecords.length === 0) return [];
 
-    const records: WorldRecord[] = items.map(item => ({
-      ...item,
-      athleteUserId: item.athleteEmail ? emailToUserId.get(item.athleteEmail) : undefined,
+    const recordsWithUserIds: WorldRecord[] = worldRecords.map(worldRecord => ({
+      ...worldRecord,
+      athleteUserId: emailToUserId.get(worldRecord.athleteEmail),
     }));
 
-    cache.set(cacheKey, records, 86400000); // Cache for 1 day
-    return records;
+    cache.set(cacheKey, recordsWithUserIds, 86400000); // Cache for 1 day
+    return recordsWithUserIds;
   } catch (error) {
     console.error('Error fetching world records:', error);
     return [];
@@ -754,20 +755,20 @@ export async function getWorldFirsts(): Promise<WorldFirst[]> {
   if (cached) return cached;
 
   try {
-    const [items, emailToUserId = new Map<string, string>()] = await Promise.all([
+    const [worldFirsts, emailToUserId] = await Promise.all([
       getWorldFirstsSheet(),
-      // buildEmailToUserIdMap(),
+      buildEmailToUserIdMap(),
     ]);
 
-    if (!items || items.length === 0) return [];
+    if (!worldFirsts || worldFirsts.length === 0) return [];
 
-    const firsts: WorldFirst[] = items.map(item => ({
-      ...item,
-      athleteUserId: item.athleteEmail ? emailToUserId.get(item.athleteEmail) : undefined,
+    const firstsWithUserIds: WorldFirst[] = worldFirsts.map(worldRecord => ({
+      ...worldRecord,
+      athleteUserId: emailToUserId.get(worldRecord.athleteEmail),
     }));
 
-    cache.set(cacheKey, firsts, 86400000); // Cache for 1 day
-    return firsts;
+    cache.set(cacheKey, firstsWithUserIds, 86400000); // Cache for 1 day
+    return firstsWithUserIds;
   } catch (error) {
     console.error('Error fetching world firsts:', error);
     return [];

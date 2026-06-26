@@ -27,6 +27,7 @@ const columnHelper = createColumnHelper<AthleteContest>();
 const columns = [
   columnHelper.accessor("rank", {
     header: "Rank",
+    size: 40,
   }),
   columnHelper.accessor("eventName", {
     enableColumnFilter: true,

@@ -1,28 +1,37 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { WorldFirst } from '@lib/data-services';
 import Table from '@ui/Table';
-import { CountryFlag } from '@ui/CountryFlag';
 import { textToTitleCase } from '@utils/strings';
+import { linkCellFormatter } from 'src/app/world_records/components/cellFormatters';
 
 const columnHelper = createColumnHelper<WorldFirst>();
 const columns = [
   columnHelper.accessor('date', {
     header: 'Date',
     enableSorting: true,
+    size: 40,
   }),
   columnHelper.accessor('typeOfFirst', {
     header: 'World First Type',
+    size: 60,
   }),
   columnHelper.accessor('specs', {
     header: 'Specs',
+    size: 80,
   }),
-  columnHelper.accessor('country', {
-    header: 'Country',
-    cell: info => <CountryFlag country={info.getValue()} />,
+  columnHelper.accessor('description', {
+    header: 'Description',
+    size: 120,
   }),
   columnHelper.accessor('gender', {
     header: 'Gender',
     cell: info => textToTitleCase(info.getValue()),
+    size: 40,
+  }),
+  columnHelper.accessor('links', {
+    header: "Links",
+    cell: linkCellFormatter,
+    size: 40,
   }),
 ];
 

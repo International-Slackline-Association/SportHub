@@ -16,6 +16,8 @@ import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import { CountryFlag } from '@ui/CountryFlag';
 import styles from './ContestsTable.module.css';
 import { formatDateRange } from '@utils/dates';
+import { TrophyIcon } from '@ui/Icons';
+import { snakeCaseToTitleCase } from '@utils/strings';
 
 const normalizeGroupField = (value: string | null | undefined) =>
   String(value ?? '')
@@ -197,13 +199,30 @@ const columns = [
   }),
   columnHelper.accessor((row: ContestData) => {
     const key = MAP_CONTEST_TYPE_ENUM_TO_NAME[row.category];
-    return contestSizeOptions.find(o => o.value === key)?.label ?? String(row.category);
+    return contestSizeOptions.find(o => o.value === key)?.value ?? String(row.category);
   }, {
     id: "size",
     enableColumnFilter: true,
     header: "Size",
-    meta: { filterVariant: 'select' },
-    size: 120,
+    cell: info => {
+      const contestSize = info.getValue();
+      const numTrophies = Number(contestSizeOptions.findIndex((option) => option.value == contestSize));
+      return (
+        <div className="cluster">
+          {Array.from({ length: numTrophies }, (_, index) => (
+            <TrophyIcon key={index} />
+          ))}
+        </div>
+      );
+    },
+    meta: {
+      filterOptions: Object.entries(MAP_CONTEST_TYPE_ENUM_TO_NAME).map(([value, label]) => ({
+        value,
+        label: snakeCaseToTitleCase(label),
+      })),
+      filterVariant: 'select'
+    },
+    size: 60,
   }),
   columnHelper.accessor("athletes", {
     header: "Winner",
