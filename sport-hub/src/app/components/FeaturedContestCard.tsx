@@ -1,7 +1,7 @@
 import Button from '@ui/Button';
 import Image from 'next/image';
 import { Badge, BadgeColor, Discipline } from '@ui/Badge';
-import { LocationIcon, CalendarIcon, UsersIcon } from '@ui/Icons';
+import { LocationIcon, CalendarIcon } from '@ui/Icons';
 import styles from './styles.module.css';
 import { getCountryByCode } from '@utils/countries';
 import { ContestData } from '@lib/data-services';

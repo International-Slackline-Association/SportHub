@@ -12,7 +12,7 @@ export const countryCellFormatter = <T extends WorldRecord | WorldFirst>(info: C
   <CountryFlag country={info.getValue()} defaultValue="" />;
 
 export const nameCellFormatter = <T extends WorldRecord | WorldFirst>(info: CellContext<T, string>) => {
-  const userId = (info.row.original as any).athleteUserId;
+  const userId = info.row.original.athleteUserId;
   return userId
     ? <Link href={`/athlete-profile/${userId}`} className={linkClassName}>{info.getValue()}</Link>
     : <>{info.getValue()}</>;

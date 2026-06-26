@@ -34,14 +34,17 @@ const columns = [
   // Shared Columns
   columnHelper.accessor("rank", {
     header: 'Rank',
+    enableSorting: false,
   }),
   columnHelper.accessor('points', {
     header: 'Points',
+    enableSorting: false,
   }),
   // Mobile: single stacked column
   columnHelper.display({
     id: 'athlete',
     header: 'Athlete',
+    enableSorting: false,
     cell: info => {
       const { age, gender, country } = info.row.original;
       const genderLabel = gender === 'female' ? 'Women' : gender === 'male' ? 'Men' : '—';
@@ -62,6 +65,7 @@ const columns = [
   // Desktop-only columns
   columnHelper.accessor('fullName', {
     enableColumnFilter: true,
+    enableSorting: false,
     header: 'Name',
     cell: info => <NameCell athlete={info.row.original} />,
     meta: { filterVariant: 'text', filterPlaceholder: 'Enter athlete name' },
@@ -70,6 +74,7 @@ const columns = [
     header: 'Age',
     cell: info => info.getValue() ?? '—',
     enableColumnFilter: true,
+    enableSorting: false,
     filterFn: ageCategoryFilterFn,
     meta: {
       filterVariant: 'select',
@@ -83,6 +88,7 @@ const columns = [
   columnHelper.accessor('gender', {
     header: 'Gender',
     enableColumnFilter: true,
+    enableSorting: false,
     filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
     cell: info => info.getValue() === 'female' ? 'Women' : info.getValue() === 'male' ? 'Men' : '—',
     meta: {
@@ -98,6 +104,7 @@ const columns = [
   columnHelper.accessor((row: AthleteRanking) => getIocCode(row.country), {
     id: 'country',
     enableColumnFilter: true,
+    enableSorting: false,
     header: 'Country',
     cell: info => <CountryFlag country={info.getValue()} />,
     meta: { filterVariant: 'country' },

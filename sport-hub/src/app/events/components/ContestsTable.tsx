@@ -96,7 +96,7 @@ const columns = [
       const winnerName = winner ? `${winner.name} ${winner.surname || ''}`.trim() : null;
       const genderKey = MAP_CONTEST_GENDER_ENUM_TO_NAME[info.row.original.gender];
       const genderLabel = ({ MIXED: 'Mixed', MEN_ONLY: 'Men', WOMEN_ONLY: 'Women' } as Record<string, string>)[genderKey] ?? genderKey;
-      let formattedDate = formatDateRange(new Date(startDate), new Date(endDate || startDate));
+      const formattedDate = formatDateRange(new Date(startDate), new Date(endDate || startDate));
       return (
         <div className="stack gap-1">
           <div className="cluster justify-between items-center text-gray-400 mb-2">

@@ -135,7 +135,10 @@ export function DisciplineHeroSection() {
   }, []);
 
   const handleMouseEnter = useCallback((discipline: Discipline) => {
-    const pool = S3_IMAGES[discipline];
+    let pool = S3_IMAGES[discipline];
+    if (discipline == "TRICKLINE_AERIAL") {
+      pool = S3_IMAGES.TRICKLINE;
+    }
     transitionTo(pool[Math.floor(Math.random() * pool.length)]);
   }, [transitionTo]);
 

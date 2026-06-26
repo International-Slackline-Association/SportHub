@@ -6,7 +6,7 @@ import FeaturedContestCard from './components/FeaturedContestCard';
 import { CardGrid } from '@ui/Card';
 import styles from './page.module.css';
 import { DisciplineHeroSection } from './components/DisciplineHeroSection';
-import { ContestData, getContestsData, getFeaturedAthletes, sortByDateRangeDesc } from '@lib/data-services';
+import { ContestData, getContestsData, getFeaturedAthletes } from '@lib/data-services';
 
 
 const NUM_FEATURED_EVENTS = 3;
