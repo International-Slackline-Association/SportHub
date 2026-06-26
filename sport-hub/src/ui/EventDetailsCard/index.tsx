@@ -89,8 +89,8 @@ export const EventDetailsCard = ({ event }: EventDetailsCardProps) => {
 	return (
     <StackedMediaCard
 			className={styles.eventDetailsCard}
-      media={<SocialMediaLinks profileImage={profileUrl} />}
-      desktopDirection="horizontal"
+      		media={<SocialMediaLinks profileImage={profileUrl} />}
+      		desktopDirection="horizontal"
 			mobileDirection="vertical"
     >
 			<div className="flex flex-row">
@@ -105,7 +105,7 @@ export const EventDetailsCard = ({ event }: EventDetailsCardProps) => {
 						value={<Country countryCode={country || "N/A"} label={[city, countryName].filter(Boolean).join(', ')} />}
 					/>
 					<LabelValuePair label="Website" value={""} />
-					<LabelValuePair label="Total Prize Pool" value={prize != null && prize !== 0 ? `${Number(prize).toLocaleString()} pts` : undefined} />
+					<LabelValuePair label="Total Winning Points Awarded" value={prize != null && prize !== 0 ? `${Number(prize).toLocaleString()} pts` : undefined} />
 					<div className="col-span-full">
 						<LabelValuePair
 							label="Discipline(s)"
