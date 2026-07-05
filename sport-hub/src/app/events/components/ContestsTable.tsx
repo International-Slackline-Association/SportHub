@@ -137,10 +137,13 @@ const columns = [
       </Link>
     ),
   }),
-  columnHelper.accessor("startDate", {
+  columnHelper.accessor(({ startDate, endDate }: ContestData) => {
+    return { startDate, endDate };
+  }, {
     enableColumnFilter: true,
-    header: "Date",
-    meta: { filterVariant: "date" },
+    header: "Date(s)",
+    id: "eventDateRange",
+    meta: { filterVariant: "date-range" },
     filterFn: dateFilterFn,
     cell: info => {
       const { startDate, endDate } = info.row.original;
@@ -281,12 +284,12 @@ const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
             data,
             initialState: {
               columnOrder: isDesktop
-                ? ['name', 'startDate', 'country', 'discipline', 'gender', 'prize', 'size', 'athletes', 'verified']
+                ? ['name', 'eventDateRange', 'country', 'discipline', 'gender', 'prize', 'size', 'athletes', 'verified']
                 : ['event'],
               columnVisibility: {
                 event:      !isDesktop,
                 name:       !!isDesktop,
-                startDate:  !!isDesktop,
+                eventDateRange:  !!isDesktop,
                 country:    !!isDesktop,
                 discipline: !!isDesktop,
                 gender:     !!isDesktop,

@@ -2,7 +2,6 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { AthleteContest } from '@lib/data-services';
 import Table from '@ui/Table';
 import Link from 'next/link';
-import { dateFilterFn } from '@ui/Table/TableFilterFields';
 import { DISCIPLINE_DATA } from '@utils/consts';
 import { contestSizeOptions, eventGenderOptions, ageCategoryOptions } from '@ui/Form/commonOptions';
 
@@ -93,10 +92,7 @@ const columns = [
     meta: { filterVariant: 'select' },
   }),
   columnHelper.accessor("dates", {
-    enableColumnFilter: true,
     header: "Date",
-    meta: { filterVariant: "date" },
-    filterFn: dateFilterFn,
   }),
 ];
 
