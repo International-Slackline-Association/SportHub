@@ -10,7 +10,7 @@ import Modal from "@ui/Modal";
 import { TabGroup } from "@ui/Tab";
 import { FormikCheckboxField, FormikCheckboxGroup, FormikRadioGroup, FormikSelectField, FormikSubmitButton, FormikTextField } from "@ui/Form";
 import FormikAutocomplete from "@ui/Form/FormikAutocomplete";
-import { Option } from '@ui/Form';
+import DisciplineDropdown from "@ui/Form/DisciplineDropdown";
 
 export default function Page() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -183,6 +183,11 @@ export default function Page() {
               variant="secondary"
             />
           </div>
+        </div>
+      </section>
+      <section className="p-4 sm:p-0">
+        <div className="stack gap-4">
+          <DisciplineDropdown />
         </div>
       </section>
       <section className="p-4 sm:p-0">

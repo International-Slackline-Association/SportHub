@@ -1,4 +1,3 @@
-import { Option } from "@ui/Form";
 import { COUNTRIES } from "@utils/countries"
 
 export const countryCodeOptions: Option[] = COUNTRIES.map(({ name, code }) => ({
@@ -20,21 +19,10 @@ export const eventGenderOptions: Option[] = [
 
 export const disciplineOptions: Option[] = [
   { value: "FREESTYLE_HIGHLINE", label: "Freestyle Highline" },
-  { value: "TRICKLINE", label: "Trickline" },
-  { value: "TRICKLINE_AERIAL", label: "Trickline Aerial" },
-  { value: "TRICKLINE_JIB_AND_STATIC", label: "Trickline Jib & Static" },
-  { value: "TRICKLINE_TRANSFER", label: "Trickline Transfer" },
-  { value: "SPEED", label: "Speed" },
+  { value: "TRICKLINE_AERIAL", label: "Trickline" },
   { value: "SPEED_SHORT", label: "Speedline Short" },
-  { value: "SPEED_HIGHLINE", label: "Speedline Highline" },
-  { value: "ENDURANCE", label: "Endurance" },
-  { value: "BLIND", label: "Blind" },
+  { value: "SPEED_HIGHLINE", label: "Speed Highline" },
   { value: "RIGGING", label: "Rigging" },
-  { value: "FREESTYLE", label: "Freestyle" },
-  { value: "WALKING", label: "Walking" },
-  // ISA-Rankings numeric discipline codes (used in migrated records)
-  { value: "2",  label: "Trickline" },
-  { value: "12", label: "Freestyle Highline" },
 ];
 
 export const ageCategoryOptions: Option[] = [

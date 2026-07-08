@@ -56,20 +56,17 @@ const columns = [
       );
     },
   }),
-  columnHelper.accessor((row: AthleteContest) => {
-    const d = String(row.discipline);
-    const byKey = DISCIPLINE_DATA[d as keyof typeof DISCIPLINE_DATA];
-    if (byKey) return byKey.name;
-    return Object.values(DISCIPLINE_DATA).find(e => e.enumValue === Number(d))?.name ?? d;
-  }, {
+  columnHelper.accessor(
+  "discipline",
+  {
     id: "discipline",
     enableColumnFilter: true,
     header: "Discipline",
-    meta: { filterVariant: 'select' },
+    meta: { filterVariant: 'discipline' },
     cell: info => {
-      const disciplineName = info.getValue();
-      const data = Object.values(DISCIPLINE_DATA).find(d => d.name === disciplineName);
-      if (!data) return disciplineName;
+      const disciplineEnum = info.getValue();
+      const data = Object.values(DISCIPLINE_DATA).find(d => String(d.enumValue) === disciplineEnum);
+      if (!data) return disciplineEnum;
       return (
         <div className="flex flex-row items-center">
           <div className="h-8 w-8">

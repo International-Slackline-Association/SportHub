@@ -23,9 +23,9 @@ type DisciplineUIData = {
 export const DISCIPLINE_DATA: Record<Discipline, DisciplineUIData> = {
   OVERALL: {
     enumValue: 0,
-    name: 'Overall',
+    name: 'All Disciplines',
     description: 'Combined overall ranking',
-    Icon: (iconProps: IconProps) => <FreestyleHighlineIcon {...iconProps} />
+    Icon: () => <></>
   },
   TRICKLINE: {
     enumValue: 1,
@@ -109,6 +109,15 @@ export const DISCIPLINE_DATA: Record<Discipline, DisciplineUIData> = {
     Icon: (iconProps: IconProps) => <SpeedHighlineIcon {...iconProps} />
   },
 };
+
+// More disciplines in our DB, these are what's accessible for users
+export const SUPPORTED_DISCIPLINES: Discipline[] = [
+  'TRICKLINE_AERIAL',
+  'FREESTYLE_HIGHLINE',
+  'SPEED_SHORT',
+  'SPEED_HIGHLINE',
+  'RIGGING',
+];
 
 export const MAP_DISCIPLINE_ENUM_TO_NAME: Record<number, Discipline> = {
   0: "OVERALL",

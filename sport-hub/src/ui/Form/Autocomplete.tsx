@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Option } from '.';
 import styles from './styles.module.css';
 import React from 'react';
 
@@ -98,7 +97,7 @@ export default function Autocomplete({
 
   return (
     <div className={`${styles.autocompleteContainer} ${className ?? ''}`} ref={containerRef}>
-      <div className={styles.inputContainer}>
+      <div>
         <input
           id={id}
           type="text"

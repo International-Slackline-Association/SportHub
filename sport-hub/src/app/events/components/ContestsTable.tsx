@@ -12,12 +12,15 @@ import { contestSizeOptions } from '@ui/Form/commonOptions';
 import { dateFilterFn } from '@ui/Table/TableFilterFields';
 import Spinner from '@ui/Spinner';
 import { Alert } from '@ui/Alert';
+import tableStyles from '@ui/Table/styles.module.css';
 import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import { CountryFlag } from '@ui/CountryFlag';
 import styles from './ContestsTable.module.css';
 import { formatDateRange } from '@utils/dates';
 import { TrophyIcon } from '@ui/Icons';
 import { snakeCaseToTitleCase } from '@utils/strings';
+import { DisciplineDropdown } from '@ui/Form';
+import { useState } from 'react';
 
 const normalizeGroupField = (value: string | null | undefined) =>
   String(value ?? '')
@@ -161,20 +164,15 @@ const columns = [
     meta: { filterVariant: 'country' },
     size: 120,
   }),
-  columnHelper.accessor((row: ContestData) => {
-    const d = String(row.discipline);
-    const byKey = DISCIPLINE_DATA[d as keyof typeof DISCIPLINE_DATA];
-    if (byKey) return byKey.name;
-    return Object.values(DISCIPLINE_DATA).find(e => e.enumValue === Number(d))?.name ?? d;
-  }, {
+  columnHelper.accessor("discipline", {
     id: "discipline",
     enableColumnFilter: true,
     header: "Discipline",
-    meta: { filterVariant: 'select' },
+    meta: { filterVariant: 'discipline' },
     cell: info => {
-      const disciplineName = info.getValue();
-      const data = Object.values(DISCIPLINE_DATA).find(d => d.name === disciplineName);
-      if (!data) return disciplineName;
+      const disciplineEnum = info.getValue();
+      const data = Object.values(DISCIPLINE_DATA).find(d => String(d.enumValue) === disciplineEnum);
+      if (!data) return disciplineEnum;
       return (
         <div className="flex flex-row items-center">
           <div className="h-8 w-8">
@@ -258,11 +256,19 @@ const columns = [
 
 const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
   const { isDesktop } = useClientMediaQuery();
+  const [selectedDiscipline, setSelectedDiscipline] = useState("");
   const { error, data = [], isError, isLoading, isSuccess } = useQuery({
     queryKey: ['events'],
     queryFn: async () => (await fetch('/api/events/contests')).json(),
     initialData,
     staleTime: 60_000,
+    select: (contests: ContestData[]) => {
+      // Filter contests when discipline is selected and not All
+      if (selectedDiscipline && selectedDiscipline !== "0") {
+        return contests.filter(({ discipline }) => discipline === selectedDiscipline);
+      }
+      return contests;
+    }
   });
 
   return (

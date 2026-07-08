@@ -2,6 +2,7 @@ import { Column, Row } from "@tanstack/react-table";
 import styles from "./styles.module.css";
 import Autocomplete from "@ui/Form/Autocomplete";
 import { COUNTRIES } from "@utils/countries";
+import { DisciplineDropdown } from "@ui/Form";
 
 type DateRangeFilterValue = { startDate?: string; endDate?: string } | undefined;
 type DateRangeRowValue = { startDate?: string; endDate?: string };
@@ -202,6 +203,26 @@ const AutocompleteTableFilter = <TData,>({ column, rows }: TableFilterProps<TDat
   );
 };
 
+const DisciplineTableFilter = <TData,>({ column }: TableFilterProps<TData>) => {
+  const id = column.id;
+  const includeAll = !column.columnDef.meta?.filterNoAll;
+
+  return (
+    <DisciplineDropdown
+      className={styles.columnFilter}
+      id={id}
+      includeAll={includeAll}
+      onChange={(discipline: string) => {
+        if (discipline === "0") {
+          column.setFilterValue(undefined);
+        } else {
+          column.setFilterValue(discipline || undefined);
+        }
+      }}
+    />
+  );
+};
+
 const TableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
   const filterVariant = column.columnDef?.meta?.filterVariant;
 
@@ -219,6 +240,10 @@ const TableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
 
   if (filterVariant === "country") {
     return <CountryTableFilter column={column} rows={rows} />;
+  }
+
+  if (filterVariant === "discipline") {
+    return <DisciplineTableFilter column={column} rows={rows} />;
   }
 
   return <SelectTableFilter column={column} rows={rows} />;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { createColumnHelper } from '@tanstack/react-table';
 import { AthleteRanking } from '@lib/data-services';
@@ -9,12 +9,12 @@ import { ageCategoryFilterFn } from '@ui/Table/TableFilterFields';
 import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import Link from 'next/link';
 import { getIocCode } from '@utils/countries';
-import { DISCIPLINE_DATA } from '@utils/consts';
 import { useQuery } from '@tanstack/react-query';
 import Spinner from '@ui/Spinner';
 import { Alert } from '@ui/Alert';
 import tableStyles from '@ui/Table/styles.module.css';
 import { CountryFlag } from '@ui/CountryFlag';
+import { DisciplineDropdown } from '@ui/Form';
 
 const columnHelper = createColumnHelper<AthleteRanking>();
 
@@ -122,68 +122,25 @@ const YEAR_OPTIONS = [
   }),
 ];
 
-// TODO: These don't cover all disciplines selectable when creating events and competitions.
-// Check with Tom if we want to group them or take a different approach to not overlook them.
-const SELECTABLE_DISCIPLINES: Discipline[] = [
-  // 'TRICKLINE',
-  // 'TRICKLINE_JIB_AND_STATIC',
-  'TRICKLINE_AERIAL',
-  // 'TRICKLINE_TRANSFER',
-  'FREESTYLE_HIGHLINE',
-  // 'FREESTYLE',
-  'SPEED_SHORT',
-  'SPEED_HIGHLINE',
-  'RIGGING',
-  // 'SPEEED',
-  // 'ENDURANCE',
-  // 'BLIND',
-  // 'WALKING',
-];
-
-const DISCIPLINE_OPTIONS = SELECTABLE_DISCIPLINES.map(discipline => ({
-  value: DISCIPLINE_DATA[discipline].enumValue,
-  label: DISCIPLINE_DATA[discipline].name,
-}));
-
-const randomDiscipline = () => {
-  const opts = DISCIPLINE_OPTIONS;
-  return opts[Math.floor(Math.random() * opts.length)].value;
-};
-
-const RankingsTable = ({ initialDiscipline }: { initialDiscipline?: string }) => {
+const RankingsTable = ({ disciplineEnumValue }: { disciplineEnumValue?: string }) => {
   const { isDesktop } = useClientMediaQuery();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [selectedYear, setSelectedYear] = useState('last3years');
-  const [selectedDiscipline, setSelectedDiscipline] = useState(
-    () => initialDiscipline || randomDiscipline()
-  );
-
-  // On mount: if no discipline was in the URL, reflect the randomly chosen one
-  useEffect(() => {
-    const isInitialDisciplineInvalid = !DISCIPLINE_OPTIONS.some(opt => String(opt.value) === String(selectedDiscipline));
-    if (!initialDiscipline || isInitialDisciplineInvalid) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set('discipline', String(selectedDiscipline));
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleDisciplineChange = (value: string) => {
-    setSelectedDiscipline(value);
     const params = new URLSearchParams(searchParams.toString());
     params.set('discipline', value);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const { data = [], error, isError, isLoading, isSuccess } = useQuery({
-    queryKey: ['rankings', selectedYear, selectedDiscipline],
+    queryKey: ['rankings', selectedYear, disciplineEnumValue],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedYear !== 'last3years') params.set('year', selectedYear);
-      if (selectedDiscipline) params.set('discipline', String(selectedDiscipline));
+      if (disciplineEnumValue) params.set('discipline', String(disciplineEnumValue));
       const url = `/api/rankings${params.size ? '?' + params.toString() : ''}`;
       return (await fetch(url)).json();
     },
@@ -220,18 +177,12 @@ const RankingsTable = ({ initialDiscipline }: { initialDiscipline?: string }) =>
                   ))}
                 </select>
               </div>
-              <div className={tableStyles.columnFilter}>
-                <label htmlFor="rankings-discipline">Discipline</label>
-                <select
-                  id="rankings-discipline"
-                  value={selectedDiscipline}
-                  onChange={e => handleDisciplineChange(e.target.value)}
-                >
-                  {DISCIPLINE_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
+              <DisciplineDropdown
+                className={tableStyles.columnFilter}
+                id="rankings-discipline"
+                initialValue={disciplineEnumValue}
+                onChange={handleDisciplineChange}
+              />
             </>
           }
           options={{
