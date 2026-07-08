@@ -7,7 +7,6 @@ import { getContestNameFromForm } from "./contest-inputs/TabbedContestForms";
 import { snakeCaseToTitleCase } from "@utils/strings";
 import { disciplineOptions, ageCategoryOptions, judgingSystemOptions, contestSizeOptions, eventGenderOptions } from "@ui/Form/commonOptions";
 import { COUNTRIES } from "@utils/countries";
-import { Option } from "@ui/Form";
 
 const labelOf = (opts: Option[], val: string | undefined) =>
   opts.find(o => o.value === val)?.label ?? (val ? snakeCaseToTitleCase(val) : "—");

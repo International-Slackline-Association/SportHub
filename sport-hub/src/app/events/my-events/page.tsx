@@ -5,7 +5,6 @@ import { getMyEvents, submitEventForApproval, withdrawEventFromApproval } from "
 import { snakeCaseToTitleCase } from "@utils/strings";
 import { COUNTRIES } from "@utils/countries";
 import { disciplineOptions } from "@ui/Form/commonOptions";
-import { Option } from "@ui/Form";
 
 export const dynamic = 'force-dynamic';
 

@@ -5,7 +5,6 @@ import { useQuery } from '@tanstack/react-query';
 import { getIn, useFormikContext } from 'formik';
 import FormikAutocomplete from '@ui/Form/FormikAutocomplete';
 import { UserProfileRecord } from '@lib/relational-types';
-import { Option } from '@ui/Form';
 import { Alert } from '@ui/Alert';
 
 const createUserLabel = (user: UserProfileRecord) => `${user.name} ${user.surname} | ${user.userId}`.toLocaleLowerCase();

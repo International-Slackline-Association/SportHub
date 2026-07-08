@@ -1,5 +1,4 @@
 import * as Yup from 'yup';
-import { Option } from '@ui/Form';
 
 // Combined form values (parent level)
 export interface EventSubmissionFormValues {

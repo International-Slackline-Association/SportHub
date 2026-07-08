@@ -7,7 +7,6 @@ import { EventSubmissionFormValues } from '../../types';
 import React from 'react';
 import FormikAutocomplete from '@ui/Form/FormikAutocomplete';
 import { EventMetadataRecord } from '@lib/relational-types';
-import { Option } from '@ui/Form';
 
 export default function EventAutocomplete() {
   const { values, setTouched, setValues, setErrors } = useFormikContext<EventSubmissionFormValues>();

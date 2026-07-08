@@ -12,15 +12,12 @@ import { contestSizeOptions } from '@ui/Form/commonOptions';
 import { dateFilterFn } from '@ui/Table/TableFilterFields';
 import Spinner from '@ui/Spinner';
 import { Alert } from '@ui/Alert';
-import tableStyles from '@ui/Table/styles.module.css';
 import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import { CountryFlag } from '@ui/CountryFlag';
 import styles from './ContestsTable.module.css';
 import { formatDateRange } from '@utils/dates';
 import { TrophyIcon } from '@ui/Icons';
 import { snakeCaseToTitleCase } from '@utils/strings';
-import { DisciplineDropdown } from '@ui/Form';
-import { useState } from 'react';
 
 const normalizeGroupField = (value: string | null | undefined) =>
   String(value ?? '')
@@ -256,19 +253,11 @@ const columns = [
 
 const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
   const { isDesktop } = useClientMediaQuery();
-  const [selectedDiscipline, setSelectedDiscipline] = useState("");
   const { error, data = [], isError, isLoading, isSuccess } = useQuery({
     queryKey: ['events'],
     queryFn: async () => (await fetch('/api/events/contests')).json(),
     initialData,
     staleTime: 60_000,
-    select: (contests: ContestData[]) => {
-      // Filter contests when discipline is selected and not All
-      if (selectedDiscipline && selectedDiscipline !== "0") {
-        return contests.filter(({ discipline }) => discipline === selectedDiscipline);
-      }
-      return contests;
-    }
   });
 
   return (
