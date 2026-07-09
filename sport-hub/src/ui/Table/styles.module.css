@@ -101,7 +101,7 @@
   width: 100%;
 
   @media (min-width: 40rem) {
-    margin-right: 1rem;
+    width: auto;
   }
 }
 
@@ -147,6 +147,7 @@
 
   @media (min-width: 40rem) {
     align-items: end;
+    flex-wrap: wrap
   }
 }
 

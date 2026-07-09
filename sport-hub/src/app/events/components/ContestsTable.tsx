@@ -16,8 +16,7 @@ import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import { CountryFlag } from '@ui/CountryFlag';
 import styles from './ContestsTable.module.css';
 import { formatDateRange } from '@utils/dates';
-import { TrophyIcon } from '@ui/Icons';
-import { snakeCaseToTitleCase } from '@utils/strings';
+import { kebabCaseToTitleCase, snakeCaseToTitleCase } from '@utils/strings';
 
 const normalizeGroupField = (value: string | null | undefined) =>
   String(value ?? '')
@@ -190,6 +189,7 @@ const columns = [
     header: "Gender",
     filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
     meta: { filterVariant: 'select' },
+    size: 72,
   }),
   columnHelper.accessor("prize", {
     header: "Total Event Prize Value (€)",
@@ -204,14 +204,8 @@ const columns = [
     header: "Size",
     cell: info => {
       const contestSize = info.getValue();
-      const numTrophies = Number(contestSizeOptions.findIndex((option) => option.value == contestSize));
-      return (
-        <div className="cluster">
-          {Array.from({ length: numTrophies }, (_, index) => (
-            <TrophyIcon key={index} />
-          ))}
-        </div>
-      );
+      const label = contestSizeOptions.find((option) => option.value == contestSize)?.label;
+      return label;
     },
     meta: {
       filterOptions: Object.entries(MAP_CONTEST_TYPE_ENUM_TO_NAME).map(([value, label]) => ({
@@ -220,7 +214,7 @@ const columns = [
       })),
       filterVariant: 'select'
     },
-    size: 60,
+    size: 120,
   }),
   columnHelper.accessor("athletes", {
     header: "Winner",
@@ -232,7 +226,7 @@ const columns = [
       const winner = athletes.find(athlete => athlete.place === "1");
       if (!winner) return "TBD";
 
-      const displayName = `${winner.name} ${winner.surname || ''}`.trim();
+      const displayName = kebabCaseToTitleCase(`${winner.name} ${winner.surname || ''}`);
       return (
         <Link
           href={`/athlete-profile/${winner.userId}`}
@@ -244,11 +238,6 @@ const columns = [
     },
     size: 120,
   }),
-  columnHelper.accessor("verified", {
-    header: "ISA Verified",
-    cell: info => info.getValue() ? "✅" : "",
-    size: 60,
-  })
 ];
 
 const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
@@ -260,6 +249,7 @@ const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
     staleTime: 60_000,
   });
 
+  const dateToday = new Date().toISOString().slice(0, 10);
   return (
     <div className="flex items-center justify-center min-h-64">
       {isLoading && (
@@ -278,6 +268,9 @@ const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
             columns,
             data,
             initialState: {
+              columnFilters: [
+                { id: "eventDateRange", value: { startDate: "", endDate: dateToday } },
+              ],
               columnOrder: isDesktop
                 ? ['name', 'eventDateRange', 'country', 'discipline', 'gender', 'prize', 'size', 'athletes', 'verified']
                 : ['event'],

@@ -7,6 +7,41 @@ import { EventSubmissionFormValues } from '../../types';
 import React from 'react';
 import FormikAutocomplete from '@ui/Form/FormikAutocomplete';
 import { EventMetadataRecord } from '@lib/relational-types';
+import { getEvent } from '../../actions';
+import { MAP_DISCIPLINE_ENUM_TO_NAME } from '@utils/consts';
+
+const createNextTouchState = (numContests: number) => ({
+  event: {
+    name: true,
+    city: true,
+    country: true,
+    startDate: true,
+    endDate: true,
+    website: true,
+    socialMedia: {
+      facebook: true,
+      instagram: true,
+      tiktok: true,
+      twitch: true,
+      youtube: true,
+    },
+    disciplines: true,
+    profileUrl: true,
+    thumbnailUrl: true,
+  },
+  contests: Array(numContests).fill({
+    startDate: true,
+    endDate: true,
+    discipline: true,
+    gender: true,
+    ageCategory: true,
+    judgingSystem: true,
+    contestSize: true,
+    totalPrizeValue: true,
+    judges: false,
+    results: false,
+  }),
+});
 
 export default function EventAutocomplete() {
   const { values, setTouched, setValues, setErrors } = useFormikContext<EventSubmissionFormValues>();
@@ -19,7 +54,7 @@ export default function EventAutocomplete() {
     return () => clearTimeout(t);
   }, [input]);
 
-  const { data: events, isLoading, isError } = useQuery({
+  const { data: events, isLoading: isLoadingEvents, isError } = useQuery({
     queryKey: ['events'],
     queryFn: async () => (await fetch('/api/events')).json(),
     enabled: debounced.length >= 3,
@@ -28,63 +63,69 @@ export default function EventAutocomplete() {
     ),
   });
 
-  const updateFormWithSelectedEvent = ({ value }: Option) => {
-    const event: EventMetadataRecord = events.find(({ eventId }: EventMetadataRecord) => eventId === value);
+  const updateFormWithSelectedEvent = ({ value: eventId }: Option) => {
+    getEvent(eventId).then(({ event }) => {
+      if (!event) {
+        console.error("Unable to populate event form for ", eventId);
+        return;
+      }
 
-    const nextTouchState = {
-      event: {
-        name: true,
-        city: true,
-        country: true,
-        startDate: true,
-        endDate: true,
-        website: true,
-        socialMedia: {
-          facebook: true,
-          instagram: true,
-          tiktok: true,
-          twitch: true,
-          youtube: true,
+      const disciplines = [
+        ...new Set(
+          event.contests.flatMap(c =>
+            MAP_DISCIPLINE_ENUM_TO_NAME[Number(c.discipline)]
+          ).filter(Boolean)
+        )
+      ];
+
+      const website = event.contests?.[0]?.infoUrl as string;
+      
+      const nextFormState = {
+        event: {
+          name: event.eventName,
+          city: event.city ?? '',
+          country: (event.country as string).toLowerCase(),
+          startDate: event?.startDate,
+          endDate: event?.endDate,
+          // TODO Backend: Missing columns from EventMetadataRecord - need to add to DynamoDB and data model
+          website,
+          socialMedia: {},
+          disciplines: Array.from(disciplines ?? []),
+          profileUrl: event.profileUrl as string,
+          thumbnailUrl: event.thumbnailUrl as string,
         },
-        disciplines: true,
-        profileUrl: true,
-        thumbnailUrl: true,
-      },
-      contests: [...values.contests.map(() => ({}))],
-    };
-
-    const nextFormState = {
-      event: {
-        name: event.eventName,
-        city: event.city ?? '',
-        country: event.country.toLowerCase(),
-        startDate: event?.startDate,
-        endDate: event?.endDate,
-        // TODO Backend: Missing columns from EventMetadataRecord - need to add to DynamoDB and data model
-        website: "",
-        socialMedia: {},
-        disciplines: [],
-        profileUrl: event.profileUrl,
-        thumbnailUrl: event.thumbnailUrl,
-      },
-      contests: values.contests,
-    };
-
-    setTouched(nextTouchState, false);
-    setValues(nextFormState, false);
-    setErrors({});
+        contests: event.contests.map(c => ({
+          startDate: c.contestDate,
+          endDate: c.contestDate,
+          discipline: MAP_DISCIPLINE_ENUM_TO_NAME[Number(c.discipline)],
+          gender: c.gender as Gender,
+          ageCategory: c.ageCategory as AgeCategory,
+          judgingSystem: "" as JudgingSystem,
+          contestSize: c.contestSize as ContestType,
+          totalPrizeValue: c.prize,
+          judges: [],
+          results: [],
+        })),
+      };
+  
+      setTouched(createNextTouchState(event.contests.length), false);
+      setValues(nextFormState, false);
+      setErrors({});
+    });
   };
 
   return (
     <FormikAutocomplete
       id="event.name"
-      isLoading={isLoading}
+      isLoading={isLoadingEvents}
       isError={isError}
       label="Event Name"
-      options={events?.map(({ eventId, eventName }: EventMetadataRecord) => ({
-        label: eventName || "",
-        value: eventId
-      })) || []}
+      options={events?.map(({ eventId, eventName, startDate }: EventMetadataRecord) => {
+        return ({
+          label: `${eventName} ${startDate}` || "",
+          value: eventId
+        });
+      }) || []}
       // Prevent the field from being set to eventId; we'll set name + other fields ourselves
       setFieldOnSelect={false}
       onSelectOption={updateFormWithSelectedEvent}

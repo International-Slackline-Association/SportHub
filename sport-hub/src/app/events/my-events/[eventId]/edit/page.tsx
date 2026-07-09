@@ -58,7 +58,7 @@ export default async function EditEventPage({ params }: Props) {
 
   if (result.success && result.event) {
     // New-format event: reconstruct form values from Metadata record
-    const event = result.event as Record<string, unknown>;
+    const event = result.event as unknown as EventFormValues & { contests: ContestFormValues[]; createdBy?: string; status?: string; };
 
     // Only the creator (or admins) may edit
     if (!isAdmin && event.createdBy !== session?.user?.id) {
@@ -71,20 +71,10 @@ export default async function EditEventPage({ params }: Props) {
       redirect('/events/my-events');
     }
 
+    const { contests, ...eventData } = event;
     initialValues = {
-      event: {
-        name: (event.name as string) || '',
-        city: (event.city as string) || '',
-        country: (event.country as string) || '',
-        startDate: (event.startDate as string) || '',
-        endDate: (event.endDate as string) || '',
-        website: (event.website as string) || '',
-        disciplines: (event.disciplines as EventFormValues['disciplines']) || [],
-        socialMedia: (event.socialMedia as EventFormValues['socialMedia']) || {},
-        profileUrl: event.profileUrl as string | undefined,
-        thumbnailUrl: event.thumbnailUrl as string | undefined,
-      },
-      contests: (event.contests as ContestFormValues[]) || [],
+      event: eventData,
+      contests,
     };
   } else {
     // Old-format event (no Metadata record) — admins only

@@ -5,11 +5,12 @@ import Link from 'next/link';
 import { EventDetailsCard } from '@ui/EventDetailsCard';
 import { getEvent } from '../submit/actions';
 import { getEventContests } from '@lib/event-contest-service';
-import { eventGenderOptions, ageCategoryOptions } from '@ui/Form/commonOptions';
-import { DISCIPLINE_DATA } from '@utils/consts';
+import { eventGenderOptions, contestSizeOptions } from '@ui/Form/commonOptions';
+import { DISCIPLINE_DATA, MAP_DISCIPLINE_ENUM_TO_NAME } from '@utils/consts';
 import ContestTabs, { ContestTabData } from './ContestTabs';
 import { auth } from '@lib/auth';
 import { getFullUserProfile } from '../../dashboard/actions';
+import { ContestRecord } from '@lib/relational-types';
 
 interface EventPageProps {
   params: Promise<{ eventId: string }>;
@@ -20,12 +21,20 @@ const labelOf = (opts: { value: string; label: string }[], val: string | undefin
   opts.find(o => o.value === val)?.label ?? val ?? '—';
 
 const disciplineLabel = (val: string | undefined): string => {
-  if (!val) return '—';
-  const byKey = DISCIPLINE_DATA[val as keyof typeof DISCIPLINE_DATA];
-  if (byKey) return byKey.name;
-  return Object.values(DISCIPLINE_DATA).find(e => e.enumValue === Number(val))?.name ?? val;
+  const name = MAP_DISCIPLINE_ENUM_TO_NAME[Number(val)];
+  const data = DISCIPLINE_DATA[name];
+  if (!data) return '—';
+  return data.name;
 };
 
+// Should match TabbedContestForms.getContestNameFromForm
+const getContestNameFromObj = (contest: ContestRecord) => {
+  const displayDiscipline = disciplineLabel(contest.discipline);
+  console.log(contest.discipline, displayDiscipline);
+  const displayContestSize = labelOf(contestSizeOptions, contest.contestSize);
+  const displayGender = labelOf(eventGenderOptions, contest.gender);
+  return `${displayGender} ${displayDiscipline} ${displayContestSize}`.trim();
+}
 
 export default async function EventPage({ params, searchParams }: EventPageProps) {
   const { eventId } = await params;
@@ -37,7 +46,7 @@ export default async function EventPage({ params, searchParams }: EventPageProps
   // Try new-format events first (Metadata record with embedded contests array)
   const newFormatResult = await getEvent(decodedEventId);
   if (newFormatResult.success && newFormatResult.event) {
-    const eventRecord = newFormatResult.event as Record<string, unknown>;
+    const eventRecord = newFormatResult.event;
     if (Array.isArray(eventRecord.contests)) {
       const event = eventRecord;
 
@@ -46,30 +55,26 @@ export default async function EventPage({ params, searchParams }: EventPageProps
       const organizerName = organizerProfile
         ? [organizerProfile.name, organizerProfile.surname].filter(Boolean).join(' ') || null
         : null;
-      const eventContests = (event.contests as Record<string, unknown>[]);
-      const totalPrize = eventContests.reduce((sum, c) => sum + Number(c.totalPrizeValue ?? c.prize ?? 0), 0);
+      const eventContests = event.contests;
+      const totalPrize = eventContests.reduce((sum, c) => sum + (c.prize ?? 0), 0);
 
       // Build an EventLike-compatible object for EventDetailsCard
       const eventLike = {
-        name: String(event.name ?? (event as Record<string, unknown>).eventName ?? ''),
-        date: event.startDate as string | undefined,
+        name: event.eventName,
+        startDate: event.startDate,
+        endDate: event.endDate,
         city: String(event.city ?? eventContests[0]?.city ?? ''),
         country: String(event.country ?? ''),
-        discipline: (event.disciplines as string[] | undefined) ?? [],
+        discipline: [... new Set(eventContests.flatMap(c => c.discipline || []))],
         prize: totalPrize || undefined,
         profileUrl: (event.profileUrl as string | undefined) || (eventContests[0]?.profileUrl as string | undefined),
         thumbnailUrl: (event.thumbnailUrl as string | undefined) || (eventContests[0]?.thumbnailUrl as string | undefined),
         verified: false,
+        website: event.contests?.[0]?.infoUrl as string,
       };
-
+      
       // Process contests into clean tab data on the server.
-      const contestTabs: ContestTabData[] = eventContests.map((contest, idx) => {
-        const label = [
-          disciplineLabel(contest.discipline as string),
-          labelOf(eventGenderOptions, contest.gender as string),
-          labelOf(ageCategoryOptions, contest.ageCategory as string),
-        ].filter(Boolean).join('-') || `Contest ${idx + 1}`;
-
+      const contestTabs: ContestTabData[] = eventContests.map(contest => {
         const judges = ((contest.judges as Record<string, unknown>[] | undefined) ?? []).map(j => {
           const pending = j.pendingUser as Record<string, unknown> | undefined;
           return {
@@ -81,11 +86,11 @@ export default async function EventPage({ params, searchParams }: EventPageProps
           };
         });
 
-        const rawResults = ((contest.results as Record<string, unknown>[] | undefined) ?? [])
+        const rawResults = (contest.results ?? [])
           .slice()
           .sort((a, b) => Number(a.rank ?? 999) - Number(b.rank ?? 999))
           .map(r => {
-            const pending = r.pendingUser as Record<string, unknown> | undefined;
+            const pending = r.pendingUser;
             return {
               rank: Number(r.rank ?? 0),
               id: pending ? undefined : (r.id as string | undefined),
@@ -98,10 +103,10 @@ export default async function EventPage({ params, searchParams }: EventPageProps
           });
 
         return {
-          label,
+          label: getContestNameFromObj(contest),
           gender: contest.gender as string | undefined,
           contestSize: contest.contestSize as string | undefined,
-          prize: Number(contest.totalPrizeValue ?? contest.prize ?? 0) || undefined,
+          prize: contest.prize ?? 0,
           judges,
           results: rawResults,
         };
@@ -134,7 +139,7 @@ export default async function EventPage({ params, searchParams }: EventPageProps
             )}
             <ContestTabs
               contests={contestTabs}
-              initialTab={contestIdParam ? eventContests.findIndex(c => (c as Record<string, unknown>).contestId === contestIdParam) : 0}
+              initialTab={contestIdParam ? eventContests.findIndex(c => c.contestId === contestIdParam) : 0}
             />
           </div>
         </PageLayout>
@@ -144,13 +149,14 @@ export default async function EventPage({ params, searchParams }: EventPageProps
 
   // Mid-path: event has Metadata + separate Contest:* records (migrated/seeded events)
   if (newFormatResult.success && newFormatResult.event) {
-    const metaRecord = newFormatResult.event as Record<string, unknown>;
+    const metaRecord = newFormatResult.event;
     const separateContests = await getEventContests(decodedEventId);
     if (separateContests.length > 0) {
       const totalPrize = separateContests.reduce((sum, c) => sum + (c.prize ?? 0), 0);
       const eventLike = {
         name: String(metaRecord.eventName ?? ''),
-        date: metaRecord.startDate as string | undefined,
+        startDate: metaRecord.startDate,
+        endDate: metaRecord.endDate,
         city: String(metaRecord.city ?? ''),
         country: String(metaRecord.country ?? ''),
         discipline: [] as string[],
@@ -160,13 +166,7 @@ export default async function EventPage({ params, searchParams }: EventPageProps
         verified: true,
       };
 
-      const contestTabs: ContestTabData[] = separateContests.map((contest, idx) => {
-        const label = [
-          disciplineLabel(contest.discipline),
-          labelOf(eventGenderOptions, contest.gender),
-          labelOf(ageCategoryOptions, contest.ageCategory),
-        ].filter(Boolean).join('-') || `Contest ${idx + 1}`;
-
+      const contestTabs: ContestTabData[] = separateContests.map(contest => {
         const rawResults = [...contest.results]
           .sort((a, b) => a.rank - b.rank)
           .map(r => ({
@@ -178,7 +178,7 @@ export default async function EventPage({ params, searchParams }: EventPageProps
           }));
 
         return {
-          label,
+          label: getContestNameFromObj(contest),
           gender: contest.gender,
           contestSize: contest.contestSize,
           prize: contest.prize,
@@ -235,7 +235,12 @@ export default async function EventPage({ params, searchParams }: EventPageProps
               </Link>
             </div>
           )}
-          <EventDetailsCard event={oldEvent} />
+          <EventDetailsCard event={{
+            ...oldEvent,
+            startDate: oldEvent.startDate,
+            endDate: oldEvent.endDate || "",
+            gender: String(oldEvent.gender),
+          }} />
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-2xl font-bold mb-4">Results</h2>
             {sortedParticipants.length > 0 ? (

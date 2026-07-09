@@ -3,8 +3,9 @@ import PageLayout from '@ui/PageLayout';
 import { getEvent } from '../../../submit/actions';
 import { requireEventSubmitter } from '@lib/authorization';
 import { auth } from '@lib/auth';
-import { EventSubmissionFormValues, EventFormValues, ContestFormValues } from '../../../submit/types';
+import { EventSubmissionFormValues } from '../../../submit/types';
 import EditScoresClient from './EditScoresClient';
+import { MAP_DISCIPLINE_ENUM_TO_NAME } from '@utils/consts';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,13 +15,11 @@ export default async function EditScoresPage({ params }: Props) {
   await requireEventSubmitter();
 
   const { eventId } = await params;
-  const result = await getEvent(eventId);
+  const { success, event } = await getEvent(eventId);
 
-  if (!result.success || !result.event) {
+  if (!success || !event) {
     notFound();
   }
-
-  const event = result.event as Record<string, unknown>;
 
   const session = await auth();
   if (session?.user?.role !== 'admin' && event.createdBy !== session?.user?.id) {
@@ -30,27 +29,48 @@ export default async function EditScoresPage({ params }: Props) {
   // Only published events use this page
   if (event.status !== 'published') {
     redirect(`/events/my-events/${eventId}/edit`);
+
   }
+
+  const disciplines = [
+    ...new Set(
+      event.contests.flatMap(c =>
+        MAP_DISCIPLINE_ENUM_TO_NAME[Number(c.discipline)]
+      ).filter(Boolean)
+    )
+  ];
+  const website = event.contests?.[0]?.infoUrl as string;
+
 
   const initialValues: EventSubmissionFormValues = {
     event: {
-      name: (event.name as string) || '',
+      name: event.eventName,
       city: (event.city as string) || '',
       country: (event.country as string) || '',
       startDate: (event.startDate as string) || '',
       endDate: (event.endDate as string) || '',
-      website: (event.website as string) || '',
-      disciplines: (event.disciplines as EventFormValues['disciplines']) || [],
-      socialMedia: (event.socialMedia as EventFormValues['socialMedia']) || {},
+      website,
+      disciplines,
+      socialMedia: {},
     },
-    contests: (event.contests as ContestFormValues[]) || [],
+    contests: event.contests.map((c) => ({
+      ...c,
+      judgingSystem: "OTHER",
+      discipline: c.discipline as Discipline,
+      gender: c.gender as Gender,
+      ageCategory: c.ageCategory as AgeCategory,
+      contestSize: c.contestSize as ContestType,
+      totalPrizeValue: c.prize,
+      judges: [],
+      results: [],
+    })),
   };
 
   return (
     <PageLayout title="Edit Judges &amp; Scores">
       <EditScoresClient
         eventId={eventId}
-        eventName={(event.name as string) || eventId}
+        eventName={event.eventName || eventId}
         initialValues={initialValues}
       />
     </PageLayout>

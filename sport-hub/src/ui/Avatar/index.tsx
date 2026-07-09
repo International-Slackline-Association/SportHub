@@ -21,16 +21,17 @@ interface AvatarProps {
   defaultLabel: string;
   image?: string;
   size?: AvatarSize;
+  isSquare?: boolean;
 }
 
-export const Avatar = ({ alt, defaultLabel, image, size = 'medium' }: AvatarProps) => {
+export const Avatar = ({ alt, defaultLabel, image, size = 'medium', isSquare = false }: AvatarProps) => {
   const avatarSizePx = AVATAR_SIZE_PIXELS[size];
 
   if (image) {
     const isDataUrl = image.startsWith('data:');
     return (
       <div
-        className={styles.avatarWrapper}
+        className={cn(styles.avatarWrapper, isSquare && styles.square)}
         style={{
           width: `${avatarSizePx}px`,
           height: `${avatarSizePx}px`,

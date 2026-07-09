@@ -108,7 +108,16 @@ const CountryTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) =
 
   const options: { value: string; label: string }[] = 
     [...new Set(rows.map(row => String(row.getValue(column.id))))]
-    .map(countryIoc => ({ value: countryIoc, label: COUNTRIES.find(c => c.ioc === countryIoc)?.name || countryIoc }))
+    .reduce((acc, countryIoc) => {
+      const { ioc, name } = COUNTRIES.find(c => c.ioc === countryIoc) || {};
+      if (ioc && name) {
+        acc.push({
+          value: ioc,
+          label: name,
+        });
+      }
+      return acc;
+    }, [] as Option[])
     .sort((a, b) => a.label.localeCompare(b.label));
 
   return (
