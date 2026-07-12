@@ -206,14 +206,14 @@ export function DisciplineHeroSection() {
         <div className="hidden sm:block">
           <CardGrid columns={5}>
             {DISCIPLINES.map(discipline => {
-              const { name, description, Icon, enumValue } = DISCIPLINE_DATA[discipline];
+              const { name, description, Icon } = DISCIPLINE_DATA[discipline];
               return (
                 <div
                   key={discipline}
                   onMouseEnter={() => handleMouseEnter(discipline)}
                 >
                   <StackedMediaCard
-                    href={`/rankings?discipline=${enumValue}`}
+                    href={`/rankings?initialDiscipline=${discipline}`}
                     className="h-48"
                     media={<Icon />}
                     desktopDirection="vertical"

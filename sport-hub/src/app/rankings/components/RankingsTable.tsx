@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from 'react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { createColumnHelper } from '@tanstack/react-table';
 import { AthleteRanking } from '@lib/data-services';
 import Table from '@ui/Table';
@@ -15,6 +14,7 @@ import { Alert } from '@ui/Alert';
 import tableStyles from '@ui/Table/styles.module.css';
 import { CountryFlag } from '@ui/CountryFlag';
 import { DisciplineDropdown } from '@ui/Form';
+import { DISCIPLINE_DATA } from '@utils/consts';
 
 const columnHelper = createColumnHelper<AthleteRanking>();
 
@@ -122,18 +122,15 @@ const YEAR_OPTIONS = [
   }),
 ];
 
-const RankingsTable = ({ disciplineEnumValue }: { disciplineEnumValue?: string }) => {
-  const { isDesktop } = useClientMediaQuery();
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [selectedYear, setSelectedYear] = useState('last3years');
+type RankingsTableProps = {
+  discipline: Discipline;
+  onChangeDiscipline: (enumValue: string) => void;
+}
 
-  const handleDisciplineChange = (value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('discipline', value);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  };
+const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) => {
+  const { isDesktop } = useClientMediaQuery();
+  const [selectedYear, setSelectedYear] = useState('last3years');
+  const disciplineEnumValue = DISCIPLINE_DATA[discipline].enumValue;
 
   const { data = [], error, isError, isLoading, isSuccess } = useQuery({
     queryKey: ['rankings', selectedYear, disciplineEnumValue],
@@ -180,8 +177,8 @@ const RankingsTable = ({ disciplineEnumValue }: { disciplineEnumValue?: string }
               <DisciplineDropdown
                 className={tableStyles.columnFilter}
                 id="rankings-discipline"
-                initialValue={disciplineEnumValue}
-                onChange={handleDisciplineChange}
+                initialValue={String(disciplineEnumValue)}
+                onChange={onChangeDiscipline}
               />
             </>
           }

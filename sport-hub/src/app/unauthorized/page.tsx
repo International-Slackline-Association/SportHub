@@ -5,10 +5,10 @@ import PageLayout from "@ui/PageLayout"
 export default async function UnauthorizedPage({
   searchParams,
 }: {
-  searchParams: { required?: string }
+  searchParams: Promise<{ required?: string }>
 }) {
   const session = await auth()
-  const requiredRole = searchParams.required
+  const requiredRole = (await searchParams).required
 
   return (
     <PageLayout
