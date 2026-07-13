@@ -30,7 +30,6 @@ const disciplineLabel = (val: string | undefined): string => {
 // Should match TabbedContestForms.getContestNameFromForm
 const getContestNameFromObj = (contest: ContestRecord) => {
   const displayDiscipline = disciplineLabel(contest.discipline);
-  console.log(contest.discipline, displayDiscipline);
   const displayContestSize = labelOf(contestSizeOptions, contest.contestSize);
   const displayGender = labelOf(eventGenderOptions, contest.gender);
   return `${displayGender} ${displayDiscipline} ${displayContestSize}`.trim();

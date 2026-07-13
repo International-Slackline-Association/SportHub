@@ -15,6 +15,7 @@ import {
   MAP_CONTEST_TYPE_ENUM_TO_NAME,
 } from '@utils/consts';
 import EditEventClient from './EditEventClient';
+import { EventMetadataRecord } from '@lib/relational-types';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,7 +59,7 @@ export default async function EditEventPage({ params }: Props) {
 
   if (result.success && result.event) {
     // New-format event: reconstruct form values from Metadata record
-    const event = result.event as unknown as EventFormValues & { contests: ContestFormValues[]; createdBy?: string; status?: string; };
+    const event = result.event as EventMetadataRecord & { contests: ContestFormValues[]; createdBy?: string; status?: string; };
 
     // Only the creator (or admins) may edit
     if (!isAdmin && event.createdBy !== session?.user?.id) {
@@ -72,8 +73,21 @@ export default async function EditEventPage({ params }: Props) {
     }
 
     const { contests, ...eventData } = event;
+    const uniqueDisciplines = [...new Set(
+      contests
+        .map((c) => MAP_DISCIPLINE_ENUM_TO_NAME[Number(c.discipline)])
+        .filter(Boolean)
+    )] as EventFormValues['disciplines'];
+    const website = event.contests?.[0].infoUrl || "";
     initialValues = {
-      event: eventData,
+      event: {
+        ...eventData,
+        name: eventData?.eventName,
+        website,
+        disciplines: uniqueDisciplines,
+        socialMedia: {},
+        city: event.city || "",
+      },
       contests,
     };
   } else {
@@ -112,7 +126,7 @@ export default async function EditEventPage({ params }: Props) {
       contests: eventContests.map(oldContestToFormValues),
     };
   }
-
+  console.log(initialValues);
   return (
     <PageLayout title="Edit Event">
       <EditEventClient eventId={eventId} initialValues={initialValues} />
