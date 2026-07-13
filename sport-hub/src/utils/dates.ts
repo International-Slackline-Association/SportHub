@@ -12,8 +12,8 @@ export const formatDateRange = (startDate: Date, endDate: Date): string => {
 
   // Display range: 18 - 20 August, 2020
   if (isSameMonth && isSameYear) {
-    return startDate.toLocaleDateString('en-GB', monthDayFormat) +
-      ` - ${endDate.getDate()}, ${endDate.getFullYear()}`;
+    return startDate.getDate() +
+      ` - ${endDate.toLocaleDateString('en-GB', monthDayFormat)}, ${endDate.getFullYear()}`;
   }
 
   // Display range: 18 August - 5 September, 2020
@@ -39,7 +39,10 @@ export const formatDateRangeShort = (startDate: Date, endDate: Date): string => 
 
   // Display range: 18-20/08/20
   if (isSameMonth) {
-    return startDate.getDate() +
+    const formattedStartDate = startDate.getDate() < 10
+      ? '0' + startDate.getDate()
+      : startDate.getDate();
+    return formattedStartDate +
       `-${endDate.toLocaleDateString('en-GB', shortDateFormat)}`;
   }
 
