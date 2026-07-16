@@ -52,6 +52,12 @@ interface User {
   contestsParticipated?: number;
 }
 
+
+interface Option {
+  value: string;
+  label: string;
+}
+
 type Discipline = "OVERALL" | "TRICKLINE" | "TRICKLINE_AERIAL" | "TRICKLINE_JIB_AND_STATIC" | "TRICKLINE_TRANSFER" | "FREESTYLE_HIGHLINE" | "SPEED" | "SPEED_SHORT" | "SPEED_HIGHLINE" | "ENDURANCE" | "BLIND" | "RIGGING" | "FREESTYLE" | "WALKING";
 
 type Role = "ATHLETE" | "JUDGE" | "ISA_VERIFIED" | "ORGANIZER";

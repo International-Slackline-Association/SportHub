@@ -74,7 +74,7 @@ export const TableFilters = <TData,>({ extraFilters, table }: TableFiltersProps<
 
   if (isDesktop) {
     return (
-      <div className={cn(styles.tableFilters, "cluster")}>
+      <div className={cn(styles.tableFilters, "cluster", "gap-2")}>
         {extraFilters}
         {
           ...filterableColumns.map((col) => (

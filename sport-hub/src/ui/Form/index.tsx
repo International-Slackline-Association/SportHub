@@ -7,6 +7,7 @@ import { Tooltip } from '@ui/Tooltip';
 import { cn } from '@utils/cn';
 import { pascalCaseToTitleCase } from '@utils/strings';
 export * from './commonOptions';
+export { default as DisciplineDropdown } from './DisciplineDropdown';
 
 export const FormikSubmitButton = ({ children }: PropsWithChildren<Record<string, never>>) => {
   const { isSubmitting, isValid, dirty } = useFormikContext();
@@ -18,11 +19,6 @@ export const FormikSubmitButton = ({ children }: PropsWithChildren<Record<string
     </Button>
   );
 };
-
-export interface Option {
-  value: string;
-  label: string;
-}
 
 export interface BaseFormFieldProps<Element> extends React.InputHTMLAttributes<Element> {
   id: string;
@@ -50,9 +46,9 @@ export const FormikFormField = (props: PropsWithChildren<TextFieldProps | Select
       <div className="stack">
         <div className={styles.labelContainer}>
           <label htmlFor={id} className={styles.label}>
-          {displayLabel}
-        </label>
-        {tooltip && <Tooltip content={tooltip} />}
+            {displayLabel}
+          </label>
+          {tooltip && <Tooltip content={tooltip} />}
         </div>
         {caption && captionPlacement === "top" && (<small className={styles.caption}>{caption}</small>)}
       </div>
@@ -84,7 +80,7 @@ export const FormikTextField = ({
     >
       <Field name={name}>
         {({ field, meta }: FormikFieldProps<string>) => (
-          <div className={styles.inputContainer}>
+          <div>
             <input
               {...field}
               {...inputProps}
@@ -126,7 +122,7 @@ export const FormikNumberField = ({
     >
       <Field name={name}>
         {({ field, meta }: FormikFieldProps<string>) => (
-          <div className={styles.inputContainer}>
+          <div>
             <input
               {...field}
               {...inputProps}
@@ -172,7 +168,7 @@ export const FormikSelectField = ({
     >
       <Field name={name}>
         {({ field, meta }: FormikFieldProps<string>) => (
-          <div className={styles.inputContainer}>
+          <div>
             <select
               {...field}
               {...selectProps}

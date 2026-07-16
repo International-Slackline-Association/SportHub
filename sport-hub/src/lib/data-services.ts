@@ -20,6 +20,7 @@ const CONTEST_TYPE_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
 );
 import { UserRecord } from './relational-types';
 import { getWorldRecordsSheet, getWorldFirstsSheet } from './google-sheets';
+import { formatDate } from '@utils/dates';
 
 // PERFORMANCE OPTIMIZATION: Simple in-memory cache with TTL
 interface CacheEntry<T> {
@@ -785,25 +786,6 @@ export async function getAthleteWorldRecords(athleteId: string): Promise<WorldRe
 export async function getAthleteWorldFirsts(athleteId: string): Promise<WorldFirst[]> {
   const all = await getWorldFirsts();
   return all.filter(r => r.athleteUserId === athleteId);
-}
-
-// ===========================================
-// UTILITY FUNCTIONS
-// ===========================================
-
-function formatDate(dateStr: string): string {
-  if (!dateStr) return '';
-
-  try {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    }).replace(/\//g, '/');
-  } catch {
-    return dateStr;
-  }
 }
 
 // ===========================================

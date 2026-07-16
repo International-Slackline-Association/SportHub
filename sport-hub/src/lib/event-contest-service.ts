@@ -224,9 +224,9 @@ export async function putEventItem(record: Record<string, unknown>): Promise<voi
  */
 export async function getAssembledEvent(
   eventId: string
-): Promise<{ success: boolean; event: Record<string, unknown> | null }> {
+): Promise<{ success: boolean; event: EventMetadataRecord & { contests: ContestRecord[] } | null }> {
   try {
-    const metadata = await dynamodb.getItem(EVENTS_TABLE, { eventId, sortKey: 'Metadata' });
+    const metadata = await dynamodb.getItem(EVENTS_TABLE, { eventId, sortKey: 'Metadata' }) as EventMetadataRecord;
     if (!metadata) {
       return { success: false, event: null };
     }
@@ -239,11 +239,11 @@ export async function getAssembledEvent(
 
     const sortedContests = [...contestItems].sort(
       (a, b) => ((a.contestIndex as number) || 0) - ((b.contestIndex as number) || 0)
-    );
-    const { contests: embeddedContests, ...metadataOnly } = metadata as Record<string, unknown>;
+    ) as ContestRecord[];
+    const { contests: embeddedContests, ...metadataOnly } = metadata;
     const contests = sortedContests.length > 0
       ? sortedContests
-      : (embeddedContests as Record<string, unknown>[]) || [];
+      : (embeddedContests as ContestRecord[]) || [];
 
     return { success: true, event: { ...metadataOnly, contests } };
   } catch (error) {

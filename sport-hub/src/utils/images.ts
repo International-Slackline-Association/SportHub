@@ -121,6 +121,27 @@ export const S3_IMAGES: Record<string, HeroImage[]> = {
       alt: 'Trickline athlete mid-combo'
     },
   ],
+  TRICKLINE_AERIAL: [
+    {
+      src: `${S3_BASE_URL}/jib-static-trick-07.jpg`,
+      alt: 'Trickline athlete performing a static trick',
+      objectPosition: 'center 90%',
+    },
+    {
+      src: `${S3_BASE_URL}/event-audience-03.jpg`,
+      alt: 'Audience watching trickline competition',
+      objectPosition: 'center 30%',
+    },
+    {
+      src: `${S3_BASE_URL}/jib-static-trick-03.jpg`,
+      alt: 'Jib and static trickline action',
+      blurredBackground: true,
+    },
+    {
+      src: `${S3_BASE_URL}/jib-static-trick-06.jpg`,
+      alt: 'Trickline athlete mid-combo'
+    },
+  ],
   SPEED_HIGHLINE: [
     {
       src: `${S3_BASE_URL}/speed-highline-04.jpg`,
@@ -203,32 +224,7 @@ export const S3_IMAGES: Record<string, HeroImage[]> = {
  * When no group is provided, selects from all groups combined.
  */
 export function randomS3Image(group?: keyof typeof S3_IMAGES): HeroImage {
-  console.log("randomS3Image", group);
+  console.log(group);
   const pool = group ? S3_IMAGES[group] : Object.values(S3_IMAGES).flat();
   return pool[Math.floor(Math.random() * pool.length)];
-}
-
-/** Maps discipline enumValues to the closest S3_IMAGES group. */
-const DISCIPLINE_ENUM_TO_IMAGE_GROUP: Record<number, keyof typeof S3_IMAGES> = {
-  1: 'TRICKLINE',
-  2: 'TRICKLINE',
-  3: 'TRICKLINE',
-  4: 'TRICKLINE',
-  5: 'FREESTYLE_HIGHLINE',
-  6: 'SPEED_HIGHLINE',
-  7: 'SPEED_SHORT',
-  8: 'SPEED_HIGHLINE',
-  11: 'RIGGING',
-  12: 'FREESTYLE_HIGHLINE',
-};
-
-/**
- * Returns a random hero image appropriate for the given discipline enum value.
- * Falls back to the RANKINGS pool when no specific group is available.
- */
-export function randomS3ImageForDiscipline(disciplineEnum?: string): HeroImage {
-  const group = disciplineEnum
-    ? DISCIPLINE_ENUM_TO_IMAGE_GROUP[Number(disciplineEnum)]
-    : undefined;
-  return randomS3Image(group ?? 'RANKINGS');
 }

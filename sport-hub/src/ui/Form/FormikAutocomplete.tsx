@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { FormikFieldProps, FormikFormField, Option } from ".";
+import { FormikFieldProps, FormikFormField } from ".";
 import { BaseFormFieldProps } from '@ui/Form';
 import { Field } from 'formik';
 import styles from './styles.module.css';
@@ -102,7 +102,7 @@ export default function FormikAutocomplete({
             const errorText = typeof meta.error === 'string' ? meta.error : undefined;
 
             return (
-              <div className={styles.inputContainer}>
+              <div>
                 <input
                   // Keep Formik wiring for name/id, but control value via computed display
                   name={id}
