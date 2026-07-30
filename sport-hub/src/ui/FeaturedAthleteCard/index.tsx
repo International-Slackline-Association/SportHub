@@ -31,7 +31,7 @@ export const FeaturedAthleteCard = ({ athlete }: FeaturedAthleteCardProps) => {
 
   const displayName = fullName || `${name} ${surname || ""}`.trim();
   const abbreviatedName = `${name.toUpperCase().charAt(0)}${surname?.toUpperCase().charAt(0) || ""}`;
-  const href = `/athlete-profile/${userId}`;
+  const href = `/athlete/${userId}`;
 
 
   return (

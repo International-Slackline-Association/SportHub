@@ -112,7 +112,7 @@ export const EventDetailsCard = ({ event }: EventDetailsCardProps) => {
 							) : "None"
 						} 
 					/>
-					<LabelValuePair label="Total Winning Points Awarded" value={prize != null && prize !== 0 ? `${Number(prize).toLocaleString()} pts` : undefined} />
+					{/* <LabelValuePair label="Total Winning Points Awarded" value={prize != null && prize !== 0 ? `${Number(prize).toLocaleString()} pts` : undefined} />
 					<div className="col-span-full">
 						<LabelValuePair
 							label="Discipline(s)"
@@ -124,7 +124,7 @@ export const EventDetailsCard = ({ event }: EventDetailsCardProps) => {
 								</>
 							)}
 						/>
-					</div>
+					</div> */}
 				</div>
 				{!!youtubeId &&
 					<Image

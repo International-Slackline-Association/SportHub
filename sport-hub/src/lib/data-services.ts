@@ -517,6 +517,7 @@ export interface AthleteProfile {
   disciplines: string[];
   roles: string[];
   profileImage?: string;
+  athleteSlug?: string;
   socialMedia?: {
     instagram?: string;
     youtube?: string;
@@ -643,6 +644,7 @@ export async function getAthleteProfile(athleteId: string): Promise<AthleteProfi
       disciplines,
       roles: profile.userSubTypes?.map((t: string) => t.toUpperCase()) || ['ATHLETE'],
       profileImage: profile.profileUrl || profile.thumbnailUrl || undefined,
+      athleteSlug: profile.athleteSlug || undefined,
       socialMedia,
     };
   } catch (error) {

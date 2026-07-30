@@ -76,7 +76,7 @@ export default async function EventApprovalPage() {
                           By{" "}
                           {event.createdBy ? (
                             <Link
-                              href={`/athlete-profile/${event.createdBy}`}
+                              href={`/athlete/${event.createdBy}`}
                               className="text-blue-600 hover:underline"
                             >
                               {String(event.createdByName ?? event.createdBy)}

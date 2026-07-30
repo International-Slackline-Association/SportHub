@@ -64,11 +64,11 @@ export default function ContestTabs({ contests, initialTab = 0 }: { contests: Co
                 {CONTEST_GENDER_LABEL[contest.gender] ?? contest.gender}
               </span>
             )}
-            {contest.prize != null && contest.prize > 0 && (
+            {/* {contest.prize != null && contest.prize > 0 && (
               <span className="text-sm font-medium text-gray-600">
                 Prize pool: {contest.prize.toLocaleString()} pts
               </span>
-            )}
+            )} */}
           </div>
         )}
 
@@ -86,7 +86,7 @@ export default function ContestTabs({ contests, initialTab = 0 }: { contests: Co
                 }
                 if (j.id) {
                   return (
-                    <Link key={ji} href={`/athlete-profile/${j.id}`} className="text-sm px-2 py-0.5 rounded border border-gray-200 bg-white text-blue-600 hover:underline">
+                    <Link key={ji} href={`/athlete/${j.id}`} className="text-sm px-2 py-0.5 rounded border border-gray-200 bg-white text-blue-600 hover:underline">
                       {j.name}
                     </Link>
                   );

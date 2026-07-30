@@ -61,7 +61,7 @@ const columns = [
             <div className="stack">
               <span className="font-medium">
                 {info.row.original.athleteUserId
-                  ? <Link href={`/athlete-profile/${info.row.original.athleteUserId}`} className={linkClassName}>{name || '—'}</Link>
+                  ? <Link href={`/athlete/${info.row.original.athleteUserId}`} className={linkClassName}>{name || '—'}</Link>
                   : name || '—'
                 }
               </span>

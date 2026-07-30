@@ -113,7 +113,7 @@ const columns = [
           </Link>
           <div className="cluster justify-start items-center gap-2">
             {winner && (
-              <Link href={`/athlete-profile/${winner?.userId}`} className="text-blue-600 hover:underline">
+              <Link href={`/athlete/${winner?.userId}`} className="text-blue-600 hover:underline">
                 {winnerName}
               </Link>
             )}
@@ -229,7 +229,7 @@ const columns = [
       const displayName = kebabCaseToTitleCase(`${winner.name} ${winner.surname || ''}`);
       return (
         <Link
-          href={`/athlete-profile/${winner.userId}`}
+          href={`/athlete/${winner.userId}`}
           className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
         >
           {displayName}

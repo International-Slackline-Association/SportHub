@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUser, deleteUser, saveUserProfile } from '@lib/user-service';
+import { getUser, deleteUser, saveUserProfile, generateUniqueAthleteSlug } from '@lib/user-service';
 import type { UserProfileRecord } from '@lib/relational-types';
 
 export async function GET(
@@ -81,7 +81,7 @@ export async function PUT(
     const finalName = ((safeUpdateData.name || existingUser.name || '') as string).trim();
     const finalSurname = ((safeUpdateData.surname || existingUser.surname || '') as string).trim();
     const athleteSlug = finalName
-      ? `${finalName}--${finalSurname}`.toLowerCase().replace(/\s+/g, '-').replace(/-+$/, '')
+      ? await generateUniqueAthleteSlug(finalName, finalSurname, existingUser.userId)
       : existingUser.athleteSlug;
 
     const updatedUser = {
