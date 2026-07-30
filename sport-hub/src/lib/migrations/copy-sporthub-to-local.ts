@@ -42,13 +42,24 @@ import { config } from 'dotenv';
 import { USERS_TABLE, EVENTS_TABLE } from '../dynamodb';
 
 // Load AWS credentials / region overrides.
-config({ path: '.env.production' });
+// `override: true` so .env.production wins over anything already exported in the
+// shell — otherwise a stale AWS_ACCESS_KEY_ID / AWS_SESSION_TOKEN in your env
+// silently shadows the file and you get UnrecognizedClientException.
+const prodEnv = config({ path: '.env.production', override: true }).parsed ?? {};
 
 type DynamoDBItem = Record<string, unknown>;
 type CopyMode = 'delete' | 'idempotent' | 'skip';
 
 // AWS source: the sporthub -dev tables live in us-east-2.
-const AWS_REGION = process.env.AWS_REGION || 'us-east-2';
+const AWS_REGION = prodEnv.AWS_REGION || process.env.AWS_REGION || 'us-east-2';
+
+// Resolve AWS creds strictly from .env.production first. Critically, only use a
+// session token if .env.production defines one — never inherit a stale token
+// from the ambient shell, which would invalidate otherwise-valid long-term keys.
+const AWS_ACCESS_KEY_ID = prodEnv.AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
+const AWS_SECRET_ACCESS_KEY =
+  prodEnv.AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+const AWS_SESSION_TOKEN = prodEnv.AWS_SESSION_TOKEN; // file-only, intentionally not from shell
 // Local target: Docker DynamoDB.
 const LOCAL_ENDPOINT = (
   process.env.DYNAMODB_ENDPOINT || 'http://127.0.0.1:8000'
@@ -58,19 +69,24 @@ const LOCAL_ENDPOINT = (
 const awsTableName = (base: string) => `${base}-dev`;
 const localTableName = (base: string) => `local-${base}`;
 
+// Fail fast if AWS credentials are missing — otherwise the client falls back to
+// undefined creds and the failure only surfaces later as an opaque scan error.
+if (!AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY) {
+  console.error(
+    '\n❌ Missing AWS credentials. Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY ' +
+      'in .env.production (or via `aws configure`) before copying from AWS.\n'
+  );
+  process.exit(1);
+}
+
 const awsClient = new DynamoDBClient({
   region: AWS_REGION,
   maxAttempts: 3,
-  credentials:
-    process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
-      ? {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-          ...(process.env.AWS_SESSION_TOKEN && {
-            sessionToken: process.env.AWS_SESSION_TOKEN,
-          }),
-        }
-      : undefined,
+  credentials: {
+    accessKeyId: AWS_ACCESS_KEY_ID,
+    secretAccessKey: AWS_SECRET_ACCESS_KEY,
+    ...(AWS_SESSION_TOKEN && { sessionToken: AWS_SESSION_TOKEN }),
+  },
 });
 
 const localClient = new DynamoDBClient({
@@ -86,12 +102,20 @@ const localDdb = DynamoDBDocumentClient.from(localClient);
 // Helpers
 // ---------------------------------------------------------------------------
 
+// A DescribeTable on a non-existent table throws ResourceNotFoundException.
+// Anything else (bad creds, wrong region, access denied, throttling) is a real
+// failure we must NOT mistake for "table doesn't exist".
+function isNotFound(error: unknown): boolean {
+  return (error as { name?: string })?.name === 'ResourceNotFoundException';
+}
+
 async function tableExists(client: DynamoDBClient, tableName: string): Promise<boolean> {
   try {
     await client.send(new DescribeTableCommand({ TableName: tableName }));
     return true;
-  } catch {
-    return false;
+  } catch (error) {
+    if (isNotFound(error)) return false;
+    throw error; // surface the real error instead of silently reporting "absent"
   }
 }
 
@@ -102,8 +126,9 @@ async function getTableSchema(
   try {
     const response = await client.send(new DescribeTableCommand({ TableName: tableName }));
     return response.Table;
-  } catch {
-    return undefined;
+  } catch (error) {
+    if (isNotFound(error)) return undefined;
+    throw error; // surface the real error instead of masking it as "not found"
   }
 }
 
