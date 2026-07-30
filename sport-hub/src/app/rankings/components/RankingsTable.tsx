@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { createColumnHelper } from '@tanstack/react-table';
 import { AthleteRanking } from '@lib/data-services';
 import Table from '@ui/Table';
@@ -124,30 +123,17 @@ const YEAR_OPTIONS = [
 ];
 
 type RankingsTableProps = {
-  initialDiscipline: Discipline;
+  discipline: Discipline;
+  onChangeDiscipline: (discipline: Discipline) => void;
 }
 
-const RankingsTable = ({ initialDiscipline }: RankingsTableProps) => {
+const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) => {
   const { isDesktop } = useClientMediaQuery();
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [selectedYear, setSelectedYear] = useState('last3years');
-  const [discipline, setDiscipline] = useState<Discipline>(initialDiscipline);
   const disciplineEnumValue = DISCIPLINE_DATA[discipline].enumValue;
 
   const handleChangeDiscipline = (enumValue: string) => {
-    setDiscipline(MAP_DISCIPLINE_ENUM_TO_NAME[Number(enumValue)]);
-
-    // Drop the now-stale ?discipline= param from the URL once the user
-    // picks a different one via the table — the URL should only reflect
-    // the discipline the page loaded with, not the table's live selection.
-    if (searchParams.has('discipline')) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.delete('discipline');
-      const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-    }
+    onChangeDiscipline(MAP_DISCIPLINE_ENUM_TO_NAME[Number(enumValue)]);
   };
 
   const { data = [], error, isError, isLoading, isSuccess } = useQuery({
