@@ -9,6 +9,9 @@ import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import { CountryFlag } from '@ui/CountryFlag';
 import { textToTitleCase } from '@utils/strings';
 import Link from 'next/link';
+import { countryCellFormatter, linkCellFormatter, nameCellFormatter } from './cellFormatters';
+
+const linkClassName = "underline text-blue-600 hover:text-blue-800 visited:text-purple-600";
 
 const columnHelper = createColumnHelper<WorldRecord>();
 
@@ -23,7 +26,7 @@ const sharedColumns = [
     id: 'country',
     header: 'Country',
     enableColumnFilter: true,
-    cell: info => <CountryFlag country={info.getValue()} />,
+    cell: countryCellFormatter,
     meta: { filterVariant: 'select' },
     size: 80,
   }),
@@ -49,7 +52,7 @@ const columns = [
     id: 'worldRecord',
     header: 'World Record',
     cell: info => {
-      const { date, recordType, specs, name, country, gender } = info.row.original;
+      const { date, recordType, specs, name, country, gender, links } = info.row.original;
       return (
         <div className="stack">
           <span className="text-xs text-gray-400">{date}</span>
@@ -58,7 +61,7 @@ const columns = [
             <div className="stack">
               <span className="font-medium">
                 {info.row.original.athleteUserId
-                  ? <Link href={`/athlete-profile/${info.row.original.athleteUserId}`} className="text-blue-600 hover:underline">{name || '—'}</Link>
+                  ? <Link href={`/athlete-profile/${info.row.original.athleteUserId}`} className={linkClassName}>{name || '—'}</Link>
                   : name || '—'
                 }
               </span>
@@ -69,6 +72,15 @@ const columns = [
             </div>
             <span className="text-md">{specs}</span>
           </div>
+          <div className="cluster gap-2 text-xs">
+            {links?.map((link, idx) => 
+              link && (
+                <Link className={linkClassName} href={link} key={`link_${idx}`} target="_newtab">
+                  Link {idx + 1}
+                </Link>
+              )
+            )}
+          </div>
         </div>
       );
     },
@@ -78,13 +90,13 @@ const columns = [
   columnHelper.accessor('specs', { header: 'Specs', size: 120 }),
   columnHelper.accessor('name', {
     header: 'Name',
-    cell: info => {
-      const userId = info.row.original.athleteUserId;
-      return userId
-        ? <Link href={`/athlete-profile/${userId}`} className="text-blue-600 hover:underline">{info.getValue()}</Link>
-        : <>{info.getValue()}</>;
-    },
+    cell: nameCellFormatter,
     size: 80,
+  }),
+  columnHelper.accessor('links', {
+    header: "Links",
+    cell: linkCellFormatter,
+    size: 40,
   }),
   // Shared filterable columns
   ...sharedColumns,
@@ -133,7 +145,7 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
         initialState: {
           sorting: [{ id: 'date', desc: true }],
           columnOrder: isDesktop
-            ? ['date', 'recordType', 'specs', 'name', 'country', 'gender']
+            ? ['date', 'recordType', 'specs', 'name', 'country', 'gender', 'links']
             : ['worldRecord', 'recordType', 'country', 'gender'],
           columnVisibility: {
             worldRecord: !isDesktop,
@@ -143,6 +155,7 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
             recordType:  !!isDesktop,
             country:     !!isDesktop,
             gender:      !!isDesktop,
+            links:       !!isDesktop,
           },
         }
       }}

@@ -46,7 +46,6 @@ export const PageLayout = ({ children, title, description, heroImage, overlayTex
                   className={styles.heroBackgroundImage}
                   style={{
                     objectPosition: heroImage.objectPosition ?? 'center',
-                    transform: `scale(${heroImage.backgroundZoom ?? 1})`,
                   }}
                   priority
                 />

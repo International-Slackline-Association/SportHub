@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
 import { AthleteRanking } from '@lib/data-services';
 import Table from '@ui/Table';
@@ -9,12 +8,13 @@ import { ageCategoryFilterFn } from '@ui/Table/TableFilterFields';
 import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import Link from 'next/link';
 import { getIocCode } from '@utils/countries';
-import { DISCIPLINE_DATA } from '@utils/consts';
 import { useQuery } from '@tanstack/react-query';
 import Spinner from '@ui/Spinner';
 import { Alert } from '@ui/Alert';
 import tableStyles from '@ui/Table/styles.module.css';
 import { CountryFlag } from '@ui/CountryFlag';
+import { DisciplineDropdown } from '@ui/Form';
+import { DISCIPLINE_DATA } from '@utils/consts';
 
 const columnHelper = createColumnHelper<AthleteRanking>();
 
@@ -32,21 +32,19 @@ const NameCell = ({ athlete }: { athlete: AthleteRanking }) => {
 
 const columns = [
   // Shared Columns
-  columnHelper.display({
-    id: 'rank',
+  columnHelper.accessor("rank", {
     header: 'Rank',
-    cell: info => {
-      const rowIndex = info.table.getRowModel().rows.findIndex(row => row.id === info.row.id);
-      return rowIndex + 1;
-    },
+    enableSorting: false,
   }),
   columnHelper.accessor('points', {
     header: 'Points',
+    enableSorting: false,
   }),
   // Mobile: single stacked column
   columnHelper.display({
     id: 'athlete',
     header: 'Athlete',
+    enableSorting: false,
     cell: info => {
       const { age, gender, country } = info.row.original;
       const genderLabel = gender === 'female' ? 'Women' : gender === 'male' ? 'Men' : '—';
@@ -67,6 +65,7 @@ const columns = [
   // Desktop-only columns
   columnHelper.accessor('fullName', {
     enableColumnFilter: true,
+    enableSorting: false,
     header: 'Name',
     cell: info => <NameCell athlete={info.row.original} />,
     meta: { filterVariant: 'text', filterPlaceholder: 'Enter athlete name' },
@@ -75,6 +74,7 @@ const columns = [
     header: 'Age',
     cell: info => info.getValue() ?? '—',
     enableColumnFilter: true,
+    enableSorting: false,
     filterFn: ageCategoryFilterFn,
     meta: {
       filterVariant: 'select',
@@ -88,6 +88,7 @@ const columns = [
   columnHelper.accessor('gender', {
     header: 'Gender',
     enableColumnFilter: true,
+    enableSorting: false,
     filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
     cell: info => info.getValue() === 'female' ? 'Women' : info.getValue() === 'male' ? 'Men' : '—',
     meta: {
@@ -103,9 +104,10 @@ const columns = [
   columnHelper.accessor((row: AthleteRanking) => getIocCode(row.country), {
     id: 'country',
     enableColumnFilter: true,
+    enableSorting: false,
     header: 'Country',
     cell: info => <CountryFlag country={info.getValue()} />,
-    meta: { filterVariant: 'select' },
+    meta: { filterVariant: 'country' },
     size: 60,
   }),
 ];
@@ -120,48 +122,22 @@ const YEAR_OPTIONS = [
   }),
 ];
 
-const DISCIPLINE_OPTIONS = Object.values(DISCIPLINE_DATA)
-  .filter(d => d.enumValue !== 0)
-  .map(d => ({ value: String(d.enumValue), label: d.name }));
+type RankingsTableProps = {
+  discipline: Discipline;
+  onChangeDiscipline: (enumValue: string) => void;
+}
 
-const randomDiscipline = () => {
-  const opts = DISCIPLINE_OPTIONS;
-  return opts[Math.floor(Math.random() * opts.length)].value;
-};
-
-const RankingsTable = ({ initialDiscipline }: { initialDiscipline?: string }) => {
+const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) => {
   const { isDesktop } = useClientMediaQuery();
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [selectedYear, setSelectedYear] = useState('last3years');
-  const [selectedDiscipline, setSelectedDiscipline] = useState(
-    () => initialDiscipline || randomDiscipline()
-  );
-
-  // On mount: if no discipline was in the URL, reflect the randomly chosen one
-  useEffect(() => {
-    if (!initialDiscipline) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set('discipline', selectedDiscipline);
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleDisciplineChange = (value: string) => {
-    setSelectedDiscipline(value);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('discipline', value);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  };
+  const disciplineEnumValue = DISCIPLINE_DATA[discipline].enumValue;
 
   const { data = [], error, isError, isLoading, isSuccess } = useQuery({
-    queryKey: ['rankings', selectedYear, selectedDiscipline],
+    queryKey: ['rankings', selectedYear, disciplineEnumValue],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedYear !== 'last3years') params.set('year', selectedYear);
-      if (selectedDiscipline) params.set('discipline', selectedDiscipline);
+      if (disciplineEnumValue) params.set('discipline', String(disciplineEnumValue));
       const url = `/api/rankings${params.size ? '?' + params.toString() : ''}`;
       return (await fetch(url)).json();
     },
@@ -198,18 +174,12 @@ const RankingsTable = ({ initialDiscipline }: { initialDiscipline?: string }) =>
                   ))}
                 </select>
               </div>
-              <div className={tableStyles.columnFilter}>
-                <label htmlFor="rankings-discipline">Discipline</label>
-                <select
-                  id="rankings-discipline"
-                  value={selectedDiscipline}
-                  onChange={e => handleDisciplineChange(e.target.value)}
-                >
-                  {DISCIPLINE_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
+              <DisciplineDropdown
+                className={tableStyles.columnFilter}
+                id="rankings-discipline"
+                initialValue={String(disciplineEnumValue)}
+                onChange={onChangeDiscipline}
+              />
             </>
           }
           options={{

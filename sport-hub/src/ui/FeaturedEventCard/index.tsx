@@ -29,13 +29,12 @@ export const FeaturedEventCard = ({ event }: FeaturedEventCardProps) => {
         <div className={styles.imageWrapper}>
           <Image
             alt={name}
-            src={thumbnailUrl || ''}
             fill
+            src={thumbnailUrl || ''}
+            style={{ objectFit: 'contain' }}
           />
         </div>
       }
-      href={href}
-      hoverable
     >
       <div className="stack gap-2 items-center">
         <h3>{name}</h3>

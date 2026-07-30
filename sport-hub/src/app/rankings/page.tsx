@@ -1,35 +1,48 @@
-import { Suspense } from 'react'
+"use client";
+
+import { useEffect, useState } from 'react';
 import { FeaturedAthleteSection } from '@ui/FeaturedAthleteCard'
-import { getFeaturedAthletes } from '@lib/data-services'
 import PageLayout from '@ui/PageLayout'
 import RankingsTable from './components/RankingsTable'
-import type { Metadata } from 'next'
-import { randomS3ImageForDiscipline } from '@utils/images'
-import Spinner from '@ui/Spinner'
+import { randomS3Image } from '@utils/images'
+import { MAP_DISCIPLINE_ENUM_TO_NAME, SUPPORTED_DISCIPLINES } from '@utils/consts'
+import { useSearchParams } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: 'SportHub - Rankings',
+const randomDiscipline = () => {
+  console.log("Invalid discipline in URL, switching to random discipline");
+  const randomIdx = Math.floor(Math.random() * SUPPORTED_DISCIPLINES.length);
+  return SUPPORTED_DISCIPLINES[randomIdx];
 }
 
-export const revalidate = false
+const Page = () => {
+  const searchParams = useSearchParams();
+  const initialDiscipline = searchParams.get("initialDiscipline") as Discipline;
+  const [discipline, setDiscipline] = useState<Discipline>(initialDiscipline || randomDiscipline());
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ discipline?: string }> }) {
-  const { discipline } = await searchParams;
-
-  const athletes = await getFeaturedAthletes(discipline);
+  useEffect(() => {
+    if (!SUPPORTED_DISCIPLINES.includes(initialDiscipline as Discipline)) {
+      setDiscipline(randomDiscipline());
+    }
+  }, [initialDiscipline]);
 
   return (
     <PageLayout
       description="View the latest athlete rankings across all disciplines."
-      heroImage={randomS3ImageForDiscipline(discipline)}
+      heroImage={randomS3Image(discipline)}
       title="Rankings"
     >
-      <FeaturedAthleteSection athletes={athletes} />
+      <FeaturedAthleteSection discipline={discipline} />
       <section className="p-4 sm:p-0">
-        <Suspense fallback={<div className="flex justify-center min-h-64 items-center"><Spinner /></div>}>
-          <RankingsTable initialDiscipline={discipline || ""} />
-        </Suspense>
+        <RankingsTable
+          discipline={discipline}
+          onChangeDiscipline={(enumValue: string) => {
+            const nextDiscipline = MAP_DISCIPLINE_ENUM_TO_NAME[Number(enumValue)]
+            setDiscipline(nextDiscipline);
+          }}
+        />
       </section>
     </PageLayout>
-  )
+  );
 }
+
+export default Page;

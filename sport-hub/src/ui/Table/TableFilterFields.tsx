@@ -1,24 +1,15 @@
 import { Column, Row } from "@tanstack/react-table";
 import styles from "./styles.module.css";
 import Autocomplete from "@ui/Form/Autocomplete";
+import { COUNTRIES } from "@utils/countries";
+import { DisciplineDropdown } from "@ui/Form";
+
+type DateRangeFilterValue = { startDate?: string; endDate?: string } | undefined;
+type DateRangeRowValue = { startDate?: string; endDate?: string };
 
 type TableFilterProps<TData,> = {
   column: Column<TData, unknown>;
   rows: Row<TData>[];
-}
-
-type DateFilterValue = { year?: string; month?: string; day?: string } | undefined;
-type DateParts = { year: number; month: number; day: number };
-
-function parseDateString(raw: string): DateParts | null {
-  if (!raw) return null;
-  // ISO format: 2024-06-01 or 2024-06-01T...
-  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (iso) return { year: Number(iso[1]), month: Number(iso[2]), day: Number(iso[3]) };
-  // en-GB format: 01/06/2024
-  const gb = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-  if (gb) return { year: Number(gb[3]), month: Number(gb[2]), day: Number(gb[1]) };
-  return null;
 }
 
 export const ageCategoryFilterFn = <TData,>(
@@ -34,29 +25,34 @@ export const ageCategoryFilterFn = <TData,>(
 };
 ageCategoryFilterFn.autoRemove = (val: unknown) => !val;
 
+function isValidIsoDate(raw: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(raw);
+}
+
 export function dateFilterFn<TData>(
   row: Row<TData>,
   columnId: string,
-  filterValue: DateFilterValue,
+  filterValue: DateRangeFilterValue,
 ): boolean {
-  if (!filterValue || (!filterValue.year && !filterValue.month && !filterValue.day)) return true;
-  const raw = row.getValue<string>(columnId);
-  const date = parseDateString(raw);
-  if (!date) return false;
-  if (filterValue.year && String(date.year) !== filterValue.year) return false;
-  if (filterValue.month && String(date.month) !== filterValue.month) return false;
-  if (filterValue.day && String(date.day) !== filterValue.day) return false;
+  const isMissingDateRangeFilter = !filterValue || (!filterValue.startDate && !filterValue.endDate);
+  if (isMissingDateRangeFilter) {
+    return true;
+  }
+
+  const rowValue = row.getValue<DateRangeRowValue>(columnId);
+  if (!rowValue || !rowValue.startDate || !isValidIsoDate(rowValue.startDate)) {
+    return false;
+  }
+
+  const rowStartDate = rowValue.startDate;
+  const rowEndDate = rowValue.endDate || rowValue.startDate;
+
+  // Row overlaps with filter range if: row doesn't end before filter starts AND row doesn't start after filter ends
+  if (filterValue.startDate && rowEndDate < filterValue.startDate) return false;
+  if (filterValue.endDate && rowStartDate > filterValue.endDate) return false;
+
   return true;
 }
-
-const MONTHS = [
-  { value: '1', label: 'Jan' }, { value: '2', label: 'Feb' },
-  { value: '3', label: 'Mar' }, { value: '4', label: 'Apr' },
-  { value: '5', label: 'May' }, { value: '6', label: 'Jun' },
-  { value: '7', label: 'Jul' }, { value: '8', label: 'Aug' },
-  { value: '9', label: 'Sep' }, { value: '10', label: 'Oct' },
-  { value: '11', label: 'Nov' }, { value: '12', label: 'Dec' },
-];
 
 const TextTableFilter = <TData,>({ column }: TableFilterProps<TData>) => {
   const id = column.id;
@@ -106,55 +102,89 @@ const SelectTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) =>
   );
 };
 
-const DateTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
+const CountryTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
   const id = column.id;
-  const columnName = column.columnDef.header?.toString() || "";
-  const filterValue = (column.getFilterValue() as DateFilterValue) ?? {};
+  const columnName = column.columnDef.header?.toString();
 
-  // Derive years from actual data — only show years that exist in the rows
-  const years = [...new Set(
-    rows
-      .map(row => parseDateString(row.getValue<string>(column.id)))
-      .filter((d): d is DateParts => d !== null)
-      .map(d => String(d.year))
-  )].sort();
-  const days = Array.from({ length: 31 }, (_, i) => String(i + 1));
+  const options: { value: string; label: string }[] = 
+    [...new Set(rows.map(row => String(row.getValue(column.id))))]
+    .reduce((acc, countryIoc) => {
+      const { ioc, name } = COUNTRIES.find(c => c.ioc === countryIoc) || {};
+      if (ioc && name) {
+        acc.push({
+          value: ioc,
+          label: name,
+        });
+      }
+      return acc;
+    }, [] as Option[])
+    .sort((a, b) => a.label.localeCompare(b.label));
 
-  const update = (patch: { year?: string; month?: string; day?: string }) => {
+  return (
+    <div className={styles.columnFilter} key={`column-filter-${id}`}>
+      <label htmlFor={id}>{columnName}</label>
+      <select
+        id={id}
+        name={columnName}
+        onChange={e => column.setFilterValue(e.target.value || undefined)}
+        value={String(column.getFilterValue() ?? '')}
+      >
+        <option value={""}>All</option>
+        {options.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
+      </select>
+    </div>
+  );
+};
+
+const DateRangeTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
+  const id = column.id;
+  const filterValue = (column.getFilterValue() as DateRangeFilterValue) ?? {};
+
+  const minDate = [...rows]
+    .map(row => {
+      const rowValue = row.getValue<DateRangeRowValue>(column.id);
+      return rowValue?.startDate || '';
+    })
+    .filter(value => isValidIsoDate(value))
+    .sort()[0];
+
+  const update = (patch: { startDate?: string; endDate?: string }) => {
     const next = { ...filterValue, ...patch };
-    if (!next.year && !next.month && !next.day) {
+    const cleaned = {
+      ...(next.startDate ? { startDate: next.startDate } : {}),
+      ...(next.endDate ? { endDate: next.endDate } : {}),
+    };
+
+    if (!cleaned.startDate && !cleaned.endDate) {
       column.setFilterValue(undefined);
     } else {
-      column.setFilterValue(next);
+      column.setFilterValue(cleaned);
     }
   };
 
   return (
     <div className={styles.columnFilter} key={`column-filter-${id}`}>
-      <label htmlFor={`${id}-year`}>{columnName}</label>
-      <div className={styles.dateFilterSelects}>
-        <select
-          id={`${id}-year`}
-          value={filterValue.year ?? ''}
-          onChange={e => update({ year: e.target.value || undefined })}
-        >
-          <option value="">Year</option>
-          {years.map(y => <option key={y} value={y}>{y}</option>)}
-        </select>
-        <select
-          value={filterValue.month ?? ''}
-          onChange={e => update({ month: e.target.value || undefined })}
-        >
-          <option value="">Month</option>
-          {MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-        </select>
-        <select
-          value={filterValue.day ?? ''}
-          onChange={e => update({ day: e.target.value || undefined })}
-        >
-          <option value="">Day</option>
-          {days.map(d => <option key={d} value={d}>{d}</option>)}
-        </select>
+      <div className="cluster gap-2">
+        <div className="stack">
+          <label htmlFor={`${id}-start`}>Start Date</label>
+          <input
+            id={`${id}-start`}
+            min={minDate}
+            onChange={e => update({ startDate: e.target.value || undefined })}
+            type="date"
+            value={filterValue.startDate ?? ''}
+          />
+        </div>
+        <div className="stack">
+          <label htmlFor={`${id}-end`}>End Date</label>
+          <input
+            id={`${id}-end`}
+            min={minDate}
+            onChange={e => update({ endDate: e.target.value || undefined })}
+            type="date"
+            value={filterValue.endDate ?? ''}
+          />
+        </div>
       </div>
     </div>
   );
@@ -182,6 +212,26 @@ const AutocompleteTableFilter = <TData,>({ column, rows }: TableFilterProps<TDat
   );
 };
 
+const DisciplineTableFilter = <TData,>({ column }: TableFilterProps<TData>) => {
+  const id = column.id;
+  const includeAll = !column.columnDef.meta?.filterNoAll;
+
+  return (
+    <DisciplineDropdown
+      className={styles.columnFilter}
+      id={id}
+      includeAll={includeAll}
+      onChange={(discipline: string) => {
+        if (discipline === "0") {
+          column.setFilterValue(undefined);
+        } else {
+          column.setFilterValue(discipline || undefined);
+        }
+      }}
+    />
+  );
+};
+
 const TableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
   const filterVariant = column.columnDef?.meta?.filterVariant;
 
@@ -189,12 +239,20 @@ const TableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
     return <TextTableFilter column={column} rows={rows} />;
   }
 
-  if (filterVariant === "date") {
-    return <DateTableFilter column={column} rows={rows} />;
+  if (filterVariant === "date-range") {
+    return <DateRangeTableFilter column={column} rows={rows} />;
   }
 
   if (filterVariant === "autocomplete") {
     return <AutocompleteTableFilter column={column} rows={rows} />;
+  }
+
+  if (filterVariant === "country") {
+    return <CountryTableFilter column={column} rows={rows} />;
+  }
+
+  if (filterVariant === "discipline") {
+    return <DisciplineTableFilter column={column} rows={rows} />;
   }
 
   return <SelectTableFilter column={column} rows={rows} />;

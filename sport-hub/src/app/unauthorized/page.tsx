@@ -5,15 +5,15 @@ import PageLayout from "@ui/PageLayout"
 export default async function UnauthorizedPage({
   searchParams,
 }: {
-  searchParams: { required?: string }
+  searchParams: Promise<{ required?: string }>
 }) {
   const session = await auth()
-  const requiredRole = searchParams.required
+  const requiredRole = (await searchParams).required
 
   return (
     <PageLayout
-      title="Access Denied"
-      description="You don't have permission to access this resource"
+      title=""
+      description=""
     >
       <div className="p-4 sm:p-0">
         <div className="max-w-2xl mx-auto bg-white shadow rounded-lg p-8 text-center">

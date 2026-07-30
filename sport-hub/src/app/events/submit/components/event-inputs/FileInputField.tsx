@@ -73,7 +73,7 @@ export default function FileInputField() {
       {values.event.profileUrl ? (
         <div style={{ position: 'relative' }}>
           <Image
-            alt="Profile image preview"
+            alt="Event profile image preview"
             className={styles.youtubeThumbnail}
             width={1280}
             height={720}

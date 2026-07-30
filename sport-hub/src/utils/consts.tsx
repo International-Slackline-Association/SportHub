@@ -23,9 +23,9 @@ type DisciplineUIData = {
 export const DISCIPLINE_DATA: Record<Discipline, DisciplineUIData> = {
   OVERALL: {
     enumValue: 0,
-    name: 'Overall',
+    name: 'All Disciplines',
     description: 'Combined overall ranking',
-    Icon: (iconProps: IconProps) => <FreestyleHighlineIcon {...iconProps} />
+    Icon: () => <></>
   },
   TRICKLINE: {
     enumValue: 1,
@@ -33,10 +33,13 @@ export const DISCIPLINE_DATA: Record<Discipline, DisciplineUIData> = {
     description: 'Dynamic tricks and flips',
     Icon: (iconProps: IconProps) => <FreestyleTricklineIcon {...iconProps} />
   },
+  // TODO: Confirm with Tom how to handle Trickline sub-disciplines. Currently we only have records for trickline aerial.
   TRICKLINE_AERIAL: {
     enumValue: 2,
-    name: 'Trickline Aerial',
-    description: 'Aerial trickline maneuvers',
+    name: 'Trickline',
+    // name: 'Trickline Aerial',
+    description: 'Dynamic tricks and flips',
+    // description: 'Aerial trickline maneuvers',
     Icon: (iconProps: IconProps) => <FreestyleTricklineIcon {...iconProps} />
   },
   TRICKLINE_JIB_AND_STATIC: {
@@ -66,13 +69,13 @@ export const DISCIPLINE_DATA: Record<Discipline, DisciplineUIData> = {
   SPEED_SHORT: {
     enumValue: 7,
     name: 'Speedline Short',
-    description: 'Sprint competitions',
+    description: 'Racing over ground',
     Icon: (iconProps: IconProps) => <SpeedShortIcon {...iconProps} />
   },
   SPEED_HIGHLINE: {
     enumValue: 8,
-    name: 'Speedline Highline',
-    description: 'Racing on exposed heights',
+    name: 'Speed Highline',
+    description: 'Racing at height',
     Icon: (iconProps: IconProps) => <SpeedHighlineIcon {...iconProps} />
   },
   ENDURANCE: {
@@ -106,6 +109,15 @@ export const DISCIPLINE_DATA: Record<Discipline, DisciplineUIData> = {
     Icon: (iconProps: IconProps) => <SpeedHighlineIcon {...iconProps} />
   },
 };
+
+// More disciplines in our DB, these are what's accessible for users
+export const SUPPORTED_DISCIPLINES: Discipline[] = [
+  'TRICKLINE_AERIAL',
+  'FREESTYLE_HIGHLINE',
+  'SPEED_SHORT',
+  'SPEED_HIGHLINE',
+  'RIGGING',
+];
 
 export const MAP_DISCIPLINE_ENUM_TO_NAME: Record<number, Discipline> = {
   0: "OVERALL",

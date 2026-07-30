@@ -137,8 +137,6 @@ interface EventTableRecord {
  * One per event - contains event-level information
  */
 export interface EventMetadataRecord extends EventTableRecord {
-  sortKey: "Metadata";
-
   // Event info
   eventName: string;
   startDate: string;
@@ -152,9 +150,16 @@ export interface EventMetadataRecord extends EventTableRecord {
   profileUrl?: string;
   thumbnailUrl?: string;
   createdAt?: number;
+  createdBy?: string;
+  createdByName?: string;
+  status?: 'draft' | 'published' | 'cancelled';
 
   // Organizers (optional)
   organizers?: EventOrganizer[];
+
+  // Optional embedded contests for convenience (not used in queries)
+  // Currently no records have these values, but they could in the future
+  contests?: ContestRecord[];  
 }
 
 /**
@@ -162,8 +167,6 @@ export interface EventMetadataRecord extends EventTableRecord {
  * Multiple per event - one for each contest in the event
  */
 export interface ContestRecord extends EventTableRecord {
-  sortKey: string;         // "Contest:{discipline}:{contestId}"
-
   // Contest identification
   contestId: string;       // For contestId-index GSI
   discipline: string;      // For date-discipline-index GSI
@@ -195,6 +198,7 @@ export interface ContestRecord extends EventTableRecord {
 
   // Metadata
   createdAt?: number;
+  contestIndex?: number;
 }
 
 /**
@@ -215,6 +219,8 @@ export interface ContestResult {
   name: string;
   isaPoints: number;
   isPending: boolean;
+
+  pendingUser?: Record<string, unknown>;
 }
 
 /**

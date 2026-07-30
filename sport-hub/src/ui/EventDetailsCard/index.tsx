@@ -6,6 +6,10 @@ import { SocialMediaLinks } from '@ui/SocialMediaLinks';
 import { getCountryByCode } from '@utils/countries';
 import Image from 'next/image';
 import styles from "./styles.module.css";
+import { formatDateRange } from '@utils/dates';
+import Link from 'next/link';
+
+const linkClassName = 'text-blue-600 hover:text-blue-800 hover:underline font-medium';
 
 // Duplicate from YouTubePreviewTextField for server
 export function extractYouTubeId(url: string): string | null {
@@ -29,8 +33,10 @@ export function extractYouTubeId(url: string): string | null {
 }
 
 type EventLike = Partial<EventRecord> & {
+	startDate: string;
+	endDate: string;
+	website?: string;
   // Admin form shape uses different property names
-  date?: string | Date | null;
   city?: string;
   country?: string;
   name?: string;
@@ -44,17 +50,6 @@ type EventLike = Partial<EventRecord> & {
 
 type EventDetailsCardProps = {
   event: EventLike;
-};
-
-const formatDate = (d?: string | Date | null) => {
-	if (!d) return '';
-	try {
-		const date = typeof d === 'string' ? new Date(d) : d;
-		if (isNaN(date.getTime())) return '';
-		return date.toLocaleDateString('en-GB');
-	} catch {
-		return '';
-	}
 };
 
 // TODO: Use these utility functions when implementing full event details
@@ -71,11 +66,13 @@ const formatDate = (d?: string | Date | null) => {
 
 export const EventDetailsCard = ({ event }: EventDetailsCardProps) => {
 	const {
-		date,
+		startDate,
+		endDate,
 		city,
 		country,
 		name,
 		discipline,
+		website,
 		prize,
 		profileUrl,
 		thumbnailUrl,
@@ -85,11 +82,12 @@ export const EventDetailsCard = ({ event }: EventDetailsCardProps) => {
 	const disciplineList = Array.isArray(discipline) ? (discipline as string[]) : (discipline ? [discipline as string] : []);
 	const countryName = getCountryByCode(country?.toLowerCase() || "")?.name;
   const youtubeId = extractYouTubeId(thumbnailUrl || '');
+	const dateRange = formatDateRange(new Date(startDate), new Date(endDate));
 
 	return (
     <StackedMediaCard
 			className={styles.eventDetailsCard}
-      media={<SocialMediaLinks profileImage={profileUrl} />}
+      media={<SocialMediaLinks profileImage={profileUrl} isSquare/>}
       desktopDirection="horizontal"
 			mobileDirection="vertical"
     >
@@ -99,13 +97,22 @@ export const EventDetailsCard = ({ event }: EventDetailsCardProps) => {
 						{verified ? <Role variant="ISA_VERIFIED" /> : <Badge color="NEUTRAL">Unverified</Badge>}
 						<h2>{name}</h2>
 					</div>
-					<LabelValuePair label="Date" value={formatDate(date)} />
+					<LabelValuePair label="Date" value={dateRange} />
 					<LabelValuePair
 						label="Location"
 						value={<Country countryCode={country || "N/A"} label={[city, countryName].filter(Boolean).join(', ')} />}
 					/>
-					<LabelValuePair label="Website" value={""} />
-					<LabelValuePair label="Total Prize Pool" value={prize != null && prize !== 0 ? `${Number(prize).toLocaleString()} pts` : undefined} />
+					<LabelValuePair
+						label="Website"
+						value={
+							website ? (
+								<Link className={linkClassName} href={website || ""}>
+									{website}
+								</Link>
+							) : "None"
+						} 
+					/>
+					<LabelValuePair label="Total Winning Points Awarded" value={prize != null && prize !== 0 ? `${Number(prize).toLocaleString()} pts` : undefined} />
 					<div className="col-span-full">
 						<LabelValuePair
 							label="Discipline(s)"

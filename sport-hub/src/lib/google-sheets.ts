@@ -33,6 +33,7 @@ export interface WorldRecordRow {
   eventName: string;    // competition / location where set
   date: string;
   athleteEmail: string; // "ISA Email" column — used to resolve SportHub userId
+  links?: string[];
 }
 
 const toGender = (raw: string): Gender => {
@@ -70,6 +71,7 @@ export interface WorldFirstRow {
   typeOfFirst: string;  // "type of first"
   lineType: string;     // "type of line"
   athleteEmail: string; // "ISA Email" column — used to resolve SportHub userId
+  links?: string[];
 }
 
 export const getWorldFirstsSheet = async (): Promise<WorldFirstRow[]> => {
@@ -97,6 +99,8 @@ export const getWorldFirstsSheet = async (): Promise<WorldFirstRow[]> => {
   const typeOfFirstIdx  = idx('type of first');
   const lineTypeIdx     = idx('type of line') !== -1 ? idx('type of line') : idx('line type');
   const emailIdx        = idx('isa email') !== -1 ? idx('isa email') : idx('email');
+  const link1Idx        = idx('link 1');
+  const link2Idx        = idx('link 2');
 
   const result = dataRows
     .filter((row: string[]) => row.some(cell => cell?.trim()))
@@ -110,6 +114,7 @@ export const getWorldFirstsSheet = async (): Promise<WorldFirstRow[]> => {
       typeOfFirst:  row[typeOfFirstIdx]  ?? '',
       lineType:     row[lineTypeIdx]     ?? '',
       athleteEmail: (row[emailIdx] ?? '').toLowerCase().trim(),
+      links: [row[link1Idx], row[link2Idx]],
     }))
     .sort((a, b) => parseDateForSort(b.date) - parseDateForSort(a.date)); // newest first
 
@@ -141,6 +146,8 @@ export const getWorldRecordsSheet = async (): Promise<WorldRecordRow[]> => {
   const eventNameIdx   = idx('event name') !== -1 ? idx('event name') : idx('event');
   const dateIdx        = idx('date');
   const emailIdx       = idx('isa email') !== -1 ? idx('isa email') : idx('email');
+  const link1Idx        = idx('link 1');
+  const link2Idx        = idx('link 2');
 
   return dataRows
     .filter((row: string[]) => row.some(cell => cell?.trim()))
@@ -154,6 +161,7 @@ export const getWorldRecordsSheet = async (): Promise<WorldRecordRow[]> => {
       eventName:    row[eventNameIdx]  ?? '',
       date:         toFormattedDate(row[dateIdx] ?? ''),
       athleteEmail: (row[emailIdx] ?? '').toLowerCase().trim(),
+      links: [row[link1Idx], row[link2Idx]],
     }))
     .sort((a, b) => parseDateForSort(b.date) - parseDateForSort(a.date)); // newest first
 };

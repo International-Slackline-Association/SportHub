@@ -15,6 +15,8 @@ import { Alert } from '@ui/Alert';
 import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import { CountryFlag } from '@ui/CountryFlag';
 import styles from './ContestsTable.module.css';
+import { formatDateRange } from '@utils/dates';
+import { kebabCaseToTitleCase, snakeCaseToTitleCase } from '@utils/strings';
 
 const normalizeGroupField = (value: string | null | undefined) =>
   String(value ?? '')
@@ -37,7 +39,7 @@ const normalizeGroupDate = (value: string | null | undefined) => {
 const buildContestGroupKey = (contest: ContestData) => {
   const eventName = normalizeGroupField(contest.name);
   const country = normalizeGroupField(contest.country);
-  const date = normalizeGroupDate(contest.date);
+  const date = normalizeGroupDate(contest.startDate);
 
   return `${eventName}|${country}|${date}`;
 };
@@ -83,7 +85,7 @@ const columns = [
     id: 'event',
     header: 'Event',
     cell: info => {
-      const { name, date, category, country, discipline, athletes, eventId } = info.row.original;
+      const { name, startDate, endDate, category, country, discipline, athletes, eventId } = info.row.original;
       const d = String(discipline);
       const disciplineData = DISCIPLINE_DATA[d as keyof typeof DISCIPLINE_DATA]
         ?? Object.values(DISCIPLINE_DATA).find(e => e.enumValue === Number(d));
@@ -93,8 +95,7 @@ const columns = [
       const winnerName = winner ? `${winner.name} ${winner.surname || ''}`.trim() : null;
       const genderKey = MAP_CONTEST_GENDER_ENUM_TO_NAME[info.row.original.gender];
       const genderLabel = ({ MIXED: 'Mixed', MEN_ONLY: 'Men', WOMEN_ONLY: 'Women' } as Record<string, string>)[genderKey] ?? genderKey;
-      let formattedDate = date;
-      try { formattedDate = new Date(date).toLocaleDateString('en-GB'); } catch { /* keep raw */ }
+      const formattedDate = formatDateRange(new Date(startDate), new Date(endDate || startDate));
       return (
         <div className="stack gap-1">
           <div className="cluster justify-between items-center text-gray-400 mb-2">
@@ -135,18 +136,17 @@ const columns = [
       </Link>
     ),
   }),
-  columnHelper.accessor("date", {
+  columnHelper.accessor(({ startDate, endDate }: ContestData) => {
+    return { startDate, endDate };
+  }, {
     enableColumnFilter: true,
-    header: "Date",
-    meta: { filterVariant: "date" },
+    header: "Date(s)",
+    id: "eventDateRange",
+    meta: { filterVariant: "date-range" },
     filterFn: dateFilterFn,
     cell: info => {
-      const date = info.getValue();
-      try {
-        return new Date(date).toLocaleDateString('en-GB');
-      } catch {
-        return date;
-      }
+      const { startDate, endDate } = info.row.original;
+      return formatDateRange(new Date(startDate), new Date(endDate || startDate));
     },
     size: 120,
   }),
@@ -157,23 +157,18 @@ const columns = [
     cell: info => (
       <CountryFlagWithName iocCode={info.getValue()} />
     ),
-    meta: { filterVariant: 'select' },
+    meta: { filterVariant: 'country' },
     size: 120,
   }),
-  columnHelper.accessor((row: ContestData) => {
-    const d = String(row.discipline);
-    const byKey = DISCIPLINE_DATA[d as keyof typeof DISCIPLINE_DATA];
-    if (byKey) return byKey.name;
-    return Object.values(DISCIPLINE_DATA).find(e => e.enumValue === Number(d))?.name ?? d;
-  }, {
+  columnHelper.accessor("discipline", {
     id: "discipline",
     enableColumnFilter: true,
     header: "Discipline",
-    meta: { filterVariant: 'select' },
+    meta: { filterVariant: 'discipline' },
     cell: info => {
-      const disciplineName = info.getValue();
-      const data = Object.values(DISCIPLINE_DATA).find(d => d.name === disciplineName);
-      if (!data) return disciplineName;
+      const disciplineEnum = info.getValue();
+      const data = Object.values(DISCIPLINE_DATA).find(d => String(d.enumValue) === disciplineEnum);
+      if (!data) return disciplineEnum;
       return (
         <div className="flex flex-row items-center">
           <div className="h-8 w-8">
@@ -194,6 +189,7 @@ const columns = [
     header: "Gender",
     filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
     meta: { filterVariant: 'select' },
+    size: 72,
   }),
   columnHelper.accessor("prize", {
     header: "Total Event Prize Value (€)",
@@ -201,12 +197,23 @@ const columns = [
   }),
   columnHelper.accessor((row: ContestData) => {
     const key = MAP_CONTEST_TYPE_ENUM_TO_NAME[row.category];
-    return contestSizeOptions.find(o => o.value === key)?.label ?? String(row.category);
+    return contestSizeOptions.find(o => o.value === key)?.value ?? String(row.category);
   }, {
     id: "size",
     enableColumnFilter: true,
     header: "Size",
-    meta: { filterVariant: 'select' },
+    cell: info => {
+      const contestSize = info.getValue();
+      const label = contestSizeOptions.find((option) => option.value == contestSize)?.label;
+      return label;
+    },
+    meta: {
+      filterOptions: Object.entries(MAP_CONTEST_TYPE_ENUM_TO_NAME).map(([value, label]) => ({
+        value,
+        label: snakeCaseToTitleCase(label),
+      })),
+      filterVariant: 'select'
+    },
     size: 120,
   }),
   columnHelper.accessor("athletes", {
@@ -219,7 +226,7 @@ const columns = [
       const winner = athletes.find(athlete => athlete.place === "1");
       if (!winner) return "TBD";
 
-      const displayName = `${winner.name} ${winner.surname || ''}`.trim();
+      const displayName = kebabCaseToTitleCase(`${winner.name} ${winner.surname || ''}`);
       return (
         <Link
           href={`/athlete-profile/${winner.userId}`}
@@ -231,11 +238,6 @@ const columns = [
     },
     size: 120,
   }),
-  columnHelper.accessor("verified", {
-    header: "ISA Verified",
-    cell: info => info.getValue() ? "✅" : "",
-    size: 60,
-  })
 ];
 
 const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
@@ -247,6 +249,7 @@ const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
     staleTime: 60_000,
   });
 
+  const dateToday = new Date().toISOString().slice(0, 10);
   return (
     <div className="flex items-center justify-center min-h-64">
       {isLoading && (
@@ -265,13 +268,16 @@ const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
             columns,
             data,
             initialState: {
+              columnFilters: [
+                { id: "eventDateRange", value: { startDate: "", endDate: dateToday } },
+              ],
               columnOrder: isDesktop
-                ? ['name', 'date', 'country', 'discipline', 'gender', 'prize', 'size', 'athletes', 'verified']
+                ? ['name', 'eventDateRange', 'country', 'discipline', 'gender', 'prize', 'size', 'athletes', 'verified']
                 : ['event'],
               columnVisibility: {
                 event:      !isDesktop,
                 name:       !!isDesktop,
-                date:       !!isDesktop,
+                eventDateRange:  !!isDesktop,
                 country:    !!isDesktop,
                 discipline: !!isDesktop,
                 gender:     !!isDesktop,

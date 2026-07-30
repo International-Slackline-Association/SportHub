@@ -14,6 +14,7 @@ import {
   scanAllEventItems,
   deleteEvent as deleteEventFromService,
 } from '@lib/event-contest-service';
+import { EventMetadataRecord } from '@lib/relational-types';
 
 // Generate unique event ID
 function generateEventId(): string {
@@ -123,23 +124,20 @@ export async function updateEventScores(
   try {
     const session = await auth();
 
-    const existing = await getAssembledEvent(eventId);
-    if (!existing.success || !existing.event) {
+    const { success, event } = await getAssembledEvent(eventId);
+    if (!success || !event) {
       return { success: false, error: 'Event not found' };
     }
 
-    const existingEvent = existing.event as Record<string, unknown>;
-
-    if (session?.user?.role !== 'admin' && existingEvent.createdBy !== session?.user?.id) {
+    if (session?.user?.role !== 'admin' && event.createdBy !== session?.user?.id) {
       return { success: false, error: 'You do not have permission to edit this event' };
     }
 
     // Merge updated judges/results into individual Contest records.
     // For old-format events the embedded contest objects lack eventId/sortKey,
     // so we supply them here (effectively migrating to separate Contest:* records).
-    const existingContests = (existingEvent.contests as Record<string, unknown>[]) || [];
     await Promise.all(
-      existingContests.map(async (ec, idx) => {
+      event.contests.map(async (ec, idx) => {
         const sortKey = (ec.sortKey as string) || `Contest:${ec.discipline ?? 'unknown'}:${idx}`;
         const updated = {
           ...ec,
@@ -176,7 +174,7 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
     const session = await auth();
 
     const existing = await getAssembledEvent(eventId);
-    let existingEvent: Record<string, unknown>;
+    let existingEvent: Partial<EventMetadataRecord>;
     let isMigration = false;
 
     if (!existing.success || !existing.event) {
@@ -189,12 +187,12 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
         sortKey: 'Metadata',
         createdBy: session?.user?.id ?? 'admin',
         createdByName: session?.user?.name || '',
-        createdAt: new Date().toISOString(),
+        createdAt: new Date().getTime(),
         status: 'published',
       };
       isMigration = true;
     } else {
-      existingEvent = existing.event as Record<string, unknown>;
+      existingEvent = existing.event;
       if (session?.user?.role !== 'admin' && existingEvent.createdBy !== session?.user?.id) {
         return { success: false, error: 'You do not have permission to edit this event' };
       }
@@ -204,7 +202,7 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
 
     // Strip assembled contests field before writing Metadata record
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { contests: _assembled, ...existingMetadata } = existingEvent as Record<string, unknown>;
+    const { contests: _assembled, ...existingMetadata } = existingEvent;
     const updatedEvent = {
       ...existingMetadata,
       ...event,
@@ -448,12 +446,10 @@ export async function submitEventForApproval(eventId: string) {
   try {
     const session = await auth();
 
-    const result = await getAssembledEvent(eventId);
-    if (!result.success || !result.event) {
+    const { success, event } = await getAssembledEvent(eventId);
+    if (!success || !event) {
       return { success: false, error: 'Event not found' };
     }
-
-    const event = result.event as Record<string, unknown>;
 
     // Non-admins can only submit their own events
     if (session?.user?.role !== 'admin' && event.createdBy !== session?.user?.id) {
@@ -496,12 +492,10 @@ export async function withdrawEventFromApproval(eventId: string) {
   try {
     const session = await auth();
 
-    const result = await getAssembledEvent(eventId);
-    if (!result.success || !result.event) {
+    const { success, event } = await getAssembledEvent(eventId);
+    if (!success || !event) {
       return { success: false, error: 'Event not found' };
     }
-
-    const event = result.event as Record<string, unknown>;
 
     if (session?.user?.role !== 'admin' && event.createdBy !== session?.user?.id) {
       return { success: false, error: 'You do not have permission to withdraw this event' };
@@ -539,14 +533,12 @@ export async function createPendingUserFromEvent(
   await requireAdmin();
 
   try {
-    const result = await getAssembledEvent(eventId);
-    if (!result.success || !result.event) {
+    const { success, event } = await getAssembledEvent(eventId);
+    if (!success || !event) {
       throw new Error('Event not found');
     }
 
-    const event = result.event as Record<string, unknown>;
-    const contests = (event.contests as Record<string, unknown>[]) ?? [];
-    const contest = contests[contestIdx] as Record<string, unknown> | undefined;
+    const contest = event.contests[contestIdx];
     if (!contest) throw new Error('Contest not found');
 
     const entries = (

@@ -27,15 +27,6 @@ const Footer = () => {
           <Image
             alt="logo"
             className={styles.logo}
-            height={112}
-            src="/static/images/ISA_logo.png"
-            width={623}
-          />
-        </div>
-        <div>
-          <Image
-            alt="logo"
-            className={styles.logo}
             height={247}
             src="/static/images/sport-hub-logo.png"
             width={426}

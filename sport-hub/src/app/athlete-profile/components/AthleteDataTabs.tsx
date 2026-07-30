@@ -10,6 +10,7 @@ import { TabGroup } from '@ui/Tab';
 import AthleteContestsTable from './AthleteContestsTable';
 import AthleteWorldRecordsTable from './AthleteWorldRecordsTable';
 import AthleteWorldFirstsTable from './AthleteWorldFirstsTable';
+import Spinner from '@ui/Spinner';
 
 const tabs = [
   { id: "contests", label: "Contests" },
@@ -82,7 +83,7 @@ export default function AthleteDataTabs({ athleteId }: AthleteDataTabsProps) {
       {loading ? (
         <div className="flex items-center justify-center min-h-64">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <Spinner />
             <p>Loading {activeTab === 'contests' ? 'contests' : activeTab === 'records' ? 'world records' : 'world firsts'}...</p>
           </div>
         </div>
