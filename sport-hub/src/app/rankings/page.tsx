@@ -6,7 +6,7 @@ import PageLayout from '@ui/PageLayout'
 import RankingsTable from './components/RankingsTable'
 import { randomS3Image } from '@utils/images'
 import { SUPPORTED_DISCIPLINES } from '@utils/consts'
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 const randomDiscipline = () => {
   console.log("Invalid discipline in URL, switching to random discipline");
@@ -16,27 +16,40 @@ const randomDiscipline = () => {
 
 const Page = () => {
   const searchParams = useSearchParams();
-  // Computed once via the lazy useState initializer and never again — the
-  // table strips ?discipline= from the URL once you pick a new one there,
-  // and useSearchParams() re-renders every subscriber (including this page)
-  // when that happens. A plain const here would re-derive from the now-gone
-  // param on every such re-render (falling into the "missing" branch and
-  // rolling a fresh random discipline each time), which is what was causing
-  // the hero image / featured athletes to change along with the table.
-  const [initialDiscipline] = useState<Discipline>(() => {
+  const router = useRouter();
+  const pathname = usePathname();
+  // Lazy initializer runs once on mount only — the state that follows is
+  // real, settable state, so a later router.replace() (which re-renders
+  // every useSearchParams() subscriber, including this page) never resets
+  // or re-derives it.
+  const [discipline, setDiscipline] = useState<Discipline>(() => {
     const rawDiscipline = searchParams.get("discipline") as Discipline;
     return SUPPORTED_DISCIPLINES.includes(rawDiscipline) ? rawDiscipline : randomDiscipline();
   });
 
+  const handleChangeDiscipline = (nextDiscipline: Discipline) => {
+    setDiscipline(nextDiscipline);
+
+    // Drop the now-stale ?discipline= param from the URL once the user
+    // picks a different one via the table — no navigation, just a shallow
+    // URL update (router.replace, no new history entry).
+    if (searchParams.has('discipline')) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('discipline');
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    }
+  };
+
   return (
     <PageLayout
       description="View the latest athlete rankings across all disciplines."
-      heroImage={randomS3Image(initialDiscipline)}
+      heroImage={randomS3Image(discipline)}
       title="Rankings"
     >
-      <FeaturedAthleteSection discipline={initialDiscipline} />
+      <FeaturedAthleteSection discipline={discipline} />
       <section className="p-4 sm:p-0">
-        <RankingsTable initialDiscipline={initialDiscipline} />
+        <RankingsTable discipline={discipline} onChangeDiscipline={handleChangeDiscipline} />
       </section>
     </PageLayout>
   );
