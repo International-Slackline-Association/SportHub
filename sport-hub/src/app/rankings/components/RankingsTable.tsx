@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { createColumnHelper } from '@tanstack/react-table';
 import { AthleteRanking } from '@lib/data-services';
 import Table from '@ui/Table';
@@ -14,7 +15,7 @@ import { Alert } from '@ui/Alert';
 import tableStyles from '@ui/Table/styles.module.css';
 import { CountryFlag } from '@ui/CountryFlag';
 import { DisciplineDropdown } from '@ui/Form';
-import { DISCIPLINE_DATA } from '@utils/consts';
+import { DISCIPLINE_DATA, MAP_DISCIPLINE_ENUM_TO_NAME } from '@utils/consts';
 
 const columnHelper = createColumnHelper<AthleteRanking>();
 
@@ -123,14 +124,31 @@ const YEAR_OPTIONS = [
 ];
 
 type RankingsTableProps = {
-  discipline: Discipline;
-  onChangeDiscipline: (enumValue: string) => void;
+  initialDiscipline: Discipline;
 }
 
-const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) => {
+const RankingsTable = ({ initialDiscipline }: RankingsTableProps) => {
   const { isDesktop } = useClientMediaQuery();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [selectedYear, setSelectedYear] = useState('last3years');
+  const [discipline, setDiscipline] = useState<Discipline>(initialDiscipline);
   const disciplineEnumValue = DISCIPLINE_DATA[discipline].enumValue;
+
+  const handleChangeDiscipline = (enumValue: string) => {
+    setDiscipline(MAP_DISCIPLINE_ENUM_TO_NAME[Number(enumValue)]);
+
+    // Drop the now-stale ?discipline= param from the URL once the user
+    // picks a different one via the table — the URL should only reflect
+    // the discipline the page loaded with, not the table's live selection.
+    if (searchParams.has('discipline')) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('discipline');
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    }
+  };
 
   const { data = [], error, isError, isLoading, isSuccess } = useQuery({
     queryKey: ['rankings', selectedYear, disciplineEnumValue],
@@ -178,7 +196,7 @@ const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) =
                 className={tableStyles.columnFilter}
                 id="rankings-discipline"
                 initialValue={String(disciplineEnumValue)}
-                onChange={onChangeDiscipline}
+                onChange={handleChangeDiscipline}
               />
             </>
           }
