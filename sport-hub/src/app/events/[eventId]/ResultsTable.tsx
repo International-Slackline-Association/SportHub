@@ -27,7 +27,7 @@ const columns = [
       const userId = info.row.original.userId;
       const formattedName = kebabCaseToTitleCase(info.getValue());
       return userId ? (
-        <Link href={`/athlete-profile/${userId}`} className={linkClassName}>
+        <Link href={`/athlete/${userId}`} className={linkClassName}>
           {formattedName}
         </Link>
       ) : (

@@ -34,6 +34,27 @@ export async function getAthleteProfile(
 }
 
 /**
+ * Resolve a userId from an athleteSlug via the athleteSlug-index GSI
+ *
+ * Used to support vanity-URL navigation (/athlete/{slug}) without a table scan.
+ */
+export async function getUserIdByAthleteSlug(athleteSlug: string): Promise<string | null> {
+  try {
+    const items = await dynamodb.queryItems(
+      USERS_TABLE,
+      'athleteSlug = :athleteSlug',
+      { ':athleteSlug': athleteSlug },
+      { indexName: 'athleteSlug-index', limit: 1 }
+    );
+    const item = items[0] as UserProfileRecord | undefined;
+    return item?.userId ?? null;
+  } catch (error) {
+    console.error(`Error resolving athleteSlug ${athleteSlug}:`, error);
+    return null;
+  }
+}
+
+/**
  * Get athlete rankings with optional filtering
  * Uses begins_with on sort key for hierarchical filtering
  *

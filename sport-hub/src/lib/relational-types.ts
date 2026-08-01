@@ -24,7 +24,9 @@ export interface UserProfileRecord extends UserTableRecord {
 
   // Identity linkage
   isaUsersId?: string;     // Link to isa-users reference DB (e.g., "ISA_FBE8B254")
-  athleteSlug?: string;    // Slug from ISA-Rankings (e.g., "john-doe")
+  athleteSlug?: string;    // Canonical URL slug (e.g., "john-doe"), unique via athleteSlug-index GSI.
+                           // Set from ISA-Rankings on migrated users, or generated from name/surname
+                           // on onboarding/enrichment/creation for everyone else.
 
   // Identity data
   // Note: email is used to link Cognito users to existing sporthub-users records

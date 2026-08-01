@@ -40,9 +40,9 @@ const ContestSummary = ({ contest, idx, values }: { contest: ContestFormValues; 
             value={[contest.startDate, contest.endDate].filter(Boolean).join(" – ")}
           />
         )}
-        {contest.totalPrizeValue ? (
+        {/* {contest.totalPrizeValue ? (
           <Row label="Prize pool" value={`€${contest.totalPrizeValue.toLocaleString()}`} />
-        ) : null}
+        ) : null} */}
         <Row
           label="Judges"
           value={

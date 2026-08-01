@@ -58,7 +58,7 @@ sport-hub/
 │   │   │   ├── revalidate/     # On-demand ISR revalidation
 │   │   │   ├── users/          # Users API
 │   │   │   └── test-local/     # Local DB test endpoints
-│   │   ├── athlete-profile/    # Athlete profile pages
+│   │   ├── athlete/    # Athlete profile pages
 │   │   ├── auth/               # Sign-in / auth error pages
 │   │   ├── contact/            # Contact page
 │   │   ├── dashboard/          # User dashboard
@@ -273,8 +273,8 @@ DYNAMODB_ENDPOINT=http://localhost:8000
 AWS_REGION=us-east-2
 AWS_ACCESS_KEY_ID=dummy
 AWS_SECRET_ACCESS_KEY=dummy
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your_secret
+AUTH_URL=http://localhost:3000
+AUTH_SECRET=your_secret
 LOCAL_REFERENCE_DB=false
 ```
 

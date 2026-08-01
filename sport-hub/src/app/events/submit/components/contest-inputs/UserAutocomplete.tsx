@@ -59,7 +59,7 @@ export default function UserAutocomplete<TFormValues>({
       <div className="stack gap-1">
         <span className="text-xs text-gray-500">Name</span>
         <a
-          href={`/athlete-profile/${formikValueUserId}`}
+          href={`/athlete/${formikValueUserId}`}
           className="text-sm px-2 py-1.5 border border-gray-200 rounded bg-gray-50 text-blue-600 hover:underline min-w-32 inline-block"
         >
           {currentFormValueUserName || formikValueUserId}

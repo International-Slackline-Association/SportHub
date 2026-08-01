@@ -5,7 +5,7 @@
  * isa-users is read-only — all Cognito users are guaranteed to exist there already.
  */
 
-import { createUser, generateSportHubId, updateUserData } from './user-service';
+import { createUser, generateSportHubId, generateUniqueAthleteSlug, updateUserData } from './user-service';
 import { getReferenceUserByEmail } from './reference-db-service';
 import type { UserProfileRecord } from './relational-types';
 
@@ -39,7 +39,14 @@ export async function ensureUserExists(
   // getUserByEmail in auth.ts already confirmed this user has no sporthub record
   const sportHubId = generateSportHubId();
 
-  await createUser(sportHubId, { email, isaUsersId });
+  // isa-users already has name/surname at this point — generate the canonical
+  // athleteSlug now so every athlete is slug-accessible immediately, not just
+  // lazily on next login.
+  const athleteSlug = referenceUser.name
+    ? await generateUniqueAthleteSlug(referenceUser.name, referenceUser.surname)
+    : undefined;
+
+  await createUser(sportHubId, { email, isaUsersId, athleteSlug });
   console.log(`[Onboarding] Created ${sportHubId} (isaUsersId: ${isaUsersId}) for ${email}`);
 
   return sportHubId;
@@ -77,6 +84,16 @@ export async function enrichUserFromReferenceDb(
   if (!existingUser.city)        updates.city        = referenceUser.city    ?? undefined;
   if (!existingUser.gender)      updates.gender      = referenceUser.gender  ?? undefined;
   if (!existingUser.birthdate)   updates.birthdate   = referenceUser.birthDate ?? undefined;
+
+  // Self-heal missing athleteSlug for profiles that predate this feature or
+  // were never touched by ensureUserExists's slug generation.
+  if (!existingUser.athleteSlug) {
+    const name = existingUser.name ?? updates.name;
+    const surname = existingUser.surname ?? updates.surname;
+    if (name) {
+      updates.athleteSlug = await generateUniqueAthleteSlug(name, surname);
+    }
+  }
 
   if (Object.keys(updates).length === 0) return;
 

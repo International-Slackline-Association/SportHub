@@ -5,13 +5,13 @@ import { revalidatePath } from 'next/cache';
 import { invalidateUsersCache } from '@lib/data-services';
 import { UserFormValues } from './types';
 import type { Role, UserSubType } from 'src/types/rbac';
-import { getUser, deleteUser as deleteUserRecord, updateUserRoleAndSubTypes as updateRoleService, saveUserProfile } from '@lib/user-service';
+import { getUser, deleteUser as deleteUserRecord, updateUserRoleAndSubTypes as updateRoleService, saveUserProfile, generateUniqueAthleteSlug } from '@lib/user-service';
 import type { UserProfileRecord } from '@lib/relational-types';
 
 export async function createUser(payload: UserFormValues, path: string) {
   const userId = payload?.id || `athlete-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-  const athleteSlug = `${payload.name}--${payload.surname || ''}`.toLowerCase().replace(/\s+/g, '-').replace(/-+$/, '');
+  const athleteSlug = await generateUniqueAthleteSlug(payload.name, payload.surname);
 
   const user = {
     ...payload,
@@ -51,8 +51,7 @@ export async function updateUser(formData: FormData) {
     throw new Error('User not found');
   }
 
-  const finalSurname = surname || '';
-  const athleteSlug = `${name}--${finalSurname}`.toLowerCase().replace(/\s+/g, '-').replace(/-+$/, '');
+  const athleteSlug = await generateUniqueAthleteSlug(name, surname, existingUser.userId);
 
   const updatedUser = {
     ...existingUser,

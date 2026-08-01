@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getUsersPaginated } from '@lib/user-query-service';
-import { createUserWithProfile } from '@lib/user-service';
+import { createUserWithProfile, generateUniqueAthleteSlug } from '@lib/user-service';
 
 const DEFAULT_PAGE_SIZE = 100;
 
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
     // Generate ID if not provided
     const userId = body.id || `athlete-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    const athleteSlug = `${trimmedName}--${trimmedSurname || ''}`.toLowerCase().replace(/\s+/g, '-').replace(/-+$/, '');
+    const athleteSlug = await generateUniqueAthleteSlug(trimmedName, trimmedSurname);
 
     const created = await createUserWithProfile(userId, {
       name: trimmedName,

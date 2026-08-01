@@ -22,6 +22,10 @@
  * Features:
  *   - Idempotent: Can be re-run safely - reuses existing athlete IDs, creates new ones only for new athletes
  *   - Generates unique SportHub IDs (SportHubID:xxxxxxxx) for each athlete
+ *   - Generates a unique, canonical athleteSlug per new athlete via the shared
+ *     generateUniqueAthleteSlug helper (single-dash, diacritic-stripped,
+ *     GSI-uniqueness-checked) — preserves an already-assigned slug on re-run
+ *     rather than regenerating it
  *   - Strips points prefixes ($ 900 -> 900)
  *   - Populates isaUsersId on user profiles from participation data
  *   - Creates hierarchical sort keys for efficient querying
@@ -37,6 +41,7 @@ import {
   ScanCommandInput,
   QueryCommandInput,
 } from "@aws-sdk/lib-dynamodb";
+import { generateUniqueAthleteSlug } from '../user-service';
 
 // Configuration
 const USE_LOCAL = process.env.DYNAMODB_LOCAL === 'true';
@@ -384,10 +389,10 @@ async function buildIsaUsersLookup(): Promise<IsaUsersLookup> {
  * Step 0: Scan existing SportHub athletes to enable idempotent re-runs
  * Returns Map of ISA-Rankings PK -> existing userId
  */
-async function scanExistingAthletes(): Promise<Map<string, string>> {
+async function scanExistingAthletes(): Promise<Map<string, { userId: string; athleteSlug?: string }>> {
   console.log('🔍 Scanning existing SportHub athletes for idempotency...');
 
-  const existingAthletes = new Map<string, string>(); // isaRankingsPK -> userId
+  const existingAthletes = new Map<string, { userId: string; athleteSlug?: string }>(); // isaRankingsPK -> { userId, athleteSlug }
   let scannedCount = 0;
   let lastEvaluatedKey: Record<string, unknown> | undefined = undefined;
 
@@ -398,7 +403,7 @@ async function scanExistingAthletes(): Promise<Map<string, string>> {
       ExpressionAttributeValues: {
         ':profile': 'Profile'
       },
-      ProjectionExpression: 'userId, isaRankingsPK',
+      ProjectionExpression: 'userId, isaRankingsPK, athleteSlug',
       ExclusiveStartKey: lastEvaluatedKey
     };
 
@@ -409,9 +414,10 @@ async function scanExistingAthletes(): Promise<Map<string, string>> {
         for (const item of response.Items) {
           const userId = item.userId as string;
           const isaRankingsPK = item.isaRankingsPK as string;
+          const athleteSlug = item.athleteSlug as string | undefined;
 
           if (isaRankingsPK) {
-            existingAthletes.set(isaRankingsPK, userId);
+            existingAthletes.set(isaRankingsPK, { userId, athleteSlug });
             scannedCount++;
           }
         }
@@ -442,7 +448,7 @@ async function scanExistingAthletes(): Promise<Map<string, string>> {
  * Returns Map keyed by userId (unique SportHubID)
  */
 async function scanAthleteDetails(
-  existingAthletes: Map<string, string>,
+  existingAthletes: Map<string, { userId: string; athleteSlug?: string }>,
   isaUsersLookup: IsaUsersLookup
 ): Promise<{
   athletes: Map<string, Partial<AthleteProfile>>;
@@ -477,7 +483,7 @@ async function scanAthleteDetails(
 
     for (const item of response.Items) {
       const athletePK = item.PK as string; // e.g., "Athlete:daniel"
-      const athleteSlug = athletePK.replace('Athlete:', '');
+      const existingEntry = existingAthletes.get(athletePK);
 
       // Extract name and surname from ISA-Rankings (trimmed)
       const name = (item.name as string | undefined)?.trim() || undefined;
@@ -516,9 +522,9 @@ async function scanAthleteDetails(
 
       // Check if athlete already exists in SportHub (idempotency)
       let userId: string;
-      if (existingAthletes.has(athletePK)) {
+      if (existingEntry) {
         // REUSE existing userId
-        userId = existingAthletes.get(athletePK)!;
+        userId = existingEntry.userId;
         reusedCount++;
       } else {
         // Generate NEW unique SportHub ID (ensure no collisions with existing OR newly generated IDs)
@@ -547,7 +553,14 @@ async function scanAthleteDetails(
       const genderNum = item.gender as number | undefined;
       const gender = genderNum === 1 ? 'male' : genderNum === 2 ? 'female' : undefined;
 
-      // Use userId as key (unique), not athleteSlug (can have duplicates)
+      // Preserve an already-assigned slug on re-run (never regenerate — that
+      // would silently change an already-published canonical URL). Only
+      // generate one for athletes that don't have one yet: new athletes, or
+      // existing ones that predate this field.
+      const athleteSlug = existingEntry?.athleteSlug
+        ?? (name ? await generateUniqueAthleteSlug(name, surname) : undefined);
+
+      // Use userId as key (unique) — athleteSlug is now generated uniquely too
       athletes.set(userId, {
         userId,
         isaUsersId,

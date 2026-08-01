@@ -132,10 +132,10 @@ export default function ProfileSection({
               </span>
             </dd>
           </div>
-          <div>
+          {/* <div>
             <dt className="text-sm font-medium text-gray-500">SportHub User ID</dt>
             <dd className="mt-1 text-xs text-gray-900 font-mono break-all">{userId}</dd>
-          </div>
+          </div> */}
           {isaUsersId && (
             <div>
               <dt className="text-sm font-medium text-gray-500">ISA User ID</dt>

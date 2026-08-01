@@ -96,7 +96,8 @@ export const { handlers, signIn, signOut, auth, unstable_update } = NextAuth({
               // is a no-op when nothing is missing. Must be awaited — fire-and-forget is
               // killed before completion in serverless runtimes.
               const needsEnrichment = !existingUser.isaUsersId || !existingUser.name
-                || !existingUser.country || !existingUser.gender || !existingUser.birthdate;
+                || !existingUser.country || !existingUser.gender || !existingUser.birthdate
+                || !existingUser.athleteSlug;
               if (needsEnrichment) {
                 await enrichUserFromReferenceDb(existingUser, token.email as string).catch(err =>
                   console.warn('[Auth] Non-fatal: could not enrich user from isa-users:', err)
