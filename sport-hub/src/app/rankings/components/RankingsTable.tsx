@@ -14,7 +14,7 @@ import { Alert } from '@ui/Alert';
 import tableStyles from '@ui/Table/styles.module.css';
 import { CountryFlag } from '@ui/CountryFlag';
 import { DisciplineDropdown } from '@ui/Form';
-import { DISCIPLINE_DATA } from '@utils/consts';
+import { DISCIPLINE_DATA, MAP_DISCIPLINE_ENUM_TO_NAME } from '@utils/consts';
 
 const columnHelper = createColumnHelper<AthleteRanking>();
 
@@ -124,13 +124,17 @@ const YEAR_OPTIONS = [
 
 type RankingsTableProps = {
   discipline: Discipline;
-  onChangeDiscipline: (enumValue: string) => void;
+  onChangeDiscipline: (discipline: Discipline) => void;
 }
 
 const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) => {
   const { isDesktop } = useClientMediaQuery();
   const [selectedYear, setSelectedYear] = useState('last3years');
   const disciplineEnumValue = DISCIPLINE_DATA[discipline].enumValue;
+
+  const handleChangeDiscipline = (enumValue: string) => {
+    onChangeDiscipline(MAP_DISCIPLINE_ENUM_TO_NAME[Number(enumValue)]);
+  };
 
   const { data = [], error, isError, isLoading, isSuccess } = useQuery({
     queryKey: ['rankings', selectedYear, disciplineEnumValue],
@@ -178,7 +182,7 @@ const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) =
                 className={tableStyles.columnFilter}
                 id="rankings-discipline"
                 initialValue={String(disciplineEnumValue)}
-                onChange={onChangeDiscipline}
+                onChange={handleChangeDiscipline}
               />
             </>
           }
