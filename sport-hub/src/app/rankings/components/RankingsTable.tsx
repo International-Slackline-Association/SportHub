@@ -23,7 +23,7 @@ const NameCell = ({ athlete }: { athlete: AthleteRanking }) => {
   return (
     <Link
       className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
-      href={`/athlete-profile/${athlete.userId}`}
+      href={`/athlete/${athlete.userId}`}
     >
       {displayName}
     </Link>

@@ -40,6 +40,7 @@ export const TABLE_SCHEMAS: TableSchema[] = [
       { AttributeName: 'totalPoints', AttributeType: 'N' },
       { AttributeName: 'discipline', AttributeType: 'S' },    // For discipline-rankings-index
       { AttributeName: 'gsiSortKey', AttributeType: 'S' },     // For sorting: points#userId
+      { AttributeName: 'athleteSlug', AttributeType: 'S' },    // For athleteSlug-index
     ],
     globalSecondaryIndexes: [
       {
@@ -55,6 +56,13 @@ export const TABLE_SCHEMAS: TableSchema[] = [
         KeySchema: [
           { AttributeName: 'discipline', KeyType: 'HASH' },
           { AttributeName: 'gsiSortKey', KeyType: 'RANGE' },  // Format: points#userId
+        ],
+        Projection: { ProjectionType: 'ALL' },
+      },
+      {
+        IndexName: 'athleteSlug-index',
+        KeySchema: [
+          { AttributeName: 'athleteSlug', KeyType: 'HASH' },
         ],
         Projection: { ProjectionType: 'ALL' },
       },

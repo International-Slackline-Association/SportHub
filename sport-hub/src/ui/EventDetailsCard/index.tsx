@@ -1,5 +1,5 @@
 import type { EventRecord } from '@lib/relational-types';
-import { Discipline, Badge, Country, Role } from '@ui/Badge';
+import { Badge, Country, Role } from '@ui/Badge';
 import { LabelValuePair } from '@ui/LabelValuePair';
 import { StackedMediaCard } from '@ui/StackedMediaCard';
 import { SocialMediaLinks } from '@ui/SocialMediaLinks';
@@ -71,15 +71,12 @@ export const EventDetailsCard = ({ event }: EventDetailsCardProps) => {
 		city,
 		country,
 		name,
-		discipline,
 		website,
-		prize,
 		profileUrl,
 		thumbnailUrl,
 		verified,
 	} = event;
 
-	const disciplineList = Array.isArray(discipline) ? (discipline as string[]) : (discipline ? [discipline as string] : []);
 	const countryName = getCountryByCode(country?.toLowerCase() || "")?.name;
   const youtubeId = extractYouTubeId(thumbnailUrl || '');
 	const dateRange = formatDateRange(new Date(startDate), new Date(endDate));
@@ -112,7 +109,7 @@ export const EventDetailsCard = ({ event }: EventDetailsCardProps) => {
 							) : "None"
 						} 
 					/>
-					<LabelValuePair label="Total Winning Points Awarded" value={prize != null && prize !== 0 ? `${Number(prize).toLocaleString()} pts` : undefined} />
+					{/* <LabelValuePair label="Total Winning Points Awarded" value={prize != null && prize !== 0 ? `${Number(prize).toLocaleString()} pts` : undefined} />
 					<div className="col-span-full">
 						<LabelValuePair
 							label="Discipline(s)"
@@ -124,7 +121,7 @@ export const EventDetailsCard = ({ event }: EventDetailsCardProps) => {
 								</>
 							)}
 						/>
-					</div>
+					</div> */}
 				</div>
 				{!!youtubeId &&
 					<Image

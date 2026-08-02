@@ -58,7 +58,7 @@ sport-hub/
 │   │   │   ├── revalidate/     # On-demand ISR revalidation
 │   │   │   ├── users/          # Users API
 │   │   │   └── test-local/     # Local DB test endpoints
-│   │   ├── athlete-profile/    # Athlete profile pages
+│   │   ├── athlete/    # Athlete profile pages
 │   │   ├── auth/               # Sign-in / auth error pages
 │   │   ├── contact/            # Contact page
 │   │   ├── dashboard/          # User dashboard

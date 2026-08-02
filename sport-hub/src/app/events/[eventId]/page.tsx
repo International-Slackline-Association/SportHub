@@ -129,7 +129,7 @@ export default async function EventPage({ params, searchParams }: EventPageProps
               <p className="text-sm text-gray-500">
                 Organized by{' '}
                 <Link
-                  href={`/athlete-profile/${encodeURIComponent(organizerId)}`}
+                  href={`/athlete/${encodeURIComponent(organizerId)}`}
                   className="text-blue-600 hover:underline font-medium"
                 >
                   {organizerName ?? String(event.createdByName ?? organizerId)}
@@ -258,7 +258,7 @@ export default async function EventPage({ params, searchParams }: EventPageProps
                         <td className="p-3 font-semibold">{participant.place}</td>
                         <td className="p-3">
                           <Link
-                            href={`/athlete-profile/${participant.userId}`}
+                            href={`/athlete/${participant.userId}`}
                             className="text-blue-600 hover:underline"
                           >
                             {participant.name}

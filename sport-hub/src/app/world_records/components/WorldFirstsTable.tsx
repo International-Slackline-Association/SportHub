@@ -71,7 +71,7 @@ const columns = [
           <div className="cluster items-center justify-between">
             <span className="font-medium">
               {info.row.original.athleteUserId
-                ? <Link href={`/athlete-profile/${info.row.original.athleteUserId}`} className={linkClassName}>{name}</Link>
+                ? <Link href={`/athlete/${info.row.original.athleteUserId}`} className={linkClassName}>{name}</Link>
                 : name
               }
             </span>

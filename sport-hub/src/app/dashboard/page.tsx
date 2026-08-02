@@ -51,7 +51,7 @@ export default async function DashboardPage() {
             </p>
           </div>
           <Link
-            href={`/athlete-profile/${encodeURIComponent(session.user.id)}`}
+            href={`/athlete/${encodeURIComponent(session.user.id)}`}
             className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 font-medium shrink-0"
           >
             View Profile
