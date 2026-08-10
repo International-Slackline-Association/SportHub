@@ -1,10 +1,10 @@
 import { Alert } from "@ui/Alert";
-import { EventStatus, statusColor } from "../page";
+import { EventStatus } from "../page";
 import { COUNTRIES } from "@utils/countries";
-import { formatDateRangeShort } from "@utils/dates";
+import { formatDate, formatDateRangeShort } from "@utils/dates";
 import Link from "next/link";
 import { Badge, Discipline } from "@ui/Badge";
-import { MyEventActions } from "./MyEventsTable";
+import { MyEventActions, statusColor } from "./MyEventsTable";
 
 export const MyEventsList = ({ events }: {events: Record<string, unknown>[]}) => {
   if (events.length === 0) {
@@ -25,9 +25,9 @@ export const MyEventsList = ({ events }: {events: Record<string, unknown>[]}) =>
         const disciplines = (event.disciplines as string[] | undefined) ?? [];
         const contests = (event.contests as unknown[] | undefined) ?? [];
         const formattedCreatedAt = event.createdAt
-          ? new Date(String(event.createdAt)).toLocaleDateString()
+          ? formatDate(new Date(Number(event.createdAt)).toLocaleDateString())
           : "—";
-        const formattedEventName = String(event.name ?? "—");
+        const formattedEventName = String(event.eventName ?? "—");
         const formattedDateRange = formatDateRangeShort(new Date(event?.startDate as string), new Date(event.endDate as string));
         const formattedLocation = `${event.city}, ${countryName}`;
 

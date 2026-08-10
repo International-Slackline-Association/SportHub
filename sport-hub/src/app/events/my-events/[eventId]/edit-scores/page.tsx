@@ -31,7 +31,6 @@ export default async function EditScoresPage({ params }: Props) {
     redirect(`/events/my-events/${eventId}/edit`);
 
   }
-
   const disciplines = [
     ...new Set(
       event.contests.flatMap(c =>
@@ -41,17 +40,18 @@ export default async function EditScoresPage({ params }: Props) {
   ];
   const website = event.contests?.[0]?.infoUrl as string;
 
+  console.log("disciplines", event);
 
   const initialValues: EventSubmissionFormValues = {
     event: {
-      name: event.eventName,
+      eventName: event.eventName,
       city: (event.city as string) || '',
       country: (event.country as string) || '',
       startDate: (event.startDate as string) || '',
       endDate: (event.endDate as string) || '',
       website,
       disciplines,
-      socialMedia: {},
+      links: [],
     },
     contests: event.contests.map((c) => ({
       ...c,

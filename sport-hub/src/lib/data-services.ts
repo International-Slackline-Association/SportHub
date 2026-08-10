@@ -303,7 +303,7 @@ export async function getEventsData(): Promise<EventMetadataRecord[]> {
     const allItems = await scanAllEventItems({
       projectionExpression: 'eventId, eventName, sortKey, country, city, profileUrl, thumbnailUrl, startDate, endDate'
     });
-    console.log("All Items:", allItems.slice(4));
+
     if (!allItems || allItems.length === 0) {
       return [];
     }

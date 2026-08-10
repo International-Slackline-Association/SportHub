@@ -4,9 +4,10 @@ import { ReactNode } from "react";
 import { useFormikContext } from "formik";
 import { ContestFormValues, ContestResultEntry, EventSubmissionFormValues } from "../types";
 import { getContestNameFromForm } from "./contest-inputs/TabbedContestForms";
-import { snakeCaseToTitleCase } from "@utils/strings";
+import { snakeCaseToTitleCase, textToTitleCase } from "@utils/strings";
 import { disciplineOptions, ageCategoryOptions, judgingSystemOptions, contestSizeOptions, eventGenderOptions } from "@ui/Form/commonOptions";
 import { COUNTRIES } from "@utils/countries";
+import { networkFor } from "react-social-icons";
 
 const labelOf = (opts: Option[], val: string | undefined) =>
   opts.find(o => o.value === val)?.label ?? (val ? snakeCaseToTitleCase(val) : "—");
@@ -99,9 +100,7 @@ export const ReviewEventForm = () => {
   const { event, contests = [] } = values;
 
   const countryName = COUNTRIES.find(c => c.code === event.country)?.name ?? event.country;
-
-  const socialEntries = Object.entries(event.socialMedia ?? {}).filter(([, v]) => v);
-
+  console.log(event);
   return (
     <div className="stack gap-6 p-4 sm:p-0">
 
@@ -109,7 +108,7 @@ export const ReviewEventForm = () => {
       <section className="stack gap-3">
         <h3 className="font-semibold border-b border-gray-200 pb-2">Event Details</h3>
         <div className="stack gap-1">
-          <div className="text-base font-medium">{event.name || "—"}</div>
+          <div className="text-base font-medium">{event.eventName || "—"}</div>
           <Row label="Dates" value={[event.startDate, event.endDate].filter(Boolean).join(" – ")} />
           <Row label="Location" value={[event.city, countryName].filter(Boolean).join(", ")} />
           <Row label="Website" value={event.website} />
@@ -121,12 +120,16 @@ export const ReviewEventForm = () => {
                 : undefined
             }
           />
-          {socialEntries.length > 0 && (
-            <Row
-              label="Social media"
-              value={socialEntries.map(([platform, handle]) => `${snakeCaseToTitleCase(platform)}: ${handle}`).join(" · ")}
-            />
+          {event.links?.length > 0 && (
+            <div className="text-base text-sm font-medium">Links</div>
           )}
+          {event.links?.map((link, i) => (
+            <Row
+              key={i}
+              label={textToTitleCase(networkFor(link))}
+              value={link}
+            />
+          ))}
         </div>
       </section>
 

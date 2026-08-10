@@ -146,6 +146,7 @@ export interface EventMetadataRecord extends EventTableRecord {
   city?: string;
   country: string;
   contestCount: number;
+  links: string[];
 
   // Metadata
   type?: 'competition' | 'clinic' | 'meetup';
@@ -159,9 +160,14 @@ export interface EventMetadataRecord extends EventTableRecord {
   // Organizers (optional)
   organizers?: EventOrganizer[];
 
+  disciplines?: string[];  // Optional list of disciplines for the event (not used in queries)
+
   // Optional embedded contests for convenience (not used in queries)
   // Currently no records have these values, but they could in the future
   contests?: ContestRecord[];  
+
+  // Old format
+  name?: string;
 }
 
 /**

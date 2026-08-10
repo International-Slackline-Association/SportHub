@@ -16,12 +16,9 @@ interface Contest {
   date: string;
   discipline: string;
   gender: number;
-  infoUrl?: string;
   name: string;
   normalizedName: string;
   prize: number;
-  profileUrl: string;
-  thumbnailUrl: string;
   verified: boolean;
 };
 

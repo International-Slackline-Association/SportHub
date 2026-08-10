@@ -15,7 +15,7 @@ export const getContestNameFromForm = (formValues: EventSubmissionFormValues, co
   const displayDiscipline = snakeCaseToTitleCase(getIn(formValues, `${contestKey}.discipline`));
   const displayContestSize = snakeCaseToTitleCase(getIn(formValues, `${contestKey}.contestSize`));
   const displayGender = snakeCaseToTitleCase(getIn(formValues, `${contestKey}.gender`));
-  const displayName = formValues.event.name || `Contest ${contestIdx + 1}`;
+  const displayName = formValues.event.eventName || `Contest ${contestIdx + 1}`;
   return `${displayName} ${displayGender} ${displayDiscipline} ${displayContestSize}`.trim();
 };
 

@@ -2,11 +2,18 @@ import Link from "next/link";
 import { submitEventForApproval, withdrawEventFromApproval } from "../../submit/actions";
 import { COUNTRIES } from "@utils/countries";
 import tableStyles from '@ui/Table/styles.module.css';
-import { formatDateRangeShort } from "@utils/dates";
+import { formatDate, formatDateRangeShort } from "@utils/dates";
 import Button from "@ui/Button";
-import { Badge, Discipline } from "@ui/Badge";
-import { EventStatus, statusColor } from "../page";
+import { Badge, BadgeColor, Discipline } from "@ui/Badge";
+import { EventStatus } from "../page";
 import { Alert } from "@ui/Alert";
+
+export const statusColor: Record<EventStatus, BadgeColor> = {
+  draft: "NEUTRAL",
+  pending: "ORANGE",
+  published: "GREEN",
+  cancelled: "RED",
+};
 
 export const MyEventActions = ({ eventId, status }: { eventId: string, status: EventStatus }) => (
   <div className="flex gap-2 flex-wrap">
@@ -78,7 +85,6 @@ export const MyEventsTable = ({ events }: {events: Record<string, unknown>[]}) =
       </Alert>
     );
   }
-  
   return (
     <div className={tableStyles.tableContainer}>
       <div className={tableStyles.tableWrapper}>
@@ -97,6 +103,7 @@ export const MyEventsTable = ({ events }: {events: Record<string, unknown>[]}) =
           </thead>
           <tbody>
             {events.map((event) => {
+  
               const eventId = String(event.eventId ?? "");
               const status = (event.status as EventStatus) ?? "published";
               const countryCode = String(event.country ?? "");
@@ -104,9 +111,9 @@ export const MyEventsTable = ({ events }: {events: Record<string, unknown>[]}) =
               const disciplines = (event.disciplines as string[] | undefined) ?? [];
               const contests = (event.contests as unknown[] | undefined) ?? [];
               const formattedCreatedAt = event.createdAt
-                ? new Date(String(event.createdAt)).toLocaleDateString()
+                ? formatDate(new Date(Number(event.createdAt)).toLocaleDateString())
                 : "—";
-              const formattedEventName = String(event.name ?? "—");
+              const formattedEventName = String(event.eventName ?? "—");
               const formattedDateRange = formatDateRangeShort(new Date(event?.startDate as string), new Date(event.endDate as string));
               const formattedLocation = `${event.city}, ${countryName}`;
 

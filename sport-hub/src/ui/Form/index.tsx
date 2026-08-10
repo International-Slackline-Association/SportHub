@@ -58,7 +58,7 @@ export const FormikFormField = (props: PropsWithChildren<TextFieldProps | Select
   );
 };
 
-type TextFieldProps = BaseFormFieldProps<HTMLInputElement>;
+export type TextFieldProps = BaseFormFieldProps<HTMLInputElement>;
 export const FormikTextField = ({
   caption,
   className,

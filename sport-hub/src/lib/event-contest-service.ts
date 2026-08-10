@@ -33,6 +33,7 @@ export async function createEvent(params: {
     organizers: params.organizers || [],
     contestCount: 0,
     createdAt: Date.now(),
+    links: [],
   };
 
   await dynamodb.putItem(EVENTS_TABLE, event as unknown as Record<string, unknown>);
