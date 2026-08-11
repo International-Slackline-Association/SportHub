@@ -62,6 +62,17 @@
   transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, padding 0.3s ease-in-out;
 }
 
+.linkGroup {
+  border: 1px solid var(--color-neutral-200); 
+  border-radius: 4px;
+  padding: 8px;
+
+  div:first-child {
+    font-weight: 600;
+    font-size: 14px;
+  }
+}
+
 /* Debug info */
 .debugInfo {
   margin-top: 24px;

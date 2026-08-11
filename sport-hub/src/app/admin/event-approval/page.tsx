@@ -69,7 +69,7 @@ export default async function EventApprovalPage() {
                   <div className="flex flex-wrap gap-4 items-start justify-between p-4 bg-white">
                     <div className="stack gap-1">
                       <Link href={`/events/${eventId}`} className="font-semibold text-blue-700 hover:underline">
-                        {String(event.name ?? "—")}
+                        {String(event.eventName ?? "—")}
                       </Link>
                       <div className="text-xs text-gray-500 flex gap-3 flex-wrap">
                         <span>

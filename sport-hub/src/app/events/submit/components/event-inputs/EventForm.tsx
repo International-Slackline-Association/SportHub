@@ -1,14 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { getIn, useFormikContext } from 'formik';
+import { useFormikContext } from 'formik';
 import {
   FormikTextField,
   FormikSelectField,
   FormikCheckboxGroup,
   countryCodeOptions,
   disciplineOptions,
-  TextFieldProps
 } from '@ui/Form';
 import { EventSubmissionFormValues } from '../../types';
 import { cn } from '@utils/cn';
@@ -19,8 +18,7 @@ import EventAutocomplete from './EventAutocomplete';
 import YouTubePreviewTextField from './YouTubePreviewTextField'
 import FileInputField from './FileInputField';
 import { Alert } from '@ui/Alert';
-import { SocialIcon } from 'react-social-icons';
-import Button from '@ui/Button';
+import { LinkFieldArray } from '@ui/Form';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -58,36 +56,9 @@ const CollapsibleSection = ({
   );
 };
 
-const LinkFormikTextField = ({ className, id, onRemove, ...props }: TextFieldProps & { onRemove: () => void }) => {
-  const { values } = useFormikContext<EventSubmissionFormValues>();
-  const url = getIn(values, id);
-  return (
-    <div className={cn(className, "cluster gap-4")}>
-      <SocialIcon bgColor="transparent" fgColor="#000000" url={url} />
-      <FormikTextField
-        className="mb-2 grow"
-        id={id}
-        name={id}
-        type="url"
-        {...props}
-      />
-      <Button
-        onClick={onRemove}
-        variant="destructive-secondary"
-        size="small"
-        style={{ height: "min-content", marginTop: "8px" }}
-      >
-        Remove
-      </Button>
-    </div>
-  );
-};
-
 export default function EventForm() {
-  const { errors, values, setFieldValue} = useFormikContext<EventSubmissionFormValues>();
-
+  const { errors, values } = useFormikContext<EventSubmissionFormValues>();
   const isError = Object.keys(errors.event || {}).length > 0;
-  const links = getIn(values, "event.links");
 
   return (
     <div className={styles.eventForm}>
@@ -156,27 +127,7 @@ export default function EventForm() {
       </CollapsibleSection>
 
       <CollapsibleSection title="Links" defaultOpen>
-        <div>
-          {links?.map((_: string, idx: number) => (
-            <LinkFormikTextField
-              id={`event.links[${idx}]`}
-              key={`event.links[${idx}]`}
-              onRemove={() => {
-                const nextLinks = [...links];
-                nextLinks.splice(idx, 1);
-                console.log(links, "next", nextLinks);
-                setFieldValue("event.links", nextLinks);
-              }}
-              placeholder="Social network, live stream, event details, etc."
-            />
-          ))}
-          <Button
-            onClick={() => setFieldValue("event.links", [...links, ""])}
-            variant="default"
-          >
-            Add link
-          </Button>
-        </div>
+        <LinkFieldArray formKey="event.links" />
       </CollapsibleSection>
 
       {/* Debug info - remove in production */}

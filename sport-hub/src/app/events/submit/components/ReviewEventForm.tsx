@@ -8,6 +8,7 @@ import { snakeCaseToTitleCase, textToTitleCase } from "@utils/strings";
 import { disciplineOptions, ageCategoryOptions, judgingSystemOptions, contestSizeOptions, eventGenderOptions } from "@ui/Form/commonOptions";
 import { COUNTRIES } from "@utils/countries";
 import { networkFor } from "react-social-icons";
+import styles from './styles.module.css';
 
 const labelOf = (opts: Option[], val: string | undefined) =>
   opts.find(o => o.value === val)?.label ?? (val ? snakeCaseToTitleCase(val) : "—");
@@ -100,7 +101,7 @@ export const ReviewEventForm = () => {
   const { event, contests = [] } = values;
 
   const countryName = COUNTRIES.find(c => c.code === event.country)?.name ?? event.country;
-  console.log(event);
+
   return (
     <div className="stack gap-6 p-4 sm:p-0">
 
@@ -120,16 +121,16 @@ export const ReviewEventForm = () => {
                 : undefined
             }
           />
-          {event.links?.length > 0 && (
-            <div className="text-base text-sm font-medium">Links</div>
-          )}
-          {event.links?.map((link, i) => (
-            <Row
-              key={i}
-              label={textToTitleCase(networkFor(link))}
-              value={link}
-            />
-          ))}
+          <div className={styles.linkGroup}>
+            <div>Links</div>
+            {event.links?.map((link, i) => (
+              <Row
+                key={i}
+                label={textToTitleCase(networkFor(link))}
+                value={link}
+              />
+            ))}
+          </div>
         </div>
       </section>
 

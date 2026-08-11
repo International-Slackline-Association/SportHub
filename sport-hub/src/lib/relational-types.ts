@@ -51,14 +51,7 @@ export interface UserProfileRecord extends UserTableRecord {
   // Profile metadata
   profileUrl?: string;
   thumbnailUrl?: string;
-  socialMedia?: {
-    instagram?: string;
-    youtube?: string;
-    facebook?: string;
-    whatsapp?: string;
-    twitch?: string;
-    tiktok?: string;
-  };
+  links?: string[];
   createdAt: number;
   lastProfileUpdate?: number;
   profileCompleted?: boolean;

@@ -8,6 +8,7 @@ import { cn } from '@utils/cn';
 import { pascalCaseToTitleCase } from '@utils/strings';
 export * from './commonOptions';
 export { default as DisciplineDropdown } from './DisciplineDropdown';
+export { LinkFieldArray } from './LinkFieldArray';
 
 export const FormikSubmitButton = ({ children }: PropsWithChildren<Record<string, never>>) => {
   const { isSubmitting, isValid, dirty } = useFormikContext();

@@ -518,14 +518,7 @@ export interface AthleteProfile {
   roles: string[];
   profileImage?: string;
   athleteSlug?: string;
-  socialMedia?: {
-    instagram?: string;
-    youtube?: string;
-    facebook?: string;
-    whatsapp?: string;
-    twitch?: string;
-    tiktok?: string;
-  };
+  links?: string[];
 }
 
 export interface AthleteContest {
@@ -632,9 +625,6 @@ export async function getAthleteProfile(athleteId: string): Promise<AthleteProfi
       }
     }
 
-    // Use pre-parsed socialMedia from profile
-    const socialMedia = profile.socialMedia || undefined;
-
     return {
       name,
       surname,
@@ -645,7 +635,7 @@ export async function getAthleteProfile(athleteId: string): Promise<AthleteProfi
       roles: profile.userSubTypes?.map((t: string) => t.toUpperCase()) || ['ATHLETE'],
       profileImage: profile.profileUrl || profile.thumbnailUrl || undefined,
       athleteSlug: profile.athleteSlug || undefined,
-      socialMedia,
+      links: profile.links,
     };
   } catch (error) {
     console.error('Error fetching athlete profile:', error);

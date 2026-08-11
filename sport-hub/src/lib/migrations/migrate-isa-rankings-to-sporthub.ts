@@ -133,13 +133,13 @@ interface AthleteProfile {
   gender?: string;       // Gender from ISA-Rankings AthleteDetails
   profileUrl?: string;
   thumbnailUrl?: string;
-  socialMedia?: Record<string, string>;
   role: string;
   userSubTypes: string[];
   primarySubType: string;
   totalPoints: number;
   contestCount: number;
   createdAt: number;
+  links?: string[];
 }
 
 interface AthleteRanking {
@@ -213,41 +213,6 @@ function mapGender(n: number | undefined): string {
   if (n === 1) return 'MEN_ONLY';
   if (n === 2) return 'WOMEN_ONLY';
   return 'MIXED';
-}
-
-/**
- * Parse infoUrl field into structured social media links.
- */
-function parseInfoUrlToSocialMedia(infoUrl: string): Record<string, string> {
-  const result: Record<string, string> = {};
-  const entries = infoUrl.split(/[,\s]+/).filter(Boolean);
-
-  for (const entry of entries) {
-    const trimmed = entry.trim();
-    if (!trimmed) continue;
-
-    if (trimmed.includes('://') || trimmed.includes('.com') || trimmed.includes('.tv')) {
-      const lower = trimmed.toLowerCase();
-      if (lower.includes('instagram.com')) {
-        result.instagram = trimmed;
-      } else if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
-        result.youtube = trimmed;
-      } else if (lower.includes('facebook.com') || lower.includes('fb.com')) {
-        result.facebook = trimmed;
-      } else if (lower.includes('tiktok.com')) {
-        result.tiktok = trimmed;
-      } else if (lower.includes('twitch.tv')) {
-        result.twitch = trimmed;
-      }
-    } else {
-      const handle = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed;
-      if (handle && !result.instagram) {
-        result.instagram = `https://instagram.com/${handle}`;
-      }
-    }
-  }
-
-  return result;
 }
 
 // Statistics
@@ -575,7 +540,7 @@ async function scanAthleteDetails(
         gender,                   // Gender from ISA-Rankings AthleteDetails (converted from number)
         profileUrl: item.profileUrl as string | undefined,
         thumbnailUrl: item.thumbnailUrl as string | undefined,
-        socialMedia: item.infoUrl ? parseInfoUrlToSocialMedia(item.infoUrl as string) : undefined,
+        links: item?.infoUrl.split(/[,\s]+/).filter(Boolean),
         role: 'user',
         userSubTypes: ['athlete'],
         primarySubType: 'athlete',
