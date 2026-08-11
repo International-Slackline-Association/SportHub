@@ -173,7 +173,6 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
 
   try {
     const session = await auth();
-
     const existing = await getAssembledEvent(eventId);
     let existingEvent: Partial<EventMetadataRecord>;
     let isMigration = false;

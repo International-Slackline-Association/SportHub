@@ -89,6 +89,7 @@ export const { handlers, signIn, signOut, auth, unstable_update } = NextAuth({
             if (existingUser) {
               // Use existing user's SportHub ID (sporthub-users partition key)
               token.sportHubUserId = existingUser.userId;
+              token.name = existingUser.name;
               console.log(`[Auth] Found existing user by email: ${existingUser.userId}`);
 
               // Back-fill any missing reference DB fields (isaUsersId, name, country, etc.)

@@ -83,7 +83,7 @@ export default function EventAutocomplete() {
           endDate: event?.endDate,
           // TODO Backend: Missing columns from EventMetadataRecord - need to add to DynamoDB and data model
           website,
-          links: [],
+          links: event.links,
           disciplines: Array.from(disciplines ?? []),
           profileUrl: event.profileUrl as string,
           thumbnailUrl: event.thumbnailUrl as string,

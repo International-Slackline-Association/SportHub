@@ -248,7 +248,7 @@ const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
     initialData,
     staleTime: 60_000,
   });
-
+  console.log(data);
   const dateToday = new Date().toISOString().slice(0, 10);
   return (
     <div className="flex items-center justify-center min-h-64">

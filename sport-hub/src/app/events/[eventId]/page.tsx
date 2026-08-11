@@ -70,6 +70,7 @@ export default async function EventPage({ params, searchParams }: EventPageProps
         thumbnailUrl: (event.thumbnailUrl as string | undefined) || (eventContests[0]?.thumbnailUrl as string | undefined),
         verified: false,
         website: event.contests?.[0]?.infoUrl as string,
+        links: event.links,
       };
       
       // Process contests into clean tab data on the server.
