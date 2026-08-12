@@ -88,16 +88,6 @@ export default async function EventPage({ params, searchParams }: EventPageProps
     return (
       <PageLayout>
         <div className="space-y-6">
-          {isAdmin && (
-            <div className="flex justify-end">
-              <Link
-                href={`/events/my-events/${encodeURIComponent(decodedEventId)}/edit`}
-                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-              >
-                Edit Event
-              </Link>
-            </div>
-          )}
           <EventDetailsCard event={eventLike} />
           {organizerId && (
             <p className="text-sm text-gray-500">
@@ -111,8 +101,11 @@ export default async function EventPage({ params, searchParams }: EventPageProps
             </p>
           )}
           <ContestDetails
+            eventId={decodedEventId}
+            eventName={event.eventName}
             contests={contestTabs}
             initialTab={contestIdParam ? eventContests.findIndex(c => c.contestId === contestIdParam) : 0}
+            isAdmin={isAdmin}
           />
         </div>
       </PageLayout>
@@ -137,7 +130,7 @@ export default async function EventPage({ params, searchParams }: EventPageProps
           {isAdmin && (
             <div className="flex justify-end">
               <Link
-                href={`/events/my-events/${encodeURIComponent(decodedEventId)}/edit`}
+                href={`/events/my-events/${eventId}/edit`}
                 className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
               >
                 Edit Event

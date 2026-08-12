@@ -94,7 +94,7 @@ export const EventDetailsCard = ({ event }: EventDetailsCardProps) => {
 						{verified ? <Role variant="ISA_VERIFIED" /> : <Badge color="NEUTRAL">Unverified</Badge>}
 						<h2>{name}</h2>
 					</div>
-					<LabelValuePair label="Date" value={dateRange} />
+					<LabelValuePair label="Date(s)" value={dateRange} />
 					<LabelValuePair
 						label="Location"
 						value={<Country countryCode={country || "N/A"} label={[city, countryName].filter(Boolean).join(', ')} />}
