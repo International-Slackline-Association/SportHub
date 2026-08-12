@@ -37,6 +37,14 @@
   background-color: var(--color-neutral-500);
 }
 
+.contestSizeChallenge {
+  color: var(--color-neutral-500);
+}
+
+.contestSizeChallenge .dot {
+  background-color: var(--color-blue-500);
+}
+
 .contestSizeOpen {
   color: var(--color-neutral-500);
 }
@@ -143,6 +151,11 @@
 }
 
 /* Age Category Badges */
+.ageAll {
+  background-color: var(--color-neutral-200);
+  color: var(--color-neutral-600);
+}
+
 .ageProfessional {
   background-color: var(--color-neutral-200);
   color: var(--color-neutral-600);

@@ -197,6 +197,7 @@ export interface ContestRecord extends EventTableRecord {
   // Judges/Organizers (optional)
   judges?: ContestJudge[];
   organizers?: EventOrganizer[];
+  judgingSystem?: JudgingSystem;
 
   // Metadata
   createdAt?: number;

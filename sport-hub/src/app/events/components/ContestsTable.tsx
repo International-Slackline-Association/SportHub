@@ -14,7 +14,7 @@ import Spinner from '@ui/Spinner';
 import { Alert } from '@ui/Alert';
 import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import { CountryFlag } from '@ui/CountryFlag';
-import styles from './ContestsTable.module.css';
+import styles from './styles.module.css';
 import { formatDateRange } from '@utils/dates';
 import { kebabCaseToTitleCase, snakeCaseToTitleCase } from '@utils/strings';
 

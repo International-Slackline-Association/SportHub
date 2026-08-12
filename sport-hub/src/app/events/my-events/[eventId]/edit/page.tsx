@@ -78,7 +78,7 @@ export default async function EditEventPage({ params }: Props) {
         .map((c) => MAP_DISCIPLINE_ENUM_TO_NAME[Number(c.discipline)])
         .filter(Boolean)
     )] as EventFormValues['disciplines'];
-    const website = event.contests?.[0].infoUrl || "";
+    const website = event?.contests?.[0]?.infoUrl || "";
     initialValues = {
       event: {
         ...eventData,

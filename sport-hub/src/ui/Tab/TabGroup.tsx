@@ -4,16 +4,16 @@ import styles from "./styles.module.css";
 
 export interface TabItem {
   id: string;
-  label: string;
+  label: string | React.ReactNode;
   disabled?: boolean;
 }
 
-interface TabGroupProps {
-  tabs: TabItem[];
+export interface TabGroupProps {
   activeTab?: string;
-  onTabChange?: (tabId: string) => void;
-  variant?: TabVariant;
   className?: string;
+  onTabChange?: (tabId: string) => void;
+  tabs: TabItem[];
+  variant?: TabVariant;
 }
 
 const TabGroup = ({

@@ -8,6 +8,8 @@
 import { dynamodb, EVENTS_TABLE } from './dynamodb';
 import type { EventMetadataRecord, ContestRecord, EventOrganizer } from './relational-types';
 
+export interface AssembledEvent extends EventMetadataRecord { contests: ContestRecord[] };
+
 /**
  * Create new event (metadata record only)
  */
@@ -218,32 +220,33 @@ export async function putEventItem(record: Record<string, unknown>): Promise<voi
 /**
  * Get assembled event (metadata + sorted Contest records)
  *
- * Equivalent to the local `getEvent()` in events/submit/actions.ts — returns
- * `{ ...metadataOnly, contests }` where contests are separate Contest:* records
- * (or the embedded array for old-format events).
+ * Returns `{ ...metadataOnly, contests }` where contests are separate Contest:* records
  */
 export async function getAssembledEvent(
   eventId: string
-): Promise<{ success: boolean; event: EventMetadataRecord & { contests: ContestRecord[] } | null }> {
+): Promise<{ success: boolean; event: AssembledEvent | null }> {
   try {
-    const metadata = await dynamodb.getItem(EVENTS_TABLE, { eventId, sortKey: 'Metadata' }) as EventMetadataRecord;
+    const metadata = await getEvent(eventId);
     if (!metadata) {
       return { success: false, event: null };
     }
 
-    const contestItems = await dynamodb.queryItems(
-      EVENTS_TABLE,
-      'eventId = :eid AND begins_with(sortKey, :prefix)',
-      { ':eid': eventId, ':prefix': 'Contest:' },
-    );
-
-    const sortedContests = [...contestItems].sort(
-      (a, b) => ((a.contestIndex as number) || 0) - ((b.contestIndex as number) || 0)
-    ) as ContestRecord[];
+    let contests: ContestRecord[] = [];
     const { contests: embeddedContests, ...metadataOnly } = metadata;
-    const contests = sortedContests.length > 0
-      ? sortedContests
-      : (embeddedContests as ContestRecord[]) || [];
+
+    const hasEmbeddedContests = Array.isArray(embeddedContests) && embeddedContests.length > 0;
+
+    // If the event has embedded contests (new format), use those; 
+    // otherwise, use the separate Contest:* records
+    if (hasEmbeddedContests) {
+      contests = embeddedContests;
+    } else {
+      contests = await getEventContests(eventId);
+    }
+
+    contests = contests.sort(
+      (a, b) => (a.contestIndex || 0) - (b.contestIndex || 0)
+    );
 
     return { success: true, event: { ...metadataOnly, contests } };
   } catch (error) {

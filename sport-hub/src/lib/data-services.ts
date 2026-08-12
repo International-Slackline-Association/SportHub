@@ -321,7 +321,7 @@ export async function getEventsData(): Promise<EventMetadataRecord[]> {
 }
 
 /**
- * Get all contests for events table
+ * Get all contests from events table
  * OPTIMIZED: Scan with projection expression (reduces data transfer) + 10-min caching
  *
  * NOTE: Table scan is necessary here because we need ALL contests across ALL events.
