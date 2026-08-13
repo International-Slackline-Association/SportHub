@@ -157,6 +157,11 @@
   width: 20px;
 }
 
+.filterUpcomingDatesOnly {
+  position: absolute;
+  top: 80px;
+}
+
 .accordionOpen {
   max-height: 1000px; /* Set a max height larger than content */
   opacity: 1;

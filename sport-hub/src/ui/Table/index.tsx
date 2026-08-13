@@ -28,6 +28,8 @@ declare module "@tanstack/react-table" {
     filterPlaceholder?: string;
     /** When true, hides the blank "All" option in select filters. */
     filterNoAll?: boolean;
+    /** When true, renders toggle to filter for future dates */
+    dateFilterShowUpcomingToggle?: boolean;
   }
 }
 

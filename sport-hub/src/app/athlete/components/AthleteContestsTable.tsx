@@ -4,6 +4,7 @@ import Table from '@ui/Table';
 import Link from 'next/link';
 import { DISCIPLINE_DATA } from '@utils/consts';
 import { contestSizeOptions, eventGenderOptions, ageCategoryOptions } from '@ui/Form/commonOptions';
+import { formatDate } from '@utils/dates';
 
 const labelOf = (opts: { value: string; label: string }[], val: string | undefined) =>
   opts.find(o => o.value === val)?.label ?? val ?? '';
@@ -88,8 +89,10 @@ const columns = [
     header: "Contest Size",
     meta: { filterVariant: 'select' },
   }),
-  columnHelper.accessor("dates", {
+  columnHelper.accessor((row: AthleteContest) => new Date(row.dates), {
     header: "Date",
+    sortingFn: "datetime",
+    cell: info => formatDate(info.getValue()),
   }),
 ];
 

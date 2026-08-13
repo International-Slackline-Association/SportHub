@@ -142,7 +142,10 @@ const columns = [
     enableColumnFilter: true,
     header: "Date(s)",
     id: "eventDateRange",
-    meta: { filterVariant: "date-range" },
+    meta: { 
+      filterVariant: "date-range",
+      dateFilterShowUpcomingToggle: true,
+    },
     filterFn: dateFilterFn,
     cell: info => {
       const { startDate, endDate } = info.row.original;
@@ -209,7 +212,7 @@ const columns = [
     },
     meta: {
       filterOptions: Object.entries(MAP_CONTEST_TYPE_ENUM_TO_NAME).map(([value, label]) => ({
-        value,
+        value: label,
         label: snakeCaseToTitleCase(label),
       })),
       filterVariant: 'select'

@@ -705,7 +705,7 @@ export async function getAthleteContests(athleteId: string): Promise<AthleteCont
         ageCategory: contest?.ageCategory,
         points: parseFloat(participation.points || '0'),
         contestSize: contest?.contestSize || '',
-        dates: formatDate(participation.contestDate)
+        dates: participation.contestDate
       };
     });
 
