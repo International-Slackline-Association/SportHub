@@ -214,7 +214,7 @@ const DateRangeTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>)
             className={formStyles.checkbox}
             checked={showUpcomingOnly}
             id="upcoming-filter"
-            onChange={e => {
+            onChange={() => {
               const dateToday = (new Date()).toISOString().split("T")[0];
               if (showUpcomingOnly) {
                 update({ startDate: undefined, endDate: dateToday });

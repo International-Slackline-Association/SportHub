@@ -20,7 +20,6 @@ const CONTEST_TYPE_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
 );
 import { UserRecord } from './relational-types';
 import { getWorldRecordsSheet, getWorldFirstsSheet } from './google-sheets';
-import { formatDate } from '@utils/dates';
 
 // PERFORMANCE OPTIMIZATION: Simple in-memory cache with TTL
 interface CacheEntry<T> {
@@ -257,7 +256,7 @@ export async function getRankingsData(year?: string, discipline?: string): Promi
 
   const cacheKey = `rankings-data-${resolvedYears.join(',')}-${discipline ?? 'all'}`;
   const cached = cache.get<AthleteRanking[]>(cacheKey);
-  // if (cached) return cached;
+  if (cached) return cached;
 
   try {
     const rankings = await getRankingsForYears(resolvedYears, discipline);

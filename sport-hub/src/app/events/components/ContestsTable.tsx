@@ -211,7 +211,7 @@ const columns = [
       return label;
     },
     meta: {
-      filterOptions: Object.entries(MAP_CONTEST_TYPE_ENUM_TO_NAME).map(([value, label]) => ({
+      filterOptions: Object.values(MAP_CONTEST_TYPE_ENUM_TO_NAME).map((label) => ({
         value: label,
         label: snakeCaseToTitleCase(label),
       })),

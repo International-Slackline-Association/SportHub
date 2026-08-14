@@ -45,47 +45,6 @@ const columns = [
     enableSorting: false,
     size: 30,
   }),
-  columnHelper.accessor('points', {
-    header: () => {
-      const { isDesktop } = useClientMediaQuery();
-      return (
-        <div className={cn("flex gap-2", isDesktop ? "flex-row" : "flex-col")}>
-          Points
-          <Tooltip
-            content={'Ranking is determined by adding the top two awarded points from the competitions athletes have participated in.'}
-            position="bottom"
-          />
-        </div>
-      );
-    },
-    cell: info => {
-      const { isDesktop } = useClientMediaQuery();
-      const { points, topParticipations } = info.row.original;
-
-      return (
-        <div>
-          {points}
-          {!isDesktop && <br/>}
-          <span className={cn("opacity-75 italic", isDesktop ? "text-sm ml-2" : "text-xs")}>
-            {topParticipations[0] && (
-              <span>
-                (<ContestLink {...topParticipations[0]} />
-              </span>
-            )}
-            {topParticipations[1] && (
-              <span>
-                &nbsp;+ <ContestLink {...topParticipations[1]} />
-              </span>
-            )}
-            {topParticipations.length > 0 && (
-              <span>)</span>
-            )}
-          </span>
-        </div>
-      );
-    },
-    enableSorting: false,
-  }),
   // Mobile: single stacked column
   columnHelper.display({
     id: 'athlete',
@@ -107,7 +66,7 @@ const columns = [
         </div>
       );
     },
-    size: 120,
+    size: 180,
   }),
   // Desktop-only columns
   columnHelper.accessor('fullName', {
@@ -231,7 +190,45 @@ const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) =
             </>
           }
           options={{
-            columns,
+            columns: [
+              ...columns,
+              columnHelper.accessor('points', {
+                header: () => (
+                  <div className={cn("flex gap-2", isDesktop ? "flex-row" : "flex-col")}>
+                    Points
+                    <Tooltip
+                      content={'Ranking is determined by adding the top two awarded points from the competitions athletes have participated in.'}
+                      position="bottom"
+                    />
+                  </div>
+                ),
+                cell: info => {
+                  const { points, topParticipations } = info.row.original;
+                  return (
+                    <div>
+                      {points}
+                      {!isDesktop && <br/>}
+                      <span className={cn("opacity-75 italic", isDesktop ? "text-sm ml-2" : "text-xs")}>
+                        {topParticipations[0] && (
+                          <span>
+                            (<ContestLink {...topParticipations[0]} />
+                          </span>
+                        )}
+                        {topParticipations[1] && (
+                          <span>
+                            &nbsp;+ <ContestLink {...topParticipations[1]} />
+                          </span>
+                        )}
+                        {topParticipations.length > 0 && (
+                          <span>)</span>
+                        )}
+                      </span>
+                    </div>
+                  );
+                },
+                enableSorting: false,
+              }),
+            ],
             data,
             initialState: {
               columnFilters: [{ id: 'gender', value: 'female' }],
