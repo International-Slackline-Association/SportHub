@@ -66,8 +66,6 @@ export interface UserProfileRecord extends UserTableRecord {
   // Aggregated stats (calculated from participations)
   totalPoints: number;             // For userSubType-index GSI (sort key)
   contestCount: number;
-  firstCompetition?: string;
-  lastCompetition?: string;
 
   // Judge/Organizer stats
   totalContestsJudged?: number;

@@ -113,7 +113,7 @@ const Table = <TData,>({ extraFilters, options, title, rowClassName }: TableProp
                   <th
                     key={header.id}
                     colSpan={header.colSpan}
-                    style={{ width: `${header.getSize()}px` }}
+                    style={{ overflow: "visible", width: `${header.getSize()}px` }}
                     className={header.column.getCanSort() ? styles.sortableHeader : undefined}
                     onClick={header.column.getCanSort() ? header.column.getToggleSortingHandler() : undefined}
                   >

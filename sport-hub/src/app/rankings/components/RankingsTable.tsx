@@ -15,29 +15,75 @@ import tableStyles from '@ui/Table/styles.module.css';
 import { CountryFlag } from '@ui/CountryFlag';
 import { DisciplineDropdown } from '@ui/Form';
 import { DISCIPLINE_DATA } from '@utils/consts';
+import { Tooltip } from '@ui/Tooltip';
+import { cn } from '@utils/cn';
+import { AthleteParticipationRecord } from '@lib/relational-types';
+
+const linkClassName = 'text-blue-600 hover:text-blue-800 hover:underline font-medium';
 
 const columnHelper = createColumnHelper<AthleteRanking>();
 
 const NameCell = ({ athlete }: { athlete: AthleteRanking }) => {
   const displayName = athlete.fullName || athlete.name || `${athlete.name} ${athlete.surname || ''}`;
   return (
-    <Link
-      className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
-      href={`/athlete/${athlete.userId}`}
-    >
+    <Link className={linkClassName} href={`/athlete/${athlete.userId}`}>
       {displayName}
     </Link>
   );
 };
+
+const ContestLink = ({ eventId, contestId, points }: AthleteParticipationRecord) => (
+  <Link className={linkClassName} href={`/events/${eventId}?contest=${contestId}`}>
+    {points}
+  </Link>
+);
 
 const columns = [
   // Shared Columns
   columnHelper.accessor("rank", {
     header: 'Rank',
     enableSorting: false,
+    size: 30,
   }),
   columnHelper.accessor('points', {
-    header: 'Points',
+    header: () => {
+      const { isDesktop } = useClientMediaQuery();
+      return (
+        <div className={cn("flex gap-2", isDesktop ? "flex-row" : "flex-col")}>
+          Points
+          <Tooltip
+            content={'Ranking is determined by adding the top two awarded points from the competitions athletes have participated in.'}
+            position="bottom"
+          />
+        </div>
+      );
+    },
+    cell: info => {
+      const { isDesktop } = useClientMediaQuery();
+      const { points, topParticipations } = info.row.original;
+
+      return (
+        <div>
+          {points}
+          {!isDesktop && <br/>}
+          <span className={cn("opacity-75 italic", isDesktop ? "text-sm ml-2" : "text-xs")}>
+            {topParticipations[0] && (
+              <span>
+                (<ContestLink {...topParticipations[0]} />
+              </span>
+            )}
+            {topParticipations[1] && (
+              <span>
+                &nbsp;+ <ContestLink {...topParticipations[1]} />
+              </span>
+            )}
+            {topParticipations.length > 0 && (
+              <span>)</span>
+            )}
+          </span>
+        </div>
+      );
+    },
     enableSorting: false,
   }),
   // Mobile: single stacked column
@@ -61,6 +107,7 @@ const columns = [
         </div>
       );
     },
+    size: 120,
   }),
   // Desktop-only columns
   columnHelper.accessor('fullName', {
@@ -69,6 +116,7 @@ const columns = [
     header: 'Name',
     cell: info => <NameCell athlete={info.row.original} />,
     meta: { filterVariant: 'text', filterPlaceholder: 'Enter athlete name' },
+    size: 80,
   }),
   columnHelper.accessor('age', {
     header: 'Age',
@@ -83,7 +131,7 @@ const columns = [
         { value: 'senior', label: 'Senior (35+)' },
       ],
     },
-    size: 36,
+    size: 24,
   }),
   columnHelper.accessor('gender', {
     header: 'Gender',
@@ -99,7 +147,7 @@ const columns = [
         { value: 'male', label: 'Men' },
       ],
     },
-    size: 60,
+    size: 40,
   }),
   columnHelper.accessor((row: AthleteRanking) => getIocCode(row.country), {
     id: 'country',
@@ -108,7 +156,7 @@ const columns = [
     header: 'Country',
     cell: info => <CountryFlag country={info.getValue()} />,
     meta: { filterVariant: 'country' },
-    size: 60,
+    size: 40,
   }),
 ];
 

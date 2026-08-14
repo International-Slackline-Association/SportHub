@@ -1,5 +1,5 @@
 // import { UserSubType } from '@types/rbac';
-import type { ContestRecord, EventMetadataRecord, ContestParticipant } from './relational-types';
+import type { ContestRecord, EventMetadataRecord, ContestParticipant, AthleteParticipationRecord, UserProfileRecord } from './relational-types';
 import {
   getAthleteProfile as getAthleteProfileOptimized,
   getAthleteParticipations as getAthleteParticipationsOptimized,
@@ -113,6 +113,11 @@ export async function getUsers({ subtype }: { subtype: string }): Promise<Partia
 // RANKINGS AND ATHLETES DATA SERVICES
 // ===========================================
 
+interface ParticipationMetadata { 
+  participations: AthleteParticipationRecord[];
+  total: number;
+};
+
 export interface AthleteRanking {
   userId: string;
   name: string;
@@ -126,12 +131,11 @@ export interface AthleteRanking {
   points: number;
   profileImage?: string;
   contestsParticipated?: number;
-  firstCompetition?: string;
-  lastCompetition?: string;
+  topParticipations: AthleteParticipationRecord[];
   rank?: number;
 }
 
-function mapProfileToRanking(profile: Record<string, unknown>, points?: number): AthleteRanking {
+function mapProfileToRanking(profile: UserProfileRecord, participationMetadata?: ParticipationMetadata): AthleteRanking {
   const name = (profile.name as string) || (profile.athleteSlug as string)?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || '';
   const surname = (profile.surname as string) || '';
   const country = (profile.country as string) || '-';
@@ -145,6 +149,7 @@ function mapProfileToRanking(profile: Record<string, unknown>, points?: number):
     if (now.getMonth() < birth.getMonth() || (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate())) a--;
     return a;
   })();
+
   return {
     userId: (profile.userId as string) || '',
     name,
@@ -155,11 +160,10 @@ function mapProfileToRanking(profile: Record<string, unknown>, points?: number):
     ageCategory: 'Open',
     age,
     disciplines: [],
-    points: points ?? (profile.totalPoints as number) ?? 0,
+    points: participationMetadata?.total || 0,
     profileImage: (profile.thumbnailUrl as string) || (profile.profileUrl as string) || undefined,
     contestsParticipated: (profile.contestCount as number) || 0,
-    firstCompetition: (profile.firstCompetition as string) || '',
-    lastCompetition: (profile.lastCompetition as string) || '',
+    topParticipations: participationMetadata?.participations || [],
   };
 }
 
@@ -173,35 +177,55 @@ async function getRankingsForYears(years: string[], discipline?: string): Promis
   const yearsSet = new Set(years);
 
   // Scan all participation records — filter by contestDate year and discipline client-side
-  const participations = await dynamodb.scanItems(USERS_TABLE, {
+  const participations: AthleteParticipationRecord[] = await dynamodb.scanItems(USERS_TABLE, {
     filterExpression: 'begins_with(sortKey, :pfix)',
     expressionAttributeValues: { ':pfix': 'Participation:' },
-    projectionExpression: 'userId, #pts, contestDate, discipline',
+    projectionExpression: 'userId, #pts, contestDate, discipline, eventId, contestId',
     expressionAttributeNames: { '#pts': 'points' },
   });
 
-  const pointsMap = new Map<string, number>();
-  for (const item of participations) {
-    const contestDate = item.contestDate as string | undefined;
-    if (!contestDate) continue;
-    const year = contestDate.substring(0, 4);
-    if (!yearsSet.has(year)) continue;
-    if (discipline && item.discipline !== discipline) continue;
+  const participationsByUserId = participations.reduce((participationsByUserId, participationRecord) => {
+    const { contestDate, discipline: contestDiscipline, userId } = participationRecord;
 
-    const userId = item.userId as string;
-    const pts = parseFloat((item.points as string) || '0');
-    pointsMap.set(userId, (pointsMap.get(userId) ?? 0) + pts);
-  }
+    const isYearInTimeFrame = yearsSet.has(contestDate.substring(0, 4) || "");
+    const isSelectedDiscipline = discipline == contestDiscipline;
 
-  if (pointsMap.size === 0) return [];
+    if (isYearInTimeFrame && isSelectedDiscipline) {
+      if (participationsByUserId[userId]) {
+        participationsByUserId[userId].push(participationRecord);
+      } else {
+        participationsByUserId[userId] = [participationRecord];
+      }
+    }
 
-  const profilesMap = await getAthleteProfilesBatch([...pointsMap.keys()]);
+    return participationsByUserId;
+  }, {} as Record<string, AthleteParticipationRecord[]>);
 
-  const rankings = [...pointsMap.entries()]
-    .map(([userId, pts]) => {
-      const profile = profilesMap.get(userId);
+  if (Object.entries(participationsByUserId).length === 0) return [];
+
+  const topParticipationsByUserId = Object.entries(participationsByUserId).reduce(
+    (topParticipationsByUserId, [userId, participations]) => {
+      // Sort highest to lowest
+      const topParticipations = participations.sort((a, b) => Number(b.points) - Number(a.points)).slice(0, 2);
+      const mostPoints = Number(topParticipations?.[0]?.points || 0);
+      const secondMostPoints = Number(topParticipations?.[1]?.points || 0);
+      topParticipationsByUserId[userId] = {
+        participations: topParticipations,
+        total: mostPoints + secondMostPoints,
+      };
+      return topParticipationsByUserId;
+    }, 
+    {} as Record<string, ParticipationMetadata>
+  );
+
+  const userIds = Object.keys(participationsByUserId);
+  const athleteProfiles = await getAthleteProfilesBatch(userIds);
+  
+  const rankings = Object.entries(topParticipationsByUserId)
+    .map(([userId, participationData]) => {
+      const profile = athleteProfiles.get(userId);
       if (!profile) return null;
-      return mapProfileToRanking(profile as unknown as Record<string, unknown>, pts);
+      return mapProfileToRanking(profile, participationData);
     })
     .filter((r): r is AthleteRanking => r !== null)
     .sort((a, b) => b.points - a.points);
@@ -233,7 +257,7 @@ export async function getRankingsData(year?: string, discipline?: string): Promi
 
   const cacheKey = `rankings-data-${resolvedYears.join(',')}-${discipline ?? 'all'}`;
   const cached = cache.get<AthleteRanking[]>(cacheKey);
-  if (cached) return cached;
+  // if (cached) return cached;
 
   try {
     const rankings = await getRankingsForYears(resolvedYears, discipline);
@@ -303,7 +327,7 @@ export async function getEventsData(): Promise<EventMetadataRecord[]> {
     const allItems = await scanAllEventItems({
       projectionExpression: 'eventId, eventName, sortKey, country, city, profileUrl, thumbnailUrl, startDate, endDate'
     });
-    console.log("All Items:", allItems.slice(4));
+
     if (!allItems || allItems.length === 0) {
       return [];
     }
