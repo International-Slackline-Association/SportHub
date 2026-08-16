@@ -1,15 +1,9 @@
-import { DISCIPLINE_DATA, MAP_DISCIPLINE_ENUM_TO_NAME } from "@utils/consts";
+import { MAP_DISCIPLINE_ENUM_TO_NAME } from "@utils/consts";
 import { ContestTabData } from "./ContestTabGroup";
-import { AgeCategory, ContestSize, Gender } from "@ui/Badge";
+import { AgeCategory, ContestSize, Discipline, Gender } from "@ui/Badge";
 import { ContestJudge, EventOrganizer } from "@lib/relational-types";
 import Link from "next/link";
-
-const KeyValuePair = ({ label, value }: { label: string; value: string | React.ReactNode }) => (
-  <div className="flex flex-col justify-between">
-    <span className="text-sm text-gray-500">{label}</span>
-    <span className="font-semibold">{value}</span>
-  </div>
-);
+import { LabelValuePair } from "@ui/LabelValuePair";
 
 const NameLink = (user: (ContestJudge | EventOrganizer) & { isPending?: boolean; id?: string }) => {
   const id = user.id || user.userId || "";
@@ -46,20 +40,19 @@ export const ContestAbout = ({ contest }: { contest: ContestTabData }) => {
     prize
   } = contest;
   const disciplineKey = MAP_DISCIPLINE_ENUM_TO_NAME[Number(discipline)];
-  const { name: disciplineName } = DISCIPLINE_DATA[disciplineKey];
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-row gap-8">
-        <KeyValuePair label="Discipline" value={disciplineName} />
-        <KeyValuePair label="Gender" value={<Gender variant={(gender || "") as ContestGender} />} />
-        <KeyValuePair label="Age Category" value={<AgeCategory variant={(ageCategory || "") as AgeCategory} />} />
-        <KeyValuePair label="Contest Size" value={<ContestSize variant={(contestSize || "") as ContestType} />} />
-        <KeyValuePair label="Total Prize Value" value={prize ? `${prize} Euro` : "N/A"} />
-        <KeyValuePair label="Judging System" value={judgingSystem || "Not Available"} />
+        <LabelValuePair label="Discipline" value={<Discipline variant={disciplineKey} />} />
+        <LabelValuePair label="Gender" value={<Gender variant={(gender || "") as ContestGender} />} />
+        <LabelValuePair label="Age Category" value={<AgeCategory variant={(ageCategory || "") as AgeCategory} />} />
+        <LabelValuePair label="Contest Size" value={<ContestSize variant={(contestSize || "") as ContestType} />} />
+        <LabelValuePair label="Total Prize Value" value={prize ? `${prize} Euro` : "N/A"} />
+        <LabelValuePair label="Judging System" value={judgingSystem || "Not Available"} />
       </div>
-      <KeyValuePair label="Judges" value={judges.map(NameLink)} />
-      <KeyValuePair label="Organizers" value={organizers.map(NameLink)} />
+      <LabelValuePair label="Judges" value={judges.map(NameLink)} />
+      <LabelValuePair label="Organizers" value={organizers.map(NameLink)} />
     </div>
   );
 };

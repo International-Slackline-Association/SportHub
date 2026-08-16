@@ -53,11 +53,11 @@ export const AthleteProfileCard = ({ athlete }: AthleteProfileCardProps) => {
           <LabelValuePair
             label="Discipline(s)"
             value={(
-              <>
+              <span className="flex flex-row gap-1">
                 {disciplines.map(discipline => (
                   <Discipline key={discipline} variant={discipline as Discipline} />
                 ))}
-              </>
+              </span>
             )}
           />
         </div>

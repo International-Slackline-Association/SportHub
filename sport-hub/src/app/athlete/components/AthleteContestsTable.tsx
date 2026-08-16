@@ -21,7 +21,7 @@ const contestLabel = (row: AthleteContest): string =>
     disciplineLabel(row.discipline),
     labelOf(eventGenderOptions, row.gender),
     labelOf(ageCategoryOptions, row.ageCategory),
-  ].filter(Boolean).join('-') || row.contest || 'Contest';
+  ].filter(Boolean).join(' ') || row.contest || 'Contest';
 
 const columnHelper = createColumnHelper<AthleteContest>();
 const columns = [
@@ -80,6 +80,7 @@ const columns = [
   }),
   columnHelper.accessor("points", {
     header: "Points",
+    size: 40,
   }),
   columnHelper.accessor((row: AthleteContest) => {
     return contestSizeOptions.find(o => o.value === row.contestSize)?.label ?? row.contestSize;
@@ -88,11 +89,13 @@ const columns = [
     enableColumnFilter: true,
     header: "Contest Size",
     meta: { filterVariant: 'select' },
+    size: 100,
   }),
   columnHelper.accessor((row: AthleteContest) => new Date(row.dates), {
     header: "Date",
     sortingFn: "datetime",
     cell: info => formatDate(info.getValue()),
+    size: 60,
   }),
 ];
 

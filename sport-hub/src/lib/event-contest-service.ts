@@ -235,13 +235,17 @@ export async function getAssembledEvent(
     const { contests: embeddedContests, ...metadataOnly } = metadata;
 
     const hasEmbeddedContests = Array.isArray(embeddedContests) && embeddedContests.length > 0;
-
+    console.log("hasEmbeddedContests");
     // If the event has embedded contests (new format), use those; 
     // otherwise, use the separate Contest:* records
     if (hasEmbeddedContests) {
       contests = embeddedContests;
     } else {
-      contests = await getEventContests(eventId);
+      contests = (await getEventContests(eventId)).filter((c) =>
+        // Contest from different events can have the save event ID if their events share a date.
+        // Ensure the correct contests are selected.
+        c.city?.toLowerCase() === metadata.city?.toLowerCase()
+      );
     }
 
     contests = contests.sort(

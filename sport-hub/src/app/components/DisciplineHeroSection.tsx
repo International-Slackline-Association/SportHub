@@ -174,6 +174,11 @@ export function DisciplineHeroSection() {
           />
         )}
       </figure>
+      {currentHero?.credit && (
+        <caption className="relative text-xs text-right bottom-10px">
+          Photo by: {currentHero?.credit}
+        </caption>
+      )}
 
       {/* Rankings / Disciplines Section */}
       <section className={styles.section}>

@@ -83,12 +83,12 @@
   color: var(--color-violet-600);
 }
 
-.disciplineTrickline {
+.disciplineTrickline, .disciplineTricklineAerial {
   background-color: var(--color-red-100);
   color: var(--color-red-600);
 }
 
-.disciplineFreestyleHighline {
+.disciplineFreestyle, .disciplineFreestyleHighline {
   background-color: var(--color-yellow-100);
   color: var(--color-yellow-600);
 }

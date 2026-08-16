@@ -15,7 +15,6 @@ const Discipline = ({ variant, className = "" }: DisciplineProps) => {
     modifiedVariant = MAP_DISCIPLINE_ENUM_TO_NAME[Number(variant)] || variant;
   }
 
-
   const variantClass = `discipline${pascalCaseToTitleCase(modifiedVariant)}`;
 
   return (
@@ -23,7 +22,8 @@ const Discipline = ({ variant, className = "" }: DisciplineProps) => {
       className={[
         styles.badge,
         styles[variantClass],
-        className
+        className,
+        styles.test,
       ].filter(Boolean).join(" ")}
     >
       {DISCIPLINE_DATA[modifiedVariant as Discipline]?.name.toUpperCase()}

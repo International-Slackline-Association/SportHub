@@ -92,7 +92,7 @@ export default function ContestDetails({
           </Button>
         </div>
       </div>
-      {contest.results.length > 0 ? (
+      {contest?.results?.length > 0 ? (
         <ResultsTable
           data={contest.results.map(result => ({
             userId: result.id ?? '',

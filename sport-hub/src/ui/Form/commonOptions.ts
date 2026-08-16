@@ -26,7 +26,7 @@ export const disciplineOptions: Option[] = [
 ];
 
 export const ageCategoryOptions: Option[] = [
-  { value: "ALL", label: "All" },
+  { value: "ALL", label: "All Ages" },
   { value: "YOUTH", label: "Youth" },
   { value: "SENIOR", label: "Senior" },
 ];

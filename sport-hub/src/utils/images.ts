@@ -4,6 +4,7 @@ export type HeroImage = {
   caption?: string;
   blurredBackground?: boolean;
   objectPosition?: string;
+  credit?: string;
 };
 
 const S3_BASE_URL = 'https://s3.eu-central-1.amazonaws.com/images.isa-rankings.org/public/sporthub/slackline-photos';
@@ -17,11 +18,13 @@ export const S3_IMAGES: Record<string, HeroImage[]> = {
       src: `${S3_BASE_URL}/organizers-laax2024-jonas-05.jpg`,
       alt: 'Event organization scene at Laax 2024',
       objectPosition: 'center 60%',
+      credit: "Jonas Konijnenberg"
     },
     {
       src: `${S3_BASE_URL}/organizers-laax2024-jonas-01.jpg`,
       alt: 'Event setup at Laax 2024',
       objectPosition: 'center 30%',
+      credit: "Jonas Konijnenberg"
     },
     {
       src: `${S3_BASE_URL}/celebrations-podium-03.jpg`,
@@ -40,7 +43,8 @@ export const S3_IMAGES: Record<string, HeroImage[]> = {
     },
     {
       src: `${S3_BASE_URL}/celebrations-podium-laax2024-jonas-14.jpg`,
-      alt: 'Athletes celebrating on the podium'
+      alt: 'Athletes celebrating on the podium',
+      credit: "Jonas Konijnenberg"
     },
     {
       src: `${S3_BASE_URL}/celebrations-podium-12.jpg`,
@@ -83,11 +87,13 @@ export const S3_IMAGES: Record<string, HeroImage[]> = {
       src: `${S3_BASE_URL}/freestyle-highline-laax2024-jonas-16.jpg`,
       alt: 'Highline freestyle trick over alpine terrain',
       blurredBackground: true,
+      credit: "Jonas Konijnenberg",
     },
     {
       src: `${S3_BASE_URL}/freestyle-highline-laax2024-jonas-14.jpg`,
       alt: 'Freestyle highline maneuver in competition',
       blurredBackground: true,
+      credit: "Jonas Konijnenberg",
     },
     {
       src: `${S3_BASE_URL}/freestyle-highline-10.jpg`,
