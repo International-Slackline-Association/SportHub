@@ -187,7 +187,7 @@ async function getRankingsForYears(years: string[], discipline?: string): Promis
     const { contestDate, discipline: contestDiscipline, userId } = participationRecord;
 
     const isYearInTimeFrame = yearsSet.has(contestDate.substring(0, 4) || "");
-    const isSelectedDiscipline = discipline == contestDiscipline;
+    const isSelectedDiscipline = !discipline || (discipline && discipline == contestDiscipline);
 
     if (isYearInTimeFrame && isSelectedDiscipline) {
       if (participationsByUserId[userId]) {
@@ -256,6 +256,7 @@ export async function getRankingsData(year?: string, discipline?: string): Promi
 
   const cacheKey = `rankings-data-${resolvedYears.join(',')}-${discipline ?? 'all'}`;
   const cached = cache.get<AthleteRanking[]>(cacheKey);
+
   if (cached) return cached;
 
   try {
@@ -273,7 +274,7 @@ export async function getRankingsData(year?: string, discipline?: string): Promi
  */
 export async function getFeaturedAthletes(discipline?: string, limit: number = 3): Promise<AthleteRanking[]> {
   const rankings = await getRankingsData(undefined, discipline);
-  
+
   return rankings
     .filter((athlete) => {
       const isProfileComplete = athlete.name && athlete.surname && athlete.country && athlete.profileImage;

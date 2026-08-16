@@ -12,7 +12,8 @@ export const S3_IMAGES: Record<string, HeroImage[]> = {
   EVENTS: [
     {
       src: `${S3_BASE_URL}/organizers-laax2024-marcial-08.jpg`,
-      alt: 'Event organizers at Laax 2024'
+      alt: 'Event organizers at Laax 2024',
+      credit: "Marcial Sommer"
     },
     {
       src: `${S3_BASE_URL}/organizers-laax2024-jonas-05.jpg`,
@@ -58,7 +59,8 @@ export const S3_IMAGES: Record<string, HeroImage[]> = {
   JUDGING: [
     {
       src: `${S3_BASE_URL}/judging-laax2024-marcial-13.jpg`,
-      alt: 'Judges scoring performances at Laax 2024'
+      alt: 'Judges scoring performances at Laax 2024',
+      credit: "Marcial Sommer"
     },
     {
       src: `${S3_BASE_URL}/judging-19.jpg`,
@@ -82,6 +84,7 @@ export const S3_IMAGES: Record<string, HeroImage[]> = {
       src: `${S3_BASE_URL}/freestyle-highline-laax2024-marcial-19.jpg`,
       alt: 'Freestyle highline athlete at Laax 2024',
       objectPosition: 'center 40%',
+      credit: "Marcial Sommer"
     },
     {
       src: `${S3_BASE_URL}/freestyle-highline-laax2024-jonas-16.jpg`,
