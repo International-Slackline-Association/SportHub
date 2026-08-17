@@ -42,6 +42,7 @@ export class TestHelpers {
       contestCount: overrides.contestCount || 0,
       type: 'competition',
       createdAt: Date.now(),
+      links: [],
       ...overrides
     };
   }

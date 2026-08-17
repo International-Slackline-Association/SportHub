@@ -70,12 +70,13 @@ export async function saveEvent(values: EventSubmissionFormValues, status: Event
       ...event,
       eventId,
       sortKey: 'Metadata',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date().getTime(),
+      updatedAt: new Date().getTime(),
       status,
       createdBy: session?.user?.id,
       createdByName: session?.user?.name,
-      ...(status === 'pending' && { submittedForApprovalAt: new Date().toISOString() }),
+      contestCount: contests.length,
+      ...(status === 'pending' && { submittedForApprovalAt: new Date().getTime() }),
     };
 
     // Save event metadata and contests as separate records
@@ -172,7 +173,6 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
 
   try {
     const session = await auth();
-
     const existing = await getAssembledEvent(eventId);
     let existingEvent: Partial<EventMetadataRecord>;
     let isMigration = false;
@@ -466,8 +466,8 @@ export async function submitEventForApproval(eventId: string) {
     const updated = {
       ...event,
       status: 'pending' as EventStatus,
-      updatedAt: new Date().toISOString(),
-      submittedForApprovalAt: new Date().toISOString(),
+      updatedAt: new Date().getTime(),
+      submittedForApprovalAt: new Date().getTime(),
     };
 
     await putEventItem(updated);

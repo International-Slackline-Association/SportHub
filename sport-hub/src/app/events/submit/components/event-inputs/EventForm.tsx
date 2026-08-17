@@ -7,7 +7,7 @@ import {
   FormikSelectField,
   FormikCheckboxGroup,
   countryCodeOptions,
-  disciplineOptions
+  disciplineOptions,
 } from '@ui/Form';
 import { EventSubmissionFormValues } from '../../types';
 import { cn } from '@utils/cn';
@@ -18,6 +18,7 @@ import EventAutocomplete from './EventAutocomplete';
 import YouTubePreviewTextField from './YouTubePreviewTextField'
 import FileInputField from './FileInputField';
 import { Alert } from '@ui/Alert';
+import { LinkFieldArray } from '@ui/Form';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -26,9 +27,9 @@ interface CollapsibleSectionProps {
 }
 
 const CollapsibleSection = ({
-  title,
+  defaultOpen = true,
   children,
-  defaultOpen = true
+  title,
 }: CollapsibleSectionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -56,8 +57,7 @@ const CollapsibleSection = ({
 };
 
 export default function EventForm() {
-  const { errors, values, } = useFormikContext<EventSubmissionFormValues>();
-
+  const { errors, values } = useFormikContext<EventSubmissionFormValues>();
   const isError = Object.keys(errors.event || {}).length > 0;
 
   return (
@@ -78,7 +78,7 @@ export default function EventForm() {
           <EventAutocomplete />
           <FormikTextField
             id="event.website"
-            label="Website"
+            label="Event Website"
             name="event.website"
             placeholder="https://example.com"
             type="url"
@@ -126,42 +126,8 @@ export default function EventForm() {
         </div>
       </CollapsibleSection>
 
-      <CollapsibleSection title="Social Media" defaultOpen>
-        <div className={sharedStyles.formGrid}>
-          <FormikTextField
-            id="event.socialMedia.instagram"
-            label="Instagram"
-            name="event.socialMedia.instagram"
-            placeholder="@username or profile URL"
-          />
-          <FormikTextField
-            id="event.socialMedia.youtube"
-            label="YouTube"
-            name="event.socialMedia.youtube"
-            placeholder="https://youtube.com/..."
-            type="url"
-          />
-          <FormikTextField
-            id="event.socialMedia.facebook"
-            label="Facebook"
-            name="event.socialMedia.facebook"
-            placeholder="https://facebook.com/..."
-            type="url"
-          />
-          <FormikTextField
-            id="event.socialMedia.tiktok"
-            label="TikTok"
-            name="event.socialMedia.tiktok"
-            placeholder="@username or profile URL"
-          />
-          <FormikTextField
-            id="event.socialMedia.twitch"
-            label="Twitch"
-            name="event.socialMedia.twitch"
-            placeholder="https://twitch.tv/..."
-            type="url"
-          />
-        </div>
+      <CollapsibleSection title="Links" defaultOpen>
+        <LinkFieldArray formKey="event.links" />
       </CollapsibleSection>
 
       {/* Debug info - remove in production */}

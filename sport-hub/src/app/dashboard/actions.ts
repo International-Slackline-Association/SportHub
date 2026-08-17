@@ -10,15 +10,6 @@ import { clearRoleCache } from '@lib/rbac-service';
 import { getUser, createUser, saveUserProfile } from '@lib/user-service';
 import { updateReferenceUser } from '@lib/reference-db-service';
 
-export interface SocialMediaData {
-  instagram?: string;
-  youtube?: string;
-  facebook?: string;
-  whatsapp?: string;
-  twitch?: string;
-  tiktok?: string;
-}
-
 export interface ProfileUpdateData {
   name?: string;
   surname?: string;
@@ -27,7 +18,7 @@ export interface ProfileUpdateData {
   city?: string;
   birthdate?: string;
   gender?: string;
-  socialMedia?: SocialMediaData;
+  links?: string[];
 }
 
 /**
@@ -81,12 +72,10 @@ export async function updateProfile(userId: string, data?: ProfileUpdateData) {
       gender: data?.gender?.trim() || undefined,
     };
 
-    // Clean social media: trim values, remove empty strings
-    const socialMedia = data?.socialMedia ? Object.fromEntries(
-      Object.entries(data.socialMedia)
-        .map(([k, v]) => [k, v?.trim() || undefined])
-        .filter(([, v]) => v)
-    ) : undefined;
+    // Clean links: trim values, remove empty strings
+    const links = Array.isArray(data?.links)
+      ? data!.links.map((link) => link.trim()).filter(Boolean)
+      : undefined;
 
     const newName = trimmed.name ?? currentUser.name;
     const newSurname = trimmed.surname ?? currentUser.surname;
@@ -105,7 +94,7 @@ export async function updateProfile(userId: string, data?: ProfileUpdateData) {
       ...(data?.city !== undefined && { city: trimmed.city }),
       ...(data?.birthdate !== undefined && { birthdate: trimmed.birthdate }),
       ...(data?.gender !== undefined && { gender: trimmed.gender }),
-      ...(data?.socialMedia !== undefined && { socialMedia: Object.keys(socialMedia || {}).length > 0 ? socialMedia : undefined }),
+      ...(data?.links !== undefined && { links: links?.length ? links : undefined }),
       ...(athleteSlug && { athleteSlug }),
       lastProfileUpdate: Date.now(),
     };
@@ -200,7 +189,7 @@ export async function getFullUserProfile(userId: string) {
       city: user.city || '',
       birthdate: user.birthdate || '',
       gender: user.gender || '',
-      socialMedia: user.socialMedia,
+      links: user.links || [],
     };
   } catch (error) {
     console.error('Error fetching full user profile:', error);

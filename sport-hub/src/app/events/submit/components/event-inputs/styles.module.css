@@ -27,19 +27,3 @@
   color: #8784A7; /* Neutral/600 */
   margin: 0;
 }
-
-/* Accordion animations for mobile */
-.accordionOpen {
-  max-height: 2000px;
-  opacity: 1;
-  overflow: hidden;
-  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
-}
-
-.accordionClose {
-  max-height: 0;
-  opacity: 0;
-  padding: 0 20px;
-  overflow: hidden;
-  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, padding 0.3s ease-in-out;
-}

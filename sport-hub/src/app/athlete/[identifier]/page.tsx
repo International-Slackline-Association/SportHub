@@ -76,7 +76,7 @@ export default async function AthleteProfilePage({ params }: AthleteProfilePageP
                 >
                   <div className="flex justify-between items-start gap-4 flex-wrap">
                     <div className="stack gap-1">
-                      <p className="font-semibold text-blue-700">{String(event.name ?? '—')}</p>
+                      <p className="font-semibold text-blue-700">{String(event.eventName ?? '—')}</p>
                       <p className="text-sm text-gray-500">{location}</p>
                     </div>
                     <div className="text-right text-sm text-gray-500 shrink-0">
