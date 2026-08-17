@@ -25,7 +25,7 @@ export const MyEventsList = ({ events }: {events: Record<string, unknown>[]}) =>
         const disciplines = (event.disciplines as string[] | undefined) ?? [];
         const contests = (event.contests as unknown[] | undefined) ?? [];
         const formattedCreatedAt = event.createdAt
-          ? formatDate(new Date(Number(event.createdAt)).toLocaleDateString())
+          ? formatDate(new Date(Number(event.createdAt)).toISOString())
           : "—";
         const formattedEventName = String(event.eventName ?? "—");
         const formattedDateRange = formatDateRangeShort(new Date(event?.startDate as string), new Date(event.endDate as string));

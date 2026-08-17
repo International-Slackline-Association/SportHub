@@ -40,8 +40,6 @@ export default async function EditScoresPage({ params }: Props) {
   ];
   const website = event.contests?.[0]?.infoUrl as string;
 
-  console.log("disciplines", event);
-
   const initialValues: EventSubmissionFormValues = {
     event: {
       eventName: event.eventName,

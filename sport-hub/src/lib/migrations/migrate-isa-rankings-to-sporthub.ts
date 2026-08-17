@@ -540,7 +540,7 @@ async function scanAthleteDetails(
         gender,                   // Gender from ISA-Rankings AthleteDetails (converted from number)
         profileUrl: item.profileUrl as string | undefined,
         thumbnailUrl: item.thumbnailUrl as string | undefined,
-        links: item?.infoUrl.split(/[,\s]+/).filter(Boolean),
+        links: item?.infoUrl ? (item.infoUrl as string).split(/[,\s]+/).filter(Boolean) : undefined,
         role: 'user',
         userSubTypes: ['athlete'],
         primarySubType: 'athlete',
