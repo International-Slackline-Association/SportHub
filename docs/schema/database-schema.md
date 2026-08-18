@@ -64,14 +64,9 @@ The Users table uses `sortKey` to distinguish between three record types:
   // Profile Metadata
   profileUrl?: string
   thumbnailUrl?: string
-  socialMedia?: {                   // Parsed from infoUrl during migration
-    instagram?: string
-    youtube?: string
-    facebook?: string
-    whatsapp?: string
-    twitch?: string
-    tiktok?: string
-  }
+  links?: string[]                  // Freeform URLs (social, streams, etc); platform is
+                                     // auto-detected at render time via react-social-icons.
+                                     // Seeded from infoUrl during migration.
   createdAt: number                 // Unix timestamp
   lastProfileUpdate?: number
   profileCompleted?: boolean

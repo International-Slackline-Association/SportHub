@@ -3,7 +3,7 @@ import styles from './styles.module.css';
 import { StackedMediaCard } from '@ui/StackedMediaCard';
 import { Country, Discipline, Role } from '@ui/Badge';
 import { LabelValuePair } from '@ui/LabelValuePair';
-import { SocialMediaLinks } from "@ui/SocialMediaLinks";
+import { ProfileMediaLinks } from "@ui/ProfileMediaLinks";
 
 type AthleteProfileCardProps = {
   athlete: AthleteProfile;
@@ -13,14 +13,14 @@ export const AthleteProfileCard = ({ athlete }: AthleteProfileCardProps) => {
   const {
     name,
     surname,
-    socialMedia,
     roles,
     age,
     country,
     city,
     sponsors,
     disciplines,
-    profileImage
+    profileImage,
+    links,
   } = athlete;
 
   const displayName = `${name} ${surname || ""}`.trim();
@@ -29,7 +29,7 @@ export const AthleteProfileCard = ({ athlete }: AthleteProfileCardProps) => {
   return (
     <StackedMediaCard
       className={styles.athleteProfileCard}
-      media={<SocialMediaLinks avatarDefaultLabel={abbreviatedName} profileImage={profileImage} links={socialMedia} />}
+      media={<ProfileMediaLinks avatarDefaultLabel={abbreviatedName} profileImage={profileImage} links={links} />}
       desktopDirection="horizontal"
       mobileDirection="vertical"
     >

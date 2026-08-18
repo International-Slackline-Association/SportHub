@@ -247,6 +247,7 @@ export function transformRankingsData(): {
       contestCount,
       type: 'competition',
       createdAt: Date.now(),
+      links: [],
     });
 
     for (const [disciplineIdx, discipline] of DISCIPLINES.entries()) {

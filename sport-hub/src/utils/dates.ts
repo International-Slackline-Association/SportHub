@@ -63,6 +63,6 @@ export const formatDate = (dateStr: string | Date) =>{
       year: 'numeric'
     }).replace(/\//g, '/');
   } catch {
-    return dateStr;
+    return String(dateStr);
   }
 }

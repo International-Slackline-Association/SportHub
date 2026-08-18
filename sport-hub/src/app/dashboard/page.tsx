@@ -26,7 +26,7 @@ export default async function DashboardPage() {
   const displayCity = dbProfile?.city || '';
   const displayBirthdate = dbProfile?.birthdate || '';
   const isaUsersId = dbProfile?.isaUsersId;
-  const displaySocialMedia = dbProfile?.socialMedia;
+  const displayLinks = dbProfile?.links;
 
   return (
     <PageLayout
@@ -94,7 +94,7 @@ export default async function DashboardPage() {
           city={displayCity}
           birthdate={displayBirthdate}
           gender={displayGender}
-          socialMedia={displaySocialMedia}
+          links={displayLinks}
           role={session.user.role}
         />
 

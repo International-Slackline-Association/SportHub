@@ -15,7 +15,7 @@ const DisciplineCard = ({
   const { name, description, Icon } = DISCIPLINE_DATA[discipline];
   return (
     <StackedMediaCard
-      href={`/rankings?initialDiscipline=${discipline}`}
+      href={`/rankings?discipline=${discipline}`}
       className="h-48"
       media={<Icon />}
       desktopDirection="vertical"

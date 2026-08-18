@@ -2,7 +2,7 @@ import type { EventRecord } from '@lib/relational-types';
 import { Badge, Country, Role } from '@ui/Badge';
 import { LabelValuePair } from '@ui/LabelValuePair';
 import { StackedMediaCard } from '@ui/StackedMediaCard';
-import { SocialMediaLinks } from '@ui/SocialMediaLinks';
+import { ProfileMediaLinks } from '@ui/ProfileMediaLinks';
 import { getCountryByCode } from '@utils/countries';
 import Image from 'next/image';
 import styles from "./styles.module.css";
@@ -36,6 +36,7 @@ type EventLike = Partial<EventRecord> & {
 	startDate: string;
 	endDate: string;
 	website?: string;
+	links?: string[];
   // Admin form shape uses different property names
   city?: string;
   country?: string;
@@ -72,6 +73,7 @@ export const EventDetailsCard = ({ event }: EventDetailsCardProps) => {
 		country,
 		name,
 		website,
+		links,
 		profileUrl,
 		thumbnailUrl,
 		verified,
@@ -84,7 +86,7 @@ export const EventDetailsCard = ({ event }: EventDetailsCardProps) => {
 	return (
     <StackedMediaCard
 			className={styles.eventDetailsCard}
-      media={<SocialMediaLinks profileImage={profileUrl} isSquare/>}
+      media={<ProfileMediaLinks profileImage={profileUrl} isSquare links={links} />}
       desktopDirection="horizontal"
 			mobileDirection="vertical"
     >

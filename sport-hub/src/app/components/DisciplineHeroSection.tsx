@@ -185,7 +185,7 @@ export function DisciplineHeroSection() {
         <h2 className={styles.sectionTitle}>Rankings</h2>
         <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory sm:hidden">
           {DISCIPLINES.map(discipline => {
-            const { name, description, Icon, enumValue } = DISCIPLINE_DATA[discipline];
+            const { name, description, Icon } = DISCIPLINE_DATA[discipline];
             return (
               <div
                 key={discipline}
@@ -193,7 +193,7 @@ export function DisciplineHeroSection() {
                 onMouseEnter={() => handleMouseEnter(discipline)}
               >
                 <StackedMediaCard
-                  href={`/rankings?discipline=${enumValue}`}
+                  href={`/rankings?discipline=${discipline}`}
                   className="h-48"
                   media={<Icon />}
                   desktopDirection="vertical"
@@ -218,7 +218,7 @@ export function DisciplineHeroSection() {
                   onMouseEnter={() => handleMouseEnter(discipline)}
                 >
                   <StackedMediaCard
-                    href={`/rankings?initialDiscipline=${discipline}`}
+                    href={`/rankings?discipline=${discipline}`}
                     className="h-48"
                     media={<Icon />}
                     desktopDirection="vertical"
