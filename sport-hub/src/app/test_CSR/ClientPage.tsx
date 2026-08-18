@@ -39,8 +39,6 @@ interface User {
   gender?: string;
   totalPoints?: number;
   contestsParticipated?: number;
-  firstCompetition?: string;
-  lastCompetition?: string;
   updatedAt?: string;
   role?: Role;
   userSubTypes?: UserSubType[];
@@ -72,7 +70,7 @@ interface DbUser {
   primarySubType?: UserSubType;
 }
 
-type NewUserForm = Omit<User, 'createdAt' | 'totalPoints' | 'contestsParticipated' | 'firstCompetition' | 'lastCompetition' | 'updatedAt' | 'role' | 'userSubTypes' | 'primarySubType'>;
+type NewUserForm = Omit<User, 'createdAt' | 'totalPoints' | 'contestsParticipated' | 'updatedAt' | 'role' | 'userSubTypes' | 'primarySubType'>;
 
 export default function TestCSRPage() {
   const [users, setUsers] = useState<User[]>([]);

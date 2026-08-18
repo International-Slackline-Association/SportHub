@@ -45,8 +45,6 @@ interface User {
   createdAt: string;
   athleteId?: string;
   country?: string;
-  firstCompetition?: string;
-  lastCompetition?: string;
   updatedAt?: string;
   totalPoints?: number;
   contestsParticipated?: number;

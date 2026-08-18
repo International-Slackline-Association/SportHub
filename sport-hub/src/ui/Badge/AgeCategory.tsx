@@ -8,7 +8,7 @@ interface AgeCategoryProps {
 }
 
 const ageCategoryLabels: Record<AgeCategory, string> = {
-  ALL: "All",
+  ALL: "All Ages",
   YOUTH: "Youth",
   SENIOR: "Senior",
 };

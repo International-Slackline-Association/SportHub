@@ -4,12 +4,12 @@ import { LinkType } from "@ui/Navigation";
 import styles from "./styles.module.css"
 
 const footer_items: LinkType[] = [
-  { name: "Frequently Asked Questions", href: "/faq" },
-  { name: "ISA Members and Partners", href: "/partners" },
-  { name: "Event Registration", href: "/events" },
-  { name: "Open Source", href: "https://github.com/International-Slackline-Association" },
-  { name: "About ISA Sports", href: "/about" },
-  { name: "Contact Us", href: "/contact" },
+  { name: "Frequently Asked Questions", href: "https://data.slacklineinternational.org/sport/ranking-list-faq/" },
+  { name: "ISA Members and Partners", href: "https://www.slacklineinternational.org/members-partners/" },
+  { name: "Event Registration", href: "/events/submit" },
+  { name: "Open Source", href: "https://github.com/International-Slackline-Association/SportHub" },
+  { name: "About ISA Sports", href: "https://www.slacklineinternational.org/sport/" },
+  { name: "Contact Us", href: "mailto:info@slacklineinternational.org" },
 ];
 
 const Footer = () => {

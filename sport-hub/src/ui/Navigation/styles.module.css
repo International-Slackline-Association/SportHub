@@ -6,6 +6,7 @@
   width: 100%;
   flex-shrink: 0; /* Prevent header from shrinking */
   display: flex;
+  max-height: 72px;
 
   @media (min-width: 40rem) {  /* --breakpoint-sm: 640px */
     min-height: 4rem; /* Header adjusts to accommodate 5rem logo + padding */

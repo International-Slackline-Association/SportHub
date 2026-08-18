@@ -70,11 +70,14 @@ export const TableFilters = <TData,>({ extraFilters, table }: TableFiltersProps<
   const filterableColumns = table.getAllFlatColumns().filter(col => col.getCanFilter());
   const prefilteredRows = table.getPreFilteredRowModel().rows;
 
+  
   if (!filterableColumns.length) return null;
-
+  
   if (isDesktop) {
+    // Make room for dateFilterShowUpcomingToggle
+    const increaseBottomMargin = table.getAllColumns().some(col => col.columnDef.meta?.dateFilterShowUpcomingToggle);
     return (
-      <div className={cn(styles.tableFilters, "cluster", "gap-2")}>
+      <div className={cn(styles.tableFilters, "cluster", "gap-2", increaseBottomMargin && "mb-6")}>
         {extraFilters}
         {
           ...filterableColumns.map((col) => (

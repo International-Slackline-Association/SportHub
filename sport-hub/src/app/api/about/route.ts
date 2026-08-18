@@ -48,8 +48,6 @@ export async function GET(request: NextRequest) {
       city: item.city,
       birthdate: item.birthdate,
       gender: item.gender,
-      firstCompetition: item.firstCompetition,
-      lastCompetition: item.lastCompetition,
       totalPoints: item.totalPoints ?? 0,
       contestsParticipated: item.contestsParticipated ?? item.contestCount ?? 0,
       role: item.role ?? 'user',

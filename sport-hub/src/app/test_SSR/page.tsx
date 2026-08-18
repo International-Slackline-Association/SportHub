@@ -26,8 +26,6 @@ interface User {
   city?: string;
   birthdate?: string;
   gender?: string;
-  firstCompetition?: string;
-  lastCompetition?: string;
   totalPoints?: number;
   contestsParticipated?: number;
   role?: Role;
@@ -71,8 +69,6 @@ async function getUsers(): Promise<PaginatedUsersResult> {
       city: item.city as string | undefined,
       birthdate: item.birthdate as string | undefined,
       gender: item.gender as string | undefined,
-      firstCompetition: item.firstCompetition as string | undefined,
-      lastCompetition: item.lastCompetition as string | undefined,
       totalPoints: (item.totalPoints as number) ?? 0,
       contestsParticipated: ((item.contestsParticipated ?? item.contestCount) as number) ?? 0,
       role: (item.role as Role) ?? 'user',
@@ -119,8 +115,6 @@ async function getCurrentUserFromDb(userId: string): Promise<User | null> {
       city: item.city as string | undefined,
       birthdate: item.birthdate as string | undefined,
       gender: item.gender as string | undefined,
-      firstCompetition: item.firstCompetition as string | undefined,
-      lastCompetition: item.lastCompetition as string | undefined,
       totalPoints: (item.totalPoints as number) ?? 0,
       contestsParticipated: ((item.contestsParticipated ?? item.contestCount) as number) ?? 0,
       role: (item.role as Role) ?? 'user',
