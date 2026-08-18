@@ -20,6 +20,7 @@ import { EventMetadataRecord } from '@lib/relational-types';
 export const dynamic = 'force-dynamic';
 
 type Props = { params: Promise<{ eventId: string }> };
+type AssembledEvent = EventMetadataRecord & { contests: ContestFormValues[]; createdBy?: string; status?: string; };
 
 function oldContestToFormValues(c: ContestData): ContestFormValues {
   const disciplineKey = MAP_DISCIPLINE_ENUM_TO_NAME[Number(c.discipline)];
@@ -45,6 +46,20 @@ function oldContestToFormValues(c: ContestData): ContestFormValues {
   };
 }
 
+function getDisciplinesForEvent (event: AssembledEvent) {
+
+  if (event.disciplines) {
+    return event.disciplines as Discipline[];
+  }
+
+  const contestDisciplines = 
+    event.contests
+      .map((c) => MAP_DISCIPLINE_ENUM_TO_NAME[Number(c.discipline)])
+      .filter(Boolean);
+
+  return [...new Set(contestDisciplines)] as Discipline[];
+}
+
 export default async function EditEventPage({ params }: Props) {
   await requireEventSubmitter();
 
@@ -56,10 +71,10 @@ export default async function EditEventPage({ params }: Props) {
   const result = await getEvent(eventId);
 
   let initialValues: EventSubmissionFormValues;
-
+  
   if (result.success && result.event) {
     // New-format event: reconstruct form values from Metadata record
-    const event = result.event as EventMetadataRecord & { contests: ContestFormValues[]; createdBy?: string; status?: string; };
+    const event = result.event as AssembledEvent;
 
     // Only the creator (or admins) may edit
     if (!isAdmin && event.createdBy !== session?.user?.id) {
@@ -73,19 +88,13 @@ export default async function EditEventPage({ params }: Props) {
     }
 
     const { contests, ...eventData } = event;
-    const uniqueDisciplines = [...new Set(
-      contests
-        .map((c) => MAP_DISCIPLINE_ENUM_TO_NAME[Number(c.discipline)])
-        .filter(Boolean)
-    )] as EventFormValues['disciplines'];
     const website = event?.contests?.[0]?.infoUrl || "";
     initialValues = {
       event: {
         ...eventData,
-        name: eventData?.eventName,
+        eventName: eventData?.name || eventData?.eventName,
         website,
-        disciplines: uniqueDisciplines,
-        socialMedia: {},
+        disciplines: getDisciplinesForEvent(event),
         city: event.city || "",
       },
       contests,
@@ -112,21 +121,21 @@ export default async function EditEventPage({ params }: Props) {
 
     initialValues = {
       event: {
-        name: first.name,
+        eventName: first.name,
         city: first.city || '',
         country: first.country,
         startDate: first.startDate,
         endDate: first.endDate || '',
         website: '',
         disciplines: uniqueDisciplines,
-        socialMedia: {},
+        links: [],
         profileUrl: first.profileUrl,
         thumbnailUrl: first.thumbnailUrl,
       },
       contests: eventContests.map(oldContestToFormValues),
     };
   }
-  console.log(initialValues);
+
   return (
     <PageLayout title="Edit Event">
       <EditEventClient eventId={eventId} initialValues={initialValues} />

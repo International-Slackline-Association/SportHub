@@ -8,6 +8,7 @@ import { cn } from '@utils/cn';
 import { pascalCaseToTitleCase } from '@utils/strings';
 export * from './commonOptions';
 export { default as DisciplineDropdown } from './DisciplineDropdown';
+export { LinkFieldArray } from './LinkFieldArray';
 
 export const FormikSubmitButton = ({ children }: PropsWithChildren<Record<string, never>>) => {
   const { isSubmitting, isValid, dirty } = useFormikContext();
@@ -58,7 +59,7 @@ export const FormikFormField = (props: PropsWithChildren<TextFieldProps | Select
   );
 };
 
-type TextFieldProps = BaseFormFieldProps<HTMLInputElement>;
+export type TextFieldProps = BaseFormFieldProps<HTMLInputElement>;
 export const FormikTextField = ({
   caption,
   className,

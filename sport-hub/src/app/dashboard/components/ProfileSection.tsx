@@ -4,7 +4,6 @@ import { useState } from 'react';
 import ProfileEditForm from './ProfileEditForm';
 import { getCountryByName } from '@utils/countries';
 import { CircleFlag } from 'react-circle-flags';
-import type { SocialMediaData } from '../actions';
 
 interface ProfileSectionProps {
   userId: string;
@@ -16,7 +15,7 @@ interface ProfileSectionProps {
   city?: string;
   birthdate?: string;
   gender?: string;
-  socialMedia?: SocialMediaData;
+  links?: string[];
   role: string;
 }
 
@@ -30,7 +29,7 @@ export default function ProfileSection({
   city,
   birthdate,
   gender,
-  socialMedia,
+  links,
   role,
 }: ProfileSectionProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -39,10 +38,7 @@ export default function ProfileSection({
   // Get country code for flag display
   const countryData = country ? getCountryByName(country) : undefined;
 
-  // Format social media for display
-  const socialMediaEntries = socialMedia
-    ? Object.entries(socialMedia).filter(([, v]) => v)
-    : [];
+  const linkEntries = links?.filter(Boolean) || [];
 
   const handleSuccess = () => {
     setIsEditing(false);
@@ -57,7 +53,7 @@ export default function ProfileSection({
         <h2 className="text-2xl font-bold mb-4">Edit Profile</h2>
         <ProfileEditForm
           userId={userId}
-          initialData={{ name, surname, email, country, city, birthdate, gender, socialMedia }}
+          initialData={{ name, surname, email, country, city, birthdate, gender, links }}
           onCancel={() => setIsEditing(false)}
           onSuccess={handleSuccess}
         />
@@ -142,20 +138,20 @@ export default function ProfileSection({
               <dd className="mt-1 text-xs text-gray-900 font-mono break-all">{isaUsersId}</dd>
             </div>
           )}
-          {socialMediaEntries.length > 0 && (
+          {linkEntries.length > 0 && (
             <div className="col-span-full">
-              <dt className="text-sm font-medium text-gray-500 mb-1">Social Media</dt>
+              <dt className="text-sm font-medium text-gray-500 mb-1">Links</dt>
               <dd className="mt-1 text-sm text-gray-900">
                 <div className="flex flex-wrap gap-2">
-                  {socialMediaEntries.map(([platform, url]) => (
+                  {linkEntries.map((url) => (
                     <a
-                      key={platform}
+                      key={url}
                       href={url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100"
                     >
-                      {platform}
+                      {url}
                     </a>
                   ))}
                 </div>
