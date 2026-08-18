@@ -46,7 +46,11 @@ import { generateUniqueAthleteSlug, slugBase } from '../user-service';
 // Configuration
 const USE_LOCAL = process.env.DYNAMODB_LOCAL === 'true';
 const LOCAL_ENDPOINT = process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000';
-const suffix = process.env.DEV ? "dev" : "prod";
+// Strict, case-insensitive check: env vars are always strings, so
+// `process.env.DEV ? ...` would treat DEV="false" as truthy and resolve to
+// "dev" — exactly backwards. Amplify has this set as DEV=TRUE/FALSE
+// (uppercase), so only lowercasing first before comparing is safe.
+const suffix = process.env.DEV?.toLowerCase() === 'true' ? "dev" : "prod";
 
 // Source tables (ISA-Rankings + isa-users) are in eu-central-1
 // Destination tables (users-dev, events-dev) are in the app region (us-east-2)
