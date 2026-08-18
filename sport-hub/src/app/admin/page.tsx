@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default async function AdminPage() {
   // Require admin role (redirects if unauthorized)
   await requireAdmin();
-  console.log("Hello admin, this is a test. Please ignore and remove me later.");
+
   return (
     <PageLayout
       title="Admin Dashboard"
