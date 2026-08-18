@@ -1,0 +1,27 @@
+.groupedContestRow.groupedContestRow td {
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
+}
+
+.groupedContestRow.groupedContestRow:hover td {
+  background-color: var(--color-neutral-100) !important;
+}
+
+.groupStart.groupStart td {
+  border-top-color: #D4D4D8 !important;
+}
+
+.groupEnd.groupEnd td {
+  border-bottom-color: #D4D4D8 !important;
+}
+
+.groupMiddle.groupMiddle td,
+.groupEnd.groupEnd td {
+  border-top-color: transparent !important;
+}
+
+.tabGroup > button {
+  background-color: white;
+  border: 1px solid var(--color-neutral-300);
+  border-radius: 4px !important;
+}

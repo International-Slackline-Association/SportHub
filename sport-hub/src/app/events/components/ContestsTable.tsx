@@ -14,7 +14,7 @@ import Spinner from '@ui/Spinner';
 import { Alert } from '@ui/Alert';
 import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import { CountryFlag } from '@ui/CountryFlag';
-import styles from './ContestsTable.module.css';
+import styles from './styles.module.css';
 import { formatDateRange } from '@utils/dates';
 import { kebabCaseToTitleCase, snakeCaseToTitleCase } from '@utils/strings';
 
@@ -142,7 +142,10 @@ const columns = [
     enableColumnFilter: true,
     header: "Date(s)",
     id: "eventDateRange",
-    meta: { filterVariant: "date-range" },
+    meta: { 
+      filterVariant: "date-range",
+      dateFilterShowUpcomingToggle: true,
+    },
     filterFn: dateFilterFn,
     cell: info => {
       const { startDate, endDate } = info.row.original;
@@ -208,8 +211,8 @@ const columns = [
       return label;
     },
     meta: {
-      filterOptions: Object.entries(MAP_CONTEST_TYPE_ENUM_TO_NAME).map(([value, label]) => ({
-        value,
+      filterOptions: Object.values(MAP_CONTEST_TYPE_ENUM_TO_NAME).map((label) => ({
+        value: label,
         label: snakeCaseToTitleCase(label),
       })),
       filterVariant: 'select'

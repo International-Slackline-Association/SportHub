@@ -88,8 +88,7 @@ export default async function EditEventPage({ params }: Props) {
     }
 
     const { contests, ...eventData } = event;
-
-    const website = event.contests?.[0]?.infoUrl || "";
+    const website = event?.contests?.[0]?.infoUrl || "";
     initialValues = {
       event: {
         ...eventData,

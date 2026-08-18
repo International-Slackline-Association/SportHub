@@ -20,8 +20,6 @@ interface User {
   city?: string;
   birthdate?: string;
   gender?: string;
-  firstCompetition?: string;
-  lastCompetition?: string;
   totalPoints?: number;
   contestsParticipated?: number;
   role?: Role;
