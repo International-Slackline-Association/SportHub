@@ -1,4 +1,4 @@
-import { CreateTableCommand, DeleteTableCommand, DescribeTableCommand, ListTablesCommand, ResourceNotFoundException } from "@aws-sdk/client-dynamodb";
+import { CreateTableCommand, DeleteTableCommand, DescribeTableCommand, ListTablesCommand, ResourceNotFoundException, UpdateTableCommand } from "@aws-sdk/client-dynamodb";
 import { dynamoClient, getTableName } from "./dynamodb";
 
 export interface TableSchema {
@@ -212,6 +212,89 @@ export class DatabaseSetup {
     throw new Error(`Table ${tableName} did not become active within ${maxWaitTime}ms`);
   }
 
+  async waitForIndexActive(tableName: string, indexName: string, maxWaitTime = 5 * 60000): Promise<void> {
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < maxWaitTime) {
+      const response = await dynamoClient.send(new DescribeTableCommand({ TableName: tableName }));
+      const gsi = response.Table?.GlobalSecondaryIndexes?.find(g => g.IndexName === indexName);
+
+      if (gsi?.IndexStatus === 'ACTIVE') {
+        return;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+
+    throw new Error(`Index ${indexName} on ${tableName} did not become active within ${maxWaitTime}ms`);
+  }
+
+  /**
+   * For a table that already exists, compares its live GlobalSecondaryIndexes
+   * against what TABLE_SCHEMAS declares and creates whatever's missing.
+   *
+   * createTable() only runs for brand-new tables, so a schema change (a new
+   * GSI added to TABLE_SCHEMAS) silently does nothing for any environment
+   * whose table predates that change — createAllTables() would just log
+   * "already exists" and move on, leaving the table missing an index the
+   * app expects at query time. This closes that gap.
+   *
+   * DynamoDB only allows one GSI to be in CREATING state per table at a
+   * time, so missing indexes are added sequentially, each waited out before
+   * starting the next.
+   */
+  async reconcileIndexes(schema: TableSchema): Promise<{ added: string[]; failed: string[] }> {
+    const tableName = getTableName(schema.tableName);
+    const added: string[] = [];
+    const failed: string[] = [];
+
+    if (!schema.globalSecondaryIndexes?.length) {
+      return { added, failed };
+    }
+
+    const describe = await dynamoClient.send(new DescribeTableCommand({ TableName: tableName }));
+    const existingIndexNames = new Set(
+      (describe.Table?.GlobalSecondaryIndexes ?? []).map(gsi => gsi.IndexName)
+    );
+
+    const missing = schema.globalSecondaryIndexes.filter(gsi => !existingIndexNames.has(gsi.IndexName));
+    if (missing.length === 0) {
+      return { added, failed };
+    }
+
+    console.warn(
+      `⚠️  ${tableName} is missing ${missing.length} index(es) declared in TABLE_SCHEMAS: ` +
+      `${missing.map(g => g.IndexName).join(', ')}. This happens when the table was created ` +
+      `before these indexes were added to the schema. Adding them now.`
+    );
+
+    for (const gsi of missing) {
+      try {
+        const neededAttributeNames = new Set(gsi.KeySchema.map(k => k.AttributeName));
+        const attributeDefinitions = schema.attributeDefinitions.filter(
+          attr => neededAttributeNames.has(attr.AttributeName)
+        );
+
+        console.log(`   🚀 Adding ${gsi.IndexName} to ${tableName}...`);
+        await dynamoClient.send(new UpdateTableCommand({
+          TableName: tableName,
+          AttributeDefinitions: attributeDefinitions,
+          GlobalSecondaryIndexUpdates: [{ Create: gsi }],
+        }));
+
+        console.log(`   ⏳ Waiting for ${gsi.IndexName} to become active (can take a few minutes on AWS)...`);
+        await this.waitForIndexActive(tableName, gsi.IndexName);
+        console.log(`   ✅ ${gsi.IndexName} is active`);
+        added.push(gsi.IndexName);
+      } catch (error) {
+        console.error(`   ❌ Failed to add ${gsi.IndexName} to ${tableName}:`, error);
+        failed.push(gsi.IndexName);
+      }
+    }
+
+    return { added, failed };
+  }
+
   async createAllTables(): Promise<{ success: string[]; failed: string[] }> {
     console.log('🚀 Creating all tables...');
 
@@ -224,7 +307,12 @@ export class DatabaseSetup {
       const exists = await this.tableExists(schema.tableName);
       if (exists) {
         console.log(`ℹ️ Table ${getTableName(schema.tableName)} already exists`);
-        results.success.push(schema.tableName);
+        const { failed: failedIndexes } = await this.reconcileIndexes(schema);
+        if (failedIndexes.length > 0) {
+          results.failed.push(schema.tableName);
+        } else {
+          results.success.push(schema.tableName);
+        }
         continue;
       }
 
