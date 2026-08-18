@@ -9,6 +9,17 @@ const isLocal = process.env.DYNAMODB_LOCAL === 'true';
 // (uppercase), so only lowercasing first before comparing is safe.
 const suffix = process.env.DEV?.toLowerCase() === 'true' ? "dev" : "prod";
 
+// Always-on, one-line startup log (fires once per cold start, not per
+// request) — cheap enough to leave on, and exactly what you need in
+// CloudWatch to confirm what a given deployment actually resolved DEV/
+// DB_REGION to, without redeploying with debug logging turned on.
+console.log(
+  `[dynamodb] raw DEV=${JSON.stringify(process.env.DEV)} -> suffix="${suffix}" | ` +
+  `raw DB_REGION=${JSON.stringify(process.env.DB_REGION)} raw AWS_REGION=${JSON.stringify(process.env.AWS_REGION)} ` +
+  `-> region="${process.env.DB_REGION || process.env.AWS_REGION || 'us-east-2'}" | ` +
+  `usersTable="${isLocal ? 'local-sporthub-users' : `sporthub-users-${suffix}`}"`
+);
+
 // DEBUG: Log environment variables (uncomment when debugging)
 // console.log('🐛 DynamoDB Environment Debug:');
 // console.log('  DYNAMODB_LOCAL:', process.env.DYNAMODB_LOCAL);
