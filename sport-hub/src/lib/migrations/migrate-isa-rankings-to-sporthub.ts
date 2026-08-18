@@ -709,6 +709,27 @@ const EVENT_ID_OVERRIDES: Record<string, string> = {
   // 'abc123': 'city-regional-meet',
 };
 
+// Mirrors MAP_DISCIPLINE_ENUM_TO_NAME (src/utils/consts.tsx) for display in
+// the false-merge warning/report below. Not imported directly — consts.tsx
+// pulls in @ui/Icons and React at module load, which this standalone
+// migration script has no reason to depend on.
+const DISCIPLINE_ENUM_TO_NAME: Record<number, string> = {
+  0: 'OVERALL',
+  1: 'TRICKLINE',
+  2: 'TRICKLINE_AERIAL',
+  3: 'TRICKLINE_JIB_AND_STATIC',
+  4: 'TRICKLINE_TRANSFER',
+  5: 'FREESTYLE_HIGHLINE',
+  6: 'SPEED',
+  7: 'SPEED_SHORT',
+  8: 'SPEED_HIGHLINE',
+  9: 'ENDURANCE',
+  10: 'BLIND',
+  11: 'RIGGING',
+  12: 'FREESTYLE',
+  13: 'WALKING',
+};
+
 interface FlaggedContest { contestId: string; discipline: string; contestSize?: string; }
 interface EventInfo { country: string; city?: string; name: string; contestsByName: Map<string, FlaggedContest[]>; }
 
@@ -803,7 +824,11 @@ async function scanContests(): Promise<{ contests: Map<string, ContestRecord>; e
       if (contestName) {
         const info = eventInfoMap.get(eventId)!;
         const contestsForName = info.contestsByName.get(contestName) ?? [];
-        contestsForName.push({ contestId, discipline, contestSize });
+        // Display-only name for the warning/report — the stored ContestRecord
+        // below keeps the raw numeric `discipline` value everywhere else in
+        // the app expects it (e.g. MAP_DISCIPLINE_ENUM_TO_NAME[Number(...)]).
+        const disciplineName = DISCIPLINE_ENUM_TO_NAME[Number(discipline)] ?? discipline;
+        contestsForName.push({ contestId, discipline: disciplineName, contestSize });
         info.contestsByName.set(contestName, contestsForName);
       }
 
