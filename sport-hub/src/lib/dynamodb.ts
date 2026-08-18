@@ -3,6 +3,7 @@ import { DynamoDBDocumentClient, PutCommand, GetCommand, ScanCommand, DeleteComm
 
 // Environment detection for local development
 const isLocal = process.env.DYNAMODB_LOCAL === 'true';
+const suffix = process.env.DEV ? "dev" : "prod";
 
 // DEBUG: Log environment variables (uncomment when debugging)
 // console.log('🐛 DynamoDB Environment Debug:');
@@ -48,7 +49,7 @@ export const getTableName = (baseName: string) => {
   if (isLocal) return `local-${baseName}`;
   // For everything else (AWS), always use -dev suffix
   // This ensures we never touch production tables
-  return `${baseName}-dev`;
+  return `${baseName}-${suffix}`;
 };
 
 // Update options interface for atomic updates

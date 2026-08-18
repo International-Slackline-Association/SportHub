@@ -20,9 +20,10 @@ config({ path: '.env.production' });
 
 // Configuration
 const LOCAL_ENDPOINT = 'http://localhost:8000';
+const suffix = process.env.DEV ? "dev" : "prod";
 const TABLES = [
-  { local: 'local-users', remote: 'users-dev', keyAttr: 'userId' },
-  { local: 'local-events', remote: 'events-dev', keyAttr: 'eventId' },
+  { local: 'local-users', remote: `users-${suffix}`, keyAttr: 'userId' },
+  { local: 'local-events', remote: `events-${suffix}`, keyAttr: 'eventId' },
 ];
 
 // Create clients
