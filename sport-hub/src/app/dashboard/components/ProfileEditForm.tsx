@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { Form, Formik, type FormikHelpers } from 'formik';
 import { updateProfile } from '../actions';
 import { COUNTRIES, getCountryByName } from '@utils/countries';
 import { CircleFlag } from 'react-circle-flags';
+import { FormikTextField, LinkFieldArray } from '@ui/Form';
+import Button from '@ui/Button';
 
 interface CountryDropdownProps {
   value: string;
@@ -104,13 +107,15 @@ function CountryDropdown({ value, onChange, disabled }: CountryDropdownProps) {
   );
 }
 
-interface SocialMediaData {
-  instagram?: string;
-  youtube?: string;
-  facebook?: string;
-  whatsapp?: string;
-  twitch?: string;
-  tiktok?: string;
+interface ProfileEditFormValues {
+  name: string;
+  surname?: string;
+  email: string;
+  countryCode: string;
+  city?: string;
+  birthdate?: string;
+  gender?: string;
+  links: string[];
 }
 
 interface ProfileEditFormProps {
@@ -123,7 +128,7 @@ interface ProfileEditFormProps {
     city?: string;
     birthdate?: string;
     gender?: string;
-    socialMedia?: SocialMediaData;
+    links?: string[];
   };
   onCancel: () => void;
   onSuccess: () => void;
@@ -140,7 +145,7 @@ export default function ProfileEditForm({
     ? getCountryByName(initialData.country)
     : undefined;
 
-  const [formData, setFormData] = useState({
+  const initialValues: ProfileEditFormValues = {
     name: initialData.name || '',
     surname: initialData.surname || '',
     email: initialData.email || '',
@@ -148,41 +153,30 @@ export default function ProfileEditForm({
     city: initialData.city || '',
     birthdate: initialData.birthdate || '',
     gender: initialData.gender || '',
-    socialMedia: {
-      instagram: initialData.socialMedia?.instagram || '',
-      youtube: initialData.socialMedia?.youtube || '',
-      facebook: initialData.socialMedia?.facebook || '',
-      tiktok: initialData.socialMedia?.tiktok || '',
-      twitch: initialData.socialMedia?.twitch || '',
-    },
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+    links: initialData.links || [],
+  };
+
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  const handleSubmit = async (
+    values: ProfileEditFormValues,
+    { setSubmitting }: FormikHelpers<ProfileEditFormValues>
+  ) => {
     setError(null);
 
     try {
-      // Convert country code to country name for storage
-      const selectedCountry = COUNTRIES.find(c => c.code === formData.countryCode);
+      const selectedCountry = COUNTRIES.find(c => c.code === values.countryCode);
+      const cleanedLinks = values.links.map((link) => link.trim()).filter(Boolean);
 
       const result = await updateProfile(userId, {
-        name: formData.name.trim(),
-        surname: formData.surname.trim() || undefined,
-        email: formData.email.trim(),
+        name: values.name.trim(),
+        surname: values.surname?.trim() || undefined,
+        email: values.email.trim(),
         country: selectedCountry?.name || undefined,
-        city: formData.city.trim() || undefined,
-        birthdate: formData.birthdate || undefined,
-        gender: formData.gender || undefined,
-        socialMedia: {
-          instagram: formData.socialMedia.instagram.trim() || undefined,
-          youtube: formData.socialMedia.youtube.trim() || undefined,
-          facebook: formData.socialMedia.facebook.trim() || undefined,
-          tiktok: formData.socialMedia.tiktok.trim() || undefined,
-          twitch: formData.socialMedia.twitch.trim() || undefined,
-        },
+        city: values.city?.trim() || undefined,
+        birthdate: values.birthdate || undefined,
+        gender: values.gender || undefined,
+        links: cleanedLinks.length ? cleanedLinks : undefined,
       });
 
       if (result.success) {
@@ -194,218 +188,105 @@ export default function ProfileEditForm({
       setError('An unexpected error occurred');
       console.error(err);
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
+    <Formik initialValues={initialValues} onSubmit={handleSubmit}>
+      {({ values, setFieldValue, isSubmitting }) => (
+        <Form className="space-y-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              {error}
+            </div>
+          )}
+          <FormikTextField
+            id="name"
+            name="name"
+            label="Name"
+            required
+          />
+          <FormikTextField
+            id="surname"
+            name="surname"
+            label="Surname"
+          />
+          <div>
+            <FormikTextField
+              id="email"
+              name="email"
+              label="Email"
+              type="email"
+              required
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Note: Changing email may require re-authentication
+            </p>
+          </div>
+
+          <div>
+            <label htmlFor="countryCode" className="block text-sm font-medium text-gray-700 mb-1">
+              Country
+            </label>
+            <CountryDropdown
+              value={values.countryCode}
+              onChange={(code) => setFieldValue('countryCode', code)}
+              disabled={isSubmitting}
+            />
+          </div>
+
+          <FormikTextField
+            id="city"
+            name="city"
+            label="City"
+          />
+          <FormikTextField
+            id="birthdate"
+            name="birthdate"
+            label="Birthdate"
+            type="date"
+          />
+
+          <div>
+            <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
+              Gender
+            </label>
+            <select
+              id="gender"
+              name="gender"
+              value={values.gender}
+              onChange={(event) => setFieldValue('gender', event.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={isSubmitting}
+            >
+              <option value="">Select gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <fieldset className="border border-gray-200 rounded-md p-4 space-y-4">
+            <legend className="text-sm font-medium text-gray-700 px-1">Links</legend>
+            <LinkFieldArray formKey="links" />
+          </fieldset>
+
+          <div className="flex gap-3 pt-4">
+            <Button type="submit" variant="primary" disabled={isSubmitting}>
+              {isSubmitting ? 'Saving...' : 'Save Changes'}
+            </Button>
+            <Button
+              type="button"
+              onClick={onCancel}
+              disabled={isSubmitting}
+              variant="secondary"
+            >
+              Cancel
+            </Button>
+          </div>
+        </Form>
       )}
-
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-          Name
-        </label>
-        <input
-          type="text"
-          id="name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-          disabled={isSubmitting}
-        />
-      </div>
-
-      <div>
-        <label htmlFor="surname" className="block text-sm font-medium text-gray-700 mb-1">
-          Surname
-        </label>
-        <input
-          type="text"
-          id="surname"
-          value={formData.surname}
-          onChange={(e) => setFormData({ ...formData, surname: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          disabled={isSubmitting}
-        />
-      </div>
-
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-          Email
-        </label>
-        <input
-          type="email"
-          id="email"
-          value={formData.email}
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-          disabled={isSubmitting}
-        />
-        <p className="mt-1 text-xs text-gray-500">
-          Note: Changing email may require re-authentication
-        </p>
-      </div>
-
-      <div>
-        <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
-          Country
-        </label>
-        <CountryDropdown
-          value={formData.countryCode}
-          onChange={(code) => setFormData({ ...formData, countryCode: code })}
-          disabled={isSubmitting}
-        />
-      </div>
-
-      <div>
-        <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-          City
-        </label>
-        <input
-          type="text"
-          id="city"
-          value={formData.city}
-          onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          disabled={isSubmitting}
-        />
-      </div>
-
-      <div>
-        <label htmlFor="birthdate" className="block text-sm font-medium text-gray-700 mb-1">
-          Birthdate
-        </label>
-        <input
-          type="date"
-          id="birthdate"
-          value={formData.birthdate}
-          onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          disabled={isSubmitting}
-        />
-      </div>
-
-      <div>
-        <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
-          Gender
-        </label>
-        <select
-          id="gender"
-          value={formData.gender}
-          onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          disabled={isSubmitting}
-        >
-          <option value="">Select gender</option>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-          <option value="other">Other</option>
-        </select>
-      </div>
-
-      <fieldset className="border border-gray-200 rounded-md p-4 space-y-4">
-        <legend className="text-sm font-medium text-gray-700 px-1">Social Media</legend>
-
-        <div>
-          <label htmlFor="instagram" className="block text-sm font-medium text-gray-700 mb-1">
-            Instagram
-          </label>
-          <input
-            type="text"
-            id="instagram"
-            placeholder="https://instagram.com/username"
-            value={formData.socialMedia.instagram}
-            onChange={(e) => setFormData({ ...formData, socialMedia: { ...formData.socialMedia, instagram: e.target.value } })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={isSubmitting}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="youtube" className="block text-sm font-medium text-gray-700 mb-1">
-            YouTube
-          </label>
-          <input
-            type="text"
-            id="youtube"
-            placeholder="https://youtube.com/@channel"
-            value={formData.socialMedia.youtube}
-            onChange={(e) => setFormData({ ...formData, socialMedia: { ...formData.socialMedia, youtube: e.target.value } })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={isSubmitting}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="facebook" className="block text-sm font-medium text-gray-700 mb-1">
-            Facebook
-          </label>
-          <input
-            type="text"
-            id="facebook"
-            placeholder="https://facebook.com/profile"
-            value={formData.socialMedia.facebook}
-            onChange={(e) => setFormData({ ...formData, socialMedia: { ...formData.socialMedia, facebook: e.target.value } })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={isSubmitting}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="tiktok" className="block text-sm font-medium text-gray-700 mb-1">
-            TikTok
-          </label>
-          <input
-            type="text"
-            id="tiktok"
-            placeholder="https://tiktok.com/@username"
-            value={formData.socialMedia.tiktok}
-            onChange={(e) => setFormData({ ...formData, socialMedia: { ...formData.socialMedia, tiktok: e.target.value } })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={isSubmitting}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="twitch" className="block text-sm font-medium text-gray-700 mb-1">
-            Twitch
-          </label>
-          <input
-            type="text"
-            id="twitch"
-            placeholder="https://twitch.tv/username"
-            value={formData.socialMedia.twitch}
-            onChange={(e) => setFormData({ ...formData, socialMedia: { ...formData.socialMedia, twitch: e.target.value } })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={isSubmitting}
-          />
-        </div>
-      </fieldset>
-
-      <div className="flex gap-3 pt-4">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting ? 'Saving...' : 'Save Changes'}
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={isSubmitting}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Cancel
-        </button>
-      </div>
-    </form>
+    </Formik>
   );
 }

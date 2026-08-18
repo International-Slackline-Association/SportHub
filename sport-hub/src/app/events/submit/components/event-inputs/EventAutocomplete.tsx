@@ -12,19 +12,13 @@ import { MAP_DISCIPLINE_ENUM_TO_NAME } from '@utils/consts';
 
 const createNextTouchState = (numContests: number) => ({
   event: {
-    name: true,
+    eventName: true,
     city: true,
     country: true,
     startDate: true,
     endDate: true,
     website: true,
-    socialMedia: {
-      facebook: true,
-      instagram: true,
-      tiktok: true,
-      twitch: true,
-      youtube: true,
-    },
+    links: true,
     disciplines: true,
     profileUrl: true,
     thumbnailUrl: true,
@@ -45,7 +39,7 @@ const createNextTouchState = (numContests: number) => ({
 
 export default function EventAutocomplete() {
   const { values, setTouched, setValues, setErrors } = useFormikContext<EventSubmissionFormValues>();
-  const input = values.event.name;
+  const input = values.event.eventName || "";
   const [debounced, setDebounced] = useState(input);
 
   // simple debounce
@@ -82,14 +76,14 @@ export default function EventAutocomplete() {
       
       const nextFormState = {
         event: {
-          name: event.eventName,
+          eventName: event.eventName,
           city: event.city ?? '',
           country: (event.country as string).toLowerCase(),
           startDate: event?.startDate,
           endDate: event?.endDate,
           // TODO Backend: Missing columns from EventMetadataRecord - need to add to DynamoDB and data model
           website,
-          socialMedia: {},
+          links: event.links,
           disciplines: Array.from(disciplines ?? []),
           profileUrl: event.profileUrl as string,
           thumbnailUrl: event.thumbnailUrl as string,
@@ -116,7 +110,7 @@ export default function EventAutocomplete() {
 
   return (
     <FormikAutocomplete
-      id="event.name"
+      id="event.eventName"
       isLoading={isLoadingEvents}
       isError={isError}
       label="Event Name"

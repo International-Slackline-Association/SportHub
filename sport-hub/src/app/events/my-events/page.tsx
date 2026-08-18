@@ -4,7 +4,6 @@ import { userAgent } from "next/server";
 import PageLayout from "@ui/PageLayout";
 import { getMyEvents } from "../submit/actions";
 import Button from "@ui/Button";
-import { BadgeColor } from "@ui/Badge";
 import { MyEventsTable } from "./components/MyEventsTable";
 import { MyEventsList } from "./components/MyEventsList";
 
@@ -15,13 +14,6 @@ export const metadata: Metadata = {
 };
 
 export type EventStatus = 'draft' | 'pending' | 'published' | 'cancelled';
-
-export const statusColor: Record<EventStatus, BadgeColor> = {
-  draft: "NEUTRAL",
-  pending: "ORANGE",
-  published: "GREEN",
-  cancelled: "RED",
-};
 
 export default async function MyEventsPage() {
   const { device } = userAgent({ headers: await headers() });

@@ -15,7 +15,7 @@ export interface EventFormValues {
   thumbnailUrl?: string;
 
   // General Information
-  name: string;
+  eventName: string;
   city: string;
   country: string;
   startDate: string;
@@ -25,14 +25,7 @@ export interface EventFormValues {
   // Disciplines (checkboxes)
   disciplines: Discipline[];
 
-  // Social Media
-  socialMedia: {
-    facebook?: string;
-    instagram?: string;
-    tiktok?: string;
-    twitch?: string;
-    youtube?: string;
-  }
+  links: string[];
 }
 
 // Helper: transform "YYYY-MM-DD" into a stable Date (treat as local/UTC as needed)
@@ -42,8 +35,7 @@ const dateTransform = (value: unknown, originalValue: unknown) => {
   return new Date(originalValue + 'T00:00:00')
 }
 
-const URL_REGEX = /((https?):\/\/)?(www.)?[a-z0-9]+(\.[a-z]{2,}){1,3}(#?\/?[a-zA-Z0-9#]+)*\/?(\?[a-zA-Z0-9-_]+=[a-zA-Z0-9-%]+&?)?$/;
-const SOCIAL_MEDIA_REGEX = /^@?[\w](?!.*?\.{2})[\w.]{0,28}[\w]$/;
+const URL_REGEX = /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
 
 export const eventValidationSchema = Yup.object({
   // Assets
@@ -53,8 +45,8 @@ export const eventValidationSchema = Yup.object({
     .nullable(),
 
   // General Info
-  name: Yup.string()
-    .required("Name is required")
+  eventName: Yup.string()
+    .required("Event name is required")
     .min(3, 'Event name must be at least 3 characters'),
   city: Yup.string()
     .required("City is required")
@@ -76,36 +68,23 @@ export const eventValidationSchema = Yup.object({
     .of(Yup.string())
     .min(1, 'Please select at least one discipline')
     .required(),
-  // Social Media
-  socialMedia: Yup.object().shape({
-    facebook: Yup.string()
-      .matches(URL_REGEX, 'Please enter a valid URL')
-      .nullable(),
-    instagram: Yup.string()
-      .matches(SOCIAL_MEDIA_REGEX, 'Please enter a valid Instagram handle')
-      .nullable(),
-    tiktok: Yup.string()
-      .matches(SOCIAL_MEDIA_REGEX, 'Please enter a valid TikTok handle')
-      .nullable(),
-    twitch: Yup.string()
-      .matches(URL_REGEX, 'Please enter a valid URL')
-      .nullable(),
-    youtube: Yup.string()
-      .matches(URL_REGEX, 'Please enter a valid URL')
-      .nullable(),
-  }),
+  links: Yup.array()
+    .of(
+      Yup.string()
+        .matches(URL_REGEX, 'Please enter a valid URL')
+    ),
 });
 
 // Initial values for Event form
 export const initialEventValues: EventFormValues = {
-  name: '',
+  eventName: '',
   city: '',
   country: '',
   startDate: '',
   endDate: '',
   website: '',
   disciplines: [],
-  socialMedia: {}
+  links: []
 };
 
 /*******************************************************************************

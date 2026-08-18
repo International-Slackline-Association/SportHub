@@ -5,6 +5,7 @@
  * Events contain multiple contests as child records using composite key (PK + SK).
  */
 
+import { DISCIPLINE_DATA } from '@utils/consts';
 import { dynamodb, EVENTS_TABLE } from './dynamodb';
 import type { EventMetadataRecord, ContestRecord, EventOrganizer } from './relational-types';
 
@@ -33,6 +34,7 @@ export async function createEvent(params: {
     organizers: params.organizers || [],
     contestCount: 0,
     createdAt: Date.now(),
+    links: [],
   };
 
   await dynamodb.putItem(EVENTS_TABLE, event as unknown as Record<string, unknown>);
@@ -274,11 +276,18 @@ export async function saveEventContestRecords(
   contests: Record<string, unknown>[]
 ): Promise<void> {
   for (let i = 0; i < contests.length; i++) {
+    const discipline = contests[i].discipline as string;
+    let disciplineEnumValue = discipline;
+    if (Number.isNaN(Number(disciplineEnumValue))) {
+      disciplineEnumValue = String(DISCIPLINE_DATA[discipline as Discipline]?.enumValue);
+    }
+
     await dynamodb.putItem(EVENTS_TABLE, {
-      eventId,
-      sortKey: `Contest:${contests[i].discipline}:${i}`,
-      contestIndex: i,
       ...contests[i],
+      eventId,
+      sortKey: `Contest:${disciplineEnumValue}:${i}`,
+      contestIndex: i,
+      discipline: disciplineEnumValue,
     });
   }
 }

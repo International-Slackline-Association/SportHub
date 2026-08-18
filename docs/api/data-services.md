@@ -159,20 +159,13 @@ interface AthleteProfile {
   disciplines: string[];     // Real disciplines from ranking records (deduplicated)
   roles: string[];
   profileImage?: string;     // From profileUrl or thumbnailUrl in DB
-  socialMedia?: {
-    instagram?: string;
-    youtube?: string;
-    facebook?: string;
-    whatsapp?: string;
-    twitch?: string;
-    tiktok?: string;
-  };
+  links?: string[];           // Freeform URLs; platform auto-detected at render time
 }
 ```
 
 **Key behaviors**:
 - **Disciplines**: Extracted from `Ranking:*` records using `MAP_DISCIPLINE_ENUM_TO_NAME`. Filters out `OVERALL` (meta-category) and deduplicates generic parents when specific variants exist (e.g., removes `FREESTYLE` if `FREESTYLE_HIGHLINE` is present).
-- **Social media**: Read from `socialMedia` field on the profile record (parsed from `infoUrl` during migration).
+- **Links**: Read from `links` field (string array) on the profile record, seeded from `infoUrl` during migration.
 - **Age**: Calculated from `birthdate` on the profile record.
 - **Profile image**: Uses `profileUrl` with `thumbnailUrl` fallback.
 - **Identity**: `name`, `surname`, and `country` are read directly from the sporthub-users Profile record — no reference DB (isa-users) query at display time. `athleteSlug` is used as a display-name fallback for legacy records that predate the stored-name field.
