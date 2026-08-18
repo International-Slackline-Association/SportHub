@@ -65,8 +65,11 @@ const LOCAL_ENDPOINT = (
   process.env.DYNAMODB_ENDPOINT || 'http://127.0.0.1:8000'
 ).replace('localhost', '127.0.0.1');
 
-// Naming derived from the base constants — never touches production tables.
-const suffix = process.env.DEV ? "dev" : "prod";
+// Strict, case-insensitive check: env vars are always strings, so
+// `process.env.DEV ? ...` would treat DEV="false" as truthy and resolve to
+// "dev" — exactly backwards. Amplify has this set as DEV=TRUE/FALSE
+// (uppercase), so only lowercasing first before comparing is safe.
+const suffix = process.env.DEV?.toLowerCase() === 'true' ? "dev" : "prod";
 const awsTableName = (base: string) => `${base}-${suffix}`;
 const localTableName = (base: string) => `local-${base}`;
 

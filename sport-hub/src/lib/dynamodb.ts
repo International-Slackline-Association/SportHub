@@ -3,7 +3,11 @@ import { DynamoDBDocumentClient, PutCommand, GetCommand, ScanCommand, DeleteComm
 
 // Environment detection for local development
 const isLocal = process.env.DYNAMODB_LOCAL === 'true';
-const suffix = process.env.DEV ? "dev" : "prod";
+// Strict, case-insensitive check: env vars are always strings, so
+// `process.env.DEV ? ...` would treat DEV="false" as truthy and resolve to
+// "dev" — exactly backwards. Amplify has this set as DEV=TRUE/FALSE
+// (uppercase), so only lowercasing first before comparing is safe.
+const suffix = process.env.DEV?.toLowerCase() === 'true' ? "dev" : "prod";
 
 // DEBUG: Log environment variables (uncomment when debugging)
 // console.log('🐛 DynamoDB Environment Debug:');

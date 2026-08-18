@@ -20,7 +20,11 @@ config({ path: '.env.production' });
 
 // Configuration
 const LOCAL_ENDPOINT = 'http://localhost:8000';
-const suffix = process.env.DEV ? "dev" : "prod";
+// Strict, case-insensitive check: env vars are always strings, so
+// `process.env.DEV ? ...` would treat DEV="false" as truthy and resolve to
+// "dev" — exactly backwards. Amplify has this set as DEV=TRUE/FALSE
+// (uppercase), so only lowercasing first before comparing is safe.
+const suffix = process.env.DEV?.toLowerCase() === 'true' ? "dev" : "prod";
 const TABLES = [
   { local: 'local-users', remote: `users-${suffix}`, keyAttr: 'userId' },
   { local: 'local-events', remote: `events-${suffix}`, keyAttr: 'eventId' },
