@@ -41,7 +41,7 @@ import {
   ScanCommandInput,
   QueryCommandInput,
 } from "@aws-sdk/lib-dynamodb";
-import { generateUniqueAthleteSlug } from '../user-service';
+import { generateUniqueAthleteSlug, slugBase } from '../user-service';
 
 // Configuration
 const USE_LOCAL = process.env.DYNAMODB_LOCAL === 'true';
@@ -731,15 +731,21 @@ async function scanContests(): Promise<{ contests: Map<string, ContestRecord>; e
         }
       }
 
-      // Generate eventId from date (group contests by date)
-      const eventId = `Event:${date}`;
-
-      // Create GSI sort key for date-discipline-index: contestDate#eventId
-      const dateSortKey = `${date}#${eventId}`;
-
       const country = item.country as string || '';
       const city = item.city as string | undefined;
       const contestName = item.name as string || '';
+
+      // Generate eventId from date + city/country. A date-only key collapses
+      // any two distinct events that happen to open on the same day into one
+      // partition (see docs/known-issues/event-id-date-collision.md) — city
+      // is the cheapest disambiguator available on the source contest record.
+      // Falls back to date-only when both are missing, which can still
+      // collide, but that's a narrower case than every same-day pair.
+      const locationSlug = slugBase(city || '', country);
+      const eventId = locationSlug ? `Event:${date}:${locationSlug}` : `Event:${date}`;
+
+      // Create GSI sort key for date-discipline-index: contestDate#eventId
+      const dateSortKey = `${date}#${eventId}`;
 
       // Track country/city/name per event for EventMetadata creation
       if (!eventInfoMap.has(eventId)) {
