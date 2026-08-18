@@ -709,7 +709,8 @@ const EVENT_ID_OVERRIDES: Record<string, string> = {
   // 'abc123': 'city-regional-meet',
 };
 
-interface EventInfo { country: string; city?: string; name: string; contestIdsByName: Map<string, string[]>; }
+interface FlaggedContest { contestId: string; discipline: string; contestSize?: string; }
+interface EventInfo { country: string; city?: string; name: string; contestsByName: Map<string, FlaggedContest[]>; }
 
 /**
  * Length of the longest common prefix shared by every string (case-insensitive).
@@ -770,7 +771,12 @@ async function scanContests(): Promise<{ contests: Map<string, ContestRecord>; e
 
       const country = item.country as string || '';
       const city = item.city as string | undefined;
-      const contestName = item.name as string || '';
+      const contestSize = ISA_CATEGORY_TO_CONTEST_SIZE[item.category as number] ?? undefined;
+      // Trimmed so a stray leading/trailing space on the source record
+      // doesn't make an otherwise-identical name look like a different one
+      // to contestsByName / the false-merge warning (e.g. "Las Buitreras "
+      // vs "Las Buitreras" were being treated as two distinct contest names).
+      const contestName = (item.name as string || '').trim();
 
       // Generate eventId from date + city/country, falling back to the
       // contest name when neither is on record, or a manual override when
@@ -786,19 +792,19 @@ async function scanContests(): Promise<{ contests: Map<string, ContestRecord>; e
       const dateSortKey = `${date}#${eventId}`;
 
       // Track country/city/name per event for EventMetadata creation.
-      // contestIdsByName accumulates every distinct contest name seen under
-      // this eventId (not just the first), mapped to the contestIds that had
-      // it, so createEventMetadata() can derive a real shared event name and
-      // flag groups that look like false merges with enough detail (actual
-      // contestIds) to act on.
+      // contestsByName accumulates every distinct contest name seen under
+      // this eventId (not just the first), mapped to the contests (with
+      // discipline/contestSize, not just contestId) that had it, so
+      // createEventMetadata() can derive a real shared event name and flag
+      // groups that look like false merges with enough detail to act on.
       if (!eventInfoMap.has(eventId)) {
-        eventInfoMap.set(eventId, { country, city, name: contestName, contestIdsByName: new Map() });
+        eventInfoMap.set(eventId, { country, city, name: contestName, contestsByName: new Map() });
       }
       if (contestName) {
         const info = eventInfoMap.get(eventId)!;
-        const idsForName = info.contestIdsByName.get(contestName) ?? [];
-        idsForName.push(contestId);
-        info.contestIdsByName.set(contestName, idsForName);
+        const contestsForName = info.contestsByName.get(contestName) ?? [];
+        contestsForName.push({ contestId, discipline, contestSize });
+        info.contestsByName.set(contestName, contestsForName);
       }
 
       const contest: ContestRecord = {
@@ -811,7 +817,7 @@ async function scanContests(): Promise<{ contests: Map<string, ContestRecord>; e
         city,
         gender: mapGender(item.gender as number | undefined),
         ageCategory: 'ALL',
-        contestSize: ISA_CATEGORY_TO_CONTEST_SIZE[item.category as number] ?? undefined,
+        contestSize,
         prize: item.prize as number | undefined,
         profileUrl: item.profileUrl as string | undefined,
         thumbnailUrl: item.thumbnailUrl as string | undefined,
@@ -1016,7 +1022,7 @@ function createEventMetadata(contests: Map<string, ContestRecord>, eventInfoMap:
     // distinct name rather than discarding all of them: a fuller name is a
     // better guess at the real event name than a bare discipline label, and
     // either is better than the generic country+date fallback below.
-    const distinctNames = [...(info?.contestIdsByName.keys() ?? [])];
+    const distinctNames = [...(info?.contestsByName.keys() ?? [])];
     const commonPrefixLen = longestCommonPrefixLength(distinctNames);
     const commonName = commonPrefixLen > 0
       ? distinctNames[0].slice(0, commonPrefixLen).trim()
@@ -1027,11 +1033,17 @@ function createEventMetadata(contests: Map<string, ContestRecord>, eventInfoMap:
     // wasn't enough to separate two genuinely different events (the residual
     // case documented in docs/known-issues/event-id-date-collision.md that
     // can't be resolved automatically with the data available here) —
-    // surfaced for manual review, with the actual contestIds needed to fill
-    // in EVENT_ID_OVERRIDES, rather than guessed at.
+    // surfaced for manual review, with the actual contestIds (plus
+    // discipline/contestSize, to help tell them apart) needed to fill in
+    // EVENT_ID_OVERRIDES, rather than guessed at.
     if (distinctNames.length > 1 && commonPrefixLen < Math.min(6, ...distinctNames.map(n => n.length))) {
       const groups = distinctNames
-        .map(name => `"${name}" [${(info!.contestIdsByName.get(name) ?? []).join(', ')}]`)
+        .map(name => {
+          const contestsStr = (info!.contestsByName.get(name) ?? [])
+            .map(c => `${c.contestId}(${c.discipline}|${c.contestSize ?? '-'})`)
+            .join(', ');
+          return `"${name}" [${contestsStr}]`;
+        })
         .join(', ');
       console.warn(
         `   ⚠️  Possible merged events under ${eventId} (${eventContests.length} contests): ` +

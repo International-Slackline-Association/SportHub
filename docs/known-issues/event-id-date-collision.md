@@ -82,15 +82,22 @@ implemented) and:
 
 ## Splitting a flagged event
 When the "Possible merged events" warning fires, it names the exact
-`contestId`s under each distinct contest name, e.g.:
+`contestId`s under each distinct contest name — each followed by
+`(discipline|contestSize)` to help tell the groups apart at a glance
+(`contestSize` shows as `-` when the source record didn't have one):
 
 ```
 ⚠️  Possible merged events under Event:2024-03-15:innsbruck-austria (5 contests):
-"Innsbruck Spring Cup" [c1, c3, c4], "City Regional Slackline Meet" [c2, c5]
+"Innsbruck Spring Cup" [c1(TRICKLINE|OPEN), c3(HIGHLINE|OPEN), c4(SPEED|CHALLENGE)],
+"City Regional Slackline Meet" [c2(TRICKLINE|CHALLENGE), c5(HIGHLINE|CHALLENGE)]
 share no common prefix — these may be two different events that collided
 on date + city/country. Add the contestIds for the outlier group(s) to
 EVENT_ID_OVERRIDES to split them out, or review manually.
 ```
+
+The JSON report from `pnpm migrate:audit` breaks these out into structured
+fields (`contestId`, `discipline`, `contestSize`) per contest instead of
+the packed text form above.
 
 To split it: decide which group is the "outlier" relative to the rest
 (usually the smaller one, but check the actual contest data if unsure),
@@ -117,8 +124,8 @@ after the event itself and another is named only for its discipline.
 
 ```
 ⚠️  Possible merged events under Event:2021-08-27:bern-ch (2 contests):
-"Bern City Slack #12" [e02e49], "Rigging Masters" [0bacaf] share no
-common prefix — ...
+"Bern City Slack #12" [e02e49(RIGGING|OPEN)], "Rigging Masters" [0bacaf(RIGGING|CHALLENGE)]
+share no common prefix — ...
 ```
 
 "Bern City Slack #12" is the event; "Rigging Masters" is one of its

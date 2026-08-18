@@ -6,7 +6,8 @@
  *
  * Drops the trailing "share no common prefix — ..." prose from each
  * warning; only the actionable fields (eventId, contest count, contest
- * names with their contestIds) make it into the report.
+ * names with each contest's id/discipline/contestSize) make it into the
+ * report.
  *
  * Usage: tsx scripts/parse-collision-report.ts <log-file> <output-json-file>
  * Prints the total number of flagged event groups to stdout (nothing else),
@@ -20,9 +21,15 @@ if (!logFile || !outFile) {
   process.exit(1);
 }
 
+interface FlaggedContest {
+  contestId: string;
+  discipline: string;
+  contestSize: string | null;
+}
+
 interface FlaggedGroup {
   name: string;
-  contestIds: string[];
+  contests: FlaggedContest[];
 }
 
 interface FlaggedEvent {
@@ -32,7 +39,10 @@ interface FlaggedEvent {
 }
 
 const WARNING_RE = /Possible merged events under (\S+) \((\d+) contests\): (.+?) share no common prefix/;
+// Each name group: "name" [id1(discipline|size), id2(discipline|size)]
 const GROUP_RE = /"([^"]+)"\s*\[([^\]]*)\]/g;
+// Each contest within a group: id(discipline|size) — size is "-" when unknown
+const CONTEST_RE = /(\S+?)\(([^|)]*)\|([^)]*)\)/g;
 
 const log = readFileSync(logFile, 'utf-8');
 const byDate: Record<string, FlaggedEvent[]> = {};
@@ -49,11 +59,21 @@ for (const line of log.split('\n')) {
   GROUP_RE.lastIndex = 0;
   let groupMatch: RegExpExecArray | null;
   while ((groupMatch = GROUP_RE.exec(groupsRaw)) !== null) {
-    const [, name, idsRaw] = groupMatch;
-    groups.push({
-      name,
-      contestIds: idsRaw.split(',').map(id => id.trim()).filter(Boolean),
-    });
+    const [, name, contestsRaw] = groupMatch;
+
+    const contests: FlaggedContest[] = [];
+    CONTEST_RE.lastIndex = 0;
+    let contestMatch: RegExpExecArray | null;
+    while ((contestMatch = CONTEST_RE.exec(contestsRaw)) !== null) {
+      const [, contestId, discipline, contestSize] = contestMatch;
+      contests.push({
+        contestId,
+        discipline,
+        contestSize: contestSize === '-' ? null : contestSize,
+      });
+    }
+
+    groups.push({ name, contests });
   }
 
   (byDate[date] ??= []).push({

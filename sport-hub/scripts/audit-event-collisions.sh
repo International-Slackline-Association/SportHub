@@ -14,8 +14,12 @@
 #         "eventId": "Event:2021-08-27:bern-ch",
 #         "contestCount": 2,
 #         "groups": [
-#           { "name": "Bern City Slack #12", "contestIds": ["e02e49"] },
-#           { "name": "Rigging Masters", "contestIds": ["0bacaf"] }
+#           { "name": "Bern City Slack #12", "contests": [
+#             { "contestId": "e02e49", "discipline": "RIGGING", "contestSize": "OPEN" }
+#           ] },
+#           { "name": "Rigging Masters", "contests": [
+#             { "contestId": "0bacaf", "discipline": "RIGGING", "contestSize": "CHALLENGE" }
+#           ] }
 #         ]
 #       }
 #     ]
