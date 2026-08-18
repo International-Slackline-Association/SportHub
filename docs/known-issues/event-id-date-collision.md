@@ -109,6 +109,31 @@ gone before running `--execute` for real. This resolves the collision
 *before* any data is written — see "Rollout" for why that matters more
 than fixing it after the fact.
 
+### Not every warning is a real collision — check first
+The heuristic behind this warning (no shared prefix between contest
+names) has a real false-positive mode, confirmed against actual
+`--dry-run` output: a single legitimate event where one contest is named
+after the event itself and another is named only for its discipline.
+
+```
+⚠️  Possible merged events under Event:2021-08-27:bern-ch (2 contests):
+"Bern City Slack #12" [e02e49], "Rigging Masters" [0bacaf] share no
+common prefix — ...
+```
+
+"Bern City Slack #12" is the event; "Rigging Masters" is one of its
+disciplines, not a second event. Same date, same city, one real event —
+correctly grouped already. **Nothing to add to `EVENT_ID_OVERRIDES`
+here; the right action is to do nothing.**
+
+Before adding contestIds to the override for a flagged group, sanity
+check: does it actually look like two independent competitions (e.g.
+each with its own full slate of disciplines, different-looking
+prize/participant data), or does it look like one event where some
+contests just happen to be named after the event and others only after
+their discipline? The latter is expected to be common — treat the
+warning as "worth a 30-second look," not "assume it's a real collision."
+
 ## Rollout (not done in this PR)
 This PR is a code-only fix to the ID generation logic. Before re-running
 the migration against production data:
