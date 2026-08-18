@@ -21,6 +21,8 @@ applications:
             - env | grep -e COGNITO_USER_POOL_ID >> .env.production
             - env | grep -e AUTH_SECRET >> .env.production
             - env | grep -e AUTH_URL >> .env.production
+            - env | grep -e DEV >> .env.production
+            - env | grep -e DB_REGION >> .env.production
             - chmod +x scripts/build_sporthub.sh
             - ./scripts/build_sporthub.sh
       artifacts:
