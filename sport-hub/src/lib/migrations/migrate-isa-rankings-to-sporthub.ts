@@ -46,6 +46,7 @@ import { generateUniqueAthleteSlug, slugBase } from '../user-service';
 // Configuration
 const USE_LOCAL = process.env.DYNAMODB_LOCAL === 'true';
 const LOCAL_ENDPOINT = process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000';
+const suffix = process.env.DEV ? "dev" : "prod";
 
 // Source tables (ISA-Rankings + isa-users) are in eu-central-1
 // Destination tables (users-dev, events-dev) are in the app region (us-east-2)
@@ -55,8 +56,8 @@ const DEST_REGION = process.env.AWS_REGION || 'us-east-2';
 // Table names - use local- prefix for local dev
 const ISA_RANKINGS_TABLE = USE_LOCAL ? 'ISA-Rankings' : (process.env.ISA_RANKINGS_TABLE || 'ISA-Rankings');
 const ISA_USERS_TABLE = process.env.ISA_USERS_TABLE || 'isa-users';
-const SPORTHUB_USERS_TABLE = USE_LOCAL ? 'local-sporthub-users' : (process.env.SPORTHUB_USERS_TABLE || 'sporthub-users-dev');
-const SPORTHUB_EVENTS_TABLE = USE_LOCAL ? 'local-sporthub-events' : (process.env.SPORTHUB_EVENTS_TABLE || 'sporthub-events-dev');
+const SPORTHUB_USERS_TABLE = USE_LOCAL ? 'local-sporthub-users' : (process.env.SPORTHUB_USERS_TABLE || `sporthub-users-${suffix}`);
+const SPORTHUB_EVENTS_TABLE = USE_LOCAL ? 'local-sporthub-events' : (process.env.SPORTHUB_EVENTS_TABLE || `sporthub-events-${suffix}`);
 
 let DRY_RUN = process.argv.includes('--dry-run');
 const EXECUTE = process.argv.includes('--execute');

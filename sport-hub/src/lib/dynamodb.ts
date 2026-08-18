@@ -3,6 +3,7 @@ import { DynamoDBDocumentClient, PutCommand, GetCommand, ScanCommand, DeleteComm
 
 // Environment detection for local development
 const isLocal = process.env.DYNAMODB_LOCAL === 'true';
+const suffix = process.env.DEV ? "dev" : "prod";
 
 // DEBUG: Log environment variables (uncomment when debugging)
 // console.log('🐛 DynamoDB Environment Debug:');
@@ -15,7 +16,7 @@ const isLocal = process.env.DYNAMODB_LOCAL === 'true';
 // TODO: Set up AWS Cognito authentication(?)
 // TODO: Set up Amplify role for all server-side AWS actions (like dynamodb access)
 const clientConfig = {
-  region: process.env.AWS_REGION || "us-east-2",
+  region: process.env.AWS_DB_REGION || "us-east-2",
   maxAttempts: 3,
   ...(isLocal ? {
     endpoint: (process.env.DYNAMODB_ENDPOINT || "http://127.0.0.1:8000").replace('localhost', '127.0.0.1'),
@@ -48,7 +49,7 @@ export const getTableName = (baseName: string) => {
   if (isLocal) return `local-${baseName}`;
   // For everything else (AWS), always use -dev suffix
   // This ensures we never touch production tables
-  return `${baseName}-dev`;
+  return `${baseName}-${suffix}`;
 };
 
 // Update options interface for atomic updates

@@ -66,7 +66,8 @@ const LOCAL_ENDPOINT = (
 ).replace('localhost', '127.0.0.1');
 
 // Naming derived from the base constants — never touches production tables.
-const awsTableName = (base: string) => `${base}-dev`;
+const suffix = process.env.DEV ? "dev" : "prod";
+const awsTableName = (base: string) => `${base}-${suffix}`;
 const localTableName = (base: string) => `local-${base}`;
 
 // Fail fast if AWS credentials are missing — otherwise the client falls back to

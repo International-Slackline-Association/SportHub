@@ -20,9 +20,10 @@ config({ path: '.env.production' });
 
 // Configuration
 const LOCAL_ENDPOINT = 'http://localhost:8000';
+const suffix = process.env.DEV ? "dev" : "prod";
 const TABLES = [
-  { local: 'local-users', remote: 'users-dev', keyAttr: 'userId' },
-  { local: 'local-events', remote: 'events-dev', keyAttr: 'eventId' },
+  { local: 'local-users', remote: `users-${suffix}`, keyAttr: 'userId' },
+  { local: 'local-events', remote: `events-${suffix}`, keyAttr: 'eventId' },
 ];
 
 // Create clients
@@ -33,7 +34,7 @@ const localClient = new DynamoDBClient({
 });
 
 const remoteClient = new DynamoDBClient({
-  region: process.env.AWS_REGION || 'us-east-2',
+  region: process.env.DB_REGION || process.env.AWS_REGION || 'us-east-2',
   credentials: process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY ? {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -203,7 +204,7 @@ async function syncTable(table: typeof TABLES[0]) {
 async function main() {
   console.log('\n🚀 Multi-Table DynamoDB Sync\n');
   console.log(`Local:  ${LOCAL_ENDPOINT}`);
-  console.log(`Remote: ${process.env.AWS_REGION || 'us-east-2'}`);
+  console.log(`Remote: ${process.env.DB_REGION || process.env.AWS_REGION || 'us-east-2'}`);
   console.log(`Mode:   ${compareOnly ? 'COMPARE' : recreateAll ? 'RECREATE' : 'SYNC'}\n`);
 
   if (recreateAll && !compareOnly) {
