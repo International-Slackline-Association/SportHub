@@ -41,7 +41,7 @@ import {
   ScanCommandInput,
   QueryCommandInput,
 } from "@aws-sdk/lib-dynamodb";
-import { generateUniqueAthleteSlug } from '../user-service';
+import { generateUniqueAthleteSlug, slugBase } from '../user-service';
 
 // Configuration
 const USE_LOCAL = process.env.DYNAMODB_LOCAL === 'true';
@@ -690,7 +690,66 @@ const ISA_CATEGORY_TO_CONTEST_SIZE: Record<number, string> = {
   3: 'GRAND_SLAM', 4: 'OPEN', 5: 'CHALLENGE',
 };
 
-interface EventInfo { country: string; city?: string; name: string; }
+/**
+ * Manual overrides for contests where date + city/country + name still
+ * wasn't enough to keep two real events apart under the same eventId (see
+ * docs/known-issues/event-id-date-collision.md and the "Possible merged
+ * events" warning below).
+ *
+ * Workflow: run --dry-run, find the contestIds for the event(s) that need
+ * to be split out in the warning output, add them here with a short slug
+ * of your choosing, re-run --dry-run to confirm the warning clears (and
+ * that the split looks right), then --execute.
+ *
+ * Key: contestId (from the warning output). Value: a slug used in place of
+ * the usual city/country/name-derived one, moving just that contest onto
+ * a distinct eventId from the rest of the flagged group.
+ */
+const EVENT_ID_OVERRIDES: Record<string, string> = {
+  // 'abc123': 'city-regional-meet',
+};
+
+// Mirrors MAP_DISCIPLINE_ENUM_TO_NAME (src/utils/consts.tsx) for display in
+// the false-merge warning/report below. Not imported directly — consts.tsx
+// pulls in @ui/Icons and React at module load, which this standalone
+// migration script has no reason to depend on.
+const DISCIPLINE_ENUM_TO_NAME: Record<number, string> = {
+  0: 'OVERALL',
+  1: 'TRICKLINE',
+  2: 'TRICKLINE_AERIAL',
+  3: 'TRICKLINE_JIB_AND_STATIC',
+  4: 'TRICKLINE_TRANSFER',
+  5: 'FREESTYLE_HIGHLINE',
+  6: 'SPEED',
+  7: 'SPEED_SHORT',
+  8: 'SPEED_HIGHLINE',
+  9: 'ENDURANCE',
+  10: 'BLIND',
+  11: 'RIGGING',
+  12: 'FREESTYLE',
+  13: 'WALKING',
+};
+
+interface FlaggedContest { contestId: string; discipline: string; contestSize?: string; }
+interface EventInfo { country: string; city?: string; name: string; contestsByName: Map<string, FlaggedContest[]>; }
+
+/**
+ * Length of the longest common prefix shared by every string (case-insensitive).
+ * Used to derive a shared event name from per-discipline contest names, and
+ * to detect groups of contests that probably don't belong to the same event.
+ */
+function longestCommonPrefixLength(values: string[]): number {
+  if (values.length === 0) return 0;
+  const [first, ...rest] = values;
+  let prefixLen = first.length;
+  for (const value of rest) {
+    let i = 0;
+    while (i < prefixLen && i < value.length && first[i].toLowerCase() === value[i].toLowerCase()) i++;
+    prefixLen = Math.min(prefixLen, i);
+    if (prefixLen === 0) break;
+  }
+  return prefixLen;
+}
 
 async function scanContests(): Promise<{ contests: Map<string, ContestRecord>; eventInfoMap: Map<string, EventInfo> }> {
   console.log('📥 Scanning ISA-Rankings for Contests...');
@@ -731,19 +790,46 @@ async function scanContests(): Promise<{ contests: Map<string, ContestRecord>; e
         }
       }
 
-      // Generate eventId from date (group contests by date)
-      const eventId = `Event:${date}`;
+      const country = item.country as string || '';
+      const city = item.city as string | undefined;
+      const contestSize = ISA_CATEGORY_TO_CONTEST_SIZE[item.category as number] ?? undefined;
+      // Trimmed so a stray leading/trailing space on the source record
+      // doesn't make an otherwise-identical name look like a different one
+      // to contestsByName / the false-merge warning (e.g. "Las Buitreras "
+      // vs "Las Buitreras" were being treated as two distinct contest names).
+      const contestName = (item.name as string || '').trim();
+
+      // Generate eventId from date + city/country, falling back to the
+      // contest name when neither is on record, or a manual override when
+      // even that wasn't enough to keep two real events apart (see
+      // EVENT_ID_OVERRIDES above and docs/known-issues/event-id-date-
+      // collision.md). Two events on the same date, in the same city, with
+      // no override yet, still can't be told apart automatically — see the
+      // false-merge warning emitted in createEventMetadata() below.
+      const locationSlug = EVENT_ID_OVERRIDES[contestId] || slugBase(city || '', country) || slugBase(contestName);
+      const eventId = locationSlug ? `Event:${date}:${locationSlug}` : `Event:${date}`;
 
       // Create GSI sort key for date-discipline-index: contestDate#eventId
       const dateSortKey = `${date}#${eventId}`;
 
-      const country = item.country as string || '';
-      const city = item.city as string | undefined;
-      const contestName = item.name as string || '';
-
-      // Track country/city/name per event for EventMetadata creation
+      // Track country/city/name per event for EventMetadata creation.
+      // contestsByName accumulates every distinct contest name seen under
+      // this eventId (not just the first), mapped to the contests (with
+      // discipline/contestSize, not just contestId) that had it, so
+      // createEventMetadata() can derive a real shared event name and flag
+      // groups that look like false merges with enough detail to act on.
       if (!eventInfoMap.has(eventId)) {
-        eventInfoMap.set(eventId, { country, city, name: contestName });
+        eventInfoMap.set(eventId, { country, city, name: contestName, contestsByName: new Map() });
+      }
+      if (contestName) {
+        const info = eventInfoMap.get(eventId)!;
+        const contestsForName = info.contestsByName.get(contestName) ?? [];
+        // Display-only name for the warning/report — the stored ContestRecord
+        // below keeps the raw numeric `discipline` value everywhere else in
+        // the app expects it (e.g. MAP_DISCIPLINE_ENUM_TO_NAME[Number(...)]).
+        const disciplineName = DISCIPLINE_ENUM_TO_NAME[Number(discipline)] ?? discipline;
+        contestsForName.push({ contestId, discipline: disciplineName, contestSize });
+        info.contestsByName.set(contestName, contestsForName);
       }
 
       const contest: ContestRecord = {
@@ -756,7 +842,7 @@ async function scanContests(): Promise<{ contests: Map<string, ContestRecord>; e
         city,
         gender: mapGender(item.gender as number | undefined),
         ageCategory: 'ALL',
-        contestSize: ISA_CATEGORY_TO_CONTEST_SIZE[item.category as number] ?? undefined,
+        contestSize,
         prize: item.prize as number | undefined,
         profileUrl: item.profileUrl as string | undefined,
         thumbnailUrl: item.thumbnailUrl as string | undefined,
@@ -951,11 +1037,46 @@ function createEventMetadata(contests: Map<string, ContestRecord>, eventInfoMap:
     const country = info?.country ?? '';
     const city = info?.city ?? firstContest.city;
 
-    // Derive event name: find common prefix among all contest names, fall back to country+date
-    const allNames = eventContests
-      .map(c => eventInfoMap.get(c.eventId)?.name)
-      .filter((n): n is string => Boolean(n));
-    const commonName = allNames.length > 0 ? allNames[0] : '';
+    // Derive event name: common prefix shared by every distinct contest name
+    // under this eventId (handles "Event Name - Discipline" style contest
+    // naming). A single-name group (the common case) yields its full name
+    // unchanged. When names share no prefix at all — real source data shows
+    // this happens even for a single legitimate event, e.g. one contest
+    // named after the event ("Bern City Slack #12") and another named only
+    // for its discipline ("Rigging Masters") — fall back to the longest
+    // distinct name rather than discarding all of them: a fuller name is a
+    // better guess at the real event name than a bare discipline label, and
+    // either is better than the generic country+date fallback below.
+    const distinctNames = [...(info?.contestsByName.keys() ?? [])];
+    const commonPrefixLen = longestCommonPrefixLength(distinctNames);
+    const commonName = commonPrefixLen > 0
+      ? distinctNames[0].slice(0, commonPrefixLen).trim()
+      : distinctNames.reduce((longest, name) => name.length > longest.length ? name : longest, '');
+
+    // Flag likely false merges: distinct contest names sharing no meaningful
+    // common prefix under one eventId is a sign that date+city/country
+    // wasn't enough to separate two genuinely different events (the residual
+    // case documented in docs/known-issues/event-id-date-collision.md that
+    // can't be resolved automatically with the data available here) —
+    // surfaced for manual review, with the actual contestIds (plus
+    // discipline/contestSize, to help tell them apart) needed to fill in
+    // EVENT_ID_OVERRIDES, rather than guessed at.
+    if (distinctNames.length > 1 && commonPrefixLen < Math.min(6, ...distinctNames.map(n => n.length))) {
+      const groups = distinctNames
+        .map(name => {
+          const contestsStr = (info!.contestsByName.get(name) ?? [])
+            .map(c => `${c.contestId}(${c.discipline}|${c.contestSize ?? '-'})`)
+            .join(', ');
+          return `"${name}" [${contestsStr}]`;
+        })
+        .join(', ');
+      console.warn(
+        `   ⚠️  Possible merged events under ${eventId} (${eventContests.length} contests): ` +
+        `${groups} share no common prefix — these may be two different events that ` +
+        `collided on date + city/country. Add the contestIds for the outlier group(s) ` +
+        `to EVENT_ID_OVERRIDES to split them out, or review manually.`
+      );
+    }
 
     const event: EventMetadata = {
       eventId,
