@@ -1007,11 +1007,20 @@ function createEventMetadata(contests: Map<string, ContestRecord>, eventInfoMap:
     const city = info?.city ?? firstContest.city;
 
     // Derive event name: common prefix shared by every distinct contest name
-    // under this eventId, fall back to country+date. A single-name group
-    // (the common case) yields its full name unchanged.
+    // under this eventId (handles "Event Name - Discipline" style contest
+    // naming). A single-name group (the common case) yields its full name
+    // unchanged. When names share no prefix at all — real source data shows
+    // this happens even for a single legitimate event, e.g. one contest
+    // named after the event ("Bern City Slack #12") and another named only
+    // for its discipline ("Rigging Masters") — fall back to the longest
+    // distinct name rather than discarding all of them: a fuller name is a
+    // better guess at the real event name than a bare discipline label, and
+    // either is better than the generic country+date fallback below.
     const distinctNames = [...(info?.contestIdsByName.keys() ?? [])];
     const commonPrefixLen = longestCommonPrefixLength(distinctNames);
-    const commonName = commonPrefixLen > 0 ? distinctNames[0].slice(0, commonPrefixLen).trim() : '';
+    const commonName = commonPrefixLen > 0
+      ? distinctNames[0].slice(0, commonPrefixLen).trim()
+      : distinctNames.reduce((longest, name) => name.length > longest.length ? name : longest, '');
 
     // Flag likely false merges: distinct contest names sharing no meaningful
     // common prefix under one eventId is a sign that date+city/country
