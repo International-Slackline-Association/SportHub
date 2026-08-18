@@ -217,7 +217,7 @@ const DateRangeTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>)
             onChange={() => {
               const dateToday = (new Date()).toISOString().split("T")[0];
               if (showUpcomingOnly) {
-                update({ startDate: undefined, endDate: dateToday });
+                update({ startDate: undefined, endDate: undefined });
               } else {
                 update({ startDate: dateToday, endDate: undefined });
               }
@@ -278,10 +278,6 @@ const DisciplineTableFilter = <TData,>({ column }: TableFilterProps<TData>) => {
       }}
     />
   );
-};
-
-export const CheckboxTableFilter = () => {
-
 };
 
 const TableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {

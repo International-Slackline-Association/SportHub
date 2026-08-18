@@ -235,15 +235,16 @@ export async function getAssembledEvent(
     const { contests: embeddedContests, ...metadataOnly } = metadata;
 
     const hasEmbeddedContests = Array.isArray(embeddedContests) && embeddedContests.length > 0;
-    console.log("hasEmbeddedContests");
-    // If the event has embedded contests (new format), use those; 
+    // If the event has embedded contests (new format), use those;
     // otherwise, use the separate Contest:* records
     if (hasEmbeddedContests) {
       contests = embeddedContests;
     } else {
+      // KNOWN ISSUE (see docs/known-issues/event-id-date-collision.md): legacy
+      // migrated events derive eventId from date alone, so two distinct events
+      // on the same date share a partition and this city match is only a
+      // partial disambiguator — it does not fix the underlying collision.
       contests = (await getEventContests(eventId)).filter((c) =>
-        // Contest from different events can have the save event ID if their events share a date.
-        // Ensure the correct contests are selected.
         c.city?.toLowerCase() === metadata.city?.toLowerCase()
       );
     }

@@ -173,12 +173,12 @@ export function DisciplineHeroSection() {
             priority
           />
         )}
+        {currentHero?.credit && (
+          <figcaption className="absolute bottom-[10px] right-2 z-10 text-xs text-right text-white">
+            Photo by: {currentHero?.credit}
+          </figcaption>
+        )}
       </figure>
-      {currentHero?.credit && (
-        <caption className="relative text-xs text-right bottom-10px">
-          Photo by: {currentHero?.credit}
-        </caption>
-      )}
 
       {/* Rankings / Disciplines Section */}
       <section className={styles.section}>

@@ -79,8 +79,6 @@ The Users table uses `sortKey` to distinguish between three record types:
   // Aggregated Stats (calculated from participations)
   totalPoints: number               // For userSubType-index GSI (sort key)
   contestCount: number
-  firstCompetition?: string
-  lastCompetition?: string
 
   // Judge/Organizer Stats
   totalContestsJudged?: number

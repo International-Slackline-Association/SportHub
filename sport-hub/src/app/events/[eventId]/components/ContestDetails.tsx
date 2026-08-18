@@ -3,28 +3,11 @@
 import { useState } from 'react';
 import ResultsTable from './ResultsTable';
 import { Alert } from '@ui/Alert';
-import { ContestRecord } from '@lib/relational-types';
-import { ContestTabGroup } from './ContestTabGroup';
+import { ContestTabGroup, type ContestJudge, type ContestResult, type ContestTabData } from './ContestTabGroup';
 import { ContestAbout } from './ContestAbout';
 import Button from '@ui/Button';
 
-export type ContestJudge = {
-  id?: string;
-  name: string;
-  isPending: boolean;
-};
-
-export type ContestResult = {
-  rank: number;
-  id?: string;
-  name: string;
-  isaPoints: number;
-  isPending: boolean;
-};
-
-export type ContestTabData = ContestRecord & {
-  results: ContestResult[];
-};
+export type { ContestJudge, ContestResult, ContestTabData };
 
 export type ContestDetailsProps = {
   contests: ContestTabData[];

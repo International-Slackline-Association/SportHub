@@ -112,7 +112,6 @@ export default async function EventPage({ params, searchParams }: EventPageProps
     );
   }
 
-  console.log("No event record found with ID:", decodedEventId, ", scanning all contests (old format)...");
   // Fall through to old-format events (flat ContestData list — pre-migration records)
   const contests = await getContestsData();
   const oldEvent = contests.find(c => c.eventId === decodedEventId);
