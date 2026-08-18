@@ -65,3 +65,8 @@ sport-hub/src/mocks/data-exports/isa-rankings-export.json
 
 # pnpm
 pnpm-workspace.yaml
+
+# migration audit output (scripts/audit-event-collisions.sh) — contains
+# real athlete/event data, timestamped so it accumulates locally
+migration-dry-run-*.log
+migration-collision-report-*.json
