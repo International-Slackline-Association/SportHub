@@ -82,6 +82,7 @@ AUTH_URL=https://df-dev.d2c5lq1ojcfw0k.amplifyapp.com
 | `COGNITO_USER_POOL_ID` | `eu-central-1_iGaYGKeyJ` | Cognito user pool |
 | `AMPLIFY_MONOREPO_APP_ROOT` | `sport-hub` | Monorepo app location |
 | `AUTH_URL` | `https://df-dev.d2c5lq1ojcfw0k.amplifyapp.com` | Base URL for auth |
+| `DB_REGION` | e.g. `eu-central-1` | AWS region for the DynamoDB tables (`src/lib/dynamodb.ts`). **Set this explicitly per branch** — do not rely on `AWS_REGION` here (see note below); if unset, DynamoDB access silently falls back to `AWS_REGION`, then the hardcoded `us-east-2` default. |
 
 #### ✅ Keep in Secrets (encrypted)
 
@@ -96,7 +97,7 @@ AUTH_URL=https://df-dev.d2c5lq1ojcfw0k.amplifyapp.com
 |----------|-----------------|
 | `AWS_ACCESS_KEY_ID` | Amplify provides via IAM role |
 | `AWS_SECRET_ACCESS_KEY` | Amplify provides via IAM role |
-| `AWS_REGION` | Duplicate of `COGNITO_REGION` |
+| `AWS_REGION` | Duplicate of `COGNITO_REGION` — **but** `src/lib/dynamodb.ts` used to read this for the DynamoDB client region too, so removing it without setting `DB_REGION` (above) silently breaks DynamoDB access on that branch, falling back to the hardcoded `us-east-2` default. Safe to remove now that `DB_REGION` is set explicitly per branch — just make sure `DB_REGION` is actually set first. |
 | `AMPLIFY_DIFF_DEPLOY` | Amplify auto-managed |
 | `DYNAMODB_LOCAL` | Only for local development |
 
