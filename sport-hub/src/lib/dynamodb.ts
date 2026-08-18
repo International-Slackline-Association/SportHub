@@ -16,7 +16,7 @@ const suffix = process.env.DEV ? "dev" : "prod";
 // TODO: Set up AWS Cognito authentication(?)
 // TODO: Set up Amplify role for all server-side AWS actions (like dynamodb access)
 const clientConfig = {
-  region: process.env.AWS_REGION || "us-east-2",
+  region: process.env.DB_REGION || process.env.AWS_REGION || "us-east-2",
   maxAttempts: 3,
   ...(isLocal ? {
     endpoint: (process.env.DYNAMODB_ENDPOINT || "http://127.0.0.1:8000").replace('localhost', '127.0.0.1'),
