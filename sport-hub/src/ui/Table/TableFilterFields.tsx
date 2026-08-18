@@ -3,6 +3,10 @@ import styles from "./styles.module.css";
 import Autocomplete from "@ui/Form/Autocomplete";
 import { COUNTRIES } from "@utils/countries";
 import { DisciplineDropdown } from "@ui/Form";
+import { useState } from "react";
+import formStyles from "@ui/Form/styles.module.css";
+import { cn } from "@utils/cn";
+import { useClientMediaQuery } from "@utils/useClientMediaQuery";
 
 type DateRangeFilterValue = { startDate?: string; endDate?: string } | undefined;
 type DateRangeRowValue = { startDate?: string; endDate?: string };
@@ -139,7 +143,10 @@ const CountryTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) =
 const DateRangeTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
   const id = column.id;
   const filterValue = (column.getFilterValue() as DateRangeFilterValue) ?? {};
-
+  const { dateFilterShowUpcomingToggle } = column.columnDef?.meta || {};
+  const { isDesktop } = useClientMediaQuery();
+  const [showUpcomingOnly, setShowUpcomingOnly] = useState(false);
+  
   const minDate = [...rows]
     .map(row => {
       const rowValue = row.getValue<DateRangeRowValue>(column.id);
@@ -160,10 +167,25 @@ const DateRangeTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>)
     } else {
       column.setFilterValue(cleaned);
     }
+
+    // Sync toggle state with date range
+    if (dateFilterShowUpcomingToggle) {
+      const dateToday = new Date();
+      const isStartDateInTheFuture = new Date(cleaned.startDate || "") >= dateToday;
+      const isEndDateInTheFuture = !cleaned.endDate || new Date(cleaned.endDate || "") >= dateToday;
+      const isDateRangeInTheFuture = isStartDateInTheFuture && isEndDateInTheFuture;
+      setShowUpcomingOnly(isDateRangeInTheFuture);
+    }
   };
 
   return (
-    <div className={styles.columnFilter} key={`column-filter-${id}`}>
+    <div
+      className={cn(styles.columnFilter, "gap-2")}
+      key={`column-filter-${id}`}
+      style={isDesktop ? {} : {
+        marginBottom: '3rem',
+      }}
+    >
       <div className="cluster gap-2">
         <div className="stack">
           <label htmlFor={`${id}-start`}>Start Date</label>
@@ -186,6 +208,32 @@ const DateRangeTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>)
           />
         </div>
       </div>
+      {dateFilterShowUpcomingToggle && (
+        <div className={cn(styles.filterUpcomingDatesOnly, "cluster gap-2")}> 
+          <input
+            className={formStyles.checkbox}
+            checked={showUpcomingOnly}
+            id="upcoming-filter"
+            onChange={() => {
+              const dateToday = (new Date()).toISOString().split("T")[0];
+              if (showUpcomingOnly) {
+                update({ startDate: undefined, endDate: undefined });
+              } else {
+                update({ startDate: dateToday, endDate: undefined });
+              }
+              setShowUpcomingOnly(!showUpcomingOnly);
+            }}
+            role="switch"
+            type="checkbox"
+          />
+          <label 
+            className={formStyles.label}
+            htmlFor="upcoming-filter"
+          >
+            Upcoming Only
+          </label>
+        </div>
+      )}
     </div>
   );
 };

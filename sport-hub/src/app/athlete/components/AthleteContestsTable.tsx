@@ -4,6 +4,7 @@ import Table from '@ui/Table';
 import Link from 'next/link';
 import { DISCIPLINE_DATA } from '@utils/consts';
 import { contestSizeOptions, eventGenderOptions, ageCategoryOptions } from '@ui/Form/commonOptions';
+import { formatDate } from '@utils/dates';
 
 const labelOf = (opts: { value: string; label: string }[], val: string | undefined) =>
   opts.find(o => o.value === val)?.label ?? val ?? '';
@@ -20,7 +21,7 @@ const contestLabel = (row: AthleteContest): string =>
     disciplineLabel(row.discipline),
     labelOf(eventGenderOptions, row.gender),
     labelOf(ageCategoryOptions, row.ageCategory),
-  ].filter(Boolean).join('-') || row.contest || 'Contest';
+  ].filter(Boolean).join(' ') || row.contest || 'Contest';
 
 const columnHelper = createColumnHelper<AthleteContest>();
 const columns = [
@@ -79,6 +80,7 @@ const columns = [
   }),
   columnHelper.accessor("points", {
     header: "Points",
+    size: 40,
   }),
   columnHelper.accessor((row: AthleteContest) => {
     return contestSizeOptions.find(o => o.value === row.contestSize)?.label ?? row.contestSize;
@@ -87,9 +89,13 @@ const columns = [
     enableColumnFilter: true,
     header: "Contest Size",
     meta: { filterVariant: 'select' },
+    size: 100,
   }),
-  columnHelper.accessor("dates", {
+  columnHelper.accessor((row: AthleteContest) => new Date(row.dates), {
     header: "Date",
+    sortingFn: "datetime",
+    cell: info => formatDate(info.getValue()),
+    size: 60,
   }),
 ];
 

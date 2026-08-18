@@ -52,17 +52,17 @@ export const formatDateRangeShort = (startDate: Date, endDate: Date): string => 
 };
 
 // Formats to DD/MM/YYYY, returns empty string if invalid date
-export const formatDate = (dateStr: string) =>{
+export const formatDate = (dateStr: string | Date) =>{
   if (!dateStr) return '';
 
   try {
-    const date = new Date(dateStr);
+    const date = dateStr instanceof Date ? dateStr : new Date(dateStr);
     return date.toLocaleDateString('en-GB', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
     }).replace(/\//g, '/');
   } catch {
-    return dateStr;
+    return String(dateStr);
   }
 }

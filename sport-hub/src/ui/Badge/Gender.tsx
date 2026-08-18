@@ -4,19 +4,25 @@ import Image from 'next/image';
 import { pascalCaseToTitleCase } from ".";
 
 interface GenderProps {
-  variant: Gender;
+  variant: Gender | ContestGender;
   className?: string;
 }
 
-const genderLabels: Record<Gender, string> = {
-  ALL: "ALL",
+const genderLabels: Record<Gender | ContestGender, string> = {
+  ALL: "MIXED",
   MEN: "MEN",
+  MEN_ONLY: "MEN",
+  MIXED: "MIXED",
   WOMEN: "WOMEN",
+  WOMEN_ONLY: "WOMEN",
   OTHER: "OTHER",
 };
 
 const Gender = ({ variant, className = "" }: GenderProps) => {
   const variantClass = `gender${pascalCaseToTitleCase(variant)}`;
+
+  const includeFemaleIcon = ["WOMEN", "WOMEN_ONLY", "MIXED", "ALL"].includes(variant);
+  const includeMaleIcon = ["MEN", "MEN_ONLY", "MIXED", "ALL"].includes(variant);
 
   return (
     <div
@@ -27,10 +33,10 @@ const Gender = ({ variant, className = "" }: GenderProps) => {
         className
       ].filter(Boolean).join(" ")}
     >
-      {variant === "WOMEN" && (
+      {includeFemaleIcon && (
         <Image src="/static/images/icons/gender-female.svg" alt="Female" width={24} height={24} />
       )}
-      {variant === "MEN" && (
+      {includeMaleIcon && (
         <Image src="/static/images/icons/gender-male.svg" alt="Male" width={24} height={24} />
       )}
       {genderLabels[variant]}
