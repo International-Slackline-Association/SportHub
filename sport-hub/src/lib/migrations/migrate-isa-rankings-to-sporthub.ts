@@ -690,7 +690,25 @@ const ISA_CATEGORY_TO_CONTEST_SIZE: Record<number, string> = {
   3: 'GRAND_SLAM', 4: 'OPEN', 5: 'CHALLENGE',
 };
 
-interface EventInfo { country: string; city?: string; name: string; }
+interface EventInfo { country: string; city?: string; name: string; allNames: Set<string>; }
+
+/**
+ * Length of the longest common prefix shared by every string (case-insensitive).
+ * Used to derive a shared event name from per-discipline contest names, and
+ * to detect groups of contests that probably don't belong to the same event.
+ */
+function longestCommonPrefixLength(values: string[]): number {
+  if (values.length === 0) return 0;
+  const [first, ...rest] = values;
+  let prefixLen = first.length;
+  for (const value of rest) {
+    let i = 0;
+    while (i < prefixLen && i < value.length && first[i].toLowerCase() === value[i].toLowerCase()) i++;
+    prefixLen = Math.min(prefixLen, i);
+    if (prefixLen === 0) break;
+  }
+  return prefixLen;
+}
 
 async function scanContests(): Promise<{ contests: Map<string, ContestRecord>; eventInfoMap: Map<string, EventInfo> }> {
   console.log('📥 Scanning ISA-Rankings for Contests...');
@@ -735,21 +753,30 @@ async function scanContests(): Promise<{ contests: Map<string, ContestRecord>; e
       const city = item.city as string | undefined;
       const contestName = item.name as string || '';
 
-      // Generate eventId from date + city/country. A date-only key collapses
+      // Generate eventId from date + city/country, falling back to the
+      // contest name when neither is on record. A date-only key collapses
       // any two distinct events that happen to open on the same day into one
-      // partition (see docs/known-issues/event-id-date-collision.md) — city
-      // is the cheapest disambiguator available on the source contest record.
-      // Falls back to date-only when both are missing, which can still
-      // collide, but that's a narrower case than every same-day pair.
-      const locationSlug = slugBase(city || '', country);
+      // partition (see docs/known-issues/event-id-date-collision.md); city/
+      // country is the cheapest disambiguator available on the source
+      // contest record, and contest name is the next-best signal when even
+      // those are missing. Two events on the same date, in the same city,
+      // still can't be told apart this way — see the false-merge warning
+      // emitted in createEventMetadata() below for that residual case.
+      const locationSlug = slugBase(city || '', country) || slugBase(contestName);
       const eventId = locationSlug ? `Event:${date}:${locationSlug}` : `Event:${date}`;
 
       // Create GSI sort key for date-discipline-index: contestDate#eventId
       const dateSortKey = `${date}#${eventId}`;
 
-      // Track country/city/name per event for EventMetadata creation
+      // Track country/city/name per event for EventMetadata creation.
+      // allNames accumulates every distinct contest name seen under this
+      // eventId (not just the first), so createEventMetadata() can derive a
+      // real shared event name and flag groups that look like false merges.
       if (!eventInfoMap.has(eventId)) {
-        eventInfoMap.set(eventId, { country, city, name: contestName });
+        eventInfoMap.set(eventId, { country, city, name: contestName, allNames: new Set() });
+      }
+      if (contestName) {
+        eventInfoMap.get(eventId)!.allNames.add(contestName);
       }
 
       const contest: ContestRecord = {
@@ -957,11 +984,26 @@ function createEventMetadata(contests: Map<string, ContestRecord>, eventInfoMap:
     const country = info?.country ?? '';
     const city = info?.city ?? firstContest.city;
 
-    // Derive event name: find common prefix among all contest names, fall back to country+date
-    const allNames = eventContests
-      .map(c => eventInfoMap.get(c.eventId)?.name)
-      .filter((n): n is string => Boolean(n));
-    const commonName = allNames.length > 0 ? allNames[0] : '';
+    // Derive event name: common prefix shared by every distinct contest name
+    // under this eventId, fall back to country+date. A single-name group
+    // (the common case) yields its full name unchanged.
+    const distinctNames = [...(info?.allNames ?? [])];
+    const commonPrefixLen = longestCommonPrefixLength(distinctNames);
+    const commonName = commonPrefixLen > 0 ? distinctNames[0].slice(0, commonPrefixLen).trim() : '';
+
+    // Flag likely false merges: distinct contest names sharing no meaningful
+    // common prefix under one eventId is a sign that date+city/country
+    // wasn't enough to separate two genuinely different events (the residual
+    // case documented in docs/known-issues/event-id-date-collision.md that
+    // can't be resolved automatically with the data available here) —
+    // surfaced for manual review rather than guessed at.
+    if (distinctNames.length > 1 && commonPrefixLen < Math.min(6, ...distinctNames.map(n => n.length))) {
+      console.warn(
+        `   ⚠️  Possible merged events under ${eventId} (${eventContests.length} contests): ` +
+        `names ${distinctNames.map(n => `"${n}"`).join(', ')} share no common prefix — ` +
+        `these may be two different events that collided on date + city/country. Review manually.`
+      );
+    }
 
     const event: EventMetadata = {
       eventId,
