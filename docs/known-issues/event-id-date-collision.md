@@ -69,8 +69,9 @@ implemented) and:
   automatically without risking incorrectly fragmenting genuinely
   multi-discipline single events (which have differing per-discipline
   contest names on purpose). This case is instead **surfaced as a
-  warning** (see above) for a human to resolve manually rather than
-  guessed at automatically.
+  warning** (see above), naming the exact `contestId`s per group, for a
+  human to resolve via `EVENT_ID_OVERRIDES` — see "Splitting a flagged
+  event" below.
 - **Does not retroactively fix already-migrated data.** This only changes
   what a *future or re-run* migration produces. Events already written to
   the production `SportHub-Events` table under the old `Event:{date}` keys
@@ -79,14 +80,46 @@ implemented) and:
   should stay in place as a safety net for that already-migrated data
   until then; it isn't rendered obsolete by this PR alone.
 
+## Splitting a flagged event
+When the "Possible merged events" warning fires, it names the exact
+`contestId`s under each distinct contest name, e.g.:
+
+```
+⚠️  Possible merged events under Event:2024-03-15:innsbruck-austria (5 contests):
+"Innsbruck Spring Cup" [c1, c3, c4], "City Regional Slackline Meet" [c2, c5]
+share no common prefix — these may be two different events that collided
+on date + city/country. Add the contestIds for the outlier group(s) to
+EVENT_ID_OVERRIDES to split them out, or review manually.
+```
+
+To split it: decide which group is the "outlier" relative to the rest
+(usually the smaller one, but check the actual contest data if unsure),
+then add its `contestId`s to `EVENT_ID_OVERRIDES` in
+`migrate-isa-rankings-to-sporthub.ts`:
+
+```ts
+const EVENT_ID_OVERRIDES: Record<string, string> = {
+  'c2': 'city-regional-meet',
+  'c5': 'city-regional-meet',
+};
+```
+
+Re-run `--dry-run` (or `pnpm migrate:audit`) and confirm the warning is
+gone before running `--execute` for real. This resolves the collision
+*before* any data is written — see "Rollout" for why that matters more
+than fixing it after the fact.
+
 ## Rollout (not done in this PR)
 This PR is a code-only fix to the ID generation logic. Before re-running
 the migration against production data:
-1. **Audit**: run the migration in `--dry-run` mode and check the console
-   output for the "Possible merged events" warnings described above — that
-   is the audit, already built into the tool rather than a separate
-   manual pass. It tells you exactly which `eventId`s to look at and why.
-2. Decide how to handle the re-migration for affected events: `putItem`
+1. **Audit**: run `pnpm migrate:audit` (local source) or
+   `pnpm migrate:audit:aws` (production source, read-only scan) —
+   `scripts/audit-event-collisions.sh` runs the dry-run and pulls out just
+   the "Possible merged events" warnings into a standalone report, so
+   they're not lost in the rest of the migration's console output.
+2. For each flagged group, follow "Splitting a flagged event" above, then
+   re-run the audit to confirm it's clean.
+3. Decide how to handle the re-migration for affected events: `putItem`
    on the new keys will create fresh, correctly-split records, but the
    old colliding `Event:{date}` records and their `Contest:*` children
    will be orphaned in the table, not cleaned up automatically — this
@@ -97,7 +130,11 @@ the migration against production data:
 
 ## Where this is referenced in code
 - `sport-hub/src/lib/migrations/migrate-isa-rankings-to-sporthub.ts` —
-  the fixed `eventId` generation, in `scanContests()`
+  the fixed `eventId` generation and `EVENT_ID_OVERRIDES`, in
+  `scanContests()`; the false-merge warning, in `createEventMetadata()`
+- `sport-hub/scripts/audit-event-collisions.sh` (`pnpm migrate:audit` /
+  `migrate:audit:aws`) — runs `--dry-run` and extracts just the collision
+  warnings into a standalone report
 - `sport-hub/src/lib/event-contest-service.ts`, `getAssembledEvent` (PR
   #76) — the pre-existing city-match filter, kept as a safety net for
   already-migrated legacy data

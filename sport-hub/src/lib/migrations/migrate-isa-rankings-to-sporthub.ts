@@ -690,7 +690,26 @@ const ISA_CATEGORY_TO_CONTEST_SIZE: Record<number, string> = {
   3: 'GRAND_SLAM', 4: 'OPEN', 5: 'CHALLENGE',
 };
 
-interface EventInfo { country: string; city?: string; name: string; allNames: Set<string>; }
+/**
+ * Manual overrides for contests where date + city/country + name still
+ * wasn't enough to keep two real events apart under the same eventId (see
+ * docs/known-issues/event-id-date-collision.md and the "Possible merged
+ * events" warning below).
+ *
+ * Workflow: run --dry-run, find the contestIds for the event(s) that need
+ * to be split out in the warning output, add them here with a short slug
+ * of your choosing, re-run --dry-run to confirm the warning clears (and
+ * that the split looks right), then --execute.
+ *
+ * Key: contestId (from the warning output). Value: a slug used in place of
+ * the usual city/country/name-derived one, moving just that contest onto
+ * a distinct eventId from the rest of the flagged group.
+ */
+const EVENT_ID_OVERRIDES: Record<string, string> = {
+  // 'abc123': 'city-regional-meet',
+};
+
+interface EventInfo { country: string; city?: string; name: string; contestIdsByName: Map<string, string[]>; }
 
 /**
  * Length of the longest common prefix shared by every string (case-insensitive).
@@ -754,29 +773,32 @@ async function scanContests(): Promise<{ contests: Map<string, ContestRecord>; e
       const contestName = item.name as string || '';
 
       // Generate eventId from date + city/country, falling back to the
-      // contest name when neither is on record. A date-only key collapses
-      // any two distinct events that happen to open on the same day into one
-      // partition (see docs/known-issues/event-id-date-collision.md); city/
-      // country is the cheapest disambiguator available on the source
-      // contest record, and contest name is the next-best signal when even
-      // those are missing. Two events on the same date, in the same city,
-      // still can't be told apart this way — see the false-merge warning
-      // emitted in createEventMetadata() below for that residual case.
-      const locationSlug = slugBase(city || '', country) || slugBase(contestName);
+      // contest name when neither is on record, or a manual override when
+      // even that wasn't enough to keep two real events apart (see
+      // EVENT_ID_OVERRIDES above and docs/known-issues/event-id-date-
+      // collision.md). Two events on the same date, in the same city, with
+      // no override yet, still can't be told apart automatically — see the
+      // false-merge warning emitted in createEventMetadata() below.
+      const locationSlug = EVENT_ID_OVERRIDES[contestId] || slugBase(city || '', country) || slugBase(contestName);
       const eventId = locationSlug ? `Event:${date}:${locationSlug}` : `Event:${date}`;
 
       // Create GSI sort key for date-discipline-index: contestDate#eventId
       const dateSortKey = `${date}#${eventId}`;
 
       // Track country/city/name per event for EventMetadata creation.
-      // allNames accumulates every distinct contest name seen under this
-      // eventId (not just the first), so createEventMetadata() can derive a
-      // real shared event name and flag groups that look like false merges.
+      // contestIdsByName accumulates every distinct contest name seen under
+      // this eventId (not just the first), mapped to the contestIds that had
+      // it, so createEventMetadata() can derive a real shared event name and
+      // flag groups that look like false merges with enough detail (actual
+      // contestIds) to act on.
       if (!eventInfoMap.has(eventId)) {
-        eventInfoMap.set(eventId, { country, city, name: contestName, allNames: new Set() });
+        eventInfoMap.set(eventId, { country, city, name: contestName, contestIdsByName: new Map() });
       }
       if (contestName) {
-        eventInfoMap.get(eventId)!.allNames.add(contestName);
+        const info = eventInfoMap.get(eventId)!;
+        const idsForName = info.contestIdsByName.get(contestName) ?? [];
+        idsForName.push(contestId);
+        info.contestIdsByName.set(contestName, idsForName);
       }
 
       const contest: ContestRecord = {
@@ -987,7 +1009,7 @@ function createEventMetadata(contests: Map<string, ContestRecord>, eventInfoMap:
     // Derive event name: common prefix shared by every distinct contest name
     // under this eventId, fall back to country+date. A single-name group
     // (the common case) yields its full name unchanged.
-    const distinctNames = [...(info?.allNames ?? [])];
+    const distinctNames = [...(info?.contestIdsByName.keys() ?? [])];
     const commonPrefixLen = longestCommonPrefixLength(distinctNames);
     const commonName = commonPrefixLen > 0 ? distinctNames[0].slice(0, commonPrefixLen).trim() : '';
 
@@ -996,12 +1018,17 @@ function createEventMetadata(contests: Map<string, ContestRecord>, eventInfoMap:
     // wasn't enough to separate two genuinely different events (the residual
     // case documented in docs/known-issues/event-id-date-collision.md that
     // can't be resolved automatically with the data available here) —
-    // surfaced for manual review rather than guessed at.
+    // surfaced for manual review, with the actual contestIds needed to fill
+    // in EVENT_ID_OVERRIDES, rather than guessed at.
     if (distinctNames.length > 1 && commonPrefixLen < Math.min(6, ...distinctNames.map(n => n.length))) {
+      const groups = distinctNames
+        .map(name => `"${name}" [${(info!.contestIdsByName.get(name) ?? []).join(', ')}]`)
+        .join(', ');
       console.warn(
         `   ⚠️  Possible merged events under ${eventId} (${eventContests.length} contests): ` +
-        `names ${distinctNames.map(n => `"${n}"`).join(', ')} share no common prefix — ` +
-        `these may be two different events that collided on date + city/country. Review manually.`
+        `${groups} share no common prefix — these may be two different events that ` +
+        `collided on date + city/country. Add the contestIds for the outlier group(s) ` +
+        `to EVENT_ID_OVERRIDES to split them out, or review manually.`
       );
     }
 
