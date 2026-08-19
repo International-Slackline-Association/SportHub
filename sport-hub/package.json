@@ -53,7 +53,7 @@
     "google": "link:next/font/google",
     "next": "15.3",
     "next-auth": "5.0.0-beta.30",
-    "postcss": "^8.5.3",
+    "postcss": "^8.5.26",
     "react": "^19.0.0",
     "react-circle-flags": "^0.0.23",
     "react-dom": "^19.0.0",
@@ -78,6 +78,10 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "sharp"
-    ]
+    ],
+    "overrides": {
+      "lodash": "^4.18.0",
+      "lodash-es": "^4.18.0"
+    }
   }
 }
