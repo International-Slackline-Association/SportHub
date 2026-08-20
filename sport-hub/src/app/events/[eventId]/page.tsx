@@ -8,7 +8,8 @@ import ContestDetails, { ContestTabData } from './components/ContestDetails';
 import { auth } from '@lib/auth';
 import { getFullUserProfile } from '../../dashboard/actions';
 import { ContestJudge } from '@lib/relational-types';
-import { getMyOrganizerClaim, requestOrganizerClaim } from '../submit/organizer-claims-actions';
+import { getMyOrganizerClaim } from '../submit/organizer-claims-actions';
+import ClaimOrganizerButton from './components/ClaimOrganizerButton';
 
 interface EventPageProps {
   params: Promise<{ eventId: string }>;
@@ -127,23 +128,10 @@ export default async function EventPage({ params, searchParams }: EventPageProps
             </p>
           )}
           {showClaimCta && (
-            myClaim?.status === 'pending' ? (
-              <span className="inline-block text-sm text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded">
-                Claim pending admin review
-              </span>
-            ) : (
-              <form action={async () => {
-                'use server';
-                await requestOrganizerClaim(decodedEventId);
-              }}>
-                <button
-                  type="submit"
-                  className="text-sm px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 cursor-pointer"
-                >
-                  Claim this event as organizer
-                </button>
-              </form>
-            )
+            <ClaimOrganizerButton
+              eventId={decodedEventId}
+              initialPending={myClaim?.status === 'pending'}
+            />
           )}
           <ContestDetails
             eventId={decodedEventId}
