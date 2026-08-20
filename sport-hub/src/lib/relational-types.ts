@@ -63,6 +63,15 @@ export interface UserProfileRecord extends UserTableRecord {
   // Judge/Organizer stats
   totalContestsJudged?: number;
   totalEventsOrganized?: number;
+  eventsOrganized?: {
+    eventId: string;
+    eventName: string;
+    date: string;
+    role: string;
+    city?: string;
+    country?: string;
+    contestCount?: number;
+  }[];
 }
 
 /**
@@ -202,9 +211,32 @@ export interface ContestRecord extends EventTableRecord {
 }
 
 /**
+ * Organizer Claim Record (sortKey = "OrganizerClaim:{userId}")
+ * One per (event, claimant) pair — a claimant requesting to be credited as
+ * organizer on an event that currently has none (e.g. a legacy migrated
+ * event with no createdBy/organizers). Admin-reviewed: approval deletes
+ * this record and appends to EventMetadataRecord.organizers instead, so
+ * there is no 'approved' status to track here.
+ */
+export interface OrganizerClaimRecord extends EventTableRecord {
+  sortKey: string;          // `OrganizerClaim:${userId}`
+  userId: string;
+  userName: string;
+  role?: 'organizer' | 'co-organizer';
+  status: 'pending' | 'rejected';
+  requestedAt: number;
+
+  // Denormalized event info so the admin review queue avoids N+1 getEvent calls
+  eventName: string;
+  startDate: string;
+  city?: string;
+  country?: string;
+}
+
+/**
  * Union type for all events table records
  */
-export type EventRecord = EventMetadataRecord | ContestRecord;
+export type EventRecord = EventMetadataRecord | ContestRecord | OrganizerClaimRecord;
 
 // ============================================================================
 // EMBEDDED TYPES (used within records)
