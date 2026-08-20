@@ -406,8 +406,12 @@ export async function getContestsData(): Promise<ContestData[]> {
       const contestId = contest.contestId || contest.sortKey.replace(/^Contest:[^:]+:/, '');
 
       // New-format: written by saveEventContestRecords / updateEventScores
-      // Detected by presence of 'results' array (may be empty [])
-      if ('results' in raw) {
+      // Detected by absence of 'contestDate' — a field only legacy migrated
+      // records carry (new-format records use startDate/endDate instead).
+      // Can't key off 'results' presence: a future event with no results
+      // yet is submitted with 'results' undefined (stripped before save),
+      // which would otherwise misclassify it as old-format and lose its date.
+      if (!('contestDate' in raw)) {
         const results = (raw.results as Record<string, unknown>[] | undefined) ?? [];
         const athletes = results
           .slice()
