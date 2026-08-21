@@ -16,6 +16,40 @@ import {
 } from '@lib/event-contest-service';
 import { EventMetadataRecord } from '@lib/relational-types';
 
+export type PendingEntry = {
+  contestIdx: number;
+  contestLabel: string;
+  entryType: 'judge' | 'athlete';
+  entryIdx: number;
+  pendingUser: PendingUserData;
+};
+
+/**
+ * Find every judge/result entry across an event's contests that still holds
+ * a pendingUser placeholder instead of a real linked account.
+ *
+ * Shared by the admin event-approval page (display + hasPendingUsers gate)
+ * and createAllPendingUsersFromEvent/updateEventStatus (enumeration +
+ * enforcement) so there's one definition of "pending" instead of two that
+ * can drift apart.
+ */
+export function collectPendingUsers(event: Record<string, unknown>): PendingEntry[] {
+  const contests = (event.contests as Record<string, unknown>[] | undefined) ?? [];
+  const entries: PendingEntry[] = [];
+  contests.forEach((contest, contestIdx) => {
+    const label = `Contest ${contestIdx + 1}`;
+    const judges = (contest.judges as Record<string, unknown>[] | undefined) ?? [];
+    const results = (contest.results as Record<string, unknown>[] | undefined) ?? [];
+    judges.forEach((j, jIdx) => {
+      if (j.pendingUser) entries.push({ contestIdx, contestLabel: label, entryType: 'judge', entryIdx: jIdx, pendingUser: j.pendingUser as PendingUserData });
+    });
+    results.forEach((r, rIdx) => {
+      if (r.pendingUser) entries.push({ contestIdx, contestLabel: label, entryType: 'athlete', entryIdx: rIdx, pendingUser: r.pendingUser as PendingUserData });
+    });
+  });
+  return entries;
+}
+
 // Generate unique event ID
 function generateEventId(): string {
   return `event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -344,6 +378,19 @@ export async function updateEventStatus(eventId: string, status: 'draft' | 'publ
       };
     }
 
+    // The "Approve" button is only disabled client-side while pending users
+    // remain — enforce it here too so publishing can't be triggered while
+    // any contest still holds a pendingUser placeholder, regardless of entry point.
+    if (status === 'published') {
+      const pendingUsers = collectPendingUsers(result.event as unknown as Record<string, unknown>);
+      if (pendingUsers.length > 0) {
+        return {
+          success: false,
+          error: `Cannot publish: ${pendingUsers.length} pending user${pendingUsers.length === 1 ? '' : 's'} must be created first`,
+        };
+      }
+    }
+
     // Update with new status
     const updatedEvent = {
       ...result.event,
@@ -632,5 +679,52 @@ export async function createPendingUserFromEvent(
   } catch (error) {
     console.error('Error creating pending user:', error);
     throw error;
+  }
+}
+
+/**
+ * Create every remaining pendingUser entry for an event in one action.
+ * PROTECTED: Requires admin role.
+ * Called from the admin event-approval page's "Create All" button.
+ */
+export async function createAllPendingUsersFromEvent(
+  eventId: string
+): Promise<{ success: boolean; created: number; error?: string }> {
+  await requireAdmin();
+
+  try {
+    const { success, event } = await getAssembledEvent(eventId);
+    if (!success || !event) {
+      return { success: false, created: 0, error: 'Event not found' };
+    }
+
+    const entries = collectPendingUsers(event as unknown as Record<string, unknown>);
+    let created = 0;
+    const failures: string[] = [];
+
+    // Sequential, not Promise.all: createPendingUserFromEvent does a fresh
+    // getAssembledEvent() read + whole-contest-record putEventItem() write
+    // per call. Two entries in the SAME contest running concurrently would
+    // both read the same "before" state, and the second write would clobber
+    // the first's update (lost update). Awaiting in sequence makes each call
+    // see the previous one's write.
+    for (const entry of entries) {
+      try {
+        await createPendingUserFromEvent(eventId, entry.contestIdx, entry.entryType, entry.entryIdx);
+        created++;
+      } catch {
+        failures.push(`${entry.pendingUser.name} ${entry.pendingUser.surname}`.trim());
+      }
+    }
+
+    revalidatePath('/admin/event-approval');
+    return {
+      success: failures.length === 0,
+      created,
+      error: failures.length ? `Failed to create: ${failures.join(', ')}` : undefined,
+    };
+  } catch (error) {
+    console.error('Error creating all pending users:', error);
+    return { success: false, created: 0, error: 'Failed to create pending users. Please try again.' };
   }
 }
