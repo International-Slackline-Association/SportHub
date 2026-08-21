@@ -8,6 +8,8 @@ import ContestDetails, { ContestTabData } from './components/ContestDetails';
 import { auth } from '@lib/auth';
 import { getFullUserProfile } from '../../dashboard/actions';
 import { ContestJudge } from '@lib/relational-types';
+import { getMyOrganizerClaim } from '../submit/organizer-claims-actions';
+import ClaimOrganizerButton from './components/ClaimOrganizerButton';
 
 interface EventPageProps {
   params: Promise<{ eventId: string }>;
@@ -29,6 +31,17 @@ export default async function EventPage({ params, searchParams }: EventPageProps
     const organizerName = organizerProfile
       ? [organizerProfile.name, organizerProfile.surname].filter(Boolean).join(' ') || null
       : null;
+    const claimedOrganizers = (event.organizers ?? []).filter((o) => o.userId !== organizerId);
+    const hasAnyOrganizer = !!organizerId || claimedOrganizers.length > 0;
+
+    const canClaim =
+      session?.user?.role === 'admin' ||
+      (session?.user?.userSubTypes ?? []).includes('organizer');
+    const myClaim = !hasAnyOrganizer && canClaim
+      ? await getMyOrganizerClaim(decodedEventId)
+      : null;
+    const showClaimCta = !hasAnyOrganizer && canClaim;
+
     const eventContests = event.contests;
     const totalPrize = eventContests.reduce((sum, c) => sum + (c.prize ?? 0), 0);
 
@@ -90,16 +103,35 @@ export default async function EventPage({ params, searchParams }: EventPageProps
       <PageLayout>
         <div className="space-y-6">
           <EventDetailsCard event={eventLike} />
-          {organizerId && (
+          {(organizerId || claimedOrganizers.length > 0) && (
             <p className="text-sm text-gray-500">
               Organized by{' '}
-              <Link
-                href={`/athlete/${encodeURIComponent(organizerId)}`}
-                className="text-blue-600 hover:underline font-medium"
-              >
-                {organizerName ?? String(event.createdByName ?? organizerId)}
-              </Link>
+              {[
+                ...(organizerId
+                  ? [{
+                      userId: organizerId,
+                      name: organizerName ?? String(event.createdByName ?? organizerId),
+                    }]
+                  : []),
+                ...claimedOrganizers,
+              ].map((o, i, arr) => (
+                <span key={o.userId}>
+                  <Link
+                    href={`/athlete/${encodeURIComponent(o.userId)}`}
+                    className="text-blue-600 hover:underline font-medium"
+                  >
+                    {o.name}
+                  </Link>
+                  {i < arr.length - 1 ? ', ' : ''}
+                </span>
+              ))}
             </p>
+          )}
+          {showClaimCta && (
+            <ClaimOrganizerButton
+              eventId={decodedEventId}
+              initialPending={myClaim?.status === 'pending'}
+            />
           )}
           <ContestDetails
             eventId={decodedEventId}

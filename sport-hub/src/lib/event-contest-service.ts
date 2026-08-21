@@ -7,7 +7,7 @@
 
 import { DISCIPLINE_DATA } from '@utils/consts';
 import { dynamodb, EVENTS_TABLE } from './dynamodb';
-import type { EventMetadataRecord, ContestRecord, EventOrganizer } from './relational-types';
+import type { EventMetadataRecord, ContestRecord, EventOrganizer, OrganizerClaimRecord } from './relational-types';
 
 export interface AssembledEvent extends EventMetadataRecord { contests: ContestRecord[] };
 
@@ -340,4 +340,47 @@ export async function deleteEvent(eventId: string): Promise<boolean> {
     console.error(`Error deleting event ${eventId}:`, error);
     return false;
   }
+}
+
+/**
+ * Get a user's organizer claim for an event (if any)
+ */
+export async function getOrganizerClaim(
+  eventId: string,
+  userId: string
+): Promise<OrganizerClaimRecord | null> {
+  const item = await dynamodb.getItem(EVENTS_TABLE, {
+    eventId,
+    sortKey: `OrganizerClaim:${userId}`,
+  });
+  return (item as OrganizerClaimRecord | undefined) ?? null;
+}
+
+/**
+ * Create or overwrite an organizer claim (e.g. resubmitting after rejection)
+ */
+export async function putOrganizerClaim(record: OrganizerClaimRecord): Promise<void> {
+  await dynamodb.putItem(EVENTS_TABLE, record as unknown as Record<string, unknown>);
+}
+
+/**
+ * Delete an organizer claim (on approval or rejection)
+ */
+export async function deleteOrganizerClaim(eventId: string, userId: string): Promise<void> {
+  await dynamodb.deleteItem(EVENTS_TABLE, { eventId, sortKey: `OrganizerClaim:${userId}` });
+}
+
+/**
+ * List all pending organizer claims across all events (admin review queue)
+ *
+ * NOTE: Table scan — acceptable here as this is a low-traffic admin-only
+ * page, same precedent as getPendingEvents().
+ */
+export async function listPendingOrganizerClaims(): Promise<OrganizerClaimRecord[]> {
+  const items = await dynamodb.scanItems(EVENTS_TABLE, {
+    filterExpression: 'begins_with(sortKey, :prefix) AND #status = :pending',
+    expressionAttributeNames: { '#status': 'status' },
+    expressionAttributeValues: { ':prefix': 'OrganizerClaim:', ':pending': 'pending' },
+  });
+  return (items as unknown as OrganizerClaimRecord[]) || [];
 }

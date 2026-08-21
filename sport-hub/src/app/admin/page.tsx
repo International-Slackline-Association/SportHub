@@ -39,6 +39,16 @@ export default async function AdminPage() {
           </Link>
 
           <Link
+            href="/admin/organizer-claims"
+            className="block p-6 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+          >
+            <h3 className="text-lg font-semibold text-amber-900 mb-2">Organizer Claims</h3>
+            <p className="text-sm text-amber-700">
+              Review requests to be credited as organizer on unowned events
+            </p>
+          </Link>
+
+          <Link
             href="/test_SSR"
             className="block p-6 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
           >
