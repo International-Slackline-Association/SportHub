@@ -56,8 +56,11 @@ export default async function EventApprovalPage() {
               const countryName = COUNTRIES.find(c => c.code === countryCode)?.name ?? countryCode;
               const contests = (event.contests as unknown[] | undefined) ?? [];
               const submittedAt = event.submittedForApprovalAt ?? event.createdAt;
+              // submittedAt is a number (epoch ms) or an ISO string depending on which
+              // action wrote it — stringifying a numeric epoch before parsing turns it
+              // into an unparseable date string ("Invalid Date"), so pass it through as-is.
               const submittedDate = submittedAt
-                ? new Date(String(submittedAt)).toLocaleDateString()
+                ? new Date(submittedAt as string | number).toLocaleDateString()
                 : "—";
               const dates = [event.startDate, event.endDate].filter(Boolean).join(" – ") || "—";
               const pendingUsers = collectPendingUsers(event);
