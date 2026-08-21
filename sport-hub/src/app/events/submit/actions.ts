@@ -241,6 +241,34 @@ export async function getEvent(eventId: string) {
 }
 
 /**
+ * Group Contest:* records by eventId from a full table scan, sorted by
+ * contestIndex.
+ *
+ * getAllEvents()'s raw Metadata records never carry a populated `contests`
+ * field (it's only ever written as an empty/stale snapshot by
+ * updateEventStatus, never by saveEvent/updateEvent), even though multiple
+ * callers (My Events list/table, admin event-approval's contest count and
+ * pending-user detection) read `event.contests` expecting it. Derive the
+ * real, current list from the Contest:* records already present in this
+ * same scan instead.
+ */
+function groupContestsByEventId(allItems: Record<string, unknown>[]): Map<string, Record<string, unknown>[]> {
+  const contestsByEventId = new Map<string, Record<string, unknown>[]>();
+  for (const item of allItems) {
+    if (typeof item.sortKey === 'string' && item.sortKey.startsWith('Contest:')) {
+      const eid = String(item.eventId ?? '');
+      const list = contestsByEventId.get(eid) ?? [];
+      list.push(item);
+      contestsByEventId.set(eid, list);
+    }
+  }
+  for (const list of contestsByEventId.values()) {
+    list.sort((a, b) => Number(a.contestIndex ?? 0) - Number(b.contestIndex ?? 0));
+  }
+  return contestsByEventId;
+}
+
+/**
  * Get all events
  * PUBLIC: No authentication required (read-only)
  *
@@ -369,8 +397,15 @@ export async function getMyEvents() {
 
     console.log('[getMyEvents] total events:', result.events?.length);
 
-    const myEvents = (result.events as Record<string, unknown>[])
+    const allItems = result.events as Record<string, unknown>[];
+    const contestsByEventId = groupContestsByEventId(allItems);
+
+    const myEvents = allItems
       .filter(e => e.createdBy === userId)
+      .map((e): Record<string, unknown> => {
+        const contests = contestsByEventId.get(String(e.eventId ?? '')) ?? [];
+        return { ...e, contests, contestCount: contests.length };
+      })
       .sort((a, b) => String(b.createdAt ?? '').localeCompare(String(a.createdAt ?? '')));
 
     console.log('[getMyEvents] my events:', myEvents.length);
@@ -425,8 +460,15 @@ export async function getPendingEvents() {
     const result = await getAllEvents();
     if (!result.success) return result;
 
-    const pending = (result.events as Record<string, unknown>[])
+    const allItems = result.events as Record<string, unknown>[];
+    const contestsByEventId = groupContestsByEventId(allItems);
+
+    const pending = allItems
       .filter(e => e.status === 'pending')
+      .map((e): Record<string, unknown> => {
+        const contests = contestsByEventId.get(String(e.eventId ?? '')) ?? [];
+        return { ...e, contests, contestCount: contests.length };
+      })
       .sort((a, b) => String(a.createdAt ?? '').localeCompare(String(b.createdAt ?? '')));
 
     return { success: true, events: pending };
