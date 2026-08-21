@@ -202,9 +202,37 @@ export interface ContestRecord extends EventTableRecord {
 }
 
 /**
+ * Pending Score Edit Record (sortKey = "PendingScoreEdit:{discipline}:{idx}")
+ * One per contest being edited — mirrors the target Contest record's suffix.
+ * Staged proposed changes to an already-published contest's judges/results,
+ * awaiting admin approval before being applied to the live Contest record.
+ * First-time submission of results (contest currently has none) bypasses
+ * staging entirely and writes straight through — this record type only
+ * exists for edits to already-submitted results.
+ */
+export interface PendingScoreEditRecord extends EventTableRecord {
+  sortKey: string;          // `PendingScoreEdit:${discipline}:${idx}`
+  contestSortKey: string;   // the live Contest:* record this targets
+  contestIndex: number;
+  proposedJudges: ContestJudge[];
+  proposedResults: ContestResult[];
+  // Snapshot of the live contest's judges/results taken before the FIRST
+  // pending edit in a chain — preserved across re-edits so the admin always
+  // diffs against the true pre-edit baseline, not an intermediate state.
+  previousJudges: ContestJudge[];
+  previousResults: ContestResult[];
+  submittedBy: string;
+  submittedByName: string;
+  submittedAt: number;
+  status: 'pending';
+  eventName: string;
+  discipline?: string;
+}
+
+/**
  * Union type for all events table records
  */
-export type EventRecord = EventMetadataRecord | ContestRecord;
+export type EventRecord = EventMetadataRecord | ContestRecord | PendingScoreEditRecord;
 
 // ============================================================================
 // EMBEDDED TYPES (used within records)

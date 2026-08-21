@@ -7,7 +7,7 @@
 
 import { DISCIPLINE_DATA } from '@utils/consts';
 import { dynamodb, EVENTS_TABLE } from './dynamodb';
-import type { EventMetadataRecord, ContestRecord, EventOrganizer } from './relational-types';
+import type { EventMetadataRecord, ContestRecord, EventOrganizer, PendingScoreEditRecord } from './relational-types';
 
 export interface AssembledEvent extends EventMetadataRecord { contests: ContestRecord[] };
 
@@ -340,4 +340,53 @@ export async function deleteEvent(eventId: string): Promise<boolean> {
     console.error(`Error deleting event ${eventId}:`, error);
     return false;
   }
+}
+
+function pendingScoreEditSortKey(contestSortKey: string): string {
+  return contestSortKey.replace(/^Contest:/, 'PendingScoreEdit:');
+}
+
+/**
+ * Get the pending score edit staged for a contest (if any)
+ */
+export async function getPendingScoreEdit(
+  eventId: string,
+  contestSortKey: string
+): Promise<PendingScoreEditRecord | null> {
+  const item = await dynamodb.getItem(EVENTS_TABLE, {
+    eventId,
+    sortKey: pendingScoreEditSortKey(contestSortKey),
+  });
+  return (item as PendingScoreEditRecord | undefined) ?? null;
+}
+
+/**
+ * Stage (or overwrite) a proposed judges/results edit for a contest
+ */
+export async function putPendingScoreEdit(record: Record<string, unknown>): Promise<void> {
+  await dynamodb.putItem(EVENTS_TABLE, record);
+}
+
+/**
+ * Delete a staged score edit (on approval or rejection)
+ */
+export async function deletePendingScoreEdit(eventId: string, contestSortKey: string): Promise<void> {
+  await dynamodb.deleteItem(EVENTS_TABLE, {
+    eventId,
+    sortKey: pendingScoreEditSortKey(contestSortKey),
+  });
+}
+
+/**
+ * List all pending score edits across all events (admin review queue)
+ *
+ * NOTE: Table scan — acceptable here as this is a low-traffic admin-only
+ * page, same precedent as getPendingEvents().
+ */
+export async function listPendingScoreEdits(): Promise<PendingScoreEditRecord[]> {
+  const items = await dynamodb.scanItems(EVENTS_TABLE, {
+    filterExpression: 'begins_with(sortKey, :prefix)',
+    expressionAttributeValues: { ':prefix': 'PendingScoreEdit:' },
+  });
+  return (items as unknown as PendingScoreEditRecord[]) || [];
 }

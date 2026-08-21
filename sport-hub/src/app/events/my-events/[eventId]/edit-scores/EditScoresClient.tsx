@@ -19,7 +19,7 @@ type Props = {
 };
 
 export default function EditScoresClient({ eventId, eventName, initialValues }: Props) {
-  const [saved, setSaved] = useState(false);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const router = useRouter();
 
   const handleSubmit = (
@@ -32,22 +32,22 @@ export default function EditScoresClient({ eventId, eventName, initialValues }: 
         return;
       }
       router.refresh(); // clear client router cache so /events shows updated data immediately
-      setSaved(true);
+      setSavedMessage(result.message || 'Judges and scores saved.');
     }).catch(() => {
       alert('Failed to save changes. Please try again.');
     }).finally(() => {
       setSubmitting(false);
     });
 
-  if (saved) {
+  if (savedMessage) {
     return (
       <div className="stack gap-4 p-4 sm:p-0">
-        <p className="text-sm text-gray-600">Judges and scores saved.</p>
+        <p className="text-sm text-gray-600">{savedMessage}</p>
         <div className="flex gap-3">
           <Link href="/events/my-events">
             <Button type="button" variant="primary">Back to My Events</Button>
           </Link>
-          <Button type="button" variant="secondary" onClick={() => setSaved(false)}>
+          <Button type="button" variant="secondary" onClick={() => setSavedMessage(null)}>
             Keep editing
           </Button>
         </div>
