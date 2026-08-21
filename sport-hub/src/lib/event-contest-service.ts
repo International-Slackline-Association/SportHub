@@ -242,13 +242,17 @@ export async function getAssembledEvent(
     if (hasEmbeddedContests) {
       contests = embeddedContests;
     } else {
-      // KNOWN ISSUE (see docs/known-issues/event-id-date-collision.md): legacy
-      // migrated events derive eventId from date alone, so two distinct events
-      // on the same date share a partition and this city match is only a
-      // partial disambiguator — it does not fix the underlying collision.
-      contests = (await getEventContests(eventId)).filter((c) =>
-        c.city?.toLowerCase() === metadata.city?.toLowerCase()
-      );
+      const allContests = await getEventContests(eventId);
+      // Legacy migrated events derive eventId from date alone (`Event:YYYY-MM-DD[:city]`),
+      // so two distinct events can share a partition — city is used to disambiguate.
+      // New-format events (`event-<timestamp>-<rand>`, see generateEventId()) have a
+      // collision-proof eventId, so no disambiguation is needed — and their Contest:*
+      // records never carry a city field anyway, so filtering on it here would drop
+      // every contest.
+      const isLegacyEventId = eventId.startsWith('Event:');
+      contests = isLegacyEventId
+        ? allContests.filter((c) => c.city?.toLowerCase() === metadata.city?.toLowerCase())
+        : allContests;
     }
 
     contests = contests.sort(
