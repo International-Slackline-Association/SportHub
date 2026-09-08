@@ -1,38 +1,18 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import PageLayout from "@ui/PageLayout";
-import { getPendingEvents, updateEventStatus, createPendingUserFromEvent } from "../../events/submit/actions";
+import {
+  getPendingEvents,
+  updateEventStatus,
+  createPendingUserFromEvent,
+  createAllPendingUsersFromEvent,
+  collectPendingUsers,
+} from "../../events/submit/actions";
 import { COUNTRIES } from "@utils/countries";
-import { PendingUserData } from "../../events/submit/types";
 
 export const metadata: Metadata = {
   title: "SportHub - Event Approval",
 };
-
-type PendingEntry = {
-  contestIdx: number;
-  contestLabel: string;
-  entryType: 'judge' | 'athlete';
-  entryIdx: number;
-  pendingUser: PendingUserData;
-};
-
-function collectPendingUsers(event: Record<string, unknown>): PendingEntry[] {
-  const contests = (event.contests as Record<string, unknown>[] | undefined) ?? [];
-  const entries: PendingEntry[] = [];
-  contests.forEach((contest, contestIdx) => {
-    const label = `Contest ${contestIdx + 1}`;
-    const judges = (contest.judges as Record<string, unknown>[] | undefined) ?? [];
-    const results = (contest.results as Record<string, unknown>[] | undefined) ?? [];
-    judges.forEach((j, jIdx) => {
-      if (j.pendingUser) entries.push({ contestIdx, contestLabel: label, entryType: 'judge', entryIdx: jIdx, pendingUser: j.pendingUser as PendingUserData });
-    });
-    results.forEach((r, rIdx) => {
-      if (r.pendingUser) entries.push({ contestIdx, contestLabel: label, entryType: 'athlete', entryIdx: rIdx, pendingUser: r.pendingUser as PendingUserData });
-    });
-  });
-  return entries;
-}
 
 export default async function EventApprovalPage() {
   const result = await getPendingEvents();
@@ -85,9 +65,6 @@ export default async function EventApprovalPage() {
                               {String(event.createdByName ?? event.createdBy)}
                             </Link>
                           ) : "—"}
-                          {!!event.createdBy && (
-                            <span className="ml-1 text-gray-400">({String(event.createdBy)})</span>
-                          )}
                         </span>
                         <span>{dates}</span>
                         <span>{[event.city, countryName].filter(Boolean).join(", ") || "—"}</span>
@@ -143,9 +120,22 @@ export default async function EventApprovalPage() {
                   {/* Pending users sub-section */}
                   {hasPendingUsers && (
                     <div className="border-t border-amber-100 bg-amber-50 p-4 stack gap-3">
-                      <h4 className="text-xs font-semibold text-amber-800 uppercase tracking-wide">
-                        New Users — must be created before approving
-                      </h4>
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <h4 className="text-xs font-semibold text-amber-800 uppercase tracking-wide">
+                          New Users — must be created before approving
+                        </h4>
+                        <form action={async () => {
+                          "use server";
+                          await createAllPendingUsersFromEvent(eventId);
+                        }}>
+                          <button
+                            type="submit"
+                            className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
+                          >
+                            Create All ({pendingUsers.length})
+                          </button>
+                        </form>
+                      </div>
                       <div className="stack gap-2">
                         {pendingUsers.map((entry, i) => {
                           const createAction = createPendingUserFromEvent.bind(
