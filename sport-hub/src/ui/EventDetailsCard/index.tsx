@@ -47,6 +47,9 @@ type EventLike = Partial<EventRecord> & {
   disciplines?: string[];
   athletes?: Array<unknown>;
   verified?: boolean;
+	gender?: string;
+	profileUrl?: string;
+	thumbnailUrl?: string;
 };
 
 type EventDetailsCardProps = {
