@@ -13,6 +13,8 @@ import {
   saveEventContestRecords,
   scanAllEventItems,
   deleteEvent as deleteEventFromService,
+  getPendingScoreEdit,
+  putPendingScoreEdit,
 } from '@lib/event-contest-service';
 import { EventMetadataRecord } from '@lib/relational-types';
 
@@ -114,12 +116,19 @@ export async function saveEvent(values: EventSubmissionFormValues, status: Event
 
 /**
  * Update only the judges and results for each contest of a published event.
+ *
+ * A contest with no existing results/judges gets its first-time submission
+ * written straight through — that's not an edit. But changing a contest
+ * that already has results/judges is staged as a PendingScoreEditRecord and
+ * requires admin approval before it takes effect, unless the actor is an
+ * admin (who bypasses staging entirely, same as elsewhere in this app).
+ *
  * PROTECTED: Requires admin role or organizer sub-type; must be event creator (unless admin)
  */
 export async function updateEventScores(
   eventId: string,
   contests: ContestFormValues[],
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; message?: string }> {
   await requireEventSubmitter();
 
   try {
@@ -134,21 +143,55 @@ export async function updateEventScores(
       return { success: false, error: 'You do not have permission to edit this event' };
     }
 
+    const isAdmin = session?.user?.role === 'admin';
+    let appliedCount = 0;
+    let stagedCount = 0;
+
     // Merge updated judges/results into individual Contest records.
     // For old-format events the embedded contest objects lack eventId/sortKey,
     // so we supply them here (effectively migrating to separate Contest:* records).
     await Promise.all(
       event.contests.map(async (ec, idx) => {
         const sortKey = (ec.sortKey as string) || `Contest:${ec.discipline ?? 'unknown'}:${idx}`;
-        const updated = {
-          ...ec,
-          eventId,
-          sortKey,
-          contestIndex: ec.contestIndex ?? idx,
-          judges: contests[idx]?.judges ?? ec.judges,
-          results: contests[idx]?.results ?? ec.results,
-        };
-        await putEventItem(updated as Record<string, unknown>);
+        const proposedJudges = contests[idx]?.judges ?? ec.judges ?? [];
+        const proposedResults = contests[idx]?.results ?? ec.results ?? [];
+        const hasExistingData = (ec.results?.length ?? 0) > 0 || (ec.judges?.length ?? 0) > 0;
+
+        if (!hasExistingData || isAdmin) {
+          const updated = {
+            ...ec,
+            eventId,
+            sortKey,
+            contestIndex: ec.contestIndex ?? idx,
+            judges: proposedJudges,
+            results: proposedResults,
+          };
+          await putEventItem(updated as Record<string, unknown>);
+          appliedCount++;
+        } else {
+          // Editing already-published results as a non-admin — stage instead
+          // of writing, keeping the ORIGINAL pre-edit snapshot if a pending
+          // edit for this contest already exists, so re-editing before
+          // review still diffs against the true "before" state.
+          const existingPending = await getPendingScoreEdit(eventId, sortKey);
+          await putPendingScoreEdit({
+            eventId,
+            sortKey: sortKey.replace(/^Contest:/, 'PendingScoreEdit:'),
+            contestSortKey: sortKey,
+            contestIndex: ec.contestIndex ?? idx,
+            proposedJudges,
+            proposedResults,
+            previousJudges: existingPending?.previousJudges ?? ec.judges ?? [],
+            previousResults: existingPending?.previousResults ?? ec.results ?? [],
+            submittedBy: session?.user?.id ?? '',
+            submittedByName: session?.user?.name ?? '',
+            submittedAt: Date.now(),
+            status: 'pending',
+            eventName: event.eventName,
+            discipline: ec.discipline,
+          } as Record<string, unknown>);
+          stagedCount++;
+        }
       })
     );
 
@@ -157,7 +200,13 @@ export async function updateEventScores(
     revalidatePath('/events/my-events');
     revalidatePath('/rankings');
 
-    return { success: true };
+    const message = stagedCount === 0
+      ? 'Judges and scores saved.'
+      : appliedCount === 0
+        ? 'Your changes were submitted for admin review and will go live once approved.'
+        : `Judges and scores saved for ${appliedCount} contest${appliedCount === 1 ? '' : 's'}; ${stagedCount} contest${stagedCount === 1 ? '' : 's'} submitted for admin review.`;
+
+    return { success: true, message };
   } catch (error) {
     console.error('Error updating event scores:', error);
     return { success: false, error: 'Failed to save changes. Please try again.' };
