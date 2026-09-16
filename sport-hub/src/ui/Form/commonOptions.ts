@@ -6,9 +6,8 @@ export const countryCodeOptions: Option[] = COUNTRIES.map(({ name, code }) => ({
 }));
 
 export const userGenderOptions: Option[] = [
-  { value: "MEN", label: "Male" },
-  { value: "WOMEN", label: "Female" },
-  { value: "OTHER", label: "Other" },
+  { value: "male", label: "Men" },
+  { value: "female", label: "Women" },
 ];
 
 export const eventGenderOptions: Option[] = [
