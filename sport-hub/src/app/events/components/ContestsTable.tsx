@@ -85,12 +85,11 @@ const columns = [
     id: 'event',
     header: 'Event',
     cell: info => {
-      const { name, startDate, endDate, category, country, discipline, athletes, eventId } = info.row.original;
+      const { name, startDate, endDate, contestSize, country, discipline, athletes, eventId } = info.row.original;
       const d = String(discipline);
       const disciplineData = DISCIPLINE_DATA[d as keyof typeof DISCIPLINE_DATA]
         ?? Object.values(DISCIPLINE_DATA).find(e => e.enumValue === Number(d));
-      const contestType = MAP_CONTEST_TYPE_ENUM_TO_NAME[category];
-      const size = contestSizeOptions.find(o => o.value === contestType)?.label ?? String(category);
+      const size = contestSizeOptions.find(o => o.value === contestSize)?.label ?? String(contestSize);
       const winner = athletes?.find(a => a.place === '1');
       const winnerName = winner ? `${winner.name} ${winner.surname || ''}`.trim() : null;
       const genderKey = MAP_CONTEST_GENDER_ENUM_TO_NAME[info.row.original.gender];
@@ -198,10 +197,7 @@ const columns = [
     header: "Total Event Prize Value (€)",
     size: 72,
   }),
-  columnHelper.accessor((row: ContestData) => {
-    const key = MAP_CONTEST_TYPE_ENUM_TO_NAME[row.category];
-    return contestSizeOptions.find(o => o.value === key)?.value ?? String(row.category);
-  }, {
+  columnHelper.accessor("contestSize", {
     id: "size",
     enableColumnFilter: true,
     header: "Size",
@@ -252,6 +248,7 @@ const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
     staleTime: 60_000,
   });
   const dateToday = new Date().toISOString().slice(0, 10);
+
   return (
     <div className="flex items-center justify-center min-h-64">
       {isLoading && (

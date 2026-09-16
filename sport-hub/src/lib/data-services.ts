@@ -296,10 +296,10 @@ export interface ContestData {
   country: string;
   city?: string;
   discipline: string;
+  contestSize: string;
   prize: number;
   gender: number;
   ageCategory: string;
-  category: number;
   status?: 'upcoming' | 'recent' | 'live'; // TODO: Check with Dylan on adding this attribute
   verified: boolean;
   profileUrl?: string;
@@ -436,7 +436,8 @@ export async function getContestsData(): Promise<ContestData[]> {
           prize: Number(raw.totalPrizeValue ?? raw.prize ?? 0),
           gender: CONTEST_GENDER_NAME_TO_ENUM[String(raw.gender ?? '')] ?? 0,
           ageCategory: String(raw.ageCategory ?? ''),
-          category: CONTEST_TYPE_NAME_TO_ENUM[String(raw.contestSize ?? '')] ?? 0,
+          contestSize: String(raw.contestSize ?? ''),
+          category: CONTEST_TYPE_NAME_TO_ENUM[String(contest.contestSize ?? '')] ?? 0,
           verified: true,
           profileUrl: (meta?.profileUrl as string | undefined) || (raw.profileUrl as string | undefined) || '',
           thumbnailUrl: (meta?.thumbnailUrl as string | undefined) || (raw.thumbnailUrl as string | undefined) || '',
@@ -472,7 +473,8 @@ export async function getContestsData(): Promise<ContestData[]> {
         prize: contest.prize || 0,
         gender: CONTEST_GENDER_NAME_TO_ENUM[String(contest.gender ?? '')] ?? 0,
         ageCategory: String(raw.ageCategory ?? ''),
-        category: 0,
+        contestSize: String(raw.contestSize ?? ''),
+        category: CONTEST_TYPE_NAME_TO_ENUM[String(contest.contestSize ?? '')] ?? 0,
         verified: true,
         profileUrl: contest.profileUrl || '',
         thumbnailUrl: contest.thumbnailUrl || '',
@@ -513,7 +515,7 @@ export async function getContestsData(): Promise<ContestData[]> {
           prize: Number(contest.totalPrizeValue ?? 0),
           gender: CONTEST_GENDER_NAME_TO_ENUM[String(contest.gender ?? '')] ?? 0,
           ageCategory: String(contest.ageCategory ?? ''),
-          category: CONTEST_TYPE_NAME_TO_ENUM[String(contest.contestSize ?? '')] ?? 0,
+          contestSize: String(contest.contestSize ?? ''),
           verified: false,
           athletes,
         });
