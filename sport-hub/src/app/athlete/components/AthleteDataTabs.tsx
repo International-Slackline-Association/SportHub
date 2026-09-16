@@ -12,6 +12,12 @@ import AthleteWorldRecordsTable from './AthleteWorldRecordsTable';
 import AthleteWorldFirstsTable from './AthleteWorldFirstsTable';
 import Spinner from '@ui/Spinner';
 
+const tabs = [
+  { id: "contests", label: "Contests" },
+  { id: "records", label: "World Records" },
+  { id: "firsts", label: "World Firsts" },
+];
+
 interface AthleteDataTabsProps {
   athleteId: string;
 }
@@ -24,11 +30,7 @@ interface AthleteTabData {
 
 export default function AthleteDataTabs({ athleteId }: AthleteDataTabsProps) {
   const [activeTab, setActiveTab] = useState('contests');
-  const [data, setData] = useState<AthleteTabData>({
-    contests: [],
-    worldRecords: [],
-    worldFirsts: [],
-  });
+  const [data, setData] = useState<AthleteTabData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -67,21 +69,6 @@ export default function AthleteDataTabs({ athleteId }: AthleteDataTabsProps) {
     );
   }
 
-  const hasWorldRecords = data.worldRecords.length > 0;
-  const hasWorldFirsts = data.worldFirsts.length > 0;
-
-  const tabs = [
-    { id: "contests", label: "Contests" }
-  ];
-
-  if (hasWorldRecords) {
-    tabs.push({ id: "records", label: "World Records" });
-  }
-
-  if (hasWorldFirsts) {
-    tabs.push({ id: "firsts", label: "World Firsts" });
-  }
-
   return (
     <>
       <div className="mb-6">
@@ -106,11 +93,11 @@ export default function AthleteDataTabs({ athleteId }: AthleteDataTabsProps) {
             <AthleteContestsTable contests={data.contests} />
           )}
 
-          {activeTab === 'records' && hasWorldRecords && (
+          {activeTab === 'records' && data && (
             <AthleteWorldRecordsTable worldRecords={data.worldRecords} />
           )}
 
-          {activeTab === 'firsts' && hasWorldFirsts && (
+          {activeTab === 'firsts' && data && (
             <AthleteWorldFirstsTable worldFirsts={data.worldFirsts} />
           )}
         </>

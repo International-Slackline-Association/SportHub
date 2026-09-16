@@ -3,6 +3,7 @@ import { WorldFirst } from '@lib/data-services';
 import Table from '@ui/Table';
 import { textToTitleCase } from '@utils/strings';
 import { linkCellFormatter } from 'src/app/world_records/components/cellFormatters';
+import { Alert } from '@ui/Alert';
 
 const columnHelper = createColumnHelper<WorldFirst>();
 const columns = [
@@ -40,6 +41,9 @@ type AthleteWorldFirstsTableProps = {
 };
 
 const AthleteWorldFirstsTable = ({ worldFirsts }: AthleteWorldFirstsTableProps) => {
+  if (worldFirsts.length === 0) {
+    return <Alert variant="info">No world firsts found for this athlete.</Alert>;
+  }
   return (
     <Table options={{ columns, data: worldFirsts, initialState: { sorting: [{ id: 'date', desc: true }] } }} />
   );
