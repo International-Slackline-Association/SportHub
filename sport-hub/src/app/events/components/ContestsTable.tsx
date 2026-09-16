@@ -83,7 +83,7 @@ const columns = [
   // Mobile: single stacked column
   columnHelper.display({
     id: 'event',
-    header: 'Event',
+    header: 'Competition',
     cell: info => {
       const { name, startDate, endDate, contestSize, country, discipline, athletes, eventId } = info.row.original;
       const d = String(discipline);
@@ -124,7 +124,7 @@ const columns = [
   }),
   columnHelper.accessor("name", {
     enableColumnFilter: true,
-    header: "Event Name",
+    header: "Competition Name",
     meta: {
       filterVariant: "text",
     },

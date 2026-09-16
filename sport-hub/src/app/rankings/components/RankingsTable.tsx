@@ -164,7 +164,7 @@ const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) =
           extraFilters={
             <>
               <div className={tableStyles.columnFilter}>
-                <label htmlFor="rankings-year">Season</label>
+                <label htmlFor="rankings-year">Timeframe</label>
                 <select
                   id="rankings-year"
                   value={selectedYear}
@@ -191,7 +191,7 @@ const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) =
                   <div className={cn("flex gap-2", isDesktop ? "flex-row" : "flex-col")}>
                     Points
                     <Tooltip
-                      content={'Ranking is determined by adding the top two awarded points from the competitions athletes have participated in.'}
+                      content={'Ranking is determined by adding the top two awarded points from the contests athletes have participated in within the defined timeframe.'}
                       position="bottom"
                     />
                   </div>
@@ -236,6 +236,9 @@ const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) =
                 gender:   !!isDesktop,
                 country:  !!isDesktop,
               },
+              pagination: {
+                pageSize: 50,
+              }
             },
           }}
         />
