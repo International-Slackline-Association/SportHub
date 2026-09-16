@@ -51,8 +51,22 @@ export const ContestAbout = ({ contest }: { contest: ContestTabData }) => {
         <LabelValuePair label="Total Prize Value" value={prize ? `${prize} Euro` : "N/A"} />
         <LabelValuePair label="Judging System" value={judgingSystem || "Not Available"} />
       </div>
-      <LabelValuePair label="Judges" value={judges.map(NameLink)} />
-      <LabelValuePair label="Organizers" value={organizers.map(NameLink)} />
+      <LabelValuePair 
+        label="Judges" 
+        value={
+          <div className="flex flex-row flex-wrap gap-4">
+            {judges.map(NameLink)}
+          </div>
+        }
+      />
+      <LabelValuePair 
+        label="Organizers" 
+        value={
+          <div className="flex flex-row flex-wrap gap-4">
+            {organizers.map(NameLink)}
+          </div>
+        }
+      />
     </div>
   );
 };

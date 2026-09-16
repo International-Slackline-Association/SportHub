@@ -16,7 +16,7 @@ const getFeaturedContests = async () => {
   const allEvents = await getContestsData();
   const featuredComps = allEvents
     .filter(event => {
-        const isWorldTier = event.category < 2; // World Cup or World Championship
+        const isWorldTier = event.contestSize === 'WORLD_CUP' || event.contestSize === 'WORLD_CHAMPIONSHIP';
         const twoYears = 2 * 365 * 24 * 60 * 60 * 1000;
         const isRecent = (new Date().getTime() - new Date(event.startDate).getTime()) < twoYears;
         const hasProfileImage = !!event.thumbnailUrl;

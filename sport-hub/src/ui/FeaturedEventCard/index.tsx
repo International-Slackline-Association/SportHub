@@ -54,7 +54,7 @@ export const FeaturedEventCard = ({ event }: FeaturedEventCardProps) => {
           variant="secondary"
           href={href}
         >
-          View Event
+          View Competition
         </Button>
       </div>
     </StackedMediaCard>
@@ -64,7 +64,7 @@ export const FeaturedEventCard = ({ event }: FeaturedEventCardProps) => {
 export const FeaturedEventSection = ({ events }: { events: ContestData[] }) => {
   return (
     <section className={pageStyles.section}>
-      <h2 className={pageStyles.sectionTitle}>Featured Events</h2>
+      <h2 className={pageStyles.sectionTitle}>Featured Competitions</h2>
       <CardGrid columns={events.length}>
         {events.map(event => (
           <FeaturedEventCard key={event.contestId || `${event.eventId}-${event.discipline}-${event.gender}`} event={event} />

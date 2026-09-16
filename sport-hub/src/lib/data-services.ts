@@ -297,6 +297,7 @@ export interface ContestData {
   city?: string;
   discipline: string;
   contestSize: string;
+  category?: number; // Old-format
   prize: number;
   gender: number;
   ageCategory: string;

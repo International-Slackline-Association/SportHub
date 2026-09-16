@@ -15,7 +15,9 @@ const getFeaturedEvents = (allEvents: ContestData[]) => {
   const featuredEvents = allEvents
     .filter(event => {
         const hasProfileImage = !!event.thumbnailUrl;
-        return hasProfileImage;
+        const sixMonths = 180 * 24 * 60 * 60 * 1000;
+        const isRecent = (new Date().getTime() - new Date(event.startDate).getTime()) < sixMonths;
+        return hasProfileImage && isRecent;
       });
 
   const randomIndex = () => Math.floor(Math.random() * featuredEvents.length);
@@ -30,7 +32,7 @@ const getFeaturedEvents = (allEvents: ContestData[]) => {
       featuredEvents[randomIndex()],
     ];
     hasDuplicateEvent = selectedEvents.some((comp, index) => {
-      return selectedEvents.findIndex(c => c.eventId === comp.eventId) !== index;
+      return selectedEvents.findIndex(c => c.name === comp.name) !== index;
     });
   } while (hasDuplicateEvent);
 
