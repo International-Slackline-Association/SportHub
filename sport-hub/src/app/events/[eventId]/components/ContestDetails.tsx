@@ -52,7 +52,7 @@ export default function ContestDetails({
         <ContestAbout contest={contest} />
       </div>
 
-      <div className="flex flex-row justify-between items-center">
+      <div className="flex flex-row flex-wrap justify-between items-center">
         <h3 className="mb-2">Results</h3>
         <div className="flex flex-row gap-2 mb-2">
           {isAdmin && (
