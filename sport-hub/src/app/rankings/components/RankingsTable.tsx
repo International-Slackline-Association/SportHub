@@ -43,12 +43,11 @@ const columns = [
   columnHelper.accessor("rank", {
     header: 'Rank',
     enableSorting: false,
-    size: 30,
   }),
   // Mobile: single stacked column
   columnHelper.display({
     id: 'athlete',
-    header: 'Athlete',
+    header: 'Athlete mo',
     enableSorting: false,
     cell: info => {
       const { age, gender, country } = info.row.original;
@@ -66,7 +65,6 @@ const columns = [
         </div>
       );
     },
-    size: 180,
   }),
   // Desktop-only columns
   columnHelper.accessor('fullName', {
@@ -75,7 +73,6 @@ const columns = [
     header: 'Name',
     cell: info => <NameCell athlete={info.row.original} />,
     meta: { filterVariant: 'text', filterPlaceholder: 'Enter athlete name' },
-    size: 80,
   }),
   columnHelper.accessor('age', {
     header: 'Age',
@@ -90,7 +87,6 @@ const columns = [
         { value: 'senior', label: 'Senior (35+)' },
       ],
     },
-    size: 24,
   }),
   columnHelper.accessor('gender', {
     header: 'Gender',
@@ -106,7 +102,6 @@ const columns = [
         { value: 'male', label: 'Men' },
       ],
     },
-    size: 40,
   }),
   columnHelper.accessor((row: AthleteRanking) => getIocCode(row.country), {
     id: 'country',
@@ -115,7 +110,6 @@ const columns = [
     header: 'Country',
     cell: info => <CountryFlag country={info.getValue()} />,
     meta: { filterVariant: 'country' },
-    size: 40,
   }),
 ];
 
@@ -154,10 +148,6 @@ const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) =
     },
   });
 
-  // Adjust rank and points column width based on device
-  columns[0].size = isDesktop ? 36 : 48;
-  columns[1].size = isDesktop ? 36 : 60;
-
   return (
     <div className="flex items-center justify-center min-h-64">
       {isLoading && (
@@ -174,7 +164,7 @@ const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) =
           extraFilters={
             <>
               <div className={tableStyles.columnFilter}>
-                <label htmlFor="rankings-year">Season</label>
+                <label htmlFor="rankings-year">Timeframe</label>
                 <select
                   id="rankings-year"
                   value={selectedYear}
@@ -201,7 +191,7 @@ const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) =
                   <div className={cn("flex gap-2", isDesktop ? "flex-row" : "flex-col")}>
                     Points
                     <Tooltip
-                      content={'Ranking is determined by adding the top two awarded points from the competitions athletes have participated in.'}
+                      content={'Ranking is determined by adding the top two awarded points from the contests athletes have participated in within the defined timeframe.'}
                       position="bottom"
                     />
                   </div>
@@ -246,6 +236,9 @@ const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) =
                 gender:   !!isDesktop,
                 country:  !!isDesktop,
               },
+              pagination: {
+                pageSize: 50,
+              }
             },
           }}
         />

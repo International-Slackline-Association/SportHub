@@ -61,8 +61,9 @@ export async function createContest(params: {
   eventId: string;
   discipline: string;
   contestDate: string;
-  ageCategory?: string;
-  gender?: string;
+  contestSize: string;
+  ageCategory: string;
+  gender: string;
 }): Promise<ContestRecord> {
   // Get event to determine next contest number
   const event = await getEvent(params.eventId);
@@ -79,6 +80,7 @@ export async function createContest(params: {
     contestId,
     discipline: params.discipline,
     contestDate: params.contestDate,
+    contestSize: params.contestSize,
     dateSortKey,
     ageCategory: params.ageCategory,
     gender: params.gender,

@@ -32,8 +32,15 @@ export const ContestTabGroup = ({ contests, ...tabGroupProps }: Omit<TabGroupPro
       {...tabGroupProps}
       className={styles.tabGroup}
       tabs={contests.map(({ ageCategory, contestSize, discipline, gender }: ContestRecord, idx) => {
-        const disciplineKey = MAP_DISCIPLINE_ENUM_TO_NAME[Number(discipline)];
-        const { name: disciplineName, Icon } = DISCIPLINE_DATA[disciplineKey];
+        
+        let disciplineKey: Discipline ;
+        if (Number.isInteger(Number(discipline))) {
+          disciplineKey = MAP_DISCIPLINE_ENUM_TO_NAME[Number(discipline)];
+        } else {
+          disciplineKey = discipline as Discipline;
+        }
+        
+        const { name: disciplineName = "", Icon } = DISCIPLINE_DATA[disciplineKey];
 
         return {
           id: String(idx),

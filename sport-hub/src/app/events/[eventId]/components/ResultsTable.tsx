@@ -25,7 +25,11 @@ const columns = [
     header: 'Athlete',
     cell: info => {
       const userId = info.row.original.userId;
-      const formattedName = kebabCaseToTitleCase(info.getValue());
+      let formattedName = info.getValue();
+      if (formattedName.includes('-')) {
+        formattedName = kebabCaseToTitleCase(formattedName);
+      }
+
       return userId ? (
         <Link href={`/athlete/${userId}`} className={linkClassName}>
           {formattedName}
@@ -59,7 +63,6 @@ const ResultsTable = ({ data }: ResultsTableProps) => {
       return String(a.place).localeCompare(String(b.place));
     });
   }, [data]);
-
   return (
     <Table
       options={{

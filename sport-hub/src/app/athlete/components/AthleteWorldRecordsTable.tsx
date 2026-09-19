@@ -3,6 +3,7 @@ import { WorldRecord } from '@lib/data-services';
 import Table from '@ui/Table';
 import { textToTitleCase } from '@utils/strings';
 import { linkCellFormatter } from 'src/app/world_records/components/cellFormatters';
+import { Alert } from '@ui/Alert';
 
 const columnHelper = createColumnHelper<WorldRecord>();
 const columns = [
@@ -35,6 +36,9 @@ type AthleteWorldRecordsTableProps = {
 };
 
 const AthleteWorldRecordsTable = ({ worldRecords }: AthleteWorldRecordsTableProps) => {
+  if (worldRecords.length === 0) {
+    return <Alert variant="info">No world records found for this athlete.</Alert>;
+  }
   return (
     <Table options={{ columns, data: worldRecords, initialState: { sorting: [{ id: 'date', desc: true }] } }} />
   );

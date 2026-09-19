@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { DISCIPLINE_DATA } from '@utils/consts';
 import { contestSizeOptions, eventGenderOptions, ageCategoryOptions } from '@ui/Form/commonOptions';
 import { formatDate } from '@utils/dates';
+import { Alert } from '@ui/Alert';
 
 const labelOf = (opts: { value: string; label: string }[], val: string | undefined) =>
   opts.find(o => o.value === val)?.label ?? val ?? '';
@@ -104,6 +105,10 @@ type AthleteContestsTableProps = {
 };
 
 const AthleteContestsTable = ({ contests }: AthleteContestsTableProps) => {
+  if (contests.length === 0) {
+    return <Alert variant="info">No contest participations found for this athlete.</Alert>;
+  }
+
   return (
     <Table options={{ columns, data: contests }} />
   );

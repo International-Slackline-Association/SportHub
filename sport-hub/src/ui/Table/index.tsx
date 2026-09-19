@@ -71,6 +71,7 @@ const Table = <TData,>({ extraFilters, options, title, rowClassName }: TableProp
   const table = useReactTable({
     defaultColumn: {
       enableColumnFilter: false,
+      size: undefined,
     },
     initialState: {
       columnFilters,
@@ -113,7 +114,7 @@ const Table = <TData,>({ extraFilters, options, title, rowClassName }: TableProp
                   <th
                     key={header.id}
                     colSpan={header.colSpan}
-                    style={{ overflow: "visible", width: `${header.getSize()}px` }}
+                    style={{ overflow: "visible" }}
                     className={header.column.getCanSort() ? styles.sortableHeader : undefined}
                     onClick={header.column.getCanSort() ? header.column.getToggleSortingHandler() : undefined}
                   >

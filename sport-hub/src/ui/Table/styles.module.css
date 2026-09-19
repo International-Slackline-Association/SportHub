@@ -9,7 +9,7 @@
   border-collapse: separate;
   border-spacing: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  table-layout: fixed;
+  table-layout: auto;
 }
 
 .tableContainer thead th {

@@ -6,6 +6,7 @@ import { deleteUser } from './actions';
 import Button from '@ui/Button';
 import SearchBar from './SearchBar';
 import type { Role, UserSubType } from 'src/types/rbac';
+import { userGenderOptions } from '@ui/Form';
 
 interface User {
   id: string;
@@ -207,7 +208,7 @@ export default function UserListPagination({
               {user.country && <p className="text-sm text-gray-500">Country: {user.country}</p>}
               {user.city && <p className="text-sm text-gray-500">City: {user.city}</p>}
               {user.birthdate && <p className="text-sm text-gray-500">Birthdate: {user.birthdate}</p>}
-              {user.gender && <p className="text-sm text-gray-500 capitalize">Gender: {user.gender}</p>}
+              {user.gender && <p className="text-sm text-gray-500 capitalize">Gender: {userGenderOptions.find(o => o.value === user.gender)?.label}</p>}
               <div className="flex gap-4 text-sm text-gray-500 mt-1">
                 <span>Points: {user.totalPoints || 0}</span>
                 <span>Contests: {user.contestsParticipated || 0}</span>
