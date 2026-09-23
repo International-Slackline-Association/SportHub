@@ -1,30 +1,45 @@
-import { AthleteProfile } from '@lib/data-services';
 import styles from './styles.module.css';
 import { StackedMediaCard } from '@ui/StackedMediaCard';
 import { Country, Discipline, Role } from '@ui/Badge';
 import { LabelValuePair } from '@ui/LabelValuePair';
 import { ProfileMediaLinks } from "@ui/ProfileMediaLinks";
+import { UserProfileRecord } from '@lib/relational-types';
 
-type AthleteProfileCardProps = {
-  athlete: AthleteProfile;
+type AthleteProfileCardProps = UserProfileRecord & {
+  disciplines?: Discipline[];
 }
 
-export const AthleteProfileCard = ({ athlete }: AthleteProfileCardProps) => {
+export const AthleteProfileCard = ({ disciplines, ...athleteProfile }: AthleteProfileCardProps) => {
   const {
     name,
     surname,
-    roles,
-    age,
+    birthdate,
     country,
     city,
-    sponsors,
-    disciplines,
-    profileImage,
+    profileUrl,
+    thumbnailUrl,
     links,
-  } = athlete;
+    userSubTypes,
+  } = athleteProfile;
+
+  // Calculate age from birthdate
+  let age: number | undefined;
+  if (birthdate) {
+    const birth = new Date(birthdate);
+    const now = new Date();
+    age = now.getFullYear() - birth.getFullYear();
+    const monthDiff = now.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
+      age--;
+    }
+  }
+
+  const roles = userSubTypes?.map((t: string) => t.toUpperCase()) || ['ATHLETE'];
+
+  const profileImage = profileUrl || thumbnailUrl || undefined;
 
   const displayName = `${name} ${surname || ""}`.trim();
-  const abbreviatedName = `${name.toUpperCase().charAt(0)}${surname?.toUpperCase().charAt(0) || ""}`;
+  const abbreviatedName = `${name?.toUpperCase().charAt(0)}${surname?.toUpperCase().charAt(0) || ""}`;
 
   return (
     <StackedMediaCard
@@ -45,16 +60,17 @@ export const AthleteProfileCard = ({ athlete }: AthleteProfileCardProps) => {
         <LabelValuePair label="Age" value={age} />
         <LabelValuePair
           label="Country"
-          value={(<Country countryCode={country.toLowerCase()} />)}
+          value={(<Country countryCode={country?.toLowerCase() || ""} />)}
         />
         <LabelValuePair label="City" value={city} />
-        <LabelValuePair label="Sponsors" value={sponsors} />
+        {/* TODO add sponsors to DB */}
+        <LabelValuePair label="Sponsors" value={""} />
         <div className="col-span-full">
           <LabelValuePair
             label="Discipline(s)"
             value={(
               <span className="flex flex-row flex-wrap gap-1">
-                {disciplines.map(discipline => (
+                {disciplines?.map(discipline => (
                   <Discipline key={discipline} variant={discipline as Discipline} />
                 ))}
               </span>

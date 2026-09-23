@@ -46,9 +46,10 @@ const DISCIPLINE_LOOKUP: Record<string, { name: string; enumValue: number }> = {
 
 const GENDER_LOOKUP: Record<string, { name: string; enumValue: number }> = {
   ALL: { name: 'All', enumValue: 0 },
+  MIXED: { name: 'All', enumValue: 0 },
   MEN: { name: 'Men', enumValue: 1 },
-  WOMEN: { name: 'Women', enumValue: 2 },
   MEN_ONLY: { name: 'Men', enumValue: 1 },
+  WOMEN: { name: 'Women', enumValue: 2 },
   WOMEN_ONLY: { name: 'Women', enumValue: 2 },
   OTHER: { name: 'Other', enumValue: 3 },
   '0': { name: 'All', enumValue: 0 },
@@ -113,48 +114,12 @@ function formatDiscipline(value?: string | number): string {
   return raw;
 }
 
-function formatGender(value?: string | number): string {
-  if (value === undefined || value === null || value === '') {
-    return 'All (0)';
-  }
-
-  const raw = String(value).trim();
-  const direct = GENDER_LOOKUP[raw] ?? GENDER_LOOKUP[raw.toUpperCase()];
-  if (direct) {
-    return `${direct.name} (${direct.enumValue})`;
-  }
-
-  const byName = Object.values(GENDER_LOOKUP).find(entry => entry.name.toLowerCase() === raw.toLowerCase());
-  if (byName) {
-    return `${byName.name} (${byName.enumValue})`;
-  }
-
-  return raw;
-}
-
 function toEventYear(record: Partial<{ startDate?: string; endDate?: string }>): number {
   const startDate = typeof record.startDate === 'string' ? record.startDate : undefined;
   const endDate = typeof record.endDate === 'string' ? record.endDate : undefined;
   const dateValue = startDate || endDate || '1970-01-01';
   const year = Number(new Date(dateValue).getFullYear());
   return Number.isFinite(year) ? year : 1970;
-}
-
-function resolveUserName(userId: string | undefined, fallback: Partial<{ name: string; fullName: string }>, userProfilesByUserId: Map<string, UserProfileRecord>): string {
-  if (userId) {
-    const profile = userProfilesByUserId.get(userId);
-    const profileName = typeof profile?.name === 'string' ? profile.name : undefined;
-    const profileFullName = typeof profile?.name === 'string' ? profile.name : undefined;
-    if (profileName) return profileName;
-    if (profileFullName) return profileFullName;
-  }
-
-  const fallbackName = typeof fallback.name === 'string' ? fallback.name : undefined;
-  const fallbackFullName = typeof fallback.fullName === 'string' ? fallback.fullName : undefined;
-  if (fallbackName) return fallbackName;
-  if (fallbackFullName) return fallbackFullName;
-
-  return 'unknown';
 }
 
 function isProfileRecord(record: unknown): record is UserProfileRecord {
@@ -338,29 +303,31 @@ async function main() {
       // Update contest results included in the event record
       if (contestResults.length > 0) {
         const nextResults = contestResults.map((result) => {
-          const rank = Number(result.rank ?? 0);
-          const existingPoints = Number(result.isaPoints ?? 0);
-          const contestGenderValue = (contestGender || 'MIXED') as ContestGender;
-          const genderForPoints = contestGenderValue === 'MEN_ONLY' ? 'MEN' : contestGenderValue === 'WOMEN_ONLY' ? 'WOMEN' : 'ALL';
+          const {
+            rank,
+            isaPoints: originalPoints,
+          } = result;
+          const formattedGender = GENDER_LOOKUP[contestGender || "MIXED"].enumValue == 1 ? "MEN" : "WOMEN";
           const numContestants = contestResults.length;
-          const recalculated = sanitizePointValue(calculatePointsForRank(rank, contestSize as ContestType, genderForPoints as Gender, numContestants));
+          const recalculatedPoints = sanitizePointValue(calculatePointsForRank(rank, contestSize as ContestType, formattedGender, numContestants));
+          const hasChanged = recalculatedPoints !== originalPoints;
 
-          if (recalculated !== existingPoints) {
+          if (hasChanged) {
             contestRecordResultsChanges.push({
               eventId: contestEventId,
               contestId,
-              userName: typeof result.name === 'string' ? result.name : 'unknown',
+              userId: result.id,
+              userName: result.name,
               sortKey: contestSortKey,
-              rank: result.rank ?? 0,
-              before: String(existingPoints || 0),
-              after: String(recalculated),
-              location: 'events.ContestRecord.results',
+              rank,
+              before: originalPoints || 0,
+              after: recalculatedPoints,
             });
           }
 
           return {
             ...result,
-            isaPoints: recalculated,
+            isaPoints: recalculatedPoints,
           };
         });
 
@@ -371,9 +338,6 @@ async function main() {
           contestUpdateCount.results = contestRecordResultsChanges.length;
 
           for (const change of contestRecordResultsChanges) {
-            const userId = typeof change.userId === 'string' ? change.userId : (typeof change.id === 'string' ? change.id : '');
-            const userName = typeof change.userName === 'string' ? change.userName : 'unknown';
-            const location = typeof change.location === 'string' ? change.location : 'events.ContestRecord.results';
 
             csvRows.push(
               buildCsvRow([
@@ -384,13 +348,13 @@ async function main() {
                 contestGender ?? 'MIXED',
                 contestSize,
                 contestResults.length,
-                userId,
-                userName,
+                String(change.userId),
+                String(change.userName),
                 String(change.sortKey ?? contestSortKey ?? ''),
                 String(change.rank ?? 0),
                 String(change.before ?? 0),
                 String(change.after ?? 0),
-                location,
+                'events.ContestRecord.results',
               ])
             );
           }
@@ -412,38 +376,43 @@ async function main() {
       });
 
       for (const participationRecord of matchingParticipationRecords) {
-        const record = participationRecord as Record<string, unknown>;
-        const participationPlace = Number(record.place ?? 0);
-        const participationBefore = Number(record.points ? String(record.points).replace(/[^0-9.-]/g, '') || '0' : 0);
+        const {
+          place = 1,
+          points: originalPoints,
+          sortKey,
+          userId,
+
+        } = participationRecord as unknown as AthleteParticipationRecord;
+
         const contestGenderValue = (contestGender || 'MIXED') as ContestGender;
         const genderForPoints = contestGenderValue === 'MEN_ONLY' ? 'MEN' : contestGenderValue === 'WOMEN_ONLY' ? 'WOMEN' : 'ALL';
         const numContestants = matchingParticipationRecords.length;
-        const recalculated = sanitizePointValue(calculatePointsForRank(participationPlace || 1, contestSize as ContestType, genderForPoints as Gender, numContestants));
+        const recalculatedPoints = sanitizePointValue(calculatePointsForRank(place || 1, contestSize as ContestType, genderForPoints as Gender, numContestants));
 
-        if (recalculated < 1) {
+        if (recalculatedPoints < 1) {
           continue;
         }
 
         summary.matchedParticipationCount += 1;
 
-        const participationChanged = participationBefore !== recalculated || String(record.points ?? '') !== String(recalculated);
+        const hasParticipationChanged = originalPoints !== String(recalculatedPoints);
 
-        if (participationChanged) {
+        if (hasParticipationChanged) {
           summary.needsUpdate = true;
           summary.updatedParticipationCount += 1;
           contestUpdateCount.participations += 1;
 
           const nextRecord = {
-            ...record,
-            points: String(recalculated),
+            ...participationRecord,
+            points: String(recalculatedPoints),
           };
 
           if (!DRY_RUN) {
             await writeItem(usersTable, nextRecord as Record<string, unknown>);
           }
 
-          const userId = typeof record.userId === 'string' ? record.userId : 'unknown';
-          const userName = resolveUserName(userId === 'unknown' ? undefined : userId, record, userProfilesByUserId);
+          const userProfile = userProfilesByUserId.get(userId);
+          const userName = `${userProfile?.name} ${userProfile?.surname || ''}`;
 
           csvRows.push(
             buildCsvRow([
@@ -456,10 +425,10 @@ async function main() {
               numContestants,
               userId,
               userName,
-              String(record.sortKey ?? ''),
-              String(record.place ?? ''),
-              String(participationBefore || 0),
-              String(recalculated),
+              sortKey,
+              place,
+              originalPoints,
+              recalculatedPoints,
               'users.AthleteParticipationRecord.points',
             ])
           );
@@ -468,7 +437,7 @@ async function main() {
 
       if (VERBOSE) {
         console.log(
-          `   • ${DRY_RUN ? '[DRY-RUN] ' : ''}Contest ${contestId} | ${formatDiscipline(contestDiscipline)} | ${formatGender(contestGender)} | ${contestSize} | participation updates: ${contestUpdateCount.participations}/${matchingParticipationRecords.length}, event result updates: ${contestUpdateCount.results}/${contestResults.length}`
+          `   • ${DRY_RUN ? '[DRY-RUN] ' : ''}Contest ${contestId} | ${formatDiscipline(contestDiscipline)} | ${contestGender} | ${contestSize} | participation updates: ${contestUpdateCount.participations}/${matchingParticipationRecords.length}, event result updates: ${contestUpdateCount.results}/${contestResults.length}`
         );
       }
     }
