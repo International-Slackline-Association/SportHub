@@ -231,6 +231,7 @@ async function main() {
       'year',
       'contestId',
       'gender',
+      'discipline',
       'contestSize',
       'numContestants',
       'userId',
@@ -309,7 +310,7 @@ async function main() {
           } = result;
           const formattedGender = GENDER_LOOKUP[contestGender || "MIXED"].enumValue == 1 ? "MEN" : "WOMEN";
           const numContestants = contestResults.length;
-          const recalculatedPoints = sanitizePointValue(calculatePointsForRank(rank, contestSize as ContestType, formattedGender, numContestants));
+          const recalculatedPoints = sanitizePointValue(calculatePointsForRank(rank, contestSize as ContestType, numContestants));
           const hasChanged = recalculatedPoints !== originalPoints;
 
           if (hasChanged) {
@@ -346,6 +347,7 @@ async function main() {
                 year,
                 contestId,
                 contestGender ?? 'MIXED',
+                formatDiscipline(contestDiscipline),
                 contestSize,
                 contestResults.length,
                 String(change.userId),
@@ -387,7 +389,7 @@ async function main() {
         const contestGenderValue = (contestGender || 'MIXED') as ContestGender;
         const genderForPoints = contestGenderValue === 'MEN_ONLY' ? 'MEN' : contestGenderValue === 'WOMEN_ONLY' ? 'WOMEN' : 'ALL';
         const numContestants = matchingParticipationRecords.length;
-        const recalculatedPoints = sanitizePointValue(calculatePointsForRank(place || 1, contestSize as ContestType, genderForPoints as Gender, numContestants));
+        const recalculatedPoints = sanitizePointValue(calculatePointsForRank(place || 1, contestSize as ContestType, numContestants));
 
         if (recalculatedPoints < 1) {
           continue;
@@ -421,6 +423,7 @@ async function main() {
               year,
               contestId,
               contestGender ?? 'MIXED',
+              formatDiscipline(contestDiscipline),
               contestSize,
               numContestants,
               userId,

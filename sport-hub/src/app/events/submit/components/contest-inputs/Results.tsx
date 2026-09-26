@@ -43,8 +43,7 @@ const AthleteListItem = ({
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           const rank = Number(e.target.value);
           const contestSize = getIn(values, `${contestKey}.contestSize`);
-          const gender = getIn(values, `${contestKey}.gender`);
-          const points = calculatePointsForRank(rank, contestSize, gender, currentNumContestants || 1);
+          const points = calculatePointsForRank(rank, contestSize, currentNumContestants || 1);
           setFieldValue(`${athleteFormKey}.isaPoints`, points);
           setFieldValue(`${athleteFormKey}.rank`, rank);
         }}
@@ -77,12 +76,12 @@ const AthleteListItem = ({
   );
 };
 
-const recalculatePointsForAllAthletes = (results: ContestResultEntry[], contestSize: ContestType, gender: Gender) => {
+const recalculatePointsForAllAthletes = (results: ContestResultEntry[], contestSize: ContestType) => {
   if (!contestSize) return results;
   
   const recalculatedResults = results.map((r) => {
     if (r.rank && r.rank > 0) {
-      return { ...r, isaPoints: calculatePointsForRank(r.rank, contestSize, gender, results.length) };
+      return { ...r, isaPoints: calculatePointsForRank(r.rank, contestSize, results.length) };
     }
     return r;
   });
@@ -93,7 +92,6 @@ const recalculatePointsForAllAthletes = (results: ContestResultEntry[], contestS
 export const Results = ({ contestKey, results }: Props) => {
   const { setFieldTouched, setFieldValue, values } = useFormikContext<EventSubmissionFormValues>();
   const contestSize = getIn(values, `${contestKey}.contestSize`);
-  const gender = getIn(values, `${contestKey}.gender`);
 
   return (
     <>
@@ -118,7 +116,7 @@ export const Results = ({ contestKey, results }: Props) => {
                     // Build new results array with the item removed
                     const newResults = [...results.slice(0, currentIdx), ...results.slice(currentIdx + 1)];
                     // Recalculate points for all athletes based on the new number of participants
-                    const recalculatedResults = recalculatePointsForAllAthletes(newResults, contestSize, gender);
+                    const recalculatedResults = recalculatePointsForAllAthletes(newResults, contestSize);
                     
                     setFieldValue(`${contestKey}.results`, recalculatedResults, true);
                     setFieldTouched(`${contestKey}.results`, true, false);
@@ -153,7 +151,7 @@ export const Results = ({ contestKey, results }: Props) => {
 
                   // create new results array with the new athlete appended
                   const newResults = [...results, newAthlete];
-                  const recalculatedResults = recalculatePointsForAllAthletes(newResults, contestSize, gender);
+                  const recalculatedResults = recalculatePointsForAllAthletes(newResults, contestSize);
 
                   setFieldValue(`${contestKey}.results`, recalculatedResults, true);
 

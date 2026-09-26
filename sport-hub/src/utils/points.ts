@@ -1,60 +1,29 @@
-type ContestPointVariables = {
-  fixedPointsWomen: number[];
-  fixedPointsMen: number[];
-  ratio: number;
+type fixedPoints=  number[];
+
+const FIXED_POINTS_BY_CONTEST_SIZE: Record<ContestType, fixedPoints> = {
+  CHALLENGE: [200, 167, 139],
+  OPEN: [300, 250, 208],
+  GRAND_SLAM:[600, 500, 417],
+  MASTERS:  [900, 750, 625, 521],
+  WORLD_CUP: [2000, 1667, 1389, 1157, 965],
+  WORLD_CHAMPIONSHIP: [3000, 2400, 1920, 1536, 1229, 983]
 }
-
-const VARIABLES_BY_CONTEST_SIZE: Record<ContestType, ContestPointVariables> = {
-  CHALLENGE: {
-    fixedPointsWomen: [200, 167, 139],
-    fixedPointsMen: [200, 167, 139],
-    ratio: 1.2
-  },
-  OPEN: {
-    fixedPointsWomen: [300, 250, 208],
-    fixedPointsMen: [300, 250, 208],
-    ratio: 1.2
-  },
-  GRAND_SLAM: {
-    fixedPointsWomen: [600, 500, 417],
-    fixedPointsMen: [600, 500, 417, 347, 289],
-    ratio: 1.2
-  },
-  MASTERS: {
-    fixedPointsWomen: [900, 750, 625, 521],
-    fixedPointsMen: [900, 750, 625, 521, 434, 362, 301],
-    ratio: 1.2
-  },
-  WORLD_CUP: {
-    fixedPointsWomen: [2000, 1667, 1389, 1157, 965],
-    fixedPointsMen: [2000, 1667, 1389, 1157, 965, 804, 670, 558, 465],
-    ratio: 1.2
-  },
-  WORLD_CHAMPIONSHIP: {
-    fixedPointsWomen: [3000, 2400, 1920, 1536, 1229, 983],
-    fixedPointsMen: [3000, 2400, 1920, 1536, 1229, 983, 786, 629, 503, 403, 322],
-    ratio: 1.25
-  },
-};
-
 /**
- * Each tier sets a top score and a decay ratio. Places 1..m (top ranks) use a pure geometric decay;
+ * Each comp level sets a fixed points for the top levels
  * places m..N (the field size) decay linearly to zero at place N+1.
  * 
- * P(k) = max / ratio^(k-1)                       for k = 1..m
+ * P(k) = fixedPoints(k-1)                       for k = 1..m
  * P(k) = P(m) * (1 - ((k-m) / (N-m+1)))          for k = m..N
  *  
- * where k = rank, m = minContestants, N = numContestants, max = points of rank 1, ratio = decay ratio
+ * where k = rank, m = minContestants (length of the fixedPoints list), N = numContestants, max = points of rank 1,
  * 
- * e.g. for a men's Masters contest with 10 contestants:
- * the top 7 ranks will receive fixed points (formula one)
- * the bottom 3 ranks will receive 3/4, 2/4, and 1/4 of the points for rank 7 (formula two)
+ * e.g. for a men's Masters contest with 7 contestants:
+ * the top 4 ranks will receive fixed points
+ * the bottom 3 ranks will receive 3/4, 2/4, and 1/4 of the points for rank 4 (formula two)
  */
 
-export const calculatePointsForRank = (rank: number, contestSize: ContestType, gender: Gender, numContestants: number) => {
-  const { fixedPointsWomen, fixedPointsMen } = VARIABLES_BY_CONTEST_SIZE[contestSize];
-  const isContestMenOnly = ["MEN", "MEN_ONLY", "1"].includes(gender);
-  const fixedPoints = isContestMenOnly ? fixedPointsMen : fixedPointsWomen;
+export const calculatePointsForRank = (rank: number, contestSize: ContestType,numContestants: number) => {
+  const fixedPoints = FIXED_POINTS_BY_CONTEST_SIZE[contestSize];
   const minContestants = fixedPoints.length;
 
   if (rank <= minContestants) {
