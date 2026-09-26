@@ -1,72 +1,40 @@
-type ContestPointVariables = {
-  maxRank: number;
-  minContestantsFemale: number;
-  minContestantsMale: number;
-  ratio: number;
-  maxPoints: number;
+type fixedPoints=  number[];
+
+const FIXED_POINTS_BY_CONTEST_SIZE: Record<ContestType, fixedPoints> = {
+  CHALLENGE: [200, 167, 139],
+  OPEN: [300, 250, 208],
+  GRAND_SLAM:[600, 500, 417],
+  MASTERS:  [900, 750, 625, 521],
+  WORLD_CUP: [2000, 1667, 1389, 1157, 965],
+  WORLD_CHAMPIONSHIP: [3000, 2400, 1920, 1536, 1229, 983]
 }
+/**
+ * Each comp level sets a fixed points for the top levels
+ * places m..N (the field size) decay linearly to zero at place N+1.
+ * 
+ * P(k) = fixedPoints(k-1)                       for k = 1..m
+ * P(k) = P(m) * (1 - ((k-m) / (N-m+1)))          for k = m..N
+ *  
+ * where k = rank, m = minContestants (length of the fixedPoints list), N = numContestants, max = points of rank 1,
+ * 
+ * e.g. for a men's Masters contest with 7 contestants:
+ * the top 4 ranks will receive fixed points
+ * the bottom 3 ranks will receive 3/4, 2/4, and 1/4 of the points for rank 4 (formula two)
+ */
 
-const VARIABLES_BY_CONTEST_SIZE: Record<ContestType, ContestPointVariables> = {
-  CHALLENGE: {
-    maxPoints: 200,
-    maxRank: 5,
-    minContestantsFemale: 3,
-    minContestantsMale: 3,
-    ratio: 1.2
-  },
-  OPEN: {
-    maxPoints: 300,
-    maxRank: 7,
-    minContestantsFemale: 3,
-    minContestantsMale: 3,
-    ratio: 1.2
-  },
-  GRAND_SLAM: {
-    maxPoints: 600,
-    maxRank: 8,
-    minContestantsFemale: 3,
-    minContestantsMale: 5,
-    ratio: 1.2
-  },
-  MASTERS: {
-    maxPoints: 900,
-    maxRank: 12,
-    minContestantsFemale: 4,
-    minContestantsMale: 7,
-    ratio: 1.2
-  },
-  WORLD_CUP: {
-    maxPoints: 2000,
-    maxRank: 11,
-    minContestantsFemale: 5,
-    minContestantsMale: 9,
-    ratio: 1.2
-  },
-  WORLD_CHAMPIONSHIP: {
-    maxPoints: 3000,
-    maxRank: 15,
-    minContestantsFemale: 6,
-    minContestantsMale: 11,
-    ratio: 1.25
-  },
-};
+export const calculatePointsForRank = (rank: number, contestSize: ContestType,numContestants: number) => {
+  const fixedPoints = FIXED_POINTS_BY_CONTEST_SIZE[contestSize];
+  const minContestants = fixedPoints.length;
 
-export const calculatePointsForRank = (rank: number, contestSize: ContestType) => {
-  const { maxPoints, maxRank, minContestantsFemale, ratio } = VARIABLES_BY_CONTEST_SIZE[contestSize];
-
-  if (rank > maxRank) {
-    return 0;
+  if (rank <= minContestants) {
+    return fixedPoints[rank - 1];
   }
 
-  // Fixed points, reserved for top ranks
-  if (rank < minContestantsFemale) {
-    const points = maxPoints / Math.pow(ratio, rank - 1);
-    return Math.round(points);
-  }
+  const numExtraContestants = Math.max(0, numContestants - minContestants);
+  const pointsOfLastTopRank = fixedPoints[minContestants - 1];
+  const stepLowerRanks = pointsOfLastTopRank / (numExtraContestants + 1);
+  const pointsForLowerRank = pointsOfLastTopRank - (rank - minContestants) * stepLowerRanks;
 
-  // Dynamic points
-  const lastFixedPoints = maxPoints / Math.pow(ratio, minContestantsFemale - 1);
-  const factor = Math.max(0, 1 - ((rank - minContestantsFemale) / (maxRank - minContestantsFemale + 1)));
-  const points = lastFixedPoints * factor;
-  return Math.round(points);
+  // Atleast 1 point awarded for participation
+  return Math.max(1, Math.round(pointsForLowerRank));
 };

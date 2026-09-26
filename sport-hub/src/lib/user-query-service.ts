@@ -11,7 +11,6 @@ import type {
   UserProfileRecord,
   AthleteRankingRecord,
   AthleteParticipationRecord,
-  RankingFilter,
 } from './relational-types';
 
 /**
@@ -51,53 +50,6 @@ export async function getUserIdByAthleteSlug(athleteSlug: string): Promise<strin
   } catch (error) {
     console.error(`Error resolving athleteSlug ${athleteSlug}:`, error);
     return null;
-  }
-}
-
-/**
- * Get athlete rankings with optional filtering
- * Uses begins_with on sort key for hierarchical filtering
- *
- * Before: Would scan all users, filter client-side
- * After: Single query with sort key filter - returns only matching records
- */
-export async function getAthleteRankings(
-  userId: string,
-  filters?: RankingFilter
-): Promise<AthleteRankingRecord[]> {
-  try {
-    // Build sort key prefix based on filters
-    let sortKeyPrefix = 'Ranking:';
-
-    if (filters?.type) {
-      sortKeyPrefix += `${filters.type}:`;
-
-      if (filters?.year) {
-        sortKeyPrefix += `${filters.year}:`;
-
-        if (filters?.discipline) {
-          sortKeyPrefix += `${filters.discipline}:`;
-
-          if (filters?.gender) {
-            sortKeyPrefix += `${filters.gender}:`;
-
-            if (filters?.ageCategory) {
-              sortKeyPrefix += `${filters.ageCategory}`;
-            }
-          }
-        }
-      }
-    }
-
-    const items = await dynamodb.queryItems(
-      USERS_TABLE,
-      'userId = :userId AND begins_with(sortKey, :sortKeyPrefix)',
-      { ':userId': userId, ':sortKeyPrefix': sortKeyPrefix },
-    );
-    return items as AthleteRankingRecord[];
-  } catch (error) {
-    console.error(`Error fetching rankings for ${userId}:`, error);
-    return [];
   }
 }
 
