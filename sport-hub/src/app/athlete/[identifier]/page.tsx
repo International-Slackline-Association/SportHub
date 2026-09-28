@@ -1,11 +1,12 @@
 import { notFound, permanentRedirect } from 'next/navigation';
 import Link from 'next/link';
-import { getAthleteProfile } from '@lib/data-services';
 import { getUserIdByAthleteSlug } from '@lib/user-query-service';
 import { AthleteProfileCard } from '../components/AthleteProfileCard';
 import AthleteDataTabs from '../components/AthleteDataTabs';
 import { getPublishedEventsByOrganizer } from '../../events/submit/actions';
 import { COUNTRIES } from '@utils/countries';
+import { getAthletePageData } from './actions';
+import { Alert } from '@ui/Alert';
 
 interface AthleteProfilePageProps {
   params: Promise<{ identifier: string }>;
@@ -27,10 +28,16 @@ export default async function AthleteProfilePage({ params }: AthleteProfilePageP
   }
 
   // Fetch only profile data server-side for immediate display
-  const profile = await getAthleteProfile(userId);
+  const { success, profile, contests, worldRecords, worldFirsts } = await getAthletePageData(userId) || {};
 
   if (!profile) {
     notFound();
+  }
+
+  if (!success) {
+    return (
+      <Alert variant="error">Error fetching athlete data</Alert>
+    );
   }
 
   // Canonicalize the URL bar to the athlete's slug. Every athlete gets one at
@@ -41,16 +48,25 @@ export default async function AthleteProfilePage({ params }: AthleteProfilePageP
     permanentRedirect(`/athlete/${encodeURIComponent(profile.athleteSlug)}`);
   }
 
-  const isOrganizer = profile.roles.includes('ORGANIZER');
+  const disciplines = [...new Set(contests?.map(c => c.discipline as Discipline))].filter(Boolean);
+
+  const isOrganizer = profile.userSubTypes?.includes('organizer');
   const organizedEvents = isOrganizer
     ? await getPublishedEventsByOrganizer(userId)
     : [];
 
   return (
     <div className="stack gap-4">
-      <AthleteProfileCard athlete={profile} />
+      <AthleteProfileCard
+        {...profile}
+        disciplines={disciplines}
+      />
       <section className="p-4 sm:p-0">
-        <AthleteDataTabs athleteId={userId} />
+        <AthleteDataTabs
+          contests={contests}
+          worldRecords={worldRecords}
+          worldFirsts={worldFirsts}
+        />
       </section>
       {isOrganizer && organizedEvents.length > 0 && (
         <section className="p-4 sm:p-0">

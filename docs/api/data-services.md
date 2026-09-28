@@ -136,40 +136,6 @@ const firsts = await getWorldFirsts();
 
 **Note**: Currently returns hardcoded data. Future: query world-firsts table.
 
-## Athlete Profile
-
-### `getAthleteProfile(athleteId)`
-
-Get a complete athlete profile by athlete ID. Fetches profile data and ranking records in parallel, resolves identity from SportHub DB with fallback to reference DB (isa-users).
-
-**Signature**:
-```typescript
-async function getAthleteProfile(athleteId: string): Promise<AthleteProfile | null>
-```
-
-**Returns**:
-```typescript
-interface AthleteProfile {
-  name: string;
-  surname?: string;
-  age?: number;              // Calculated from birthdate
-  country: string;
-  city?: string;
-  sponsors?: string;
-  disciplines: string[];     // Real disciplines from ranking records (deduplicated)
-  roles: string[];
-  profileImage?: string;     // From profileUrl or thumbnailUrl in DB
-  links?: string[];           // Freeform URLs; platform auto-detected at render time
-}
-```
-
-**Key behaviors**:
-- **Disciplines**: Extracted from `Ranking:*` records using `MAP_DISCIPLINE_ENUM_TO_NAME`. Filters out `OVERALL` (meta-category) and deduplicates generic parents when specific variants exist (e.g., removes `FREESTYLE` if `FREESTYLE_HIGHLINE` is present).
-- **Links**: Read from `links` field (string array) on the profile record, seeded from `infoUrl` during migration.
-- **Age**: Calculated from `birthdate` on the profile record.
-- **Profile image**: Uses `profileUrl` with `thumbnailUrl` fallback.
-- **Identity**: `name`, `surname`, and `country` are read directly from the sporthub-users Profile record — no reference DB (isa-users) query at display time. `athleteSlug` is used as a display-name fallback for legacy records that predate the stored-name field.
-
 ### Rankings Data
 
 #### `getRankingsData()`

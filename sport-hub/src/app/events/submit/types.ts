@@ -101,7 +101,7 @@ export interface PendingUserData {
 }
 
 export interface ContestResultEntry {
-  rank: number;
+  rank: number | undefined;
   id: string;
   name?: string;
   isaPoints: number;

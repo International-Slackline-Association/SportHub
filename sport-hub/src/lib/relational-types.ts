@@ -296,17 +296,6 @@ export interface UserWithDetails extends UserProfileRecord {
 }
 
 /**
- * Helper type for ranking filters
- */
-export interface RankingFilter {
-  type?: string;           // "1" or "2"
-  year?: string;           // "2024", "2023", "0" (all-time)
-  discipline?: string;     // "12", "13", etc.
-  gender?: string;         // "0", "1", "2"
-  ageCategory?: string;    // "0", "1", etc.
-}
-
-/**
  * Helper type for contest filters
  */
 export interface ContestFilter {

@@ -1,15 +1,12 @@
-// import { UserSubType } from '@types/rbac';
 import type { ContestRecord, EventMetadataRecord, ContestParticipant, AthleteParticipationRecord, UserProfileRecord } from './relational-types';
 import {
-  getAthleteProfile as getAthleteProfileOptimized,
   getAthleteParticipations as getAthleteParticipationsOptimized,
-  getAthleteRankings,
   getAllUserProfiles,
   getAthleteProfilesBatch,
 } from './user-query-service';
 import { dynamodb, USERS_TABLE } from './dynamodb';
 import { getEvent, getContest, scanAllEventItems } from './event-contest-service';
-import { MAP_DISCIPLINE_ENUM_TO_NAME, MAP_CONTEST_TYPE_ENUM_TO_NAME, MAP_CONTEST_GENDER_ENUM_TO_NAME } from '@utils/consts';
+import { MAP_CONTEST_TYPE_ENUM_TO_NAME, MAP_CONTEST_GENDER_ENUM_TO_NAME } from '@utils/consts';
 
 // Reverse lookups: name → numeric enum (for mapping new-format string values back to ContestData numbers)
 const CONTEST_GENDER_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
@@ -538,20 +535,6 @@ export async function getContestsData(): Promise<ContestData[]> {
 // ATHLETE PROFILE DATA SERVICES
 // ===========================================
 
-export interface AthleteProfile {
-  name: string;
-  surname?: string;
-  age?: number;
-  country: string;
-  city?: string;
-  sponsors?: string;
-  disciplines: string[];
-  roles: string[];
-  profileImage?: string;
-  athleteSlug?: string;
-  links?: string[];
-}
-
 export interface AthleteContest {
   rank: number;
   eventId: string;
@@ -590,88 +573,6 @@ export interface WorldFirst {
   lineType: string;       // "type of line"
   athleteUserId?: string; // Resolved SportHub userId (when ISA Email matches a profile)
   links?: string[];
-}
-
-/**
- * Get athlete profile by athlete ID
- * OPTIMIZED: Uses composite key (userId + sortKey="Profile") for O(1) lookup
- *
- * Uses name/surname/country from sporthub-users Profile; falls back to athleteSlug.
- */
-export async function getAthleteProfile(athleteId: string): Promise<AthleteProfile | null> {
-  try {
-    console.log('getAthleteProfile', athleteId)
-    // Fetch profile, reference user, and rankings in parallel
-    const [profile, rankingRecords] = await Promise.all([
-      getAthleteProfileOptimized(athleteId),
-      getAthleteRankings(athleteId),
-    ]);
-
-    if (!profile) {
-      return null;
-    }
-
-    let name = profile.name || '';
-    const surname = profile.surname || '';
-    const country = profile.country || 'N/A';
-
-    if (!name && profile.athleteSlug) {
-      name = profile.athleteSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-    }
-
-    // Extract unique disciplines from ranking records
-    const disciplineNumbers = new Set(
-      rankingRecords.map(r => Number.parseInt(r.discipline, 10))
-    );
-    // Filter out OVERALL (meta-category) and generic parent disciplines
-    // when a more specific variant is present
-    const allDisciplines: string[] = [];
-    for (const num of disciplineNumbers) {
-      const mapped = MAP_DISCIPLINE_ENUM_TO_NAME[num];
-      if (mapped && mapped !== 'OVERALL') {
-        allDisciplines.push(mapped);
-      }
-    }
-    // Remove generic FREESTYLE if FREESTYLE_HIGHLINE is present
-    // Remove generic TRICKLINE if any specific TRICKLINE_* variant is present
-    // Remove generic SPEED if SPEED_SHORT or SPEED_HIGHLINE is present
-    const hasSpecificTrickline = allDisciplines.some(d => d.startsWith('TRICKLINE_'));
-    const hasSpecificSpeed = allDisciplines.some(d => d === 'SPEED_SHORT' || d === 'SPEED_HIGHLINE');
-    const disciplines = allDisciplines.filter(d => {
-      if (d === 'FREESTYLE' && allDisciplines.includes('FREESTYLE_HIGHLINE')) return false;
-      if (d === 'TRICKLINE' && hasSpecificTrickline) return false;
-      if (d === 'SPEED' && hasSpecificSpeed) return false;
-      return true;
-    });
-
-    // Calculate age from birthdate
-    let age: number | undefined;
-    if (profile.birthdate) {
-      const birth = new Date(profile.birthdate);
-      const now = new Date();
-      age = now.getFullYear() - birth.getFullYear();
-      const monthDiff = now.getMonth() - birth.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
-        age--;
-      }
-    }
-
-    return {
-      name,
-      surname,
-      age,
-      country,
-      city: profile.city || undefined,
-      disciplines,
-      roles: profile.userSubTypes?.map((t: string) => t.toUpperCase()) || ['ATHLETE'],
-      profileImage: profile.profileUrl || profile.thumbnailUrl || undefined,
-      athleteSlug: profile.athleteSlug || undefined,
-      links: profile.links,
-    };
-  } catch (error) {
-    console.error('Error fetching athlete profile:', error);
-    return null;
-  }
 }
 
 /**

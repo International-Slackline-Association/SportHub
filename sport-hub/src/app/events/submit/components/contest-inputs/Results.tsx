@@ -10,13 +10,6 @@ import { FormikNumberField, FormikTextField } from '@ui/Form';
 import PendingUserForm from './PendingUserForm';
 import { calculatePointsForRank } from '@utils/points';
 
-const initialAthleteValues: Partial<ContestResultEntry> = {
-  id: "",
-  name: "",
-  isaPoints: 0,
-  stats: "",
-};
-
 type Props = {
   contestKey: string;
   results: ContestResultEntry[];
@@ -36,6 +29,8 @@ const AthleteListItem = ({
 }: AthleteListItemProps) => {
   const { values, setFieldValue } = useFormikContext<EventSubmissionFormValues>();
   const formValueUserId = getIn(values, `${athleteFormKey}.id`);
+  const currentResults = getIn(values, `${contestKey}.results`) as ContestResultEntry[] | undefined;
+  const currentNumContestants = Array.isArray(currentResults) ? currentResults.length : 0;
 
   return (
     <div className="flex flex-row cluster items-end gap-4 mb-4">
@@ -48,7 +43,7 @@ const AthleteListItem = ({
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           const rank = Number(e.target.value);
           const contestSize = getIn(values, `${contestKey}.contestSize`);
-          const points = calculatePointsForRank(rank, contestSize);
+          const points = calculatePointsForRank(rank, contestSize, currentNumContestants || 1);
           setFieldValue(`${athleteFormKey}.isaPoints`, points);
           setFieldValue(`${athleteFormKey}.rank`, rank);
         }}
@@ -56,10 +51,9 @@ const AthleteListItem = ({
       <UserAutocomplete formKey={athleteFormKey} readOnlyIfSet={!!formValueUserId} />
       <FormikNumberField
         className="shrink"
-        disabled
         id={`${athleteFormKey}.isaPoints`}
         label="Points"
-        min={0}
+        min={1}
         name={`${athleteFormKey}.isaPoints`}
       />
       <FormikTextField
@@ -80,6 +74,19 @@ const AthleteListItem = ({
       </Button>
     </div>
   );
+};
+
+const recalculatePointsForAllAthletes = (results: ContestResultEntry[], contestSize: ContestType) => {
+  if (!contestSize) return results;
+  
+  const recalculatedResults = results.map((r) => {
+    if (r.rank && r.rank > 0) {
+      return { ...r, isaPoints: calculatePointsForRank(r.rank, contestSize, results.length) };
+    }
+    return r;
+  });
+
+  return recalculatedResults;
 };
 
 export const Results = ({ contestKey, results }: Props) => {
@@ -105,6 +112,13 @@ export const Results = ({ contestKey, results }: Props) => {
                     // Recalculate index because item may have been re-ordered
                     const currentIdx = results.findIndex((r) => r.id === entry.id);
                     remove(currentIdx);
+                    if (currentIdx === -1) return;
+                    // Build new results array with the item removed
+                    const newResults = [...results.slice(0, currentIdx), ...results.slice(currentIdx + 1)];
+                    // Recalculate points for all athletes based on the new number of participants
+                    const recalculatedResults = recalculatePointsForAllAthletes(newResults, contestSize);
+                    
+                    setFieldValue(`${contestKey}.results`, recalculatedResults, true);
                     setFieldTouched(`${contestKey}.results`, true, false);
                   }}
                 />
@@ -115,7 +129,6 @@ export const Results = ({ contestKey, results }: Props) => {
                 type="button"
                 onClick={() => {
                   let rank;
-                  let points;
                   const ranksSet = new Set(results.map(r => r.rank));
                   const hasNoSharedRanks = ranksSet.size === results.length;
                   if (hasNoSharedRanks) {
@@ -126,11 +139,22 @@ export const Results = ({ contestKey, results }: Props) => {
                     rank = undefined;
                   }
 
-                  if (rank && contestSize) {
-                    points = calculatePointsForRank(rank, contestSize);
-                  }
+                  const newAthlete: ContestResultEntry = {
+                    id: "",
+                    name: "",
+                    isaPoints: 0,
+                    stats: "",
+                    rank,
+                  };
 
-                  push({ ...initialAthleteValues, rank, isaPoints: points });
+                  push(newAthlete);
+
+                  // create new results array with the new athlete appended
+                  const newResults = [...results, newAthlete];
+                  const recalculatedResults = recalculatePointsForAllAthletes(newResults, contestSize);
+
+                  setFieldValue(`${contestKey}.results`, recalculatedResults, true);
+
                   setFieldTouched(`${contestKey}.results`, true, false);
                 }}
                 variant="secondary"
