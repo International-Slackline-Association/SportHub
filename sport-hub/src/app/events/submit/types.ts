@@ -1,3 +1,4 @@
+import { ContestJudge, ContestResult } from '@lib/relational-types';
 import * as Yup from 'yup';
 
 // Combined form values (parent level)
@@ -100,15 +101,6 @@ export interface PendingUserData {
   birthdate?: string;
 }
 
-export interface ContestResultEntry {
-  rank: number | undefined;
-  id: string;
-  name?: string;
-  isaPoints: number;
-  stats: string;
-  pendingUser?: PendingUserData;
-}
-
 export interface ContestFormValues {
   startDate?: string;
   endDate?: string;
@@ -118,12 +110,8 @@ export interface ContestFormValues {
   judgingSystem: JudgingSystem;
   contestSize: ContestType;
   totalPrizeValue?: number;
-  judges?: {
-    id: string;
-    name?: string;
-    pendingUser?: PendingUserData;
-  }[];
-  results?: ContestResultEntry[];
+  judges?: ContestJudge[];
+  results?: ContestResult[];
 }
 
 export const contestValidationSchema = Yup.object({

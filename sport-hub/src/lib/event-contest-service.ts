@@ -6,41 +6,51 @@
  */
 
 import { DISCIPLINE_DATA } from '@utils/consts';
-import { dynamodb, EVENTS_TABLE } from './dynamodb';
-import type { EventMetadataRecord, ContestRecord, EventOrganizer, PendingScoreEditRecord } from './relational-types';
+import { dynamodb, EVENTS_TABLE, USERS_TABLE } from './dynamodb';
+import { auth } from '@lib/auth';
+import type {
+  EventMetadataRecord,
+  ContestRecord,
+  PendingScoreEditRecord,
+  AthleteParticipationRecord,
+} from './relational-types';
+import { ContestFormValues, EventFormValues } from 'src/app/events/submit/types';
+import { EventStatus } from 'src/app/events/my-events/page';
 
 export interface AssembledEvent extends EventMetadataRecord { contests: ContestRecord[] };
+
+// Generate unique event ID.
+// Legacy events follow format Event:YYYY-MM-DD[:city]
+function generateEventId(): string {
+  return `event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
 
 /**
  * Create new event (metadata record only)
  */
-export async function createEvent(params: {
-  eventId: string;
-  eventName: string;
-  type: 'competition' | 'clinic' | 'meetup';
-  startDate: string;
-  endDate?: string;
-  city?: string;
-  country: string;
-  organizers?: EventOrganizer[];
-}): Promise<EventMetadataRecord> {
-  const event: EventMetadataRecord = {
-    eventId: params.eventId,
+export async function createEventFromForm(eventForm: EventFormValues, status: EventStatus, contestCount: number): Promise<EventMetadataRecord> {
+  // Get current user for audit trail
+  const session = await auth();
+
+  // Transform form data to database format
+  const eventId = generateEventId();
+  const eventMetadataRecord = {
+    ...eventForm,
+    eventId,
     sortKey: 'Metadata',
-    type: params.type,
-    eventName: params.eventName,
-    startDate: params.startDate,
-    endDate: params.endDate || params.startDate,
-    city: params.city,
-    country: params.country,
-    organizers: params.organizers || [],
-    contestCount: 0,
-    createdAt: Date.now(),
-    links: [],
+    createdAt: new Date().getTime(),
+    updatedAt: new Date().getTime(),
+    status,
+    createdBy: session?.user?.id || '',
+    createdByName: session?.user?.name || 'unknown',
+    contestCount,
+    ...(status === 'pending' && { submittedForApprovalAt: new Date().getTime() }),
   };
 
-  await dynamodb.putItem(EVENTS_TABLE, event as unknown as Record<string, unknown>);
-  return event;
+  console.log(`Creating event ${eventId} with status=${status} createdBy=${session?.user?.id}`);
+  await putEventItem(eventMetadataRecord);
+
+  return eventMetadataRecord;
 }
 
 /**
@@ -55,52 +65,52 @@ export async function getEvent(eventId: string): Promise<EventMetadataRecord | n
 }
 
 /**
- * Create contest within an event
+ * Create contest associated with an event
  */
-export async function createContest(params: {
-  eventId: string;
-  discipline: string;
-  contestDate: string;
-  contestSize: string;
-  ageCategory: string;
-  gender: string;
-}): Promise<ContestRecord> {
-  // Get event to determine next contest number
-  const event = await getEvent(params.eventId);
-  if (!event) throw new Error(`Event not found: ${params.eventId}`);
+export async function createContestFromForm(
+  eventId: string, 
+  contestForm: ContestFormValues, 
+  contestIndex: number, 
+  updateContestCount: boolean = false
+): Promise<ContestRecord> {
+  const { discipline, startDate, endDate, results = [] } = contestForm;
 
-  const contestNumber = event.contestCount + 1;
-  const sortKey = `Contest:${params.discipline}:${params.eventId}-${contestNumber}`;
-  const contestId = `${params.eventId}#${contestNumber}`;
-  const dateSortKey = `${params.contestDate}#${params.eventId}`;
+  let disciplineEnumValue: string = discipline;
+  if (Number.isNaN(Number(disciplineEnumValue))) {
+    disciplineEnumValue = String(DISCIPLINE_DATA[discipline]?.enumValue);
+  }
 
-  const contest: ContestRecord = {
-    eventId: params.eventId,
-    sortKey,
+  const contestDate = endDate || startDate || '';
+  const contestId = Math.random().toString(36).slice(2, 8); // 6 random alpha-numeric characters
+  const contestRecord = {
+    ...contestForm,
+    eventId,
+    sortKey: `Contest:${disciplineEnumValue}:${contestIndex}`,
     contestId,
-    discipline: params.discipline,
-    contestDate: params.contestDate,
-    contestSize: params.contestSize,
-    dateSortKey,
-    ageCategory: params.ageCategory,
-    gender: params.gender,
-    results: [],
-    judges: [],
-    organizers: [],
+    contestIndex,
+    contestDate,
+    dateSortKey: `${contestDate}#${eventId}`,
+    discipline: disciplineEnumValue,
+    results,
   };
 
-  // Atomic: Create contest and increment event's contestCount
-  await dynamodb.putItem(EVENTS_TABLE, contest as unknown as Record<string, unknown>);
-  await dynamodb.updateItem(
-    EVENTS_TABLE,
-    { eventId: params.eventId, sortKey: 'Metadata' },
-    {
-      updateExpression: 'SET contestCount = contestCount + :one',
-      expressionAttributeValues: { ':one': 1 },
-    }
-  );
+  console.log(`Creating contest ${contestId} for event ${eventId}`);
 
-  return contest;
+  await dynamodb.putItem(EVENTS_TABLE, contestRecord);
+  await syncContestParticipationRecords(eventId, contestRecord);
+
+  if (updateContestCount) {
+    await dynamodb.updateItem(
+      EVENTS_TABLE,
+      { eventId, sortKey: 'Metadata' },
+      {
+        updateExpression: 'SET contestCount = contestCount + :one',
+        expressionAttributeValues: { ':one': 1 },
+      }
+    );
+  }
+
+  return contestRecord;
 }
 
 /**
@@ -245,6 +255,7 @@ export async function getAssembledEvent(
       contests = embeddedContests;
     } else {
       const allContests = await getEventContests(eventId);
+      console.log('allContests', allContests);
       // Legacy migrated events derive eventId from date alone (`Event:YYYY-MM-DD[:city]`),
       // so two distinct events can share a partition — city is used to disambiguate.
       // New-format events (`event-<timestamp>-<rand>`, see generateEventId()) have a
@@ -283,27 +294,63 @@ export async function deleteEventContestRecords(eventId: string): Promise<void> 
 }
 
 /**
- * Write contest form values as separate Contest:* records
+ * Keep athlete Participation:* records in sync with the active contest result set.
+ * These are the per-user lookup records used by athlete dashboards and ranking queries.
  */
-export async function saveEventContestRecords(
+export async function syncContestParticipationRecords(
   eventId: string,
-  contests: Record<string, unknown>[]
+  contest: ContestRecord
 ): Promise<void> {
-  for (let i = 0; i < contests.length; i++) {
-    const discipline = contests[i].discipline as string;
-    let disciplineEnumValue = discipline;
-    if (Number.isNaN(Number(disciplineEnumValue))) {
-      disciplineEnumValue = String(DISCIPLINE_DATA[discipline as Discipline]?.enumValue);
-    }
+  const {
+    discipline,
+    contestDate,
+    contestId,
+  } = contest;
 
-    await dynamodb.putItem(EVENTS_TABLE, {
-      ...contests[i],
+  const contestName = `${discipline || 'Contest'} / ${typeof contest.gender === 'string' ? contest.gender : 'ALL'} / ${typeof contest.ageCategory === 'string' ? contest.ageCategory : 'ALL'}`;
+
+  const activeUserIds = new Set<string>();
+
+  for (const result of contest.results) {
+    if (!result || typeof result !== 'object') continue;
+
+    const userId = typeof result.id === 'string' ? result.id : null;
+    if (!userId) continue;
+
+    const participation: AthleteParticipationRecord = {
+      userId,
+      sortKey: `Participation:${contestId}`,
       eventId,
-      sortKey: `Contest:${disciplineEnumValue}:${i}`,
-      contestIndex: i,
-      discipline: disciplineEnumValue,
-    });
+      contestId,
+      discipline,
+      place: Number(result.rank ?? 0),
+      points: String(result.isaPoints ?? 0),
+      contestDate,
+      contestName,
+    };
+
+    activeUserIds.add(userId);
+    await dynamodb.putItem(USERS_TABLE, participation as unknown as Record<string, unknown>);
   }
+
+  // Remove stale Participation:* entries for this contest if a result was removed.
+  const staleItems = await dynamodb.scanItems(USERS_TABLE, {
+    filterExpression: 'eventId = :eventId AND contestId = :contestId AND begins_with(sortKey, :prefix)',
+    expressionAttributeValues: {
+      ':eventId': eventId,
+      ':contestId': contestId,
+      ':prefix': 'Participation:',
+    },
+  });
+
+  await Promise.all(
+    (staleItems as AthleteParticipationRecord[]).map(async ({ userId, sortKey }) => {
+      if (!userId || !sortKey || activeUserIds.has(userId)) {
+        return;
+      }
+      await dynamodb.deleteItem(USERS_TABLE, { userId, sortKey });
+    })
+  );
 }
 
 /**

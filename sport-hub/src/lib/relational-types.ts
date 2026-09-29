@@ -1,6 +1,7 @@
 // Enhanced data structure for SportHub with hierarchical sort keys
 // Optimized for efficient DynamoDB queries using composite sort keys and GSIs
 
+import { PendingUserData } from 'src/app/events/submit/types';
 import type { Role, UserSubType } from '../types/rbac';
 
 // ============================================================================
@@ -125,6 +126,8 @@ interface EventTableRecord {
   sortKey: string;         // SK: "Metadata" | "Contest:{discipline}:{contestId}"
 }
 
+type EventStatus = 'draft' | 'pending' | 'published' | 'cancelled';
+
 /**
  * Event Metadata Record (sortKey = "Metadata")
  * One per event - contains event-level information
@@ -146,7 +149,7 @@ export interface EventMetadataRecord extends EventTableRecord {
   createdAt?: number;
   createdBy?: string;
   createdByName?: string;
-  status?: 'draft' | 'published' | 'cancelled';
+  status?: EventStatus;
 
   // Organizers (optional)
   organizers?: EventOrganizer[];
@@ -242,13 +245,13 @@ export type EventRecord = EventMetadataRecord | ContestRecord | PendingScoreEdit
  * Result embedded in Contest record (new format)
  */
 export interface ContestResult {
-  rank: number;
+  rank: number; // | undefined
   id?: string;
-  name: string;
+  name: string; // ?
   isaPoints: number;
   isPending: boolean;
-
-  pendingUser?: Record<string, unknown>;
+  stats?: string;
+  pendingUser?: PendingUserData;
 }
 
 /**
@@ -271,6 +274,7 @@ export interface ContestJudge {
   userId: string;
   name: string;
   role?: 'head_judge' | 'judge' | 'assistant';
+  pendingUser?: PendingUserData;
 }
 
 /**

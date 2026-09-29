@@ -3,32 +3,29 @@
 import { revalidatePath } from 'next/cache';
 import { requireAdmin, requireEventSubmitter } from '@lib/authorization';
 import { auth } from '@lib/auth';
-import { EventSubmissionFormValues, ContestFormValues, PendingUserData } from './types';
+import { EventSubmissionFormValues, ContestFormValues, PendingUserData, EventFormValues } from './types';
 import { createUser } from '@ui/UserForm/actions';
 import { invalidateContestsCache } from '@lib/data-services';
 import {
   putEventItem,
   getAssembledEvent,
   deleteEventContestRecords,
-  saveEventContestRecords,
   scanAllEventItems,
   deleteEvent as deleteEventFromService,
   getPendingScoreEdit,
   putPendingScoreEdit,
+  syncContestParticipationRecords,
+  createContestFromForm,
+  createEventFromForm,
 } from '@lib/event-contest-service';
-import { EventMetadataRecord } from '@lib/relational-types';
-
-// Generate unique event ID
-function generateEventId(): string {
-  return `event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-}
-
+import { ContestRecord, EventMetadataRecord } from '@lib/relational-types';
+import { DISCIPLINE_DATA } from '@utils/consts';
+import { EventStatus } from '../my-events/page';
 
 /**
  * Save event to DynamoDB
  * PROTECTED: Requires admin role or organizer sub-type
  */
-type EventStatus = 'draft' | 'pending' | 'published' | 'cancelled';
 
 // Returns true if the given date string (YYYY-MM-DD) is strictly in the past
 function isDateInPast(dateStr: string | undefined): boolean {
@@ -55,9 +52,6 @@ export async function saveEvent(values: EventSubmissionFormValues, status: Event
   await requireEventSubmitter();
 
   try {
-    // Get current user for audit trail
-    const session = await auth();
-
     const { event, contests } = values;
 
     // Past-event guard: judges and results required if event date is in the past
@@ -66,26 +60,13 @@ export async function saveEvent(values: EventSubmissionFormValues, status: Event
       return { success: false, error: pastEventError };
     }
 
-    // Transform form data to database format
-    const eventId = generateEventId();
-    const eventData = {
-      ...event,
-      eventId,
-      sortKey: 'Metadata',
-      createdAt: new Date().getTime(),
-      updatedAt: new Date().getTime(),
-      status,
-      createdBy: session?.user?.id,
-      createdByName: session?.user?.name,
-      contestCount: contests.length,
-      ...(status === 'pending' && { submittedForApprovalAt: new Date().getTime() }),
-    };
-
-    // Save event metadata and contests as separate records
-    console.log(`[saveEvent] saving event ${eventId} with status=${status} createdBy=${session?.user?.id}`);
-    await putEventItem(eventData);
-    await saveEventContestRecords(eventId, (contests || []) as unknown as Record<string, unknown>[]);
-    console.log(`[saveEvent] saved successfully`);
+    // Save event metadata used by event profile
+    const { eventId } = await createEventFromForm(event, status, contests.length);
+    
+    // Save contest results including the per-athlete Participation:* records
+    await Promise.all(contests.map((c, idx) => createContestFromForm(eventId, c, idx)));
+    
+    console.log(`Event ${eventId} saved successfully`);
 
     // Revalidate events pages
     revalidatePath('/events');
@@ -167,6 +148,7 @@ export async function updateEventScores(
             results: proposedResults,
           };
           await putEventItem(updated as Record<string, unknown>);
+          await syncContestParticipationRecords(eventId, updated as Record<string, unknown>);
           appliedCount++;
         } else {
           // Editing already-published results as a non-admin — stage instead
@@ -268,7 +250,7 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
     }
 
     // Save contests as separate records
-    await saveEventContestRecords(eventId, (contests || []) as unknown as Record<string, unknown>[]);
+    await saveEventContestRecords(eventId, contests);
 
     invalidateContestsCache();
     revalidatePath('/events');
