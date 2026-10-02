@@ -102,6 +102,7 @@ export interface PendingUserData {
 }
 
 export interface ContestFormValues {
+  contestId: string;
   startDate?: string;
   endDate?: string;
   discipline: Discipline;
@@ -181,6 +182,7 @@ export const contestValidationSchema = Yup.object({
 });
 
 export const initialContestValues: ContestFormValues = {
+  contestId: '',
   gender: '' as Gender,
   discipline: '' as Discipline,
   judgingSystem: '' as JudgingSystem,

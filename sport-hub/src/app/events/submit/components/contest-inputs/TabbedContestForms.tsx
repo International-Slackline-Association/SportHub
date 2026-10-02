@@ -9,6 +9,34 @@ import { useState } from 'react';
 import ContestForm from './ContestForm';
 import { cn } from '@utils/cn';
 import { snakeCaseToTitleCase } from '@utils/strings';
+import { generateContestId } from '@lib/event-contest-service';
+import { ageCategoryOptions, contestSizeOptions, disciplineOptions, eventGenderOptions, judgingSystemOptions } from '@ui/Form/commonOptions';
+
+const randomOption = (options: Option[]) => options[Math.floor(Math.random() * options.length)].value;
+
+const DEBUG_randomContest = () => ({
+  contestId: generateContestId(),
+  gender: randomOption(eventGenderOptions),
+  discipline: randomOption(disciplineOptions),
+  judgingSystem: randomOption(judgingSystemOptions),
+  ageCategory: randomOption(ageCategoryOptions),
+  totalPrizeValue: 1,
+  contestSize: randomOption(contestSizeOptions),
+  startDate: '2030-01-01',
+  endDate: '2030-02-02',
+  judges: [
+    { userId: 'SportHubID:zh2o2o5x', name: 'Dylan Furlong' }
+  ],
+  results: [
+    { 
+      rank: 1, 
+      id: 'SportHubID:3vb2qt9x', 
+      name: 'Muhammad Martinez',
+      isaPoints: 1,
+      isPending: false,
+    }
+  ]
+});
 
 export const getContestNameFromForm = (formValues: EventSubmissionFormValues, contestIdx: number) => {
   const contestKey = `contests[${contestIdx}]`;
@@ -32,6 +60,7 @@ export default function TabbedContestForms() {
   const contestHasErrors = Object.keys(contestErrors).length > 0;
 
   const isCurrentContestTouched = getIn(touched, `contests[${activeContestIdx}]`);
+  const isDevMode = process.env.NODE_ENV === 'development';
 
   return (
     <div>
@@ -40,7 +69,7 @@ export default function TabbedContestForms() {
           const contestKey = `contests[${activeContestIdx}]`;
 
           const createNewContest = () => {
-            push(initialContestValues);
+            push({ ...initialContestValues, contestId: generateContestId() });
             setActiveContestIdx(activeContestIdx + 1);
           };
 
@@ -65,6 +94,11 @@ export default function TabbedContestForms() {
             }
           };
 
+          const handleClickAutofillContest = () => {
+            push(DEBUG_randomContest());
+            setActiveContestIdx(activeContestIdx + 1);
+          }
+
           return (
             <>
               <div className={cn(tabs.length === 0 && sharedStyles.sectionContent, "cluster", "justify-between", "items-center")}>
@@ -87,6 +121,14 @@ export default function TabbedContestForms() {
                 >
                   Add Contest
                 </Button>
+
+                {isDevMode && (<Button
+                  onClick={handleClickAutofillContest}
+                  type="button"
+                  variant="ghost"
+                >
+                  Autofill Contest
+                </Button>)}
               </div>
               {contests.length > 0 && (
                 <ContestForm
@@ -104,7 +146,7 @@ export default function TabbedContestForms() {
       </FieldArray>
 
       {/* Debug info - remove in production */}
-      {process.env.NODE_ENV === 'development' && (
+      {isDevMode && (
         <details className={sharedStyles.debugInfo}>
           <summary>Contest Form State (Debug)</summary>
           <pre>contests = {JSON.stringify(contests, null, 2)}</pre>

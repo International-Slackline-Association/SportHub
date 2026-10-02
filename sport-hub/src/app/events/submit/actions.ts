@@ -9,7 +9,7 @@ import { invalidateContestsCache } from '@lib/data-services';
 import {
   putEventItem,
   getAssembledEvent,
-  deleteEventContestRecords,
+  deleteContestAndParticipationRecords,
   scanAllEventItems,
   deleteEvent as deleteEventFromService,
   getPendingScoreEdit,
@@ -18,8 +18,7 @@ import {
   createContestFromForm,
   createEventFromForm,
 } from '@lib/event-contest-service';
-import { ContestRecord, EventMetadataRecord } from '@lib/relational-types';
-import { DISCIPLINE_DATA } from '@utils/consts';
+import { EventMetadataRecord, ContestRecord } from '@lib/relational-types';
 import { EventStatus } from '../my-events/page';
 
 /**
@@ -139,7 +138,7 @@ export async function updateEventScores(
         const hasExistingData = (ec.results?.length ?? 0) > 0 || (ec.judges?.length ?? 0) > 0;
 
         if (!hasExistingData || isAdmin) {
-          const updated = {
+          const updated: ContestRecord = {
             ...ec,
             eventId,
             sortKey,
@@ -147,8 +146,8 @@ export async function updateEventScores(
             judges: proposedJudges,
             results: proposedResults,
           };
-          await putEventItem(updated as Record<string, unknown>);
-          await syncContestParticipationRecords(eventId, updated as Record<string, unknown>);
+          await putEventItem(updated as unknown as Record<string, unknown>);
+          await syncContestParticipationRecords(eventId, updated);
           appliedCount++;
         } else {
           // Editing already-published results as a non-admin — stage instead
@@ -233,7 +232,7 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
 
     // Strip assembled contests field before writing Metadata record
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { contests: _assembled, ...existingMetadata } = existingEvent;
+    const { contests: previousContests = [], ...existingMetadata } = existingEvent;
     const updatedEvent = {
       ...existingMetadata,
       ...event,
@@ -243,14 +242,20 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
     console.log(`[updateEvent] updating event ${eventId}${isMigration ? ' (migration)' : ''}`);
     await putEventItem(updatedEvent);
 
-    // Delete existing Contest records (handles both old-format and previous new-format)
-    await deleteEventContestRecords(eventId);
+    // Delete existing Contest and Participation records, then recreate contests from form.
+    if (previousContests.length > 0) {
+      await Promise.all(previousContests.map((c) => deleteContestAndParticipationRecords(eventId, c.contestId, c.sortKey)));
+    }
+    await Promise.all(contests.map((contestForm, idx) => createContestFromForm(eventId, contestForm, idx)));
+
     if (isMigration) {
       console.log(`[updateEvent] migrated old-format event`);
     }
 
-    // Save contests as separate records
-    await saveEventContestRecords(eventId, contests);
+    await putEventItem({
+      ...updatedEvent,
+      contestCount: contests.length,
+    } as Record<string, unknown>);
 
     invalidateContestsCache();
     revalidatePath('/events');
