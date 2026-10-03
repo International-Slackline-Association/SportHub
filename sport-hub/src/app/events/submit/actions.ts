@@ -17,6 +17,8 @@ import {
   syncContestParticipationRecords,
   createContestFromForm,
   createEventFromForm,
+  getContestSortKey,
+  transformContestFormToRecord,
 } from '@lib/event-contest-service';
 import { EventMetadataRecord, ContestRecord } from '@lib/relational-types';
 import { EventStatus } from '../my-events/page';
@@ -59,7 +61,8 @@ export async function saveEvent(values: EventSubmissionFormValues, status: Event
       return { success: false, error: pastEventError };
     }
 
-    // Save event metadata used by event profile
+    // Save event metadata used by event profile. 
+    // Does not embed contest results; those are saved separately below
     const { eventId } = await createEventFromForm(event, status, contests.length);
     
     // Save contest results including the per-athlete Participation:* records
@@ -127,12 +130,23 @@ export async function updateEventScores(
     let appliedCount = 0;
     let stagedCount = 0;
 
+    const hasEmbeddedContests = Array.isArray(event.contests) && event.contests.length > 0;
+    if (hasEmbeddedContests && isAdmin) {
+      console.log(`[updateEventScores] Updated embedded contests for event ${eventId} (admin bypass)`);
+      const updatedEventRecord = {
+        ...event,
+        contests: contests.map((c, idx) => transformContestFormToRecord(c, eventId, idx))
+      };
+
+      await putEventItem(updatedEventRecord as unknown as Record<string, unknown>);
+    }
+
     // Merge updated judges/results into individual Contest records.
     // For old-format events the embedded contest objects lack eventId/sortKey,
     // so we supply them here (effectively migrating to separate Contest:* records).
     await Promise.all(
       event.contests.map(async (ec, idx) => {
-        const sortKey = (ec.sortKey as string) || `Contest:${ec.discipline ?? 'unknown'}:${idx}`;
+        const sortKey = (ec.sortKey as string) || getContestSortKey(ec);
         const proposedJudges = contests[idx]?.judges ?? ec.judges ?? [];
         const proposedResults = contests[idx]?.results ?? ec.results ?? [];
         const hasExistingData = (ec.results?.length ?? 0) > 0 || (ec.judges?.length ?? 0) > 0;
@@ -146,10 +160,13 @@ export async function updateEventScores(
             judges: proposedJudges,
             results: proposedResults,
           };
+          console.log(!hasExistingData ? `[updateEventScores] No pre-existing data: applying changes directly` : '');
+          console.log(isAdmin ? `[updateEventScores] Updating contest record ${ec.contestId} (admin bypass)` : '');
           await putEventItem(updated as unknown as Record<string, unknown>);
           await syncContestParticipationRecords(eventId, updated);
           appliedCount++;
         } else {
+          console.log(`[updateEventScores] creating pending score edit for contest ${ec.contestId}`);
           // Editing already-published results as a non-admin — stage instead
           // of writing, keeping the ORIGINAL pre-edit snapshot if a pending
           // edit for this contest already exists, so re-editing before

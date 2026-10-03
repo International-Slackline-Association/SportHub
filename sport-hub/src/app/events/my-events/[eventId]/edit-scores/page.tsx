@@ -43,13 +43,13 @@ export default async function EditScoresPage({ params }: Props) {
   const initialValues: EventSubmissionFormValues = {
     event: {
       eventName: event.eventName,
-      city: (event.city as string) || '',
-      country: (event.country as string) || '',
-      startDate: (event.startDate as string) || '',
-      endDate: (event.endDate as string) || '',
+      city: event?.city || '',
+      country: event.country,
+      startDate: event.startDate,
+      endDate: event.endDate,
       website,
       disciplines,
-      links: [],
+      links: event.links,
     },
     contests: event.contests.map((c) => ({
       ...c,
@@ -59,13 +59,21 @@ export default async function EditScoresPage({ params }: Props) {
       ageCategory: c.ageCategory as AgeCategory,
       contestSize: c.contestSize as ContestType,
       totalPrizeValue: c.prize,
-      judges: [],
-      results: [],
+      judges: c.judges || [],
+      results: c.results || [],
     })),
   };
 
   return (
-    <PageLayout title="Edit Judges &amp; Scores">
+    <PageLayout
+      description={
+        <>
+          Editing judges and scores for <strong>{event.eventName}</strong>.
+          Contest settings cannot be changed here.
+        </>
+      }
+      title="Edit Judges &amp; Scores"
+    >
       <EditScoresClient
         eventId={eventId}
         eventName={event.eventName || eventId}

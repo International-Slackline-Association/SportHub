@@ -47,7 +47,16 @@ export const getContestNameFromForm = (formValues: EventSubmissionFormValues, co
   return `${displayName} ${displayGender} ${displayDiscipline} ${displayContestSize}`.trim();
 };
 
-export default function TabbedContestForms() {
+type Props = {
+  showContestActions?: boolean;
+  showGeneralInfoTab?: boolean;
+}
+
+export default function TabbedContestForms({
+  showContestActions = true,
+  showGeneralInfoTab = true,
+}: Props) {
+  
   const { errors, touched, values, validateField } = useFormikContext<EventSubmissionFormValues>();
   const { contests } = values;
   const [activeContestIdx, setActiveContestIdx] = useState((contests?.length || 0) - 1);
@@ -113,16 +122,16 @@ export default function TabbedContestForms() {
                   tabs={tabs}
                   variant="secondary"
                 />
-                <Button
+                {showContestActions && (<Button
                   disabled={contests.length > 0 && (!isCurrentContestTouched || contestHasErrors)}
                   onClick={handleClickAddContest}
                   type="button"
                   variant="secondary"
                 >
                   Add Contest
-                </Button>
+                </Button>)}
 
-                {isDevMode && (<Button
+                {isDevMode && showContestActions && (<Button
                   onClick={handleClickAutofillContest}
                   type="button"
                   variant="ghost"
@@ -133,6 +142,8 @@ export default function TabbedContestForms() {
               {contests.length > 0 && (
                 <ContestForm
                   contestIdx={activeContestIdx}
+                  showContestActions={showContestActions}
+                  showGeneralInfoTab={showGeneralInfoTab}
                   onDuplicate={duplicateCurrentContest}
                   onRemove={() => {
                     remove(activeContestIdx);

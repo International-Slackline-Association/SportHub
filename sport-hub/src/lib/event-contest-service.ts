@@ -171,6 +171,7 @@ export async function getAssembledEvent(
     // otherwise, use the separate Contest:* records
     if (hasEmbeddedContests) {
       contests = embeddedContests;
+      embeddedContests.forEach(c => console.log(c.judges, c.results));
     } else {
       const allContests = await getEventContests(eventId);
       // Legacy migrated events derive eventId from date alone (`Event:YYYY-MM-DD[:city]`),
@@ -244,6 +245,37 @@ export function generateContestId() {
   return Math.random().toString(36).slice(2, 8); // 6 random alpha-numeric characters
 }
 
+export function getContestSortKey({ discipline, contestId }: ContestFormValues | ContestRecord): string {
+  const disciplineEnumValue = Number.isNaN(Number(discipline))
+    ? DISCIPLINE_DATA[discipline as Discipline]?.enumValue
+    : discipline;
+  
+  return `Contest:${disciplineEnumValue}:${contestId}`;
+}
+
+export function transformContestFormToRecord(contestForm: ContestFormValues, eventId: string, contestIndex: number): ContestRecord {
+  const { contestId, discipline, startDate, endDate, results = [] } = contestForm;
+
+  let disciplineEnumValue: string = discipline;
+  if (Number.isNaN(Number(disciplineEnumValue))) {
+    disciplineEnumValue = String(DISCIPLINE_DATA[discipline]?.enumValue);
+  }
+
+  const contestDate = endDate || startDate || '';
+
+  return {
+    ...contestForm,
+    eventId,
+    sortKey: getContestSortKey(contestForm),
+    contestId,
+    contestIndex,
+    contestDate,
+    dateSortKey: `${contestDate}#${eventId}`,
+    discipline: disciplineEnumValue,
+    results,
+  };
+}
+
 /**
  * Create contest associated with an event
  */
@@ -253,29 +285,13 @@ export async function createContestFromForm(
   contestIndex: number, 
   updateContestCount: boolean = false
 ): Promise<ContestRecord> {
-  const { contestId, discipline, startDate, endDate, results = [] } = contestForm;
+  const { contestId } = contestForm;
 
-  let disciplineEnumValue: string = discipline;
-  if (Number.isNaN(Number(disciplineEnumValue))) {
-    disciplineEnumValue = String(DISCIPLINE_DATA[discipline]?.enumValue);
-  }
-
-  const contestDate = endDate || startDate || '';
-  const contestRecord = {
-    ...contestForm,
-    eventId,
-    sortKey: `Contest:${disciplineEnumValue}:${contestId}`,
-    contestId,
-    contestIndex,
-    contestDate,
-    dateSortKey: `${contestDate}#${eventId}`,
-    discipline: disciplineEnumValue,
-    results,
-  };
+  const contestRecord = transformContestFormToRecord(contestForm, eventId, contestIndex);
 
   console.log(`Creating contest ${contestId} for event ${eventId}`);
 
-  await dynamodb.putItem(EVENTS_TABLE, contestRecord);
+  await dynamodb.putItem(EVENTS_TABLE, contestRecord as unknown as Record<string, unknown>);
   await syncContestParticipationRecords(eventId, contestRecord);
 
   if (updateContestCount) {

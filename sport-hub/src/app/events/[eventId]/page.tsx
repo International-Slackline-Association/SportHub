@@ -78,6 +78,9 @@ export default async function EventPage({ params, searchParams }: EventPageProps
             isPending: Boolean(pending),
           };
         });
+      console.log("page [eventId]");
+      console.log(judges);
+      console.log(rawResults);
 
       return {
         ...contest,
