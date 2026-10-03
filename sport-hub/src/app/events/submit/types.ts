@@ -1,3 +1,4 @@
+import { ContestJudge, ContestResult } from '@lib/relational-types';
 import * as Yup from 'yup';
 
 // Combined form values (parent level)
@@ -21,10 +22,6 @@ export interface EventFormValues {
   startDate: string;
   endDate: string;
   website: string;
-
-  // Disciplines (checkboxes)
-  disciplines: Discipline[];
-
   links: string[];
 }
 
@@ -64,10 +61,6 @@ export const eventValidationSchema = Yup.object({
   website: Yup.string()
     .url('Please enter a valid URL (e.g., https://example.com)')
     .nullable(),
-  disciplines: Yup.array()
-    .of(Yup.string())
-    .min(1, 'Please select at least one discipline')
-    .required(),
   links: Yup.array()
     .of(
       Yup.string()
@@ -83,7 +76,6 @@ export const initialEventValues: EventFormValues = {
   startDate: '',
   endDate: '',
   website: '',
-  disciplines: [],
   links: []
 };
 
@@ -100,30 +92,18 @@ export interface PendingUserData {
   birthdate?: string;
 }
 
-export interface ContestResultEntry {
-  rank: number | undefined;
-  id: string;
-  name?: string;
-  isaPoints: number;
-  stats: string;
-  pendingUser?: PendingUserData;
-}
-
 export interface ContestFormValues {
+  contestId: string;
   startDate?: string;
   endDate?: string;
-  discipline: Discipline;
+  discipline: string;
   gender: Gender;
   ageCategory: AgeCategory;
   judgingSystem: JudgingSystem;
   contestSize: ContestType;
   totalPrizeValue?: number;
-  judges?: {
-    id: string;
-    name?: string;
-    pendingUser?: PendingUserData;
-  }[];
-  results?: ContestResultEntry[];
+  judges?: ContestJudge[];
+  results?: ContestResult[];
 }
 
 export const contestValidationSchema = Yup.object({
@@ -193,6 +173,7 @@ export const contestValidationSchema = Yup.object({
 });
 
 export const initialContestValues: ContestFormValues = {
+  contestId: '',
   gender: '' as Gender,
   discipline: '' as Discipline,
   judgingSystem: '' as JudgingSystem,

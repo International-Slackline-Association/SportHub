@@ -16,6 +16,8 @@ import { getContestNameFromForm } from './TabbedContestForms';
 
 type Props = {
   contestIdx: number;
+  showContestActions?: boolean;
+  showGeneralInfoTab?: boolean;
   onRemove: () => void;
   onDuplicate: () => void;
 }
@@ -66,9 +68,15 @@ const parseErrorsForContest = (errors: FormikErrors<EventSubmissionFormValues>, 
   ) : null;
 };
 
-export default function ContestForm({ contestIdx, onRemove, onDuplicate }: Props) {
+export default function ContestForm({ 
+  contestIdx, 
+  showContestActions = true,
+  showGeneralInfoTab = true,
+  onRemove, 
+  onDuplicate,
+}: Props) {
   const { errors, touched, values } = useFormikContext<EventSubmissionFormValues>();
-  const [activeTab, setActiveTab] = useState('GENERAL_INFO');
+  const [activeTab, setActiveTab] = useState(showGeneralInfoTab ? 'GENERAL_INFO' : 'RESULTS');
 
   const contestKey = `contests[${contestIdx}]`;
   const currentContest = getIn(values, contestKey) || {};
@@ -91,7 +99,7 @@ export default function ContestForm({ contestIdx, onRemove, onDuplicate }: Props
             className={sharedStyles.borderBottom}
             onTabChange={setActiveTab}
             tabs={[
-              { id: 'GENERAL_INFO', label: 'General Information' },
+              ...(showGeneralInfoTab ? [{ id: 'GENERAL_INFO', label: 'General Information' }] : []),
               { id: 'JUDGES', label: 'Judges' },
               { id: 'RESULTS', label: 'Results' },
             ]}
@@ -108,23 +116,25 @@ export default function ContestForm({ contestIdx, onRemove, onDuplicate }: Props
           <Results contestKey={contestKey} results={results} />
         )}
       </section>
-      <div className={cn('cluster', 'items-center', 'gap-4', 'justify-end')}>
-        <Button
-          type="button"
-          variant="destructive-secondary"
-          onClick={onRemove}
-        >
-          Delete Contest
-        </Button>
-        <Button
-          disabled={contestHasErrors}
-          onClick={onDuplicate}
-          type="button"
-          variant="secondary"
-        >
-          Duplicate Contest
-        </Button>
-      </div>
+      {showContestActions && (
+        <div className={cn('cluster', 'items-center', 'gap-4', 'justify-end')}>
+          <Button
+            type="button"
+            variant="destructive-secondary"
+            onClick={onRemove}
+          >
+            Delete Contest
+          </Button>
+          <Button
+            disabled={contestHasErrors}
+            onClick={onDuplicate}
+            type="button"
+            variant="secondary"
+          >
+            Duplicate Contest
+          </Button>
+        </div>
+      )}
     </>
   );
 }

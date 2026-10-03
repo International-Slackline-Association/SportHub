@@ -4,21 +4,19 @@ import { useRouter } from 'next/navigation';
 import { Formik, Form } from 'formik';
 import Link from 'next/link';
 import Button from '@ui/Button';
-import { Judges } from '../../../submit/components/contest-inputs/Judges';
-import { Results } from '../../../submit/components/contest-inputs/Results';
+import TabbedContestForms from '../../../submit/components/contest-inputs/TabbedContestForms';
 import { updateEventScores } from '../../../submit/actions';
-import { EventSubmissionFormValues, ContestFormValues } from '../../../submit/types';
+import { EventSubmissionFormValues } from '../../../submit/types';
 import { cn } from '@utils/cn';
 import styles from '../../../submit/components/styles.module.css';
 import Spinner from '@ui/Spinner';
 
 type Props = {
   eventId: string;
-  eventName: string;
   initialValues: EventSubmissionFormValues;
 };
 
-export default function EditScoresClient({ eventId, eventName, initialValues }: Props) {
+export default function EditScoresClient({ eventId, initialValues }: Props) {
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const router = useRouter();
 
@@ -60,34 +58,12 @@ export default function EditScoresClient({ eventId, eventName, initialValues }: 
       initialValues={initialValues}
       onSubmit={handleSubmit}
     >
-      {({ isSubmitting, values }) => (
-        <Form className={cn(styles.formWrapper, 'stack gap-8 p-4 sm:p-0')}>
-          <p className="text-sm text-gray-500">
-            Editing judges and scores for <strong>{eventName}</strong>.
-            Contest settings cannot be changed here.
-          </p>
-
-          {values.contests.map((contest: ContestFormValues, idx: number) => {
-            const contestKey = `contests[${idx}]`;
-            const label = [contest.discipline, contest.gender, contest.ageCategory]
-              .filter(Boolean).join(' · ');
-            return (
-              <section key={idx} className="stack gap-6 border border-gray-200 rounded-lg p-4">
-                <h3 className="font-semibold text-sm text-gray-700">
-                  Contest {idx + 1}{label ? ` — ${label}` : ''}
-                </h3>
-                <Judges
-                  contestKey={contestKey}
-                  judges={contest.judges || []}
-                />
-                <Results
-                  contestKey={contestKey}
-                  results={contest.results || []}
-                />
-              </section>
-            );
-          })}
-
+      {({ isSubmitting }) => (
+        <Form className={cn(styles.formWrapper, 'stack p-4 sm:p-0')}>
+          <TabbedContestForms
+            showContestActions={false}
+            showGeneralInfoTab={false}
+          />
           <div className={cn(styles.formActions)}>
             <Link href="/events/my-events">
               <Button type="button" variant="ghost">Cancel</Button>

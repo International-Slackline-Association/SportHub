@@ -3,6 +3,8 @@
  *
  * Handles atomic updates for adding users to contests (participants/judges/organizers).
  * Uses DynamoDB UpdateExpression to prevent race conditions.
+ * 
+ * TODO: These functions are not used, their attributes have not been accounted for by other features.
  */
 
 import { dynamodb, USERS_TABLE, EVENTS_TABLE } from './dynamodb';

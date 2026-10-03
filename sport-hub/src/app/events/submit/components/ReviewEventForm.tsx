@@ -2,13 +2,14 @@
 
 import { ReactNode } from "react";
 import { useFormikContext } from "formik";
-import { ContestFormValues, ContestResultEntry, EventSubmissionFormValues } from "../types";
+import { ContestFormValues, EventSubmissionFormValues } from "../types";
 import { getContestNameFromForm } from "./contest-inputs/TabbedContestForms";
 import { snakeCaseToTitleCase, textToTitleCase } from "@utils/strings";
 import { disciplineOptions, ageCategoryOptions, judgingSystemOptions, contestSizeOptions, eventGenderOptions } from "@ui/Form/commonOptions";
 import { COUNTRIES } from "@utils/countries";
 import { networkFor } from "react-social-icons";
 import styles from './styles.module.css';
+import { ContestResult } from "@lib/relational-types";
 
 const labelOf = (opts: Option[], val: string | undefined) =>
   opts.find(o => o.value === val)?.label ?? (val ? snakeCaseToTitleCase(val) : "—");
@@ -24,7 +25,7 @@ const Row = ({ label, value }: { label: string; value: ReactNode }) => (
 
 const ContestSummary = ({ contest, idx, values }: { contest: ContestFormValues; idx: number; values: EventSubmissionFormValues }) => {
   const name = getContestNameFromForm(values, idx);
-  const judges = contest.judges?.filter(j => j.name || j.id) ?? [];
+  const judges = contest.judges?.filter(j => j.name || j.userId) ?? [];
   const results = contest.results ?? [];
 
   return (
@@ -52,7 +53,7 @@ const ContestSummary = ({ contest, idx, values }: { contest: ContestFormValues; 
               ? judges.map(j =>
                   j.pendingUser
                     ? `${j.pendingUser.name} ${j.pendingUser.surname} (new)`
-                    : j.name || j.id
+                    : j.name || j.userId
                 ).join(", ")
               : <span className="text-gray-400">None added</span>
           }
@@ -76,7 +77,7 @@ const ContestSummary = ({ contest, idx, values }: { contest: ContestFormValues; 
                 </tr>
               </thead>
               <tbody>
-                {results.map((r: ContestResultEntry, i: number) => (
+                {results.map((r: ContestResult, i: number) => (
                   <tr key={i} className="border-b border-gray-50">
                     <td className="py-1 pr-3">{r.rank}</td>
                     <td className="py-1 pr-3">
@@ -115,11 +116,7 @@ export const ReviewEventForm = () => {
           <Row label="Website" value={event.website} />
           <Row
             label="Disciplines"
-            value={
-              event.disciplines?.length
-                ? event.disciplines.map(d => labelOf(disciplineOptions, d)).join(", ")
-                : undefined
-            }
+            value={contests.map(c => labelOf(disciplineOptions, c.discipline)).join(", ")}
           />
           <div className={styles.linkGroup}>
             <div>Links</div>

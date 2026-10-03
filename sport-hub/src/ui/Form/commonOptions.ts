@@ -17,11 +17,11 @@ export const eventGenderOptions: Option[] = [
 ];
 
 export const disciplineOptions: Option[] = [
-  { value: "FREESTYLE_HIGHLINE", label: "Freestyle Highline" },
-  { value: "TRICKLINE_AERIAL", label: "Trickline" },
-  { value: "SPEED_SHORT", label: "Speedline Short" },
-  { value: "SPEED_HIGHLINE", label: "Speed Highline" },
-  { value: "RIGGING", label: "Rigging" },
+  { value: "5", label: "Freestyle Highline" },
+  { value: "2", label: "Trickline" },
+  { value: "7", label: "Speedline Short" },
+  { value: "8", label: "Speed Highline" },
+  { value: "11", label: "Rigging" },
 ];
 
 export const ageCategoryOptions: Option[] = [

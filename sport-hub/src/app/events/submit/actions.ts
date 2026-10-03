@@ -9,26 +9,24 @@ import { invalidateContestsCache } from '@lib/data-services';
 import {
   putEventItem,
   getAssembledEvent,
-  deleteEventContestRecords,
-  saveEventContestRecords,
+  deleteContestAndParticipationRecords,
   scanAllEventItems,
   deleteEvent as deleteEventFromService,
   getPendingScoreEdit,
   putPendingScoreEdit,
+  syncContestParticipationRecords,
+  createContestFromForm,
+  createEventFromForm,
+  getContestSortKey,
+  transformContestFormToRecord,
 } from '@lib/event-contest-service';
-import { EventMetadataRecord } from '@lib/relational-types';
-
-// Generate unique event ID
-function generateEventId(): string {
-  return `event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-}
-
+import { EventMetadataRecord, ContestRecord } from '@lib/relational-types';
+import { EventStatus } from '../my-events/page';
 
 /**
  * Save event to DynamoDB
  * PROTECTED: Requires admin role or organizer sub-type
  */
-type EventStatus = 'draft' | 'pending' | 'published' | 'cancelled';
 
 // Returns true if the given date string (YYYY-MM-DD) is strictly in the past
 function isDateInPast(dateStr: string | undefined): boolean {
@@ -55,9 +53,6 @@ export async function saveEvent(values: EventSubmissionFormValues, status: Event
   await requireEventSubmitter();
 
   try {
-    // Get current user for audit trail
-    const session = await auth();
-
     const { event, contests } = values;
 
     // Past-event guard: judges and results required if event date is in the past
@@ -66,26 +61,14 @@ export async function saveEvent(values: EventSubmissionFormValues, status: Event
       return { success: false, error: pastEventError };
     }
 
-    // Transform form data to database format
-    const eventId = generateEventId();
-    const eventData = {
-      ...event,
-      eventId,
-      sortKey: 'Metadata',
-      createdAt: new Date().getTime(),
-      updatedAt: new Date().getTime(),
-      status,
-      createdBy: session?.user?.id,
-      createdByName: session?.user?.name,
-      contestCount: contests.length,
-      ...(status === 'pending' && { submittedForApprovalAt: new Date().getTime() }),
-    };
-
-    // Save event metadata and contests as separate records
-    console.log(`[saveEvent] saving event ${eventId} with status=${status} createdBy=${session?.user?.id}`);
-    await putEventItem(eventData);
-    await saveEventContestRecords(eventId, (contests || []) as unknown as Record<string, unknown>[]);
-    console.log(`[saveEvent] saved successfully`);
+    // Save event metadata used by event profile. 
+    // Does not embed contest results; those are saved separately below
+    const { eventId } = await createEventFromForm(event, status, contests);
+    
+    // Save contest results including the per-athlete Participation:* records
+    await Promise.all(contests.map((c, idx) => createContestFromForm(eventId, c, idx)));
+    
+    console.log(`Event ${eventId} saved successfully`);
 
     // Revalidate events pages
     revalidatePath('/events');
@@ -147,18 +130,29 @@ export async function updateEventScores(
     let appliedCount = 0;
     let stagedCount = 0;
 
+    const hasEmbeddedContests = Array.isArray(event.contests) && event.contests.length > 0;
+    if (hasEmbeddedContests && isAdmin) {
+      console.log(`[updateEventScores] Updated embedded contests for event ${eventId} (admin bypass)`);
+      const updatedEventRecord = {
+        ...event,
+        contests: contests.map((c, idx) => transformContestFormToRecord(c, eventId, idx))
+      };
+
+      await putEventItem(updatedEventRecord as unknown as Record<string, unknown>);
+    }
+
     // Merge updated judges/results into individual Contest records.
     // For old-format events the embedded contest objects lack eventId/sortKey,
     // so we supply them here (effectively migrating to separate Contest:* records).
     await Promise.all(
       event.contests.map(async (ec, idx) => {
-        const sortKey = (ec.sortKey as string) || `Contest:${ec.discipline ?? 'unknown'}:${idx}`;
+        const sortKey = (ec.sortKey as string) || getContestSortKey(ec);
         const proposedJudges = contests[idx]?.judges ?? ec.judges ?? [];
         const proposedResults = contests[idx]?.results ?? ec.results ?? [];
         const hasExistingData = (ec.results?.length ?? 0) > 0 || (ec.judges?.length ?? 0) > 0;
 
         if (!hasExistingData || isAdmin) {
-          const updated = {
+          const updated: ContestRecord = {
             ...ec,
             eventId,
             sortKey,
@@ -166,9 +160,13 @@ export async function updateEventScores(
             judges: proposedJudges,
             results: proposedResults,
           };
-          await putEventItem(updated as Record<string, unknown>);
+          console.log(!hasExistingData ? `[updateEventScores] No pre-existing data: applying changes directly` : '');
+          console.log(isAdmin ? `[updateEventScores] Updating contest record ${ec.contestId} (admin bypass)` : '');
+          await putEventItem(updated as unknown as Record<string, unknown>);
+          await syncContestParticipationRecords(eventId, updated);
           appliedCount++;
         } else {
+          console.log(`[updateEventScores] creating pending score edit for contest ${ec.contestId}`);
           // Editing already-published results as a non-admin — stage instead
           // of writing, keeping the ORIGINAL pre-edit snapshot if a pending
           // edit for this contest already exists, so re-editing before
@@ -238,6 +236,7 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
         createdByName: session?.user?.name || '',
         createdAt: new Date().getTime(),
         status: 'published',
+        disciplines: [...new Set(values.contests.map(c => c.discipline))],
       };
       isMigration = true;
     } else {
@@ -250,25 +249,31 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
     const { event, contests } = values;
 
     // Strip assembled contests field before writing Metadata record
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { contests: _assembled, ...existingMetadata } = existingEvent;
+    const { contests: previousContests = [], ...existingMetadata } = existingEvent;
     const updatedEvent = {
       ...existingMetadata,
       ...event,
+      disciplines: [...new Set(contests.map(c => c.discipline))],
       updatedAt: new Date().toISOString(),
     };
 
     console.log(`[updateEvent] updating event ${eventId}${isMigration ? ' (migration)' : ''}`);
     await putEventItem(updatedEvent);
 
-    // Delete existing Contest records (handles both old-format and previous new-format)
-    await deleteEventContestRecords(eventId);
+    // Delete existing Contest and Participation records, then recreate contests from form.
+    if (previousContests.length > 0) {
+      await Promise.all(previousContests.map((c) => deleteContestAndParticipationRecords(eventId, c.contestId, c.sortKey)));
+    }
+    await Promise.all(contests.map((contestForm, idx) => createContestFromForm(eventId, contestForm, idx)));
+
     if (isMigration) {
       console.log(`[updateEvent] migrated old-format event`);
     }
 
-    // Save contests as separate records
-    await saveEventContestRecords(eventId, (contests || []) as unknown as Record<string, unknown>[]);
+    await putEventItem({
+      ...updatedEvent,
+      contestCount: contests.length,
+    } as Record<string, unknown>);
 
     invalidateContestsCache();
     revalidatePath('/events');
