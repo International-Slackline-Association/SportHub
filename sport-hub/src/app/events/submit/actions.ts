@@ -126,7 +126,7 @@ export async function updateEventScores(
       return { success: false, error: 'You do not have permission to edit this event' };
     }
 
-    const isAdmin = session?.user?.role === 'admin';
+    const isAdmin = false && session?.user?.role === 'admin';
     let appliedCount = 0;
     let stagedCount = 0;
 

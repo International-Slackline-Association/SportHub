@@ -9,6 +9,8 @@ import {
   getPendingScoreEdit,
   deletePendingScoreEdit,
   listPendingScoreEdits,
+  syncContestParticipationRecords,
+  getEvent,
 } from '@lib/event-contest-service';
 import { PendingScoreEditRecord } from '@lib/relational-types';
 
@@ -43,23 +45,44 @@ export async function approveScoreEdit(
   await requireAdmin();
 
   try {
-    const [edit, contest] = await Promise.all([
+    const [edit, contestRecord] = await Promise.all([
       getPendingScoreEdit(eventId, contestSortKey),
       getContest(eventId, contestSortKey),
     ]);
     if (!edit) {
       return { success: false, error: 'Pending edit not found' };
     }
-    if (!contest) {
+    if (!contestRecord) {
       return { success: false, error: 'Contest not found' };
     }
 
-    await putEventItem({
-      ...contest,
+    const updatedContestRecord = {
+      ...contestRecord,
       judges: edit.proposedJudges,
       results: edit.proposedResults,
-    });
+    };
+
+    const eventRecord = await getEvent(eventId);
+    const hasEmbeddedContests = Array.isArray(eventRecord?.contests);
+    if (hasEmbeddedContests) {
+      const updatedEventRecord = {
+        ...eventRecord,
+        contests: eventRecord?.contests?.map((c) =>
+          c.sortKey === contestSortKey ? updatedContestRecord : c
+        ) || [],
+      };
+      await putEventItem(updatedEventRecord);
+      console.log(`[approveScoreEdit] Updated embedded contests for event ${eventId}`, updatedContestRecord);
+    }
+
+    await putEventItem(updatedContestRecord);
+    console.log(`[approveScoreEdit] Updated contest record ${updatedContestRecord.contestId}`);
+
+    await syncContestParticipationRecords(eventId, updatedContestRecord);
+    console.log(`[approveScoreEdit] Updated participation records for contest ${updatedContestRecord.contestId}`);
+
     await deletePendingScoreEdit(eventId, contestSortKey);
+    console.log(`[approveScoreEdit] Deleted pending score edit for contest ${updatedContestRecord.contestId}`);
 
     invalidateContestsCache();
     revalidatePath(`/events/${eventId}`);
