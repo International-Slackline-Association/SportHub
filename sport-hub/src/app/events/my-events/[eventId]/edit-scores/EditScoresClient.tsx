@@ -13,11 +13,10 @@ import Spinner from '@ui/Spinner';
 
 type Props = {
   eventId: string;
-  eventName: string;
   initialValues: EventSubmissionFormValues;
 };
 
-export default function EditScoresClient({ eventId, eventName, initialValues }: Props) {
+export default function EditScoresClient({ eventId, initialValues }: Props) {
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const router = useRouter();
 

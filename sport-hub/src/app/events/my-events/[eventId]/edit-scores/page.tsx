@@ -5,7 +5,6 @@ import { requireEventSubmitter } from '@lib/authorization';
 import { auth } from '@lib/auth';
 import { EventSubmissionFormValues } from '../../../submit/types';
 import EditScoresClient from './EditScoresClient';
-import { MAP_DISCIPLINE_ENUM_TO_NAME } from '@utils/consts';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,13 +30,7 @@ export default async function EditScoresPage({ params }: Props) {
     redirect(`/events/my-events/${eventId}/edit`);
 
   }
-  const disciplines = [
-    ...new Set(
-      event.contests.flatMap(c =>
-        MAP_DISCIPLINE_ENUM_TO_NAME[Number(c.discipline)]
-      ).filter(Boolean)
-    )
-  ];
+
   const website = event.contests?.[0]?.infoUrl as string;
 
   const initialValues: EventSubmissionFormValues = {
@@ -48,13 +41,12 @@ export default async function EditScoresPage({ params }: Props) {
       startDate: event.startDate,
       endDate: event.endDate,
       website,
-      disciplines,
       links: event.links,
     },
     contests: event.contests.map((c) => ({
       ...c,
       judgingSystem: "OTHER",
-      discipline: c.discipline as Discipline,
+      discipline: c.discipline,
       gender: c.gender as Gender,
       ageCategory: c.ageCategory as AgeCategory,
       contestSize: c.contestSize as ContestType,
@@ -74,11 +66,7 @@ export default async function EditScoresPage({ params }: Props) {
       }
       title="Edit Judges &amp; Scores"
     >
-      <EditScoresClient
-        eventId={eventId}
-        eventName={event.eventName || eventId}
-        initialValues={initialValues}
-      />
+      <EditScoresClient eventId={eventId} initialValues={initialValues} />
     </PageLayout>
   );
 }

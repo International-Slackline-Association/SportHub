@@ -34,7 +34,7 @@ function generateEventId(): string {
 /**
  * Create new event (metadata record only)
  */
-export async function createEventFromForm(eventForm: EventFormValues, status: EventStatus, contestCount: number): Promise<EventMetadataRecord> {
+export async function createEventFromForm(eventForm: EventFormValues, status: EventStatus, contests: ContestFormValues[]): Promise<EventMetadataRecord> {
   // Get current user for audit trail
   const session = await auth();
 
@@ -49,7 +49,8 @@ export async function createEventFromForm(eventForm: EventFormValues, status: Ev
     status,
     createdBy: session?.user?.id || '',
     createdByName: session?.user?.name || 'unknown',
-    contestCount,
+    contestCount: contests?.length,
+    disciplines: [...new Set(contests.map(c => c.discipline))],
     ...(status === 'pending' && { submittedForApprovalAt: new Date().getTime() }),
   };
 
@@ -171,7 +172,6 @@ export async function getAssembledEvent(
     // otherwise, use the separate Contest:* records
     if (hasEmbeddedContests) {
       contests = embeddedContests;
-      embeddedContests.forEach(c => console.log(c.judges, c.results));
     } else {
       const allContests = await getEventContests(eventId);
       // Legacy migrated events derive eventId from date alone (`Event:YYYY-MM-DD[:city]`),
@@ -256,11 +256,6 @@ export function getContestSortKey({ discipline, contestId }: ContestFormValues |
 export function transformContestFormToRecord(contestForm: ContestFormValues, eventId: string, contestIndex: number): ContestRecord {
   const { contestId, discipline, startDate, endDate, results = [] } = contestForm;
 
-  let disciplineEnumValue: string = discipline;
-  if (Number.isNaN(Number(disciplineEnumValue))) {
-    disciplineEnumValue = String(DISCIPLINE_DATA[discipline]?.enumValue);
-  }
-
   const contestDate = endDate || startDate || '';
 
   return {
@@ -271,7 +266,7 @@ export function transformContestFormToRecord(contestForm: ContestFormValues, eve
     contestIndex,
     contestDate,
     dateSortKey: `${contestDate}#${eventId}`,
-    discipline: disciplineEnumValue,
+    discipline,
     results,
   };
 }

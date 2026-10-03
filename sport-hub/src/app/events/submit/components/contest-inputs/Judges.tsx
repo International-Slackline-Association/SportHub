@@ -31,7 +31,7 @@ export const Judges = ({ contestKey, judges }: Props) => {
                 return (
                   <li key={idx} className="pb-4">
                     <div className={cn("cluster", "items-end", "gap-4")}>
-                      <UserAutocomplete formKey={judgeFormKey} readOnlyIfSet={!!judge.id} />
+                      <UserAutocomplete formKey={judgeFormKey} readOnlyIfSet={!!judge.id} isJudge />
                       <PendingUserForm formKey={judgeFormKey} />
                       <Button
                         onClick={() => remove(idx)}

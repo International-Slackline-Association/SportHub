@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { requireAdmin, requireEventSubmitter } from '@lib/authorization';
 import { auth } from '@lib/auth';
-import { EventSubmissionFormValues, ContestFormValues, PendingUserData, EventFormValues } from './types';
+import { EventSubmissionFormValues, ContestFormValues, PendingUserData } from './types';
 import { createUser } from '@ui/UserForm/actions';
 import { invalidateContestsCache } from '@lib/data-services';
 import {
@@ -63,7 +63,7 @@ export async function saveEvent(values: EventSubmissionFormValues, status: Event
 
     // Save event metadata used by event profile. 
     // Does not embed contest results; those are saved separately below
-    const { eventId } = await createEventFromForm(event, status, contests.length);
+    const { eventId } = await createEventFromForm(event, status, contests);
     
     // Save contest results including the per-athlete Participation:* records
     await Promise.all(contests.map((c, idx) => createContestFromForm(eventId, c, idx)));
@@ -126,7 +126,7 @@ export async function updateEventScores(
       return { success: false, error: 'You do not have permission to edit this event' };
     }
 
-    const isAdmin = false && session?.user?.role === 'admin';
+    const isAdmin = session?.user?.role === 'admin';
     let appliedCount = 0;
     let stagedCount = 0;
 
@@ -236,6 +236,7 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
         createdByName: session?.user?.name || '',
         createdAt: new Date().getTime(),
         status: 'published',
+        disciplines: [...new Set(values.contests.map(c => c.discipline))],
       };
       isMigration = true;
     } else {
@@ -248,11 +249,11 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
     const { event, contests } = values;
 
     // Strip assembled contests field before writing Metadata record
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { contests: previousContests = [], ...existingMetadata } = existingEvent;
     const updatedEvent = {
       ...existingMetadata,
       ...event,
+      disciplines: [...new Set(contests.map(c => c.discipline))],
       updatedAt: new Date().toISOString(),
     };
 

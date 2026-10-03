@@ -22,10 +22,6 @@ export interface EventFormValues {
   startDate: string;
   endDate: string;
   website: string;
-
-  // Disciplines (checkboxes)
-  disciplines: Discipline[];
-
   links: string[];
 }
 
@@ -65,10 +61,6 @@ export const eventValidationSchema = Yup.object({
   website: Yup.string()
     .url('Please enter a valid URL (e.g., https://example.com)')
     .nullable(),
-  disciplines: Yup.array()
-    .of(Yup.string())
-    .min(1, 'Please select at least one discipline')
-    .required(),
   links: Yup.array()
     .of(
       Yup.string()
@@ -84,7 +76,6 @@ export const initialEventValues: EventFormValues = {
   startDate: '',
   endDate: '',
   website: '',
-  disciplines: [],
   links: []
 };
 
@@ -105,7 +96,7 @@ export interface ContestFormValues {
   contestId: string;
   startDate?: string;
   endDate?: string;
-  discipline: Discipline;
+  discipline: string;
   gender: Gender;
   ageCategory: AgeCategory;
   judgingSystem: JudgingSystem;

@@ -6,7 +6,6 @@ import { requireEventSubmitter } from '@lib/authorization';
 import { auth } from '@lib/auth';
 import {
   EventSubmissionFormValues,
-  EventFormValues,
   ContestFormValues,
 } from '../../../submit/types';
 import {
@@ -30,6 +29,7 @@ function oldContestToFormValues(c: ContestData): ContestFormValues {
     ageCategory: (c.ageCategory as ContestFormValues['ageCategory']) || '' as ContestFormValues['ageCategory'],
     judgingSystem: '' as ContestFormValues['judgingSystem'],
     contestSize: (c.category ? MAP_CONTEST_TYPE_ENUM_TO_NAME[c.category ] as ContestFormValues['contestSize'] : '') as ContestFormValues['contestSize'],
+    contestId: c.contestId || "",
     totalPrizeValue: c.prize || undefined,
     startDate: c.startDate,
     endDate: c.endDate,
@@ -42,22 +42,9 @@ function oldContestToFormValues(c: ContestData): ContestFormValues {
         name: [athlete.name, athlete.surname].filter(Boolean).join(' '),
         isaPoints: athlete.points || 0,
         stats: '',
+        isPending: false,
       })),
   };
-}
-
-function getDisciplinesForEvent (event: AssembledEvent) {
-
-  if (event.disciplines) {
-    return event.disciplines as Discipline[];
-  }
-
-  const contestDisciplines = 
-    event.contests
-      .map((c) => MAP_DISCIPLINE_ENUM_TO_NAME[Number(c.discipline)])
-      .filter(Boolean);
-
-  return [...new Set(contestDisciplines)] as Discipline[];
 }
 
 export default async function EditEventPage({ params }: Props) {
@@ -94,7 +81,6 @@ export default async function EditEventPage({ params }: Props) {
         ...eventData,
         eventName: eventData?.name || eventData?.eventName,
         website,
-        disciplines: getDisciplinesForEvent(event),
         city: event.city || "",
       },
       contests,
@@ -113,11 +99,6 @@ export default async function EditEventPage({ params }: Props) {
     }
 
     const first = eventContests[0];
-    const uniqueDisciplines = [...new Set(
-      eventContests
-        .map((c) => MAP_DISCIPLINE_ENUM_TO_NAME[Number(c.discipline)])
-        .filter(Boolean)
-    )] as EventFormValues['disciplines'];
 
     initialValues = {
       event: {
@@ -127,7 +108,6 @@ export default async function EditEventPage({ params }: Props) {
         startDate: first.startDate,
         endDate: first.endDate || '',
         website: '',
-        disciplines: uniqueDisciplines,
         links: [],
         profileUrl: first.profileUrl,
         thumbnailUrl: first.thumbnailUrl,
