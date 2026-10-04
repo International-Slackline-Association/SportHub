@@ -51,13 +51,13 @@ export default async function EventPage({ params, searchParams }: EventPageProps
     // Process contests into clean tab data on the server.
     const contestTabs: ContestTabData[] = eventContests.map(contest => {
       const judges = ((contest.judges || []).map(
-        (j: ContestJudge & { id?: string, pendingUser?: Record<string, unknown> }) => {
+        (j: ContestJudge) => {
           const pendingUser = j.pendingUser;
           return {
-            userId: pendingUser ? "" : j.id || "",
+            userId: pendingUser ? "" : j.userId || "",
             name: pendingUser
               ? `${pendingUser.name} ${pendingUser.surname} (new)`
-              : (j.name as string) || (j.id as string) || '—',
+              : j.name || j.userId || '—',
             role: j.role,
             isPending: Boolean(pendingUser),
           };

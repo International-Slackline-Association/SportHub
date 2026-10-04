@@ -5,9 +5,7 @@ import { useFormikContext } from 'formik';
 import {
   FormikTextField,
   FormikSelectField,
-  FormikCheckboxGroup,
   countryCodeOptions,
-  disciplineOptions,
 } from '@ui/Form';
 import { EventSubmissionFormValues } from '../../types';
 import { cn } from '@utils/cn';
@@ -114,15 +112,6 @@ export default function EventForm() {
             type="date"
             required
           />
-          <div className="col-span-2">
-            <FormikCheckboxGroup
-              direction="row"
-              id="event.disciplines"
-              label="Disciplines"
-              name="event.disciplines"
-              options={disciplineOptions}
-            />
-          </div>
         </div>
       </CollapsibleSection>
 

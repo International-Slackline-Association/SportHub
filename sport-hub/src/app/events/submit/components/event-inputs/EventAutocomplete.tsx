@@ -89,6 +89,7 @@ export default function EventAutocomplete() {
           thumbnailUrl: event.thumbnailUrl as string,
         },
         contests: event.contests.map(c => ({
+          contestId: "",
           startDate: c.contestDate,
           endDate: c.contestDate,
           discipline: MAP_DISCIPLINE_ENUM_TO_NAME[Number(c.discipline)],

@@ -44,20 +44,6 @@ const DISCIPLINE_LOOKUP: Record<string, { name: string; enumValue: number }> = {
   '13': { name: 'Walking', enumValue: 13 },
 };
 
-const GENDER_LOOKUP: Record<string, { name: string; enumValue: number }> = {
-  ALL: { name: 'All', enumValue: 0 },
-  MIXED: { name: 'All', enumValue: 0 },
-  MEN: { name: 'Men', enumValue: 1 },
-  MEN_ONLY: { name: 'Men', enumValue: 1 },
-  WOMEN: { name: 'Women', enumValue: 2 },
-  WOMEN_ONLY: { name: 'Women', enumValue: 2 },
-  OTHER: { name: 'Other', enumValue: 3 },
-  '0': { name: 'All', enumValue: 0 },
-  '1': { name: 'Men', enumValue: 1 },
-  '2': { name: 'Women', enumValue: 2 },
-  '3': { name: 'Other', enumValue: 3 },
-};
-
 const DRY_RUN = process.argv.includes('--dry-run');
 const EXECUTE = process.argv.includes('--execute');
 const VERBOSE = process.argv.includes('--verbose');
@@ -308,7 +294,6 @@ async function main() {
             rank,
             isaPoints: originalPoints,
           } = result;
-          const formattedGender = GENDER_LOOKUP[contestGender || "MIXED"].enumValue == 1 ? "MEN" : "WOMEN";
           const numContestants = contestResults.length;
           const recalculatedPoints = sanitizePointValue(calculatePointsForRank(rank, contestSize as ContestType, numContestants));
           const hasChanged = recalculatedPoints !== originalPoints;
@@ -386,8 +371,6 @@ async function main() {
 
         } = participationRecord as unknown as AthleteParticipationRecord;
 
-        const contestGenderValue = (contestGender || 'MIXED') as ContestGender;
-        const genderForPoints = contestGenderValue === 'MEN_ONLY' ? 'MEN' : contestGenderValue === 'WOMEN_ONLY' ? 'WOMEN' : 'ALL';
         const numContestants = matchingParticipationRecords.length;
         const recalculatedPoints = sanitizePointValue(calculatePointsForRank(place || 1, contestSize as ContestType, numContestants));
 

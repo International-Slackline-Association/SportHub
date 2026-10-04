@@ -5,14 +5,15 @@ import { cn } from '@utils/cn';
 import Button from '@ui/Button';
 import { TrashIcon } from '@ui/Icons';
 import UserAutocomplete from './UserAutocomplete';
-import { ContestResultEntry, EventSubmissionFormValues } from '../../types';
+import { EventSubmissionFormValues } from '../../types';
 import { FormikNumberField, FormikTextField } from '@ui/Form';
 import PendingUserForm from './PendingUserForm';
 import { calculatePointsForRank } from '@utils/points';
+import { ContestResult } from '@lib/relational-types';
 
 type Props = {
   contestKey: string;
-  results: ContestResultEntry[];
+  results: ContestResult[];
 }
 
 type AthleteListItemProps = {
@@ -29,7 +30,7 @@ const AthleteListItem = ({
 }: AthleteListItemProps) => {
   const { values, setFieldValue } = useFormikContext<EventSubmissionFormValues>();
   const formValueUserId = getIn(values, `${athleteFormKey}.id`);
-  const currentResults = getIn(values, `${contestKey}.results`) as ContestResultEntry[] | undefined;
+  const currentResults = getIn(values, `${contestKey}.results`) as ContestResult[] | undefined;
   const currentNumContestants = Array.isArray(currentResults) ? currentResults.length : 0;
 
   return (
@@ -76,7 +77,7 @@ const AthleteListItem = ({
   );
 };
 
-const recalculatePointsForAllAthletes = (results: ContestResultEntry[], contestSize: ContestType) => {
+const recalculatePointsForAllAthletes = (results: ContestResult[], contestSize: ContestType) => {
   if (!contestSize) return results;
   
   const recalculatedResults = results.map((r) => {
@@ -135,16 +136,17 @@ export const Results = ({ contestKey, results }: Props) => {
                     // If no shared ranks, assign next rank
                     rank = results.length + 1;
                   } else {
-                    // If there are shared ranks, leave rank undefined for manual entry
-                    rank = undefined;
+                    // If there are shared ranks, leave rank 0 for manual entry
+                    rank = 0;
                   }
 
-                  const newAthlete: ContestResultEntry = {
+                  const newAthlete: ContestResult = {
                     id: "",
                     name: "",
                     isaPoints: 0,
                     stats: "",
                     rank,
+                    isPending: false,
                   };
 
                   push(newAthlete);

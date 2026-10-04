@@ -9,16 +9,22 @@ import { Alert } from '@ui/Alert';
 
 const createUserLabel = (user: UserProfileRecord) => `${user.name} ${user.surname} | ${user.userId}`.toLocaleLowerCase();
 
-type Props = { formKey: string; onSelectOption?: (option: Option) => void; readOnlyIfSet?: boolean };
+type Props = {
+  formKey: string;
+  onSelectOption?: (option: Option) => void;
+  readOnlyIfSet?: boolean
+  isJudge?: boolean;
+};
 
 export default function UserAutocomplete<TFormValues>({
   formKey,
   readOnlyIfSet,
+  isJudge = false,
   ...autocompleteProps
 }: Props) {
   const { setFieldTouched, setFieldValue, values } = useFormikContext<TFormValues>();
   const formKeyName = `${formKey}.name`;
-  const formikValueUserId = getIn(values, `${formKey}.id`);
+  const formikValueUserId = getIn(values, `${formKey}.${isJudge ? 'userId' : 'id'}`);
   const currentFormValueUserName = getIn(values, formKeyName); // safe access
   const [debouncedUserName, setDebouncedUserName] = useState(currentFormValueUserName);
 

@@ -6,7 +6,7 @@ import type { HeroImage } from "@utils/images";
 
 export type PageLayoutProps = PropsWithChildren<{
   title?: string;
-  description?: string;
+  description?: string | React.ReactNode;
   heroImage?: HeroImage;
   overlayText?: boolean;
 }>;
