@@ -34,18 +34,21 @@ export default function SubmitEventClient() {
     values: EventSubmissionFormValues,
     { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void; resetForm: () => void }
   ) =>
-    saveEvent(values, submitIntentRef.current).then((result) => {
-      if (!result.success) {
-        alert(result.error || 'Failed to save event. Please try again.');
-        return;
-      }
-      setSubmittedStatus(submitIntentRef.current);
-    }).catch((error) => {
-      console.error('Error submitting event:', error);
-      alert('Failed to submit event. Please try again.');
-    }).finally(() => {
-      setSubmitting(false);
-    });
+    saveEvent(values)
+      .then((result) => {
+        if (!result.success) {
+          alert(result.error || 'Failed to save event. Please try again.');
+          return;
+        }
+        setSubmittedStatus(submitIntentRef.current);
+      })
+      .catch((error) => {
+        console.error('Error submitting event:', error);
+        alert('Failed to submit event. Please try again.');
+      })
+      .finally(() =>
+        setSubmitting(false),
+      );
 
   const activeTab = stepOrder[currentStep];
   const isFirstStep = currentStep === 0;

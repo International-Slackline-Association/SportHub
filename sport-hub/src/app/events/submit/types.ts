@@ -109,10 +109,12 @@ export interface ContestFormValues {
 export const contestValidationSchema = Yup.object({
   startDate: Yup.date()
     .transform(dateTransform)
-    .typeError('Invalid date (expected YYYY-MM-DD)'),
+    .typeError('Invalid date (expected YYYY-MM-DD)')
+    .required('Start date is required'),
   endDate: Yup.date()
     .transform(dateTransform)
-    .typeError('Invalid date (expected YYYY-MM-DD)'),
+    .typeError('Invalid date (expected YYYY-MM-DD)')
+    .required('End date is required'),
   gender: Yup.string()
     .required('Gender category is required'),
   discipline: Yup.string()

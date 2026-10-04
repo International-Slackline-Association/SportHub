@@ -409,7 +409,8 @@ export async function getContestsData(): Promise<ContestData[]> {
       // Can't key off 'results' presence: a future event with no results
       // yet is submitted with 'results' undefined (stripped before save),
       // which would otherwise misclassify it as old-format and lose its date.
-      if (!('contestDate' in raw)) {
+      const hasResults = Array.isArray(raw.results) && raw.results.length > 0;
+      if (!('contestDate' in raw) || hasResults) {
         const results = (raw.results as Record<string, unknown>[] | undefined) ?? [];
         const athletes = results
           .slice()

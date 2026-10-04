@@ -34,9 +34,10 @@ function generateEventId(): string {
 /**
  * Create new event (metadata record only)
  */
-export async function createEventFromForm(eventForm: EventFormValues, status: EventStatus, contests: ContestFormValues[]): Promise<EventMetadataRecord> {
+export async function createEventFromForm(eventForm: EventFormValues, contests: ContestFormValues[]): Promise<EventMetadataRecord> {
   // Get current user for audit trail
   const session = await auth();
+  const isAdmin = session?.user?.role === 'admin';
 
   // Transform form data to database format
   const eventId = generateEventId();
@@ -46,15 +47,15 @@ export async function createEventFromForm(eventForm: EventFormValues, status: Ev
     sortKey: 'Metadata',
     createdAt: new Date().getTime(),
     updatedAt: new Date().getTime(),
-    status,
+    status: isAdmin ? 'draft' : 'pending' as EventStatus,
     createdBy: session?.user?.id || '',
     createdByName: session?.user?.name || 'unknown',
     contestCount: contests?.length,
     disciplines: [...new Set(contests.map(c => c.discipline))],
-    ...(status === 'pending' && { submittedForApprovalAt: new Date().getTime() }),
+    ...(!isAdmin && { submittedForApprovalAt: new Date().getTime() }),
   };
 
-  console.log(`Creating event ${eventId} with status=${status} createdBy=${session?.user?.id}`);
+  console.log(`Creating event ${eventId} with status=${eventMetadataRecord.status} createdBy=${session?.user?.id}`);
   await putEventItem(eventMetadataRecord);
 
   return eventMetadataRecord;

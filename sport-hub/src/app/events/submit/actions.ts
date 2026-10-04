@@ -49,7 +49,7 @@ function validatePastEventRequirements(values: EventSubmissionFormValues): strin
   return null;
 }
 
-export async function saveEvent(values: EventSubmissionFormValues, status: EventStatus = 'draft') {
+export async function saveEvent(values: EventSubmissionFormValues) {
   await requireEventSubmitter();
 
   try {
@@ -63,7 +63,7 @@ export async function saveEvent(values: EventSubmissionFormValues, status: Event
 
     // Save event metadata used by event profile. 
     // Does not embed contest results; those are saved separately below
-    const { eventId } = await createEventFromForm(event, status, contests);
+    const { eventId } = await createEventFromForm(event, contests);
     
     // Save contest results including the per-athlete Participation:* records
     await Promise.all(contests.map((c, idx) => createContestFromForm(eventId, c, idx)));
@@ -116,17 +116,19 @@ export async function updateEventScores(
 
   try {
     const session = await auth();
-
+    const isAdmin = session?.user?.role === 'admin';
     const { success, event } = await getAssembledEvent(eventId);
+    
     if (!success || !event) {
       return { success: false, error: 'Event not found' };
     }
+    
+    const isCreator = event.createdBy == session?.user?.id;
 
-    if (session?.user?.role !== 'admin' && event.createdBy !== session?.user?.id) {
+    if (!isAdmin && !isCreator) {
       return { success: false, error: 'You do not have permission to edit this event' };
     }
 
-    const isAdmin = session?.user?.role === 'admin';
     let appliedCount = 0;
     let stagedCount = 0;
 
