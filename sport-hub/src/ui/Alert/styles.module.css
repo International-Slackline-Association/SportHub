@@ -37,3 +37,9 @@
   border: 1px solid var(--color-blue-600);
   color: var(--color-blue-600);
 }
+
+.successColor {
+  background-color: var(--color-green-50);
+  border: 1px solid var(--color-green-600);
+  color: var(--color-green-600);
+}

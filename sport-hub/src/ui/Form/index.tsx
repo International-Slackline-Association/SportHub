@@ -1,5 +1,5 @@
 import React, { PropsWithChildren, ReactNode } from 'react';
-import { Field, useFormikContext, type FieldInputProps, type FieldMetaProps, type FormikHelpers } from 'formik';
+import { Field, useField, useFormikContext, type FieldInputProps, type FieldMetaProps, type FormikHelpers } from 'formik';
 import styles from './styles.module.css';
 import Button from '@ui/Button';
 import Spinner from '@ui/Spinner';
@@ -66,10 +66,13 @@ export const FormikTextField = ({
   id,
   label,
   name,
+  type = 'text',
   required,
   tooltip,
   ...inputProps
 }: TextFieldProps) => {
+  const [field, meta] = useField<string>(name || id);
+
   return (
     <FormikFormField
       caption={caption}
@@ -79,24 +82,20 @@ export const FormikTextField = ({
       required={required}
       tooltip={tooltip}
     >
-      <Field name={name}>
-        {({ field, meta }: FormikFieldProps<string>) => (
-          <div>
-            <input
-              {...field}
-              {...inputProps}
-              className={cn(styles.input, meta.touched && meta.error && styles.error)}
-              id={id}
-              name={name}
-              type="text"
-              value={field.value || ""}
-            />
-            {meta.touched && meta.error && (
-              <div className={styles.errorMessage}>{meta.error}</div>
-            )}
-          </div>
+      <div>
+        <input
+          {...field}
+          {...inputProps}
+          className={cn(styles.input, meta.touched && meta.error && styles.error)}
+          id={id}
+          name={name}
+          type={type}
+          value={field.value}
+        />
+        {meta.touched && typeof meta.error === 'string' && (
+          <div className={styles.errorMessage}>{meta.error}</div>
         )}
-      </Field>
+      </div>
     </FormikFormField>
   );
 };
