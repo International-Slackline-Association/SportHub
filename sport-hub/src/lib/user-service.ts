@@ -20,7 +20,6 @@ export function generateSportHubId(): string {
   return `SportHubID:${id}`;
 }
 import type { UserProfileRecord } from './relational-types';
-import { updateReferenceUser } from './reference-db-service';
 import { clearRoleCache } from './rbac-service';
 import { getUserIdByAthleteSlug } from './user-query-service';
 import type { Role, UserSubType } from '../types/rbac';
