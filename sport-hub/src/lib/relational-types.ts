@@ -174,6 +174,8 @@ export interface ContestRecord extends EventTableRecord {
   discipline: string;      // For date-discipline-index GSI
 
   // Contest info
+  startDate: string;
+  endDate: string;
   contestDate: string;
   dateSortKey: string;     // For date-discipline-index GSI: contestDate#eventId
 

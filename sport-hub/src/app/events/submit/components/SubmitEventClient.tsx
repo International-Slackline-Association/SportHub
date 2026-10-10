@@ -62,7 +62,6 @@ export default function SubmitEventClient() {
       }}
       validationSchema={eventSubmissionValidationSchema}
       validateOnChange={true}
-      validateOnBlur={false}
       onSubmit={handleSubmit}
     >
       {({ errors, isValid, dirty, isSubmitting, setFieldTouched, validateForm, values, resetForm }) => {

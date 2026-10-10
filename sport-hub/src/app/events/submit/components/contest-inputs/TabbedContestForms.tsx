@@ -68,12 +68,11 @@ export default function TabbedContestForms({
   const contestErrors = getIn(errors, "contests") || {};
   const contestHasErrors = Object.keys(contestErrors).length > 0;
 
-  const isCurrentContestTouched = getIn(touched, `contests[${activeContestIdx}]`);
   const isDevMode = process.env.NODE_ENV === 'development';
 
   return (
     <div>
-      <FieldArray name="contests" validateOnChange={false}>
+      <FieldArray name="contests">
         {({ push, remove }) => {
           const contestKey = `contests[${activeContestIdx}]`;
 
@@ -123,7 +122,7 @@ export default function TabbedContestForms({
                   variant="secondary"
                 />
                 {showContestActions && (<Button
-                  disabled={contests.length > 0 && (!isCurrentContestTouched || contestHasErrors)}
+                  disabled={contests.length > 0 && contestHasErrors}
                   onClick={handleClickAddContest}
                   type="button"
                   variant="secondary"
