@@ -97,44 +97,6 @@ export async function getUser(userId: string): Promise<UserProfileRecord | null>
 }
 
 /**
- * Update user profile (only allowed fields)
- * Updates identity data in reference DB (isa-users table)
- *
- * @param userId - Custom user ID (e.g., "ISA_FBE8B254")
- * @param updates - Fields to update
- * @returns Updated user record from app DB
- */
-export async function updateUserProfile(
-  userId: string,
-  updates: UserProfileUpdate
-): Promise<UserProfileRecord> {
-  try {
-    // Get existing user from app DB
-    const existingUser = await getUser(userId);
-    if (!existingUser) {
-      throw new Error('User not found');
-    }
-
-    // Update identity data in reference DB
-    await updateReferenceUser(userId, updates);
-
-    // Update app DB metadata
-    const updatedUser: UserProfileRecord = {
-      ...existingUser,
-      sortKey: 'Profile',
-      lastProfileUpdate: Date.now(),
-    };
-
-    await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
-
-    return updatedUser;
-  } catch (error) {
-    console.error('Error updating user profile:', error);
-    throw error;
-  }
-}
-
-/**
  * Create new user (for onboarding)
  * Only stores app-specific data. Identity data is in reference DB.
  *
