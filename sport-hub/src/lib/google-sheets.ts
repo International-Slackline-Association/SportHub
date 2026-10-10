@@ -2,7 +2,7 @@
 
 import { auth, sheets } from '@googleapis/sheets';
 
-const SPREADSHEET_ID = process.env.ISA_CERTIFICATES_SPREADSHEET_ID!;
+const SPREADSHEET_ID = process.env.ISA_CERTIFICATES_SPREADSHEET_ID;
 
 // Lazy-initialised so a bad/missing key throws at call time (catchable) rather
 // than at module load time (which causes an uncatchable 500 on every page import).
@@ -76,9 +76,9 @@ export interface WorldFirstRow {
 
 export const getWorldFirstsSheet = async (): Promise<WorldFirstRow[]> => {
   const client = sheets({ version: 'v4', auth: getAuthClient() });
-
+  console.log("getWorldFirstsSheet env", process.env);
   const response = await client.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: "1WO8RDDn6WKTmZQX4YK9xNwWfh0-eciIX0fdSvsgNRsA",
     range: WORLD_FIRSTS_SHEET,
   });
 
