@@ -1,4 +1,4 @@
-import type { ContestRecord, EventMetadataRecord, ContestParticipant, AthleteParticipationRecord, UserProfileRecord } from './relational-types';
+import type { ContestRecord, EventMetadataRecord, ContestParticipant, AthleteParticipationRecord, UserProfileRecord, EventRecord } from './relational-types';
 import {
   getAthleteParticipations as getAthleteParticipationsOptimized,
   getAllUserProfiles,
@@ -314,6 +314,27 @@ export interface ContestData {
 export const sortByDateRangeDesc = (a: ContestData | EventMetadataRecord, b: ContestData | EventMetadataRecord) => {
   return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
 };
+
+export async function getAllEventDataRaw(): Promise<EventRecord[]> {
+  const cacheKey = 'events-data-all-items-raw';
+  const cached = cache.get<EventRecord[]>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const allItems = await scanAllEventItems();
+
+    if (!allItems || allItems.length === 0) {
+      return [];
+    }
+
+    // Cache the results (10 min TTL to reduce scan frequency)
+    cache.set(cacheKey, allItems, 600000); // Cache for 10 minutes (was 3 min)
+    return allItems;
+  } catch (error) {
+    console.error('Error fetching all event data:', error);
+    return [];
+  }
+}
 
 export async function getEventsData(): Promise<EventMetadataRecord[]> {
   const cacheKey = 'events-data';

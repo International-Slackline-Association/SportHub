@@ -30,10 +30,6 @@
   z-index: 1;
 }
 
-.pageHeader {
-  padding: 1rem;
-}
-
 .overlayTextOnImage {
   position: absolute;
   padding-top: 0.25rem;

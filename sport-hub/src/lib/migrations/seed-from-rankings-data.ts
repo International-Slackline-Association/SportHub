@@ -281,6 +281,8 @@ export function transformRankingsData(): {
           contestId,
           discipline: discipline.code,
           contestDate,
+          startDate: contestDate,
+          endDate: contestDate,
           dateSortKey,
           city: eventDef.city,
           gender: genderCode,

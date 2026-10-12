@@ -49,6 +49,16 @@ export default async function AdminPage() {
           </Link>
 
           <Link
+            href="/admin/duplicate-accounts"
+            className="block p-6 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+          >
+            <h3 className="text-lg font-semibold text-red-900 mb-2">Duplicate Accounts</h3>
+            <p className="text-sm text-red-700">
+              Merge split contest results from a secondary account into the main profile
+            </p>
+          </Link>
+
+          <Link
             href="/test_SSR"
             className="block p-6 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
           >

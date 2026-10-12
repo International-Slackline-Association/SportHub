@@ -257,7 +257,9 @@ export function getContestSortKey({ discipline, contestId }: ContestFormValues |
 export function transformContestFormToRecord(contestForm: ContestFormValues, eventId: string, contestIndex: number): ContestRecord {
   const { contestId, discipline, startDate, endDate, results = [] } = contestForm;
 
-  const contestDate = endDate || startDate || '';
+  const normalizedStartDate = startDate || '';
+  const normalizedEndDate = endDate || normalizedStartDate;
+  const contestDate = normalizedEndDate || normalizedStartDate;
 
   return {
     ...contestForm,
@@ -265,6 +267,8 @@ export function transformContestFormToRecord(contestForm: ContestFormValues, eve
     sortKey: getContestSortKey(contestForm),
     contestId,
     contestIndex,
+    startDate: normalizedStartDate,
+    endDate: normalizedEndDate,
     contestDate,
     dateSortKey: `${contestDate}#${eventId}`,
     discipline,

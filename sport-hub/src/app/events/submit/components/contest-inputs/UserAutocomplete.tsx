@@ -37,7 +37,7 @@ export default function UserAutocomplete<TFormValues>({
   const isReadOnly = Boolean(readOnlyIfSet && formikValueUserId);
 
   const { data: allUsers, isLoading, isError } = useQuery({
-    queryKey: ['users'],
+    queryKey: ['users', formKey],
     queryFn: async () => (await fetch('/api/users')).json(),
     // Enable only when user has typed at least 3 chars and not in read-only mode
     enabled: !isReadOnly && debouncedUserName.length >= 3,
@@ -101,10 +101,13 @@ export default function UserAutocomplete<TFormValues>({
       isLoading={isLoading}
       hideErrorMessage
       getDisplayValue={(value: unknown) => {
+        if (typeof value === 'string' && value.trim().length > 0) {
+          return value;
+        }
         if (currentUser) {
           return createUserLabel(currentUser);
         }
-        return value as string;
+        return typeof value === 'string' ? value : '';
       }}
       label="Name"
       mapOptionToValue={(o) => o.label}

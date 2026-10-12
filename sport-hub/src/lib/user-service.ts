@@ -20,7 +20,6 @@ export function generateSportHubId(): string {
   return `SportHubID:${id}`;
 }
 import type { UserProfileRecord } from './relational-types';
-import { updateReferenceUser } from './reference-db-service';
 import { clearRoleCache } from './rbac-service';
 import { getUserIdByAthleteSlug } from './user-query-service';
 import type { Role, UserSubType } from '../types/rbac';
@@ -93,44 +92,6 @@ export async function getUser(userId: string): Promise<UserProfileRecord | null>
   } catch (error) {
     console.error('Error fetching user:', error);
     return null;
-  }
-}
-
-/**
- * Update user profile (only allowed fields)
- * Updates identity data in reference DB (isa-users table)
- *
- * @param userId - Custom user ID (e.g., "ISA_FBE8B254")
- * @param updates - Fields to update
- * @returns Updated user record from app DB
- */
-export async function updateUserProfile(
-  userId: string,
-  updates: UserProfileUpdate
-): Promise<UserProfileRecord> {
-  try {
-    // Get existing user from app DB
-    const existingUser = await getUser(userId);
-    if (!existingUser) {
-      throw new Error('User not found');
-    }
-
-    // Update identity data in reference DB
-    await updateReferenceUser(userId, updates);
-
-    // Update app DB metadata
-    const updatedUser: UserProfileRecord = {
-      ...existingUser,
-      sortKey: 'Profile',
-      lastProfileUpdate: Date.now(),
-    };
-
-    await dynamodb.putItem(USERS_TABLE, updatedUser as unknown as Record<string, unknown>);
-
-    return updatedUser;
-  } catch (error) {
-    console.error('Error updating user profile:', error);
-    throw error;
   }
 }
 

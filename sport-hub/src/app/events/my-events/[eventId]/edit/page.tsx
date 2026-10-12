@@ -83,7 +83,15 @@ export default async function EditEventPage({ params }: Props) {
         website,
         city: event.city || "",
       },
-      contests,
+      contests: contests.map(c => ({
+        ...c,
+        startDate: c.startDate || eventData.startDate || "",
+        endDate: c.endDate || eventData.endDate || "",
+        gender: c.gender as ContestFormValues['gender'],
+        ageCategory: c.ageCategory as ContestFormValues['ageCategory'],
+        contestSize: c.contestSize as ContestFormValues['contestSize'],
+        judgingSystem: c.judgingSystem as ContestFormValues['judgingSystem'],
+      })),
     };
   } else {
     // Old-format event (no Metadata record) — admins only
