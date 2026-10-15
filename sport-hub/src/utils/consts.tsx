@@ -136,13 +136,6 @@ export const MAP_DISCIPLINE_ENUM_TO_NAME: Record<number, Discipline> = {
   13: "WALKING",
 };
 
-export const MAP_GENDER_ENUM_TO_NAME: Record<number, Gender> = {
-  0: "ALL",
-  1: "MEN",
-  2: "WOMEN",
-  3: "OTHER",
-};
-
 export const MAP_AGE_CATEGORY_ENUM_TO_NAME: Record<number, AgeCategory> = {
   0: "ALL",
   1: "YOUTH",

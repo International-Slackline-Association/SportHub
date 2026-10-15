@@ -116,7 +116,7 @@ const columns = [
 const FIRST_COMP_YEAR = 2017;
 const CURRENT_YEAR = new Date().getFullYear();
 const YEAR_OPTIONS = [
-  { value: 'last3years', label: 'Last 3 Years' },
+  { value: 'LAST_3_YEARS', label: 'Last 3 Years' },
   ...Array.from({ length: CURRENT_YEAR - FIRST_COMP_YEAR + 1 }, (_, i) => {
     const y = String(CURRENT_YEAR - i);
     return { value: y, label: y };
@@ -125,12 +125,22 @@ const YEAR_OPTIONS = [
 
 type RankingsTableProps = {
   discipline: Discipline;
+  gender: Gender;
   onChangeDiscipline: (discipline: Discipline) => void;
+  onChangeGender: (gender: Gender) => void;
+  onChangeSeason: (season: string) => void;
+  season: string;
 }
 
-const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) => {
+const RankingsTable = ({
+  discipline,
+  gender,
+  onChangeDiscipline,
+  onChangeGender,
+  onChangeSeason,
+  season,
+}: RankingsTableProps) => {
   const { isDesktop } = useClientMediaQuery();
-  const [selectedYear, setSelectedYear] = useState('last3years');
   const disciplineEnumValue = DISCIPLINE_DATA[discipline].enumValue;
 
   const handleChangeDiscipline = (enumValue: string) => {
@@ -138,11 +148,12 @@ const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) =
   };
 
   const { data = [], error, isError, isLoading, isSuccess } = useQuery({
-    queryKey: ['rankings', selectedYear, disciplineEnumValue],
+    queryKey: ['rankings', season, disciplineEnumValue, gender],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (selectedYear !== 'last3years') params.set('year', selectedYear);
+      if (season !== 'LAST_3_YEARS') params.set('year', season);
       if (disciplineEnumValue) params.set('discipline', String(disciplineEnumValue));
+      if (gender === 'MEN' || gender === 'WOMEN') params.set('gender', gender);
       const url = `/api/rankings${params.size ? '?' + params.toString() : ''}`;
       return (await fetch(url)).json();
     },
@@ -164,15 +175,26 @@ const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) =
           extraFilters={
             <>
               <div className={tableStyles.columnFilter}>
-                <label htmlFor="rankings-year">Timeframe</label>
+                <label htmlFor="rankings-season">Season</label>
                 <select
-                  id="rankings-year"
-                  value={selectedYear}
-                  onChange={e => setSelectedYear(e.target.value)}
+                  id="rankings-season"
+                  value={season}
+                  onChange={e => onChangeSeason(e.target.value)}
                 >
                   {YEAR_OPTIONS.map(opt => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
+                </select>
+              </div>
+              <div className={tableStyles.columnFilter}>
+                <label htmlFor="rankings-gender">Gender</label>
+                <select
+                  id="rankings-gender"
+                  value={gender}
+                  onChange={e => onChangeGender(e.target.value as Gender)}
+                >
+                  <option value="WOMEN">Women</option>
+                  <option value="MEN">Men</option>
                 </select>
               </div>
               <DisciplineDropdown
@@ -191,7 +213,7 @@ const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) =
                   <div className={cn("flex gap-2", isDesktop ? "flex-row" : "flex-col")}>
                     Points
                     <Tooltip
-                      content={'Ranking is determined by adding the top two awarded points from the contests athletes have participated in within the defined timeframe.'}
+                      content={'Ranking is determined by adding the top two awarded points from the contests athletes have participated in within the defined season.'}
                       position="bottom"
                     />
                   </div>
@@ -225,7 +247,6 @@ const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) =
             ],
             data,
             initialState: {
-              columnFilters: [{ id: 'gender', value: 'female' }],
               columnOrder: isDesktop
                 ? ['rank', 'fullName', 'age', 'gender', 'country', 'points']
                 : ['rank', 'athlete', 'points'],

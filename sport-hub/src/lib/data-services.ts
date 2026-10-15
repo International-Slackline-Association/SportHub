@@ -169,7 +169,10 @@ function mapProfileToRanking(profile: UserProfileRecord, participationMetadata?:
  * the authoritative source for season totals (unlike Ranking records which
  * may store all-time aggregates depending on how they were seeded/migrated).
  */
-async function getRankingsForYears(years: string[], discipline?: string): Promise<AthleteRanking[]> {
+async function getRankingsForYears(
+  years: string[],
+  discipline?: string,
+): Promise<{ men: AthleteRanking[]; women: AthleteRanking[] }> {
   const yearsSet = new Set(years);
 
   // Scan all participation records — filter by contestDate year and discipline client-side
@@ -197,7 +200,9 @@ async function getRankingsForYears(years: string[], discipline?: string): Promis
     return participationsByUserId;
   }, {} as Record<string, AthleteParticipationRecord[]>);
 
-  if (Object.entries(participationsByUserId).length === 0) return [];
+  if (Object.entries(participationsByUserId).length === 0) {
+    return { men: [], women: [] };
+  }
 
   const topParticipationsByUserId = Object.entries(participationsByUserId).reduce(
     (topParticipationsByUserId, [userId, participations]) => {
@@ -210,13 +215,13 @@ async function getRankingsForYears(years: string[], discipline?: string): Promis
         total: mostPoints + secondMostPoints,
       };
       return topParticipationsByUserId;
-    }, 
+    },
     {} as Record<string, ParticipationMetadata>
   );
 
   const userIds = Object.keys(participationsByUserId);
   const athleteProfiles = await getAthleteProfilesBatch(userIds);
-  
+
   const rankings = Object.entries(topParticipationsByUserId)
     .map(([userId, participationData]) => {
       const profile = athleteProfiles.get(userId);
@@ -226,38 +231,42 @@ async function getRankingsForYears(years: string[], discipline?: string): Promis
     .filter((r): r is AthleteRanking => r !== null)
     .sort((a, b) => b.points - a.points);
 
-  const mensRankings = rankings.filter(r => r.gender === 'male');
-  const womensRankings = rankings.filter(r => r.gender === 'female');
+  const men = rankings.filter(r => r.gender === 'male');
+  const women = rankings.filter(r => r.gender === 'female');
 
-  mensRankings.forEach((r, idx) => {
-    r.rank = idx + 1;
-  });
+  men.forEach((r, idx) => r.rank = idx + 1);
+  women.forEach((r, idx) => r.rank = idx + 1);
 
-  womensRankings.forEach((r, idx) => {
-    r.rank = idx + 1;
-  });
-
-  return [...womensRankings, ...mensRankings];
+  return { men, women };
 }
 
 /**
  * Get athletes for the rankings table, optionally scoped to a specific year.
- * - year = undefined or 'last3years': aggregate the 3 most recent competition years
+ * - year = undefined or 'LAST_3_YEARS': aggregate the 3 most recent competition years
  * - year = '2024' (or any specific year): aggregate that year's Ranking records
  */
-export async function getRankingsData(year?: string, discipline?: string): Promise<AthleteRanking[]> {
+export async function getRankingsData(
+  year?: string,
+  discipline?: string,
+  gender?: Gender,
+): Promise<AthleteRanking[]> {
   const currentYear = new Date().getFullYear();
-  const resolvedYears = (!year || year === 'last3years')
+  const resolvedYears = (!year || year === 'LAST_3_YEARS')
     ? [String(currentYear), String(currentYear - 1), String(currentYear - 2)]
     : [year];
 
-  const cacheKey = `rankings-data-${resolvedYears.join(',')}-${discipline ?? 'all'}`;
+  const cacheKey = `rankings-data-${resolvedYears.join(',')}-${discipline ?? 'all'}-${gender ?? 'all'}`;
   const cached = cache.get<AthleteRanking[]>(cacheKey);
 
   if (cached) return cached;
 
   try {
-    const rankings = await getRankingsForYears(resolvedYears, discipline);
+    const { men, women } = await getRankingsForYears(resolvedYears, discipline);
+    const rankings = 
+      gender === 'MEN' ? men
+      : gender === 'WOMEN' ? women
+      : [...women, ...men];
+
     cache.set(cacheKey, rankings, 120000);
     return rankings;
   } catch (error) {
@@ -269,8 +278,14 @@ export async function getRankingsData(year?: string, discipline?: string): Promi
 /**
  * Get featured athletes (top athletes)
  */
-export async function getFeaturedAthletes(discipline?: string, limit: number = 3): Promise<AthleteRanking[]> {
-  const rankings = await getRankingsData(undefined, discipline);
+export async function getFeaturedAthletes(options?: {
+  discipline?: string;
+  gender?: Gender;
+  year?: string;
+}): Promise<AthleteRanking[]> {
+  const limit = 3;
+  const { discipline, gender, year } = options ?? {};
+  const rankings = await getRankingsData(year, discipline, gender);
 
   return rankings
     .filter((athlete) => {
