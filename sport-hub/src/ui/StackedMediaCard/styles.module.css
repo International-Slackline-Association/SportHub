@@ -6,7 +6,8 @@
   display: flex;
   flex: 1 0 0;
   font-size: 1rem;
-  min-width: fit-content;
+  min-width: 0;
+  width: 100%;
   text-align: left;
 
   /* Remove button styling when used as button */
@@ -35,7 +36,16 @@
 
 /* Content section (right on mobile, bottom on desktop) */
 .content {
+  display: flex;
+  flex: 1 1 auto;
+  width: 100%;
   text-align: center;
+
+  > * {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+
   @media (min-width: 40rem) {
     text-align: center;
     width: 100%;
