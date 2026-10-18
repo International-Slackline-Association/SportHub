@@ -2,3 +2,12 @@ allowBuilds:
   esbuild: false
   sharp: false
   unrs-resolver: false
+
+overrides:
+  # Critical entity-encoding bypass (GHSA-m7jm-9gc2-mpf2) + several
+  # high/medium DoS issues in fast-xml-parser, pulled in transitively via
+  # @aws-sdk/core.
+  # AWS SDK v3 hasn't uniformly bumped past the vulnerable range across
+  # every package that depends on it (client-dynamodb's @aws-sdk/core is
+  # older than client-s3's), so force it everywhere rather than wait.
+  fast-xml-parser: ^5.7.0
