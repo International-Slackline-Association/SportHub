@@ -13,11 +13,13 @@ import Spinner from '@ui/Spinner';
 import { Alert } from '@ui/Alert';
 import tableStyles from '@ui/Table/styles.module.css';
 import { CountryFlag } from '@ui/CountryFlag';
-import { DisciplineDropdown } from '@ui/Form';
+import { DisciplineDropdown, GenderDropdown } from '@ui/Form';
 import { DISCIPLINE_DATA, MAP_DISCIPLINE_ENUM_TO_NAME } from '@utils/consts';
 import { Tooltip } from '@ui/Tooltip';
 import { cn } from '@utils/cn';
 import { AthleteParticipationRecord } from '@lib/relational-types';
+import { textToTitleCase } from '@utils/strings';
+import { normalizeGender } from '@utils/gender';
 
 const linkClassName = 'text-blue-600 hover:text-blue-800 hover:underline font-medium';
 
@@ -90,18 +92,8 @@ const columns = [
   }),
   columnHelper.accessor('gender', {
     header: 'Gender',
-    enableColumnFilter: true,
     enableSorting: false,
-    filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
-    cell: info => info.getValue() === 'female' ? 'Women' : info.getValue() === 'male' ? 'Men' : '—',
-    meta: {
-      filterVariant: 'select',
-      filterNoAll: true,
-      filterOptions: [
-        { value: 'female', label: 'Women' },
-        { value: 'male', label: 'Men' },
-      ],
-    },
+    cell: info => textToTitleCase(normalizeGender(info.getValue()) || ""),
   }),
   columnHelper.accessor((row: AthleteRanking) => getIocCode(row.country), {
     id: 'country',
@@ -116,7 +108,7 @@ const columns = [
 const FIRST_COMP_YEAR = 2017;
 const CURRENT_YEAR = new Date().getFullYear();
 const YEAR_OPTIONS = [
-  { value: 'LAST_3_YEARS', label: 'Last 3 Years' },
+  { value: 'last3years', label: 'Last 3 Years' },
   ...Array.from({ length: CURRENT_YEAR - FIRST_COMP_YEAR + 1 }, (_, i) => {
     const y = String(CURRENT_YEAR - i);
     return { value: y, label: y };
@@ -151,7 +143,7 @@ const RankingsTable = ({
     queryKey: ['rankings', season, disciplineEnumValue, gender],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (season !== 'LAST_3_YEARS') params.set('year', season);
+      if (season !== 'last3years') params.set('year', season);
       if (disciplineEnumValue) params.set('discipline', String(disciplineEnumValue));
       if (gender === 'MEN' || gender === 'WOMEN') params.set('gender', gender);
       const url = `/api/rankings${params.size ? '?' + params.toString() : ''}`;
@@ -186,22 +178,18 @@ const RankingsTable = ({
                   ))}
                 </select>
               </div>
-              <div className={tableStyles.columnFilter}>
-                <label htmlFor="rankings-gender">Gender</label>
-                <select
-                  id="rankings-gender"
-                  value={gender}
-                  onChange={e => onChangeGender(e.target.value as Gender)}
-                >
-                  <option value="WOMEN">Women</option>
-                  <option value="MEN">Men</option>
-                </select>
-              </div>
               <DisciplineDropdown
                 className={tableStyles.columnFilter}
                 id="rankings-discipline"
                 initialValue={String(disciplineEnumValue)}
                 onChange={handleChangeDiscipline}
+              />
+              <GenderDropdown
+                className={tableStyles.columnFilter}
+                id="rankings-gender"
+                includeAll={false}
+                initialValue={gender}
+                onChange={value => onChangeGender(value)}
               />
             </>
           }

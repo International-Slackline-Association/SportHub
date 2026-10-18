@@ -1,4 +1,4 @@
-export const normalizeGender = (gender: number | string | null): Gender | undefined => {
+export const normalizeGender = (gender: number | string | null | undefined): Gender | undefined => {
   switch (String(gender)?.toUpperCase()) {
     case '1':
     case 'MEN':
