@@ -186,7 +186,7 @@ async function getRankingsForYears(
   const participationsByUserId = participations.reduce((participationsByUserId, participationRecord) => {
     const { contestDate, discipline: contestDiscipline, userId } = participationRecord;
 
-    const isYearInTimeFrame = yearsSet.has(contestDate.substring(0, 4) || "");
+    const isYearInTimeFrame = yearsSet.has(contestDate?.substring(0, 4) || "");
     const isSelectedDiscipline = !discipline || (discipline && discipline == contestDiscipline);
 
     if (isYearInTimeFrame && isSelectedDiscipline) {

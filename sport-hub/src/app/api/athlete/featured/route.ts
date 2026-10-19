@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     const athletes = await getFeaturedAthletes({
       discipline: String(config.enumValue),
-      gender: normalizeGender(genderParam),
+      gender: normalizeGender(genderParam) as Gender,
       year: season,
     });
     return NextResponse.json(athletes);

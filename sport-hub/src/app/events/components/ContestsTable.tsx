@@ -17,6 +17,7 @@ import { CountryFlag } from '@ui/CountryFlag';
 import styles from './styles.module.css';
 import { formatDateRange } from '@utils/dates';
 import { kebabCaseToTitleCase, snakeCaseToTitleCase } from '@utils/strings';
+import { Gender } from '@ui/Badge';
 
 const normalizeGroupField = (value: string | null | undefined) =>
   String(value ?? '')
@@ -93,7 +94,6 @@ const columns = [
       const winner = athletes?.find(a => a.place === '1');
       const winnerName = winner ? `${winner.name} ${winner.surname || ''}`.trim() : null;
       const genderKey = MAP_CONTEST_GENDER_ENUM_TO_NAME[info.row.original.gender];
-      const genderLabel = ({ MIXED: 'Mixed', MEN_ONLY: 'Men', WOMEN_ONLY: 'Women' } as Record<string, string>)[genderKey] ?? genderKey;
       const formattedDate = formatDateRange(new Date(startDate), new Date(endDate || startDate));
       return (
         <div className="stack gap-1">
@@ -117,7 +117,8 @@ const columns = [
               </Link>
             )}
             <CountryFlag country={country} />
-            <span className="text-xs text-gray-400" style={{ paddingTop: 2 }}>{genderLabel}</span>          </div>
+            <Gender className="text-xs" color="gray" variant="normal" value={genderKey} />
+          </div>
         </div>
       );
     },
@@ -189,8 +190,14 @@ const columns = [
     id: "gender",
     enableColumnFilter: true,
     header: "Gender",
+    cell: info => (
+      <Gender
+        value={info.getValue()}
+        variant="normal"
+      />
+    ),
     filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
-    meta: { filterVariant: 'select' },
+    meta: { filterVariant: 'contest-gender', filterNoAll: false },
     size: 72,
   }),
   columnHelper.accessor("prize", {

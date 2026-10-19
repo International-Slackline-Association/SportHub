@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
 import { AthleteRanking } from '@lib/data-services';
 import Table from '@ui/Table';
@@ -13,13 +12,14 @@ import Spinner from '@ui/Spinner';
 import { Alert } from '@ui/Alert';
 import tableStyles from '@ui/Table/styles.module.css';
 import { CountryFlag } from '@ui/CountryFlag';
-import { DisciplineDropdown, GenderDropdown } from '@ui/Form';
+import { DisciplineDropdown, RankingsGenderDropdown } from '@ui/Form';
 import { DISCIPLINE_DATA, MAP_DISCIPLINE_ENUM_TO_NAME } from '@utils/consts';
 import { Tooltip } from '@ui/Tooltip';
 import { cn } from '@utils/cn';
 import { AthleteParticipationRecord } from '@lib/relational-types';
-import { textToTitleCase } from '@utils/strings';
+import { Gender } from '@ui/Badge';
 import { normalizeGender } from '@utils/gender';
+import { textToTitleCase } from '@utils/strings';
 
 const linkClassName = 'text-blue-600 hover:text-blue-800 hover:underline font-medium';
 
@@ -49,11 +49,11 @@ const columns = [
   // Mobile: single stacked column
   columnHelper.display({
     id: 'athlete',
-    header: 'Athlete mo',
+    header: 'Athlete',
     enableSorting: false,
     cell: info => {
       const { age, gender, country } = info.row.original;
-      const genderLabel = gender === 'female' ? 'Women' : gender === 'male' ? 'Men' : '—';
+      const displayGender = textToTitleCase(normalizeGender(gender) || '');
       return (
         <div className="stack gap-2">
           <div className="cluster gap-2 items-center">
@@ -62,7 +62,7 @@ const columns = [
           </div>
           <div className="cluster gap-2 items-center">
             <CountryFlag country={country} defaultValue="" />
-            <span className="text-xs text-gray-400" style={{ paddingTop: 2 }}>{genderLabel}</span>
+            <span className="text-sm text-gray-400">{displayGender}</span>
           </div>
         </div>
       );
@@ -93,7 +93,9 @@ const columns = [
   columnHelper.accessor('gender', {
     header: 'Gender',
     enableSorting: false,
-    cell: info => textToTitleCase(normalizeGender(info.getValue()) || ""),
+    cell: info => (
+      <Gender value={info.getValue()} variant="normal" showIcon={false} />
+    ),
   }),
   columnHelper.accessor((row: AthleteRanking) => getIocCode(row.country), {
     id: 'country',
@@ -184,12 +186,11 @@ const RankingsTable = ({
                 initialValue={String(disciplineEnumValue)}
                 onChange={handleChangeDiscipline}
               />
-              <GenderDropdown
+              <RankingsGenderDropdown
                 className={tableStyles.columnFilter}
                 id="rankings-gender"
-                includeAll={false}
                 initialValue={gender}
-                onChange={value => onChangeGender(value)}
+                onChange={value => onChangeGender(value as Gender)}
               />
             </>
           }

@@ -96,8 +96,8 @@ export default function Page() {
           </div>
           <div className="stack gap-4">
             <strong>Gender</strong>
-            <Gender variant="MEN" />
-            <Gender variant="WOMEN" />
+            <Gender value="MEN" />
+            <Gender value="WOMEN" />
           </div>
           <div className="stack gap-4">
             <Badge color="NEUTRAL">NEUTRAL</Badge>

@@ -76,7 +76,6 @@ export interface WorldFirstRow {
 
 export const getWorldFirstsSheet = async (): Promise<WorldFirstRow[]> => {
   const client = sheets({ version: 'v4', auth: getAuthClient() });
-  console.log("getWorldFirstsSheet SPREADSHEET_ID", SPREADSHEET_ID);
   const response = await client.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID || "1WO8RDDn6WKTmZQX4YK9xNwWfh0-eciIX0fdSvsgNRsA",
     range: WORLD_FIRSTS_SHEET,

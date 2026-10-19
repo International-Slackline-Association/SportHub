@@ -32,7 +32,7 @@ const Page = () => {
     return searchParams.get('season') ?? 'LAST_3_YEARS';
   });
   const [gender, setGender] = useState<Gender>(() => {
-    return normalizeGender(searchParams.get('gender')) || "WOMEN";
+    return normalizeGender(searchParams.get('gender')) as Gender || "WOMEN";
   });
 
   const handleChangeDiscipline = (nextDiscipline: Discipline) => {
@@ -41,13 +41,10 @@ const Page = () => {
     // Drop the now-stale ?discipline= param from the URL once the user
     // picks a different one via the table — no navigation, just a shallow
     // URL update (router.replace, no new history entry).
-    // if (searchParams.has('discipline')) {
-      const params = new URLSearchParams(searchParams.toString());
-      // params.delete('discipline');
-      params.set('discipline', nextDiscipline);
-      const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-    // }
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('discipline', nextDiscipline);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
   const handleChangeSeason = (nextSeason: string) => {

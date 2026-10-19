@@ -16,6 +16,7 @@ const Badge = ({ color, children, className = "" }: BadgeProps) => {
     <div
       className={[
         styles.badge,
+        styles.badgeBold,
         styles[colorClass],
         className
       ].filter(Boolean).join(" ")}

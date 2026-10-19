@@ -1,45 +1,48 @@
 import React from "react";
 import styles from "./styles.module.css";
-import Image from 'next/image';
 import { pascalCaseToTitleCase } from ".";
+import { normalizeGender } from "@utils/gender";
+import { cn } from "@utils/cn";
+import { textToTitleCase } from "@utils/strings";
+import { FemaleIcon, MaleIcon } from "@ui/Icons";
 
 interface GenderProps {
-  variant: Gender | ContestGender;
   className?: string;
+  color?: "gray" | "neutral";
+  showIcon?: boolean;
+  size?: "sm" | "md" | "lg";
+  variant?: "normal" | "bold";
+  value: Gender | ContestGender | string | undefined;
 }
 
-const genderLabels: Record<Gender | ContestGender, string> = {
-  ALL: "MIXED",
-  MEN: "MEN",
-  MEN_ONLY: "MEN",
-  MIXED: "MIXED",
-  WOMEN: "WOMEN",
-  WOMEN_ONLY: "WOMEN",
-  OTHER: "OTHER",
-};
-
-const Gender = ({ variant, className = "" }: GenderProps) => {
-  const variantClass = `gender${pascalCaseToTitleCase(variant)}`;
-
-  const includeFemaleIcon = ["WOMEN", "WOMEN_ONLY", "MIXED", "ALL"].includes(variant);
-  const includeMaleIcon = ["MEN", "MEN_ONLY", "MIXED", "ALL"].includes(variant);
+const Gender = ({
+  className = "",
+  color = "neutral",
+  showIcon = true,
+  variant = "bold",
+  value
+}: GenderProps) => {
+  const genderClass = `gender${pascalCaseToTitleCase(value || "")}`;
+  const normalizedGender = normalizeGender(value) || "";
+  const includeFemaleIcon = normalizedGender === "WOMEN" || normalizedGender === "MIXED";
+  const includeMaleIcon = normalizedGender === "MEN" || normalizedGender === "MIXED";
+  const colorClass = color === "gray" ? styles.genderGray : "";
+  const typographyClass = variant === "normal" ? '' : styles.badgeBold;
 
   return (
     <div
-      className={[
+      className={cn(
         styles.badge,
+        colorClass,
+        typographyClass,
         styles.gender,
-        styles[variantClass],
+        styles[genderClass],
         className
-      ].filter(Boolean).join(" ")}
+      )}
     >
-      {includeFemaleIcon && (
-        <Image src="/static/images/icons/gender-female.svg" alt="Female" width={24} height={24} />
-      )}
-      {includeMaleIcon && (
-        <Image src="/static/images/icons/gender-male.svg" alt="Male" width={24} height={24} />
-      )}
-      {genderLabels[variant]}
+      {showIcon && includeFemaleIcon && <FemaleIcon />}
+      {showIcon && includeMaleIcon && <MaleIcon />}
+      {textToTitleCase(normalizedGender)}
     </div>
   );
 };

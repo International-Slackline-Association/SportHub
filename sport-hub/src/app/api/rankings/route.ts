@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const discipline = request.nextUrl.searchParams.get('discipline') ?? undefined;
     const gender = request.nextUrl.searchParams.get('gender');
 
-    const rankings = await getRankingsData(year, discipline, normalizeGender(gender));
+    const rankings = await getRankingsData(year, discipline, normalizeGender(gender) as Gender);
     return NextResponse.json(rankings);
   } catch (error) {
     console.error('Error fetching rankings data:', error);

@@ -21,6 +21,7 @@ const Discipline = ({ variant, className = "" }: DisciplineProps) => {
     <div
       className={[
         styles.badge,
+        styles.badgeBold,
         styles[variantClass],
         className,
         styles.test,

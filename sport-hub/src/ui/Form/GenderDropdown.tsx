@@ -1,46 +1,27 @@
 'use client';
 
-import Image from 'next/image';
 import React, { useEffect, useRef, useState } from 'react';
 import styles from './styles.module.css';
 import { cn } from '@utils/cn';
+import { Gender } from '@ui/Badge';
 
 export interface GenderDropdownProps {
   className?: string;
   id?: string;
-  includeAll?: boolean;
-  initialValue?: Gender;
-  onChange?: (value: Gender) => void;
+  initialValue?: string;
+  onChange?: (value: string) => void;
 }
 
-const renderGenderIcon = (value: Gender) => {
-  switch (value) {
-    case 'MEN':
-      return <Image src="/static/images/icons/gender-male.svg" alt="Male" width={12} height={12} />;
-    case 'WOMEN':
-      return <Image src="/static/images/icons/gender-female.svg" alt="Female" width={12} height={12} />;
-    default:
-      return null;
-  }
-};
-
-export default function GenderDropdown({
+const GenderDropdown = ({
   className,
   id,
-  includeAll = true,
   initialValue = 'WOMEN',
+  options,
   onChange,
-}: GenderDropdownProps) {
-  const [value, setValue] = useState<Gender>(initialValue);
+}: GenderDropdownProps & { options: Option[] }) => {
+  const [value, setValue] = useState(initialValue);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const options = [
-    { value: 'MEN' as Gender, label: 'Men' },
-    { value: 'WOMEN' as Gender, label: 'Women' }
-  ];
-  if (includeAll) {
-    options.push({ value: 'ALL' as Gender, label: 'Mixed' });
-  }
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -55,8 +36,8 @@ export default function GenderDropdown({
 
   const handleSelect = (option: Option) => {
     setIsOpen(false);
-    setValue(option.value as Gender);
-    onChange?.(option.value as Gender);
+    setValue(option.value);
+    onChange?.(option.value);
   };
 
   const selectedOption = options.find((option) => option.value === value) ?? options[0];
@@ -84,10 +65,7 @@ export default function GenderDropdown({
                   className={cn(styles.dropdownButton)}
                   onClick={() => handleSelect(option)}
                 >
-                  <div className="cluster gap-2">
-                    {renderGenderIcon(option.value)}
-                    {option.label}
-                  </div>
+                  <Gender value={option.value} variant="normal" />
                 </button>
               </li>
             ))}
@@ -95,5 +73,33 @@ export default function GenderDropdown({
         </div>
       )}
     </div>
+  );
+};
+
+export function RankingsGenderDropdown(props: GenderDropdownProps) {
+  return (
+    <GenderDropdown
+      {...props}
+      initialValue={props.initialValue ?? 'WOMEN'}
+      options={[
+        { value: 'MEN' as Gender, label: 'Men' },
+        { value: 'WOMEN' as Gender, label: 'Women' }
+      ]}
+    />
+  );
+}
+
+export function ContestsGenderDropdown(props: GenderDropdownProps) {
+  return (
+    <GenderDropdown
+      {...props}
+      initialValue="All"
+      options={[
+        { value: 'All' as Gender, label: 'All' },
+        { value: 'Men' as Gender, label: 'Men' },
+        { value: 'Women' as Gender, label: 'Women' },
+        { value: 'Mixed' as Gender, label: 'Mixed' }
+      ]}
+    />
   );
 }
