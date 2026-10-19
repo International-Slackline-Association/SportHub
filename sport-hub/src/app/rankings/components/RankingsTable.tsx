@@ -110,7 +110,7 @@ const columns = [
 const FIRST_COMP_YEAR = 2017;
 const CURRENT_YEAR = new Date().getFullYear();
 const YEAR_OPTIONS = [
-  { value: 'last3years', label: 'Last 3 Years' },
+  { value: 'LAST_3_YEARS', label: 'Last 3 Years' },
   ...Array.from({ length: CURRENT_YEAR - FIRST_COMP_YEAR + 1 }, (_, i) => {
     const y = String(CURRENT_YEAR - i);
     return { value: y, label: y };
@@ -145,11 +145,19 @@ const RankingsTable = ({
     queryKey: ['rankings', season, disciplineEnumValue, gender],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (season !== 'last3years') params.set('year', season);
+      if (season !== 'LAST_3_YEARS') params.set('year', season);
       if (disciplineEnumValue) params.set('discipline', String(disciplineEnumValue));
       if (gender === 'MEN' || gender === 'WOMEN') params.set('gender', gender);
-      const url = `/api/rankings${params.size ? '?' + params.toString() : ''}`;
-      return (await fetch(url)).json();
+
+      const url = `/api/rankings${params.size ? '?' + params.toString() : ''}`;      
+      const res = await fetch(url);
+      const resObj = await res.json();
+
+      if ("error" in resObj) {
+        throw new Error(`Failed to fetch rankings data: ${resObj.error}`);
+      }
+
+      return resObj;
     },
   });
 
@@ -162,7 +170,7 @@ const RankingsTable = ({
         </div>
       )}
       {isError && (
-        <Alert>Failed to load rankings data: {error?.message}</Alert>
+        <Alert variant="error">{error?.message}</Alert>
       )}
       {isSuccess && (
         <Table

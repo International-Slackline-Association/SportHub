@@ -260,19 +260,14 @@ export async function getRankingsData(
 
   if (cached) return cached;
 
-  try {
-    const { men, women } = await getRankingsForYears(resolvedYears, discipline);
-    const rankings = 
-      gender === 'MEN' ? men
-      : gender === 'WOMEN' ? women
-      : [...women, ...men];
+  const { men, women } = await getRankingsForYears(resolvedYears, discipline);
+  const rankings = 
+    gender === 'MEN' ? men
+    : gender === 'WOMEN' ? women
+    : [...women, ...men];
 
-    cache.set(cacheKey, rankings, 120000);
-    return rankings;
-  } catch (error) {
-    console.error('Error fetching rankings data:', error);
-    return [];
-  }
+  cache.set(cacheKey, rankings, 120000);
+  return rankings;
 }
 
 /**

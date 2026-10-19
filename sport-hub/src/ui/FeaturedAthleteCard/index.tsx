@@ -100,7 +100,14 @@ export const FeaturedAthleteSection = ({
       params.set('season', season);
       params.set('gender', gender);
       const url = `/api/athlete/featured?${params.toString()}`;
-      return (await fetch(url)).json();
+      const res = await fetch(url);
+      const resObj = await res.json();
+
+      if ("error" in resObj) {
+        throw new Error(`Failed to fetch featured athletes: ${resObj.error}`);
+      }
+
+      return resObj;
     },
   });
 
@@ -110,7 +117,7 @@ export const FeaturedAthleteSection = ({
         Featured Athletes {isLoading && <Spinner className="ml-4" />}
       </h2>
       {isError && (
-        <Alert variant="error">Error loading featured athletes: {error.message}</Alert>
+        <Alert variant="error">{error?.message}</Alert>
       )}
       {isSuccess && !athletes.length && (
         <Alert variant="error">No featured athletes found</Alert>
