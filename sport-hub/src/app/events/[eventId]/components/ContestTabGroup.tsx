@@ -50,7 +50,7 @@ export const ContestTabGroup = ({ contests, ...tabGroupProps }: Omit<TabGroupPro
                 <Icon height={24} width={24} />
                 {disciplineName}
               </div>
-              <Gender variant={(gender || "") as ContestGender} />
+              <Gender value={(gender || "") as ContestGender} />
               <AgeCategory variant={(ageCategory || "") as AgeCategory} />
               <ContestSize variant={contestSize as ContestType} />
             </div>

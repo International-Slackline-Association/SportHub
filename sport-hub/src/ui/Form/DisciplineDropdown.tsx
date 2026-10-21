@@ -51,7 +51,7 @@ export default function DisciplineDropdown({
         Discipline
       </label>
       <input
-        className={"text-base"}
+        className={cn(styles.dropdownTrigger, 'text-base')}
         id={id}
         onFocus={() => setIsOpen(true)}
         readOnly

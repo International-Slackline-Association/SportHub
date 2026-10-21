@@ -50,7 +50,7 @@ export default async function Home() {
   try {
     [featuredContestsData, featuredAthletesData] = await Promise.all([
       getFeaturedContests(),
-      getFeaturedAthletes(undefined, NUM_FEATURED_ATHLETES),
+      getFeaturedAthletes(),
     ]);
   } catch (err) {
     debugError = err instanceof Error ? `${err.message}\n${err.stack}` : String(err);

@@ -10,8 +10,10 @@ export interface StackedMediaCardProps {
   href?: string;
   media: ReactNode;
   mobileDirection?: 'horizontal' | 'vertical';
-  padding?: string | number;
   onClick?: () => void;
+  onMouseEnter?: React.MouseEventHandler<HTMLDivElement>;
+  onMouseLeave?: React.MouseEventHandler<HTMLDivElement>;
+  padding?: string | number;
 }
 
 /**
@@ -27,8 +29,10 @@ export const StackedMediaCard = ({
   href,
   media,
   mobileDirection = 'horizontal',
-  padding = 'p-4',
   onClick,
+  onMouseEnter,
+  onMouseLeave,
+  padding = 'p-4',
 }: StackedMediaCardProps) => {
   const cardClassName = cn(
     styles.card,
@@ -63,7 +67,7 @@ export const StackedMediaCard = ({
   }
 
   return (
-    <div className={cardClassName}>
+    <div className={cardClassName} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       {content}
     </div>
   );

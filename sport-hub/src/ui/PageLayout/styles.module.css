@@ -30,6 +30,14 @@
   z-index: 1;
 }
 
+.pageHeader {
+  padding: 0.5rem 1rem;
+
+  @media (min-width: 40rem) {  /* --breakpoint-sm: 640px */
+    padding: none;
+  }
+}
+
 .overlayTextOnImage {
   position: absolute;
   padding-top: 0.25rem;

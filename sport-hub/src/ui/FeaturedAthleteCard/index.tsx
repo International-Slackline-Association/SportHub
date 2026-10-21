@@ -79,9 +79,17 @@ export const FeaturedAthleteCard = ({ athlete }: FeaturedAthleteCardProps) => {
   );
 };
 
-export const FeaturedAthleteSection = ({ discipline }: { discipline: Discipline }) => {
+export const FeaturedAthleteSection = ({
+  discipline,
+  season,
+  gender,
+}: {
+  discipline: Discipline;
+  season: string;
+  gender: Gender;
+}) => {
   const { data: athletes, error, isError, isLoading, isSuccess } = useQuery({
-    queryKey: ['featured-athletes', discipline],
+    queryKey: ['featured-athletes', discipline, season, gender],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (discipline === 'TRICKLINE') {
@@ -89,8 +97,17 @@ export const FeaturedAthleteSection = ({ discipline }: { discipline: Discipline 
       } else {
         params.set("discipline", discipline);
       }
+      params.set('season', season);
+      params.set('gender', gender);
       const url = `/api/athlete/featured?${params.toString()}`;
-      return (await fetch(url)).json();
+      const res = await fetch(url);
+      const resObj = await res.json();
+
+      if ("error" in resObj) {
+        throw new Error(`Failed to fetch featured athletes: ${resObj.error}`);
+      }
+
+      return resObj;
     },
   });
 
@@ -100,7 +117,7 @@ export const FeaturedAthleteSection = ({ discipline }: { discipline: Discipline 
         Featured Athletes {isLoading && <Spinner className="ml-4" />}
       </h2>
       {isError && (
-        <Alert variant="error">Error loading featured athletes: {error.message}</Alert>
+        <Alert variant="error">{error?.message}</Alert>
       )}
       {isSuccess && !athletes.length && (
         <Alert variant="error">No featured athletes found</Alert>

@@ -3,10 +3,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { CardGrid } from '@ui/Card';
-import { StackedMediaCard } from '@ui/StackedMediaCard';
-import { DISCIPLINE_DATA } from '@utils/consts';
 import { S3_IMAGES, randomS3Image, type HeroImage } from '@utils/images';
 import styles from '../page.module.css';
+import DisciplineCard from './DisciplineCard';
 
 const DISCIPLINES: Discipline[] = [
   'FREESTYLE_HIGHLINE',
@@ -184,53 +183,28 @@ export function DisciplineHeroSection() {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Rankings</h2>
         <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory sm:hidden">
-          {DISCIPLINES.map(discipline => {
-            const { name, description, Icon } = DISCIPLINE_DATA[discipline];
-            return (
-              <div
-                key={discipline}
-                className="min-w-64 shrink-0 snap-start"
+          {DISCIPLINES.map(discipline => (
+            <div
+              key={discipline}
+              className="min-w-64 shrink-0 snap-start"
+            >
+              <DisciplineCard
+                discipline={discipline}
                 onMouseEnter={() => handleMouseEnter(discipline)}
-              >
-                <StackedMediaCard
-                  href={`/rankings?discipline=${discipline}`}
-                  className="h-48"
-                  media={<Icon />}
-                  desktopDirection="vertical"
-                  mobileDirection="vertical"
-                  hoverable
-                >
-                  <span className="font-bold block">{name}</span>
-                  <span className="font-normal text-sm">{description}</span>
-                </StackedMediaCard>
-              </div>
-            );
-          })}
+              />
+            </div>
+          ))}
         </div>
 
         <div className="hidden sm:block">
           <CardGrid columns={5}>
-            {DISCIPLINES.map(discipline => {
-              const { name, description, Icon } = DISCIPLINE_DATA[discipline];
-              return (
-                <div
-                  key={discipline}
-                  onMouseEnter={() => handleMouseEnter(discipline)}
-                >
-                  <StackedMediaCard
-                    href={`/rankings?discipline=${discipline}`}
-                    className="h-48"
-                    media={<Icon />}
-                    desktopDirection="vertical"
-                    mobileDirection="vertical"
-                    hoverable
-                  >
-                    <span className="font-bold block">{name}</span>
-                    <span className="font-normal text-sm">{description}</span>
-                  </StackedMediaCard>
-                </div>
-              );
-            })}
+            {DISCIPLINES.map(discipline => (
+              <DisciplineCard
+                key={discipline}
+                discipline={discipline}
+                onMouseEnter={() => handleMouseEnter(discipline)}
+              />
+            ))}
           </CardGrid>
         </div>
       </section>

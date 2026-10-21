@@ -28,6 +28,7 @@ const ContestSize = ({ variant, className = "" }: ContestSizeProps) => {
     <div
       className={[
         styles.badge,
+        styles.badgeBold,
         styles.contestSize,
         styles[variantClass],
         className

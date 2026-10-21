@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
 import { AthleteRanking } from '@lib/data-services';
 import Table from '@ui/Table';
@@ -13,11 +12,14 @@ import Spinner from '@ui/Spinner';
 import { Alert } from '@ui/Alert';
 import tableStyles from '@ui/Table/styles.module.css';
 import { CountryFlag } from '@ui/CountryFlag';
-import { DisciplineDropdown } from '@ui/Form';
+import { DisciplineDropdown, RankingsGenderDropdown } from '@ui/Form';
 import { DISCIPLINE_DATA, MAP_DISCIPLINE_ENUM_TO_NAME } from '@utils/consts';
 import { Tooltip } from '@ui/Tooltip';
 import { cn } from '@utils/cn';
 import { AthleteParticipationRecord } from '@lib/relational-types';
+import { Gender } from '@ui/Badge';
+import { normalizeGender } from '@utils/gender';
+import { textToTitleCase } from '@utils/strings';
 
 const linkClassName = 'text-blue-600 hover:text-blue-800 hover:underline font-medium';
 
@@ -47,11 +49,11 @@ const columns = [
   // Mobile: single stacked column
   columnHelper.display({
     id: 'athlete',
-    header: 'Athlete mo',
+    header: 'Athlete',
     enableSorting: false,
     cell: info => {
       const { age, gender, country } = info.row.original;
-      const genderLabel = gender === 'female' ? 'Women' : gender === 'male' ? 'Men' : '—';
+      const displayGender = textToTitleCase(normalizeGender(gender) || '');
       return (
         <div className="stack gap-2">
           <div className="cluster gap-2 items-center">
@@ -60,7 +62,7 @@ const columns = [
           </div>
           <div className="cluster gap-2 items-center">
             <CountryFlag country={country} defaultValue="" />
-            <span className="text-xs text-gray-400" style={{ paddingTop: 2 }}>{genderLabel}</span>
+            <span className="text-sm text-gray-400">{displayGender}</span>
           </div>
         </div>
       );
@@ -90,18 +92,10 @@ const columns = [
   }),
   columnHelper.accessor('gender', {
     header: 'Gender',
-    enableColumnFilter: true,
     enableSorting: false,
-    filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
-    cell: info => info.getValue() === 'female' ? 'Women' : info.getValue() === 'male' ? 'Men' : '—',
-    meta: {
-      filterVariant: 'select',
-      filterNoAll: true,
-      filterOptions: [
-        { value: 'female', label: 'Women' },
-        { value: 'male', label: 'Men' },
-      ],
-    },
+    cell: info => (
+      <Gender value={info.getValue()} variant="normal" showIcon={false} />
+    ),
   }),
   columnHelper.accessor((row: AthleteRanking) => getIocCode(row.country), {
     id: 'country',
@@ -116,7 +110,7 @@ const columns = [
 const FIRST_COMP_YEAR = 2017;
 const CURRENT_YEAR = new Date().getFullYear();
 const YEAR_OPTIONS = [
-  { value: 'last3years', label: 'Last 3 Years' },
+  { value: 'LAST_3_YEARS', label: 'Last 3 Years' },
   ...Array.from({ length: CURRENT_YEAR - FIRST_COMP_YEAR + 1 }, (_, i) => {
     const y = String(CURRENT_YEAR - i);
     return { value: y, label: y };
@@ -125,12 +119,22 @@ const YEAR_OPTIONS = [
 
 type RankingsTableProps = {
   discipline: Discipline;
+  gender: Gender;
   onChangeDiscipline: (discipline: Discipline) => void;
+  onChangeGender: (gender: Gender) => void;
+  onChangeSeason: (season: string) => void;
+  season: string;
 }
 
-const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) => {
+const RankingsTable = ({
+  discipline,
+  gender,
+  onChangeDiscipline,
+  onChangeGender,
+  onChangeSeason,
+  season,
+}: RankingsTableProps) => {
   const { isDesktop } = useClientMediaQuery();
-  const [selectedYear, setSelectedYear] = useState('last3years');
   const disciplineEnumValue = DISCIPLINE_DATA[discipline].enumValue;
 
   const handleChangeDiscipline = (enumValue: string) => {
@@ -138,13 +142,22 @@ const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) =
   };
 
   const { data = [], error, isError, isLoading, isSuccess } = useQuery({
-    queryKey: ['rankings', selectedYear, disciplineEnumValue],
+    queryKey: ['rankings', season, disciplineEnumValue, gender],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (selectedYear !== 'last3years') params.set('year', selectedYear);
+      if (season !== 'LAST_3_YEARS') params.set('year', season);
       if (disciplineEnumValue) params.set('discipline', String(disciplineEnumValue));
-      const url = `/api/rankings${params.size ? '?' + params.toString() : ''}`;
-      return (await fetch(url)).json();
+      if (gender === 'MEN' || gender === 'WOMEN') params.set('gender', gender);
+
+      const url = `/api/rankings${params.size ? '?' + params.toString() : ''}`;      
+      const res = await fetch(url);
+      const resObj = await res.json();
+
+      if ("error" in resObj) {
+        throw new Error(`Failed to fetch rankings data: ${resObj.error}`);
+      }
+
+      return resObj;
     },
   });
 
@@ -157,18 +170,18 @@ const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) =
         </div>
       )}
       {isError && (
-        <Alert>Failed to load rankings data: {error?.message}</Alert>
+        <Alert variant="error">{error?.message}</Alert>
       )}
       {isSuccess && (
         <Table
           extraFilters={
             <>
               <div className={tableStyles.columnFilter}>
-                <label htmlFor="rankings-year">Timeframe</label>
+                <label htmlFor="rankings-season">Season</label>
                 <select
-                  id="rankings-year"
-                  value={selectedYear}
-                  onChange={e => setSelectedYear(e.target.value)}
+                  id="rankings-season"
+                  value={season}
+                  onChange={e => onChangeSeason(e.target.value)}
                 >
                   {YEAR_OPTIONS.map(opt => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -181,6 +194,12 @@ const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) =
                 initialValue={String(disciplineEnumValue)}
                 onChange={handleChangeDiscipline}
               />
+              <RankingsGenderDropdown
+                className={tableStyles.columnFilter}
+                id="rankings-gender"
+                initialValue={gender}
+                onChange={value => onChangeGender(value as Gender)}
+              />
             </>
           }
           options={{
@@ -191,7 +210,7 @@ const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) =
                   <div className={cn("flex gap-2", isDesktop ? "flex-row" : "flex-col")}>
                     Points
                     <Tooltip
-                      content={'Ranking is determined by adding the top two awarded points from the contests athletes have participated in within the defined timeframe.'}
+                      content={'Ranking is determined by adding the top two awarded points from the contests athletes have participated in within the defined season.'}
                       position="bottom"
                     />
                   </div>
@@ -225,7 +244,6 @@ const RankingsTable = ({ discipline, onChangeDiscipline }: RankingsTableProps) =
             ],
             data,
             initialState: {
-              columnFilters: [{ id: 'gender', value: 'female' }],
               columnOrder: isDesktop
                 ? ['rank', 'fullName', 'age', 'gender', 'country', 'points']
                 : ['rank', 'athlete', 'points'],

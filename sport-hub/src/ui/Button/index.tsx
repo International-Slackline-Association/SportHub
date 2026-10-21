@@ -24,10 +24,10 @@ const Button = ({
   ...props
 }: ButtonProps) => {
   const classNameCombined = cn(
-    className,
     styles.button,
     styles[variant],
-    styles[size]
+    styles[size],
+    className
   );
 
   if (as === "link" && href) {

@@ -22,6 +22,7 @@ const Role = ({ variant, className = "" }: RoleProps) => {
     <div
       className={[
         styles.badge,
+        styles.badgeBold,
         styles[variantClass],
         className
       ].filter(Boolean).join(" ")}

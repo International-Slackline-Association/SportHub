@@ -20,6 +20,7 @@ const AgeCategory = ({ variant, className = "" }: AgeCategoryProps) => {
     <div
       className={[
         styles.badge,
+        styles.badgeBold,
         styles[variantClass],
         className
       ].filter(Boolean).join(" ")}

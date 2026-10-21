@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { normalizeGender } from '@utils/gender';
 import { FeaturedAthleteSection } from '@ui/FeaturedAthleteCard'
 import PageLayout from '@ui/PageLayout'
 import RankingsTable from './components/RankingsTable'
@@ -18,6 +19,7 @@ const Page = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+
   // Lazy initializer runs once on mount only — the state that follows is
   // real, settable state, so a later router.replace() (which re-renders
   // every useSearchParams() subscriber, including this page) never resets
@@ -26,6 +28,12 @@ const Page = () => {
     const rawDiscipline = searchParams.get("discipline") as Discipline;
     return SUPPORTED_DISCIPLINES.includes(rawDiscipline) ? rawDiscipline : randomDiscipline();
   });
+  const [season, setSeason] = useState<string>(() => {
+    return searchParams.get('season') ?? 'LAST_3_YEARS';
+  });
+  const [gender, setGender] = useState<Gender>(() => {
+    return normalizeGender(searchParams.get('gender')) as Gender || "WOMEN";
+  });
 
   const handleChangeDiscipline = (nextDiscipline: Discipline) => {
     setDiscipline(nextDiscipline);
@@ -33,12 +41,28 @@ const Page = () => {
     // Drop the now-stale ?discipline= param from the URL once the user
     // picks a different one via the table — no navigation, just a shallow
     // URL update (router.replace, no new history entry).
-    if (searchParams.has('discipline')) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.delete('discipline');
-      const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-    }
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('discipline', nextDiscipline);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
+
+  const handleChangeSeason = (nextSeason: string) => {
+    setSeason(nextSeason);
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('season', nextSeason);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
+
+  const handleChangeGender = (nextGender: Gender) => {
+    setGender(nextGender);
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('gender', nextGender);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
   return (
@@ -47,9 +71,16 @@ const Page = () => {
       heroImage={randomS3Image(discipline)}
       title="Rankings"
     >
-      <FeaturedAthleteSection discipline={discipline} />
+      <FeaturedAthleteSection discipline={discipline} season={season} gender={gender} />
       <section className="p-4 sm:p-0">
-        <RankingsTable discipline={discipline} onChangeDiscipline={handleChangeDiscipline} />
+        <RankingsTable
+          discipline={discipline}
+          onChangeDiscipline={handleChangeDiscipline}
+          season={season}
+          onChangeSeason={handleChangeSeason}
+          gender={gender}
+          onChangeGender={handleChangeGender}
+        />
       </section>
     </PageLayout>
   );

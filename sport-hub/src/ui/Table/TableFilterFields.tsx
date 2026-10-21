@@ -2,7 +2,7 @@ import { Column, Row } from "@tanstack/react-table";
 import styles from "./styles.module.css";
 import Autocomplete from "@ui/Form/Autocomplete";
 import { COUNTRIES } from "@utils/countries";
-import { DisciplineDropdown } from "@ui/Form";
+import { ContestsGenderDropdown, DisciplineDropdown } from "@ui/Form";
 import { useState } from "react";
 import formStyles from "@ui/Form/styles.module.css";
 import { cn } from "@utils/cn";
@@ -280,6 +280,20 @@ const DisciplineTableFilter = <TData,>({ column }: TableFilterProps<TData>) => {
   );
 };
 
+const ContestGenderTableFilter = <TData,>({ column }: TableFilterProps<TData>) => {
+  const id = column.id;
+
+  return (
+    <ContestsGenderDropdown
+      className={styles.columnFilter}
+      id={id}
+      onChange={value => column.setFilterValue(
+        value === "All" ? undefined : value as ContestGender
+      )}
+    />
+  );
+};
+
 const TableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
   const filterVariant = column.columnDef?.meta?.filterVariant;
 
@@ -301,6 +315,10 @@ const TableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
 
   if (filterVariant === "discipline") {
     return <DisciplineTableFilter column={column} rows={rows} />;
+  }
+
+  if (filterVariant === "contest-gender") {
+    return <ContestGenderTableFilter column={column} rows={rows} />;
   }
 
   return <SelectTableFilter column={column} rows={rows} />;
