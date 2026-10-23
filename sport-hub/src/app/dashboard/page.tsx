@@ -2,6 +2,7 @@ import { auth } from "@lib/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import PageLayout from "@ui/PageLayout"
+import Button from "@ui/Button"
 import ProfileSection from "./components/ProfileSection"
 import { getUserProfile, getFullUserProfile, becomeOrganizer } from "./actions"
 
@@ -60,10 +61,10 @@ export default async function DashboardPage() {
 
         {/* World records and firsts */}
         <div className="bg-white shadow rounded-lg p-4 flex items-center justify-between gap-4 flex-wrap">
-          <span className="font-medium text-sm">World records and world firsts</span>
-          <div className="flex gap-4">
-            <Link href="/world_records/claim" className="text-sm text-blue-600 hover:underline font-medium">Submit a claim</Link>
-            <Link href="/world_records/my-claims" className="text-sm text-blue-600 hover:underline font-medium">My claims →</Link>
+          <span className="font-medium text-sm">Records &amp; Firsts</span>
+          <div className="flex gap-3 flex-wrap">
+            <Button as="link" href="/world_records/claim" variant="secondary" size="small">Submit a claim</Button>
+            <Button as="link" href="/world_records/my-claims" variant="secondary" size="small">My Claims</Button>
           </div>
         </div>
 
