@@ -21,13 +21,13 @@ import { TableFilters } from "./TableFilters";
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface ColumnMeta<TData extends RowData, TValue> {
-    filterVariant?: "text" | "select" | "date-range" | "autocomplete" | "country" | "discipline" | "contest-gender";
+    filterVariant?: "text" | "select" | "date-range" | "autocomplete" | "country" | "discipline" | "contest-gender" | "contest-size";
     /** Explicit options for select filters. When provided, overrides data-derived options. */
     filterOptions?: { value: string; label: string }[];
     /** Custom placeholder text for text filters. */
     filterPlaceholder?: string;
-    /** When true, hides the blank "All" option in select filters. */
-    filterNoAll?: boolean;
+    /** When true, includes the "All" option in select filters. */
+    filterIncludeAll?: boolean;
     /** When true, renders toggle to filter for future dates */
     dateFilterShowUpcomingToggle?: boolean;
   }

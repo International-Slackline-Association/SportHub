@@ -167,8 +167,12 @@
 .accordionOpen {
   max-height: 1000px; /* Set a max height larger than content */
   opacity: 1;
-  overflow: hidden;
+  overflow: visible;
   transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+
+  @media (min-width: 40rem) {
+    overflow: hidden;
+  }
 }
 
 .accordionClose {

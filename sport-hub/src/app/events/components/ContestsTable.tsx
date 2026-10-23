@@ -5,10 +5,9 @@ import Table, { RowClassContext } from '@ui/Table';
 import { ContestData } from "@lib/data-services";
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { DISCIPLINE_DATA, MAP_CONTEST_TYPE_ENUM_TO_NAME, MAP_CONTEST_GENDER_ENUM_TO_NAME } from '@utils/consts';
+import { DISCIPLINE_DATA, MAP_CONTEST_GENDER_ENUM_TO_NAME } from '@utils/consts';
 import { CircleFlag } from 'react-circle-flags';
 import { COUNTRIES, getIocCode, getIso2FromIoc } from '@utils/countries';
-import { contestSizeOptions } from '@ui/Form/commonOptions';
 import { dateFilterFn } from '@ui/Table/TableFilterFields';
 import Spinner from '@ui/Spinner';
 import { Alert } from '@ui/Alert';
@@ -16,8 +15,9 @@ import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import { CountryFlag } from '@ui/CountryFlag';
 import styles from './styles.module.css';
 import { formatDateRange } from '@utils/dates';
-import { kebabCaseToTitleCase, snakeCaseToTitleCase } from '@utils/strings';
-import { Gender } from '@ui/Badge';
+import { kebabCaseToTitleCase } from '@utils/strings';
+import { ContestSize, Gender } from '@ui/Badge';
+import { normalizeContestSize } from '@utils/contestSize';
 
 const normalizeGroupField = (value: string | null | undefined) =>
   String(value ?? '')
@@ -90,34 +90,38 @@ const columns = [
       const d = String(discipline);
       const disciplineData = DISCIPLINE_DATA[d as keyof typeof DISCIPLINE_DATA]
         ?? Object.values(DISCIPLINE_DATA).find(e => e.enumValue === Number(d));
-      const size = contestSizeOptions.find(o => o.value === contestSize)?.label ?? String(contestSize);
       const winner = athletes?.find(a => a.place === '1');
-      const winnerName = winner ? `${winner.name} ${winner.surname || ''}`.trim() : null;
       const genderKey = MAP_CONTEST_GENDER_ENUM_TO_NAME[info.row.original.gender];
       const formattedDate = formatDateRange(new Date(startDate), new Date(endDate || startDate));
       return (
-        <div className="stack gap-1">
-          <div className="cluster justify-between items-center text-gray-400 mb-2">
-            <span className="text-xs">{formattedDate}</span>
+        <div className="grid grid-flow-row grid-cols-6">
+          <span className="text-sm col-span-2 self-center">{formattedDate}</span>
+          {winner && (
+            <Link href={`/athlete/${winner?.userId}`} className="text-blue-600 hover:underline col-span-4 text-sm justify-self-end">
+              {kebabCaseToTitleCase(winner.name)}
+            </Link>
+          )}
+
+          <div className='col-span-6 self-center flex flex-row items-center gap-2'>
+            <CountryFlag country={country} size={16} iconOnly />
+            <Link href={`/events/${eventId}`} className="text-blue-600 hover:underline font-medium col-span-5">
+              {name}
+            </Link>
+          </div>
+
+          <div className="col-span-6 self-center flex flex-row items-center gap-2 text-xs">
             {disciplineData && (
-              <div className="cluster gap-1 items-center text-xs">
+              <div className="flex flex-row items-center gap-2">
                 <disciplineData.Icon height={16} width={16} />
-                <span>{disciplineData.name}</span>
-                <span>{size}</span>
+                {disciplineData.name}
               </div>
             )}
-          </div>
-          <Link href={`/events/${eventId}`} className="text-blue-600 hover:underline font-medium">
-            {name}
-          </Link>
-          <div className="cluster justify-start items-center gap-2">
-            {winner && (
-              <Link href={`/athlete/${winner?.userId}`} className="text-blue-600 hover:underline">
-                {winnerName}
-              </Link>
-            )}
-            <CountryFlag country={country} />
-            <Gender className="text-xs" color="gray" variant="normal" value={genderKey} />
+            <Gender variant="normal" value={genderKey} />
+            <ContestSize
+              singleIcon
+              value={contestSize as ContestType}
+              variant="normal"
+            />
           </div>
         </div>
       );
@@ -197,29 +201,21 @@ const columns = [
       />
     ),
     filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
-    meta: { filterVariant: 'contest-gender', filterNoAll: false },
+    meta: { filterVariant: 'contest-gender', filterIncludeAll: true },
     size: 72,
   }),
   columnHelper.accessor("prize", {
     header: "Total Event Prize Value (€)",
     size: 72,
   }),
-  columnHelper.accessor("contestSize", {
+  columnHelper.accessor((row: ContestData) => normalizeContestSize(row.contestSize) ?? row.contestSize, {
     id: "size",
     enableColumnFilter: true,
     header: "Size",
-    cell: info => {
-      const contestSize = info.getValue();
-      const label = contestSizeOptions.find((option) => option.value == contestSize)?.label;
-      return label;
-    },
-    meta: {
-      filterOptions: Object.values(MAP_CONTEST_TYPE_ENUM_TO_NAME).map((label) => ({
-        value: label,
-        label: snakeCaseToTitleCase(label),
-      })),
-      filterVariant: 'select'
-    },
+    cell: info => (
+      <ContestSize className="flex-col items-start" value={info.getValue() as ContestType} variant="normal" />
+    ),
+    meta: { filterVariant: 'contest-size', filterIncludeAll: true },
     size: 120,
   }),
   columnHelper.accessor("athletes", {
