@@ -131,9 +131,12 @@ discontinued, and the material-specific ones (Polyester, Polyamide), are loaded 
 "Rankings" categories from v1 are not loaded. Records imported from the Google Sheet (FR-33) are
 matched to these categories; rows that match none are listed for an admin to resolve.
 
-- FR-C1 Each category stores: name, superlative direction (higher-is-better or
-  lower-is-better), value type (a number with a unit, or coordinates), leashed/unleashed, rule checklist (§7.4), and status
-  (Active / Unchallenged / Archived). The witness minimum is the same for every record (2, FR-12), so it is not
+- FR-C1 Each category stores: **name**, **description**, **group** (Length, Endurance, Speed, Altitude,
+  Other), **unit** (free text), superlative **direction** (higher-is-better or lower-is-better), and
+  **status** (Active / Unchallenged / Archived). Nothing else: no line type, leashed flag or rule
+  checklist. The units "m" (metres), "s" (a time, entered as e.g. "1:59 min") and "count" are read
+  smartly, "°" means coordinates (FR-C6), and any other unit is a plain number. Altitude is highline
+  height or depth. Changing a category's unit type re-reads the values of its entries. The witness minimum is the same for every record (2, FR-12), so it is not
   stored per category.
 - FR-C6 **Geographic category:** "most northern / most southern highline" is **one** category. Its value is the
   spot's coordinates, and the record with the larger **absolute latitude** wins (north or south). Longitude is
@@ -173,7 +176,7 @@ competition, as long as evidence is sufficient, so "in competition" is only an o
   the claimant sees the mark to beat. The claimed value must **beat or equal** it in the category's direction;
   the form blocks values below it. A claim that equals the current record makes the athlete(s) **co-holders**
   (FR-9c).
-- FR-6 The claimant confirms a checklist of the category's rules before submitting (§7.4).
+- FR-6 ~~The claimant confirms a checklist of the category's rules before submitting (§7.4).~~ Deferred, see open issue 1 (§11).
 - FR-7 The claimant confirms the claim follows the ISA ethics guidelines and Code of Conduct.
 - FR-8 The claimant can save a draft, withdraw a pending claim, and edit a claim when changes
   are requested.
@@ -225,9 +228,10 @@ competition, as long as evidence is sufficient, so "in competition" is only an o
   (for permanent archiving of evidence) are a planned later extension; the data model should allow
   evidence entries of type link or file.
 
-### 7.4 Category rules shown as checklist items
-The form shows the rules relevant to the chosen category, and the claimant ticks each one.
-The reviewer sees the same checklist.
+### 7.4 Category rules
+These are the ISA rules for sends and measurements. **Showing them as a per-category checklist on
+the claim form is deferred** (open issue 1, §11): the right checkboxes are hard to define for every
+kind of record. Only the world first rules are shown on the first claim form.
 
 **Highline send** (all highline length and height records):
 - The entire length of the line is walked, except for the no-fall zones, in any direction,
@@ -392,7 +396,6 @@ Records and firsts are different kinds of claim and are stored with different fi
 | Witnesses | yes | name, contact and role; at least 2 |
 | Evidence links | yes | at least one video link (FR-10 to FR-14) |
 | Reason if no full video | conditional | required when full video is missing (FR-11) |
-| Rule checklist confirmations | yes | per the category (§7.4) |
 | Ethics confirmation | yes | FR-7 |
 
 ### 8.2 World first claim
@@ -469,4 +472,7 @@ lets the Sport Commission's records group get access later without code changes.
 
 ## 11. Open questions
 
-None at the moment.
+1. **Per-category rule checklists (FR-6).** Jonas likes the idea of the claimant confirming the
+   category's rules (§7.4) on the claim form, but it is hard to get the right checkboxes for every
+   kind of record. Removed from v1 on 2026-10-23. To decide: which rules apply to which categories,
+   and whether the category stores its own checklist.

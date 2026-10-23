@@ -1,5 +1,5 @@
 import type { PendingUserData } from 'src/app/events/submit/types';
-import type { RecordUnit, RecordWitness, WorldEntryRecord } from '@lib/relational-types';
+import type { RecordWitness, WorldEntryRecord } from '@lib/relational-types';
 
 /** The three paths of the claim form (FR-4). */
 export type ClaimPath = 'existing' | 'new_category' | 'first';
@@ -17,7 +17,7 @@ export interface ClaimFormValues {
   newCategory: {
     name: string;
     measurement: string;
-    unit: RecordUnit;
+    unit: string;
     direction: 'higher' | 'lower';
     justification: string;
   };
@@ -35,7 +35,6 @@ export interface ClaimFormValues {
   witnesses: RecordWitness[];
   fullVideo: boolean;
   noFullVideoReason: string;
-  ruleConfirmations: string[];     // Checklist item ids (records-rules ruleItemIds)
 
   // Firsts
   trickName: string;
@@ -68,7 +67,6 @@ export const emptyClaim = (path: ClaimPath = 'existing'): ClaimFormValues => ({
   witnesses: [{ name: '', contact: '', role: '' }, { name: '', contact: '', role: '' }],
   fullVideo: true,
   noFullVideoReason: '',
-  ruleConfirmations: [],
   trickName: '',
   description: '',
   whyFirst: '',
@@ -128,6 +126,5 @@ export function entryToClaimValues(entry: WorldEntryRecord): ClaimFormValues {
     witnesses,
     fullVideo: !entry.noFullVideoReason,
     noFullVideoReason: entry.noFullVideoReason ?? '',
-    ruleConfirmations: entry.ruleConfirmations ?? [],
   };
 }

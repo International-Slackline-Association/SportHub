@@ -682,7 +682,6 @@ async function getWorldRecordsFromSheet(): Promise<WorldRecord[]> {
     categoryName: row.recordType,
     categoryGroup: row.lineType,
     categoryStatus: 'active',
-    lineType: row.lineType,
     value: row.specs,
     specs: '',
     list: sheetGender(row.gender),

@@ -30,7 +30,7 @@ import type {
   RecordEvidence,
 } from '../relational-types';
 import { buildFirstCategoryRecords, buildRecordCategoryRecords } from '../records-categories';
-import { deriveList, parseRecordValue, parseSheetDate, splitCurrentAndHistory, RECORD_LISTS } from '../records-logic';
+import { deriveList, parseRecordValue, parseSheetDate, splitCurrentAndHistory, unitKind, RECORD_LISTS } from '../records-logic';
 
 if (existsSync('.env.local')) process.loadEnvFile('.env.local');
 
@@ -125,6 +125,9 @@ const RECORD_TYPE_MAP: Record<string, string> = {
 };
 
 /** "Type of Line" on the World Firsts tab → first category id. */
+/** Categories that are joint by nature: sheet rows with the same value and date are one performance (FR-33a). */
+const JOINT_CATEGORY_IDS = new Set(['highline-length-tandem', 'rigging-group-most-lines-24h']);
+
 const FIRST_LINE_TYPE_MAP: Record<string, string> = {
   'freestyle highline': 'highline-freestyle',
   'freestyle trickline': 'trickline',
@@ -241,9 +244,10 @@ function transform(
       continue;
     }
     const value = parseRecordValue(category, row['Specs']);
-    const hasValue = category.valueType === 'coordinates' ? value.latitude !== undefined : value.amount !== undefined;
+    const isCoordinates = unitKind(category.unit) === 'coordinates';
+    const hasValue = isCoordinates ? value.latitude !== undefined : value.amount !== undefined;
     if (!hasValue) {
-      issues.push(issue('record', row, 'value_unparsed', `Could not read a ${category.valueType === 'coordinates' ? 'location' : category.unit} value from "${row['Specs']}"`));
+      issues.push(issue('record', row, 'value_unparsed', `Could not read a ${isCoordinates ? 'location' : category.unit} value from "${row['Specs']}"`));
       continue;
     }
     const entryId = `imp-${row['Cert ID']}`;
@@ -277,7 +281,7 @@ function transform(
   const records: RecordEntryRecord[] = [];
   const jointGroups = new Map<string, RecordEntryRecord>();
   for (const { category, entry, athlete } of pending) {
-    if (!category.joint) { records.push(entry); continue; }
+    if (!JOINT_CATEGORY_IDS.has(category.categoryId)) { records.push(entry); continue; }
     const key = `${category.categoryId}|${entry.value.amount}|${entry.date}`;
     const existing = jointGroups.get(key);
     if (!existing) { jointGroups.set(key, entry); records.push(entry); continue; }

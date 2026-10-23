@@ -261,18 +261,15 @@ export type FirstCategoryStatus = 'active' | 'archived';
 /** Claim lifecycle. "historical" only applies to records (a first cannot be beaten). */
 export type ClaimStatus = 'draft' | 'pending' | 'changes_requested' | 'published' | 'rejected' | 'historical';
 
-export type RecordValueType = 'number' | 'coordinates';
-/** Base unit a numeric value is stored in: metres, seconds, or a plain count. */
-export type RecordUnit = 'm' | 's' | 'count';
+/**
+ * Unit of a record category, free text. "m", "s" (time, entered as e.g. "1h 20min")
+ * and "count" get dedicated parsing; "°" means coordinates (compared by absolute
+ * latitude); anything else is a plain number shown with the unit.
+ */
+export type RecordUnit = string;
 
-/** Rule checklists shown on the claim form and to the reviewer (requirements §7.4). */
-export type RecordRuleSet =
-  | 'highline_send'
-  | 'longline_send'
-  | 'waterline'
-  | 'urban_highline'
-  | 'speedline'
-  | 'measurements';
+export const RECORD_CATEGORY_GROUPS = ['Length', 'Endurance', 'Speed', 'Altitude', 'Other'] as const;
+export type RecordCategoryGroup = (typeof RECORD_CATEGORY_GROUPS)[number];
 
 /**
  * Record category (pk = "RecordCategory", sortKey = "RecordCategory:{categoryId}")
@@ -283,16 +280,12 @@ export interface RecordCategoryRecord extends RecordsTableItem {
   pk: 'RecordCategory';
   categoryId: string;
   name: string;
-  group: string;                 // Display grouping only, e.g. "Highline length"
-  lineType: string;              // e.g. "Highline", "Longline", "Waterline", "Trickline"
+  description?: string;
+  group: RecordCategoryGroup;
   direction: 'higher' | 'lower'; // Which way is better
-  valueType: RecordValueType;
-  unit: RecordUnit;              // Ignored for coordinates (compared by absolute latitude)
-  leashed: boolean;
-  ruleSets: RecordRuleSet[];
+  unit: RecordUnit;
   status: RecordCategoryStatus;
-  joint?: boolean;               // Joint by nature (tandem, group rigging): sheet rows are merged on import
-  order: number;
+  order: number;                 // Display order
   createdAt: number;
   updatedAt: number;
 }
@@ -389,7 +382,6 @@ export interface RecordEntryRecord extends EntryBase {
   furtherSpecs?: string;
   witnesses: RecordWitness[];
   noFullVideoReason?: string;
-  ruleConfirmations?: string[];   // Confirmed checklist items, "{ruleSet}:{index}"
   newCategoryProposal?: NewCategoryProposal;
 }
 

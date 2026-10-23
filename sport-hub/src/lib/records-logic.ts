@@ -35,11 +35,34 @@ export const deriveList = (athletes: Pick<EntryAthlete, 'gender'>[]): RecordList
   return 'MIXED';
 };
 
-type CategoryRule = Pick<RecordCategoryRecord, 'direction' | 'valueType'>;
+/**
+ * How a free-text unit is read: metres, time (stored in seconds), a count,
+ * coordinates ("°", compared by absolute latitude) or a plain number.
+ */
+export type UnitKind = 'm' | 's' | 'count' | 'coordinates' | 'number';
+
+export const unitKind = (unit: RecordUnit | undefined): UnitKind => {
+  const u = (unit ?? '').trim().toLowerCase();
+  if (['m', 'meter', 'meters', 'metre', 'metres'].includes(u)) return 'm';
+  if (['s', 'sec', 'secs', 'second', 'seconds', 'time', 'duration'].includes(u)) return 's';
+  if (['', 'count', 'times', 'x', '#'].includes(u)) return 'count';
+  if (['°', 'deg', 'degree', 'degrees', 'latitude', 'coordinates'].includes(u)) return 'coordinates';
+  return 'number';
+};
+
+/** Units offered as suggestions; any other text works too. */
+export const UNIT_SUGGESTIONS: { value: string; label: string }[] = [
+  { value: 'm', label: 'm (metres, e.g. "1,038.5" or "2 km")' },
+  { value: 's', label: 's (time, entered as e.g. "1:59 min" or "12 min 18 sec")' },
+  { value: 'count', label: 'count (e.g. 25)' },
+  { value: '°', label: '° (coordinates, compared by absolute latitude)' },
+];
+
+type CategoryRule = Pick<RecordCategoryRecord, 'direction' | 'unit'>;
 
 /** The single number two values are compared on. Coordinates compare on absolute latitude (FR-C6). */
 export const comparableValue = (category: CategoryRule, value: RecordValue): number | undefined => {
-  if (category.valueType === 'coordinates') {
+  if (unitKind(category.unit) === 'coordinates') {
     return value.latitude === undefined ? undefined : Math.abs(value.latitude);
   }
   return value.amount;
@@ -141,26 +164,33 @@ const formatCoordinate = (value: number, positive: string, negative: string) =>
   `${Math.abs(value).toFixed(4)}° ${value >= 0 ? positive : negative}`;
 
 export const formatRecordValue = (
-  category: Pick<RecordCategoryRecord, 'valueType' | 'unit'>,
+  category: Pick<RecordCategoryRecord, 'unit'>,
   value: RecordValue,
 ): string => {
-  if (category.valueType === 'coordinates') {
+  const kind = unitKind(category.unit);
+  if (kind === 'coordinates') {
     if (value.latitude === undefined) return value.original ?? '';
     const lat = formatCoordinate(value.latitude, 'N', 'S');
     return value.longitude === undefined ? lat : `${lat}, ${formatCoordinate(value.longitude, 'E', 'W')}`;
   }
   if (value.amount === undefined) return value.original ?? '';
-  switch (category.unit) {
+  switch (kind) {
     case 'm': return `${formatNumber(value.amount)} m`;
     case 's': return formatDuration(value.amount);
     case 'count': return formatNumber(value.amount, 1);
+    case 'number': return `${formatNumber(value.amount)} ${category.unit.trim()}`;
   }
 };
 
-export const UNIT_LABELS: Record<RecordUnit, string> = {
-  m: 'metres',
-  s: 'seconds',
-  count: 'count',
+/** Hint for the value field of the claim form. */
+export const valueHint = (unit: RecordUnit | undefined): string => {
+  switch (unitKind(unit)) {
+    case 'm': return 'In metres, e.g. 2710 or 1,038.5';
+    case 's': return 'A time, e.g. 1:59 min, 12 min 18 sec or 48.67';
+    case 'count': return 'A number, e.g. 25';
+    case 'coordinates': return 'Coordinates of the line, e.g. 78°13′N 15°38′E or -77.85, 166.67';
+    case 'number': return `A number in ${unit}`;
+  }
 };
 
 // ============================================================================
@@ -250,18 +280,24 @@ export const parseCoordinates = (text: string): { latitude: number; longitude?: 
 
 /** Parses free text into a structured value for the category. `amount` stays undefined if it can't. */
 export const parseRecordValue = (
-  category: Pick<RecordCategoryRecord, 'valueType' | 'unit' | 'group'>,
+  category: Pick<RecordCategoryRecord, 'unit'> & { group?: string },
   text: string,
 ): RecordValue => {
   const original = text.trim();
-  if (category.valueType === 'coordinates') {
+  const kind = unitKind(category.unit);
+  if (kind === 'coordinates') {
     return { ...parseCoordinates(original), original };
   }
   let amount: number | undefined;
-  switch (category.unit) {
-    case 'm': amount = parseMetres(original, category.group === 'Highline height'); break;
+  switch (kind) {
+    case 'm': amount = parseMetres(original, category.group === 'Altitude'); break;
     case 's': amount = parseSeconds(original); break;
     case 'count': amount = parseCount(original); break;
+    case 'number': {
+      const m = original.match(new RegExp(String.raw`^(${NUMBER})`));
+      amount = m ? parseLooseNumber(m[1]) : undefined;
+      break;
+    }
   }
   return { amount: amount !== undefined && Number.isFinite(amount) ? amount : undefined, original };
 };

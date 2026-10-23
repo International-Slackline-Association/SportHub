@@ -4,19 +4,71 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@ui/Button';
 import { Alert } from '@ui/Alert';
-import { UNIT_LABELS } from '@lib/records-logic';
-import { RULE_CHECKLISTS } from '@lib/records-rules';
-import type { FirstCategoryRecord, FirstCategoryStatus, RecordCategoryRecord, RecordCategoryStatus, RecordRuleSet, RecordUnit } from '@lib/relational-types';
+import { UNIT_SUGGESTIONS, unitKind } from '@lib/records-logic';
+import { RECORD_CATEGORY_GROUPS } from '@lib/relational-types';
+import type { FirstCategoryRecord, FirstCategoryStatus, RecordCategoryGroup, RecordCategoryRecord, RecordCategoryStatus } from '@lib/relational-types';
 import { createFirstCategory, createRecordCategory, updateFirstCategory, updateRecordCategory, type NewFirstCategory, type NewRecordCategory } from './actions';
 
 const inputClass = 'border border-gray-300 rounded px-2 py-1 text-sm';
 const STATUS_OPTIONS: RecordCategoryStatus[] = ['active', 'unchallenged', 'archived'];
 const FIRST_STATUS_OPTIONS: FirstCategoryStatus[] = ['active', 'archived'];
-const RULE_SETS = Object.keys(RULE_CHECKLISTS) as RecordRuleSet[];
+
+const UNIT_LIST_ID = 'record-unit-suggestions';
+
+function UnitSuggestions() {
+  return (
+    <datalist id={UNIT_LIST_ID}>
+      {UNIT_SUGGESTIONS.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
+    </datalist>
+  );
+}
+
+const unitNote = (unit: string) => {
+  switch (unitKind(unit)) {
+    case 'm': return 'metres';
+    case 's': return 'time, stored in seconds';
+    case 'count': return 'count';
+    case 'coordinates': return 'coordinates, compared by absolute latitude';
+    default: return 'plain number';
+  }
+};
+
+type RecordDraft = Pick<RecordCategoryRecord, 'name' | 'group' | 'unit' | 'direction' | 'order'> & { description: string };
+
+function RecordCategoryFields({ value, onChange }: { value: Omit<RecordDraft, 'order'>; onChange: (v: Partial<RecordDraft>) => void }) {
+  return (
+    <>
+      <label className="text-xs stack gap-0.5">Name
+        <input className={inputClass} value={value.name} onChange={e => onChange({ name: e.target.value })} />
+      </label>
+      <label className="text-xs stack gap-0.5">Description
+        <textarea className={inputClass} rows={2} value={value.description} placeholder="What is measured and how" onChange={e => onChange({ description: e.target.value })} />
+      </label>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <label className="text-xs stack gap-0.5">Group
+          <select className={inputClass} value={value.group} onChange={e => onChange({ group: e.target.value as RecordCategoryGroup })}>
+            {RECORD_CATEGORY_GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
+          </select>
+        </label>
+        <label className="text-xs stack gap-0.5">Unit
+          <input className={inputClass} list={UNIT_LIST_ID} value={value.unit} placeholder="m, s, count, °, kg…" onChange={e => onChange({ unit: e.target.value })} />
+          <span className="text-gray-500">{unitNote(value.unit)}</span>
+        </label>
+        <label className="text-xs stack gap-0.5">Better is
+          <select className={inputClass} value={value.direction} onChange={e => onChange({ direction: e.target.value as 'higher' | 'lower' })}>
+            <option value="higher">Higher is better</option>
+            <option value="lower">Lower is better</option>
+          </select>
+        </label>
+      </div>
+    </>
+  );
+}
 
 function RecordCategoryRow({ category, onError }: { category: RecordCategoryRecord; onError: (e: string | null) => void }) {
   const router = useRouter();
-  const [draft, setDraft] = useState({ name: category.name, group: category.group, lineType: category.lineType, order: category.order, joint: !!category.joint, ruleSets: category.ruleSets });
+  const initial: RecordDraft = { name: category.name, description: category.description ?? '', group: category.group, unit: category.unit, direction: category.direction, order: category.order };
+  const [draft, setDraft] = useState<RecordDraft>(initial);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -32,41 +84,27 @@ function RecordCategoryRow({ category, onError }: { category: RecordCategoryReco
     <tr className="border-b border-gray-100 align-top">
       <td className="py-2 pr-2">
         {editing ? (
-          <div className="stack gap-1">
-            <input className={inputClass} value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} />
-            <input className={inputClass} value={draft.group} placeholder="Group" onChange={e => setDraft({ ...draft, group: e.target.value })} />
-            <input className={inputClass} value={draft.lineType} placeholder="Line type" onChange={e => setDraft({ ...draft, lineType: e.target.value })} />
+          <div className="stack gap-2">
+            <RecordCategoryFields value={draft} onChange={v => setDraft({ ...draft, ...v })} />
             <label className="text-xs flex gap-1 items-center">Order <input type="number" className={`${inputClass} w-20`} value={draft.order} onChange={e => setDraft({ ...draft, order: Number(e.target.value) })} /></label>
-            <label className="text-xs flex gap-1 items-center"><input type="checkbox" checked={draft.joint} onChange={() => setDraft({ ...draft, joint: !draft.joint })} /> Joint by nature (several athletes as one performance)</label>
-            <div className="text-xs stack gap-0.5">
-              Rule checklists
-              {RULE_SETS.map(rs => (
-                <label key={rs} className="flex gap-1 items-center">
-                  <input
-                    type="checkbox"
-                    checked={draft.ruleSets.includes(rs)}
-                    onChange={() => setDraft({ ...draft, ruleSets: draft.ruleSets.includes(rs) ? draft.ruleSets.filter(x => x !== rs) : [...draft.ruleSets, rs] })}
-                  />
-                  {RULE_CHECKLISTS[rs].title}
-                </label>
-              ))}
-            </div>
+            {unitKind(draft.unit) !== unitKind(category.unit) && (
+              <span className="text-xs text-amber-700">Changing the unit type re-reads the values of all entries in this category.</span>
+            )}
             <div className="flex gap-2">
-              <Button size="small" variant="primary" disabled={busy} onClick={() => save(draft)}>Save</Button>
-              <Button size="small" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
+              <Button size="small" variant="primary" disabled={busy || !draft.name.trim() || !draft.unit.trim()} onClick={() => save(draft)}>Save</Button>
+              <Button size="small" variant="ghost" onClick={() => { setDraft(initial); setEditing(false); }}>Cancel</Button>
             </div>
           </div>
         ) : (
           <div className="stack">
             <span className="font-medium">{category.name}</span>
-            <span className="text-xs text-gray-500">{category.group} · {category.lineType || 'no line type'} · {category.categoryId}</span>
+            {category.description && <span className="text-xs text-gray-700">{category.description}</span>}
+            <span className="text-xs text-gray-500">{category.categoryId}</span>
           </div>
         )}
       </td>
-      <td className="py-2 pr-2 text-xs whitespace-nowrap">
-        {category.valueType === 'coordinates' ? 'coordinates (|latitude|)' : UNIT_LABELS[category.unit]} · {category.direction} is better
-        {category.joint && <span className="block">joint</span>}
-      </td>
+      <td className="py-2 pr-2 text-xs">{category.group}</td>
+      <td className="py-2 pr-2 text-xs whitespace-nowrap">{category.unit} · {category.direction} is better</td>
       <td className="py-2 pr-2">
         <select
           className={inputClass}
@@ -87,9 +125,7 @@ function RecordCategoryRow({ category, onError }: { category: RecordCategoryReco
   );
 }
 
-const emptyNew: NewRecordCategory = {
-  name: '', group: '', lineType: '', direction: 'higher', valueType: 'number', unit: 'm', leashed: true, joint: false, ruleSets: [], status: 'unchallenged',
-};
+const emptyNew: NewRecordCategory = { name: '', description: '', group: 'Length', unit: 'm', direction: 'higher', status: 'unchallenged' };
 
 function NewCategoryForm({ onError }: { onError: (e: string | null) => void }) {
   const router = useRouter();
@@ -100,39 +136,16 @@ function NewCategoryForm({ onError }: { onError: (e: string | null) => void }) {
   return (
     <div className="border border-gray-200 rounded-lg p-4 stack gap-2 text-sm">
       <h3 className="font-semibold">New record category</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <input className={inputClass} placeholder="Name" value={value.name} onChange={e => setValue({ ...value, name: e.target.value })} />
-        <input className={inputClass} placeholder="Group, e.g. Highline length" value={value.group} onChange={e => setValue({ ...value, group: e.target.value })} />
-        <input className={inputClass} placeholder="Line type, e.g. Highline" value={value.lineType} onChange={e => setValue({ ...value, lineType: e.target.value })} />
-        <select className={inputClass} value={value.valueType} onChange={e => setValue({ ...value, valueType: e.target.value as NewRecordCategory['valueType'] })}>
-          <option value="number">Number</option>
-          <option value="coordinates">Coordinates (absolute latitude)</option>
-        </select>
-        <select className={inputClass} value={value.unit} disabled={value.valueType === 'coordinates'} onChange={e => setValue({ ...value, unit: e.target.value as RecordUnit })}>
-          {(Object.keys(UNIT_LABELS) as RecordUnit[]).map(u => <option key={u} value={u}>{UNIT_LABELS[u]}</option>)}
-        </select>
-        <select className={inputClass} value={value.direction} onChange={e => setValue({ ...value, direction: e.target.value as 'higher' | 'lower' })}>
-          <option value="higher">Higher is better</option>
-          <option value="lower">Lower is better</option>
-        </select>
+      <RecordCategoryFields value={value} onChange={v => setValue({ ...value, ...v })} />
+      <label className="text-xs stack gap-0.5 sm:w-1/3">Status
         <select className={inputClass} value={value.status} onChange={e => setValue({ ...value, status: e.target.value as RecordCategoryStatus })}>
           {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
-        <label className="flex gap-1 items-center"><input type="checkbox" checked={value.leashed} onChange={() => setValue({ ...value, leashed: !value.leashed })} /> Leashed</label>
-        <label className="flex gap-1 items-center"><input type="checkbox" checked={value.joint} onChange={() => setValue({ ...value, joint: !value.joint })} /> Joint by nature</label>
-      </div>
-      <div className="flex gap-3 flex-wrap">
-        {RULE_SETS.map(rs => (
-          <label key={rs} className="flex gap-1 items-center">
-            <input type="checkbox" checked={value.ruleSets.includes(rs)} onChange={() => setValue({ ...value, ruleSets: value.ruleSets.includes(rs) ? value.ruleSets.filter(x => x !== rs) : [...value.ruleSets, rs] })} />
-            {RULE_CHECKLISTS[rs].title}
-          </label>
-        ))}
-      </div>
+      </label>
       <div className="flex gap-2">
         <Button
           variant="primary"
-          disabled={busy || !value.name.trim()}
+          disabled={busy || !value.name.trim() || !value.unit.trim()}
           onClick={async () => {
             setBusy(true);
             const result = await createRecordCategory(value);
@@ -249,6 +262,7 @@ export default function CategoriesEditor({ recordCategories, firstCategories }: 
   return (
     <div className="stack gap-6">
       {error && <Alert>{error}</Alert>}
+      <UnitSuggestions />
       <div className="stack gap-3">
         <div className="flex justify-between items-center gap-2 flex-wrap">
           <h3 className="text-lg font-semibold">World record categories</h3>
@@ -263,7 +277,8 @@ export default function CategoriesEditor({ recordCategories, firstCategories }: 
             <thead>
               <tr className="text-left border-b border-gray-200">
                 <th className="py-2 pr-2">Category</th>
-                <th className="py-2 pr-2">Measured</th>
+                <th className="py-2 pr-2">Group</th>
+                <th className="py-2 pr-2">Unit</th>
                 <th className="py-2 pr-2">Status</th>
                 <th className="py-2" />
               </tr>

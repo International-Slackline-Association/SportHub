@@ -37,7 +37,7 @@ import {
   parseRecordValue,
   splitCurrentAndHistory,
 } from '@lib/records-logic';
-import { MIN_WITNESSES, ruleItemIds } from '@lib/records-rules';
+import { MIN_WITNESSES } from '@lib/records-rules';
 import { notifyClaimEvent } from '@lib/records-notifications';
 import type {
   ClaimStatus,
@@ -203,10 +203,6 @@ function validateForSubmit(
   if (witnesses.some(w => !w.name.trim() || !w.contact.trim() || !w.role.trim())) errors.push('Each witness needs a name, contact and role');
   if (!values.fullVideo && !values.noFullVideoReason.trim()) errors.push('Explain why there is no full video');
 
-  if (recordCategory && values.path === 'existing') {
-    const missing = ruleItemIds(recordCategory.ruleSets).filter(id => !values.ruleConfirmations.includes(id));
-    if (missing.length > 0) errors.push('Confirm every rule of the category checklist');
-  }
   return errors;
 }
 
@@ -279,11 +275,9 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
       } satisfies FirstEntryRecord;
     } else {
       const isNew = values.path === 'new_category';
-      const unitSource = isNew
-        ? { valueType: 'number' as const, unit: values.newCategory.unit, group: '' }
-        : recordCategory ?? { valueType: 'number' as const, unit: 'm' as const, group: '' };
+      const unitSource = isNew ? { unit: values.newCategory.unit } : recordCategory ?? { unit: 'm' };
       const value = parseRecordValue(unitSource, values.valueText);
-      if (submit && values.valueText && comparableValue({ direction: 'higher', valueType: unitSource.valueType }, value) === undefined) {
+      if (submit && values.valueText && comparableValue({ direction: 'higher', unit: unitSource.unit }, value) === undefined) {
         errors.push(`Could not read the value "${values.valueText}"`);
       }
       entry = {
@@ -298,7 +292,6 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
           .filter(w => w.name.trim() || w.contact.trim() || w.role.trim())
           .map(w => ({ name: w.name.trim(), contact: w.contact.trim(), role: w.role.trim() })),
         noFullVideoReason: values.fullVideo ? undefined : values.noFullVideoReason.trim(),
-        ruleConfirmations: values.ruleConfirmations,
         newCategoryProposal: isNew ? { ...values.newCategory } : undefined,
       } satisfies RecordEntryRecord;
 
@@ -521,13 +514,10 @@ export async function approveClaim(kind: EntryKind, entryId: string, options: Ap
             sortKey: '',
             categoryId: `${slugify(proposal.name)}-${now.toString(36)}`,
             name: proposal.name,
-            group: 'New categories',
-            lineType: '',
+            description: proposal.measurement || undefined,
+            group: 'Other',
             direction: proposal.direction,
-            valueType: 'number',
             unit: proposal.unit,
-            leashed: true,
-            ruleSets: [],
             status: 'unchallenged',
             order: existing.length,
             createdAt: now,
@@ -716,11 +706,9 @@ export async function adminUpdateEntry(kind: EntryKind, entryId: string, values:
       if (proposing && (isPublic || !entry.newCategoryProposal)) errors.push('Only a claim under review can propose a new category; choose an existing category');
       recordCategory = proposing ? null : await getRecordCategory(values.categoryId);
       if (!proposing && !recordCategory) errors.push('Choose a record category');
-      const unitSource = proposing
-        ? { valueType: 'number' as const, unit: values.newCategory.unit, group: '' }
-        : recordCategory ?? { valueType: 'number' as const, unit: 'm' as const, group: '' };
+      const unitSource = proposing ? { unit: values.newCategory.unit } : recordCategory ?? { unit: 'm' };
       const value = parseRecordValue(unitSource, values.valueText);
-      if (comparableValue({ direction: 'higher', valueType: unitSource.valueType }, value) === undefined) errors.push(`Could not read the value "${values.valueText}"`);
+      if (comparableValue({ direction: 'higher', unit: unitSource.unit }, value) === undefined) errors.push(`Could not read the value "${values.valueText}"`);
       updated = {
         ...entry,
         ...common,

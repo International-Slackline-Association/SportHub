@@ -8,7 +8,6 @@ import { getRecordCategory } from './records-service';
 import { formatEntryDate, formatRecordValue, LIST_LABELS } from './records-logic';
 import { getUser } from './user-service';
 import { sendMail, siteUrl } from './mailer';
-import { RULE_CHECKLISTS } from './records-rules';
 import { getCountryByCode } from '@utils/countries';
 import type { RecordEntryRecord, WorldEntryRecord } from './relational-types';
 
@@ -55,11 +54,6 @@ function fullDetails(entry: WorldEntryRecord): string[] {
     add('Further specs', entry.furtherSpecs);
     if (entry.witnesses.length > 0) lines.push('', 'Witnesses:', ...entry.witnesses.map(w => `  ${w.name} (${w.role}), ${w.contact}`));
     add('No full video because', entry.noFullVideoReason);
-    const rules = (entry.ruleConfirmations ?? []).map(id => {
-      const [rs, i] = id.split(':');
-      return RULE_CHECKLISTS[rs as keyof typeof RULE_CHECKLISTS]?.items[Number(i)];
-    }).filter(Boolean);
-    if (rules.length > 0) lines.push('', 'Rules confirmed by the claimant:', ...rules.map(r => `  - ${r}`));
   } else {
     add('Why it is a first', entry.whyFirst);
     add('Similar tricks', entry.similarTricks);

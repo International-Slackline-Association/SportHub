@@ -5,7 +5,7 @@ import PageLayout from '@ui/PageLayout';
 import { Alert } from '@ui/Alert';
 import { requireAdmin } from '@lib/authorization';
 import { formatEntryDate, formatRecordValue, GENDER_LABELS, LIST_LABELS, RECORD_LISTS } from '@lib/records-logic';
-import { FIRST_CRITERIA, RECORD_CRITERIA, RULE_CHECKLISTS } from '@lib/records-rules';
+import { FIRST_CRITERIA, RECORD_CRITERIA } from '@lib/records-rules';
 import type { RecordCategoryRecord } from '@lib/relational-types';
 import { getReviewContext } from 'src/app/world_records/actions';
 import { ClaimStatusBadge } from 'src/app/world_records/components/claimStatus';
@@ -116,20 +116,6 @@ export default async function ReviewClaimPage({ params }: Props) {
             <Row label="Ethics">{entry.ethicsConfirmed ? 'Confirmed' : undefined}</Row>
             <Row label="Review comment">{entry.reviewComment}</Row>
           </div>
-
-          {recordCategory && recordCategory.ruleSets.length > 0 && entry.kind === 'record' && (
-            <div className="stack gap-2">
-              <h3 className="text-lg font-semibold">Rules confirmed by the claimant</h3>
-              {recordCategory.ruleSets.map(rs => (
-                <div key={rs} className="text-sm stack gap-1">
-                  <span className="font-medium">{RULE_CHECKLISTS[rs].title}</span>
-                  {RULE_CHECKLISTS[rs].items.map((item, i) => (
-                    <span key={i}>{entry.ruleConfirmations?.includes(`${rs}:${i}`) ? '✓' : '✗'} {item}</span>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
 
           <div className="stack gap-2">
             <h3 className="text-lg font-semibold">History</h3>

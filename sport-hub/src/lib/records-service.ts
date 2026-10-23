@@ -314,7 +314,6 @@ export interface WorldRecord {
   categoryName: string;
   categoryGroup: string;
   categoryStatus: RecordCategoryRecord['status'];
-  lineType: string;
   value: string;                 // Formatted, e.g. "1,900 m"
   specs: string;                 // Further details (original sheet text, setup)
   list: RecordList;
@@ -373,7 +372,6 @@ const toWorldRecords = (
         categoryName: category.name,
         categoryGroup: category.group,
         categoryStatus: category.status,
-        lineType: category.lineType,
         value: formatRecordValue(categoryById.get(entry.categoryId) ?? category, entry.value),
         specs: [entry.value.original, entry.furtherSpecs, entry.setup].filter(Boolean).join(' · '),
         list: entry.list,

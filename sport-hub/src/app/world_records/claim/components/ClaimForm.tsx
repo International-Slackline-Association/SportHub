@@ -7,8 +7,8 @@ import Button from '@ui/Button';
 import { Alert } from '@ui/Alert';
 import Spinner from '@ui/Spinner';
 import { FormikCheckboxField, FormikRadioGroup, FormikSelectField, FormikTextField, countryCodeOptions } from '@ui/Form';
-import { deriveList, LIST_LABELS, UNIT_LABELS } from '@lib/records-logic';
-import { ETHICS_STATEMENT, FIRST_GENERAL_RULES, MIN_WITNESSES, RULE_CHECKLISTS } from '@lib/records-rules';
+import { deriveList, LIST_LABELS, UNIT_SUGGESTIONS, unitKind, valueHint } from '@lib/records-logic';
+import { ETHICS_STATEMENT, FIRST_GENERAL_RULES, MIN_WITNESSES } from '@lib/records-rules';
 import type { FirstCategoryRecord, RecordCategoryRecord, RecordList } from '@lib/relational-types';
 import { getAthleteGenders, getMarkToBeat, saveClaim } from '../../actions';
 import type { ClaimFormValues, ClaimPath } from '../types';
@@ -28,14 +28,6 @@ const PATH_OPTIONS: { value: ClaimPath; label: string }[] = [
   { value: 'first', label: 'A world first (a new trick)' },
 ];
 
-const UNIT_OPTIONS = (Object.keys(UNIT_LABELS) as (keyof typeof UNIT_LABELS)[]).map(u => ({ value: u, label: UNIT_LABELS[u] }));
-
-const VALUE_HINTS: Record<string, string> = {
-  m: 'In metres, e.g. 2710 or 1,038.5',
-  s: 'A time, e.g. 1:59 min, 12 min 18 sec or 48.67',
-  count: 'A number, e.g. 25',
-  coordinates: 'Coordinates of the line, e.g. 78°13′N 15°38′E or -77.85, 166.67',
-};
 
 function Section({ title, children, description }: { title: string; description?: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -110,7 +102,7 @@ function ListAndMark({ recordCategories }: { recordCategories: RecordCategoryRec
 
 /** The claim fields. In admin mode the claimant's confirmations are hidden and the kind can't change. */
 export function ClaimFields({ recordCategories, firstCategories, claimantId, admin = false }: Omit<Props, 'initialValues' | 'reviewComment'> & { admin?: boolean }) {
-  const { values, setFieldValue } = useFormikContext<ClaimFormValues>();
+  const { values } = useFormikContext<ClaimFormValues>();
   const isFirst = values.path === 'first';
   const editing = !!values.entryId;
   const category = values.path === 'existing' ? recordCategories.find(c => c.categoryId === values.categoryId) : undefined;
@@ -123,7 +115,7 @@ export function ClaimFields({ recordCategories, firstCategories, claimantId, adm
 
   const athleteCount = values.athletes.length;
   const claimantIsOnlyAthlete = athleteCount === 1 && values.athletes[0].userId === claimantId;
-  const unit = values.path === 'new_category' ? values.newCategory.unit : category?.valueType === 'coordinates' ? 'coordinates' : category?.unit;
+  const unit = values.path === 'new_category' ? values.newCategory.unit : category?.unit;
 
   return (
     <>
@@ -134,7 +126,10 @@ export function ClaimFields({ recordCategories, firstCategories, claimantId, adm
           options={editing || admin ? PATH_OPTIONS.filter(o => (o.value === 'first') === isFirst) : PATH_OPTIONS}
         />
         {values.path === 'existing' && (
-          <FormikSelectField id="categoryId" name="categoryId" label="Record category" options={categoryOptions} required />
+          <div className="stack gap-1">
+            <FormikSelectField id="categoryId" name="categoryId" label="Record category" options={categoryOptions} required />
+            {category?.description && <p className="text-sm text-gray-600">{category.description}</p>}
+          </div>
         )}
         {values.path === 'first' && (
           <FormikSelectField id="categoryId" name="categoryId" label="Discipline" options={firstOptions} required />
@@ -147,7 +142,12 @@ export function ClaimFields({ recordCategories, firstCategories, claimantId, adm
             <FormikTextField id="newCategory.name" name="newCategory.name" label="Category name" required />
             <TextArea name="newCategory.measurement" label="What is measured and how" required />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <FormikSelectField id="newCategory.unit" name="newCategory.unit" label="Unit" options={UNIT_OPTIONS} required />
+              <div className="stack gap-1">
+                <FormikTextField id="newCategory.unit" name="newCategory.unit" label="Unit" list="claim-unit-suggestions" required />
+                <datalist id="claim-unit-suggestions">
+                  {UNIT_SUGGESTIONS.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
+                </datalist>
+              </div>
               <FormikSelectField
                 id="newCategory.direction"
                 name="newCategory.direction"
@@ -224,8 +224,8 @@ export function ClaimFields({ recordCategories, firstCategories, claimantId, adm
           <FormikTextField
             id="valueText"
             name="valueText"
-            label={unit === 'coordinates' ? 'Coordinates' : 'Value'}
-            caption={unit ? VALUE_HINTS[unit] : 'Choose a category first'}
+            label={unit !== undefined && unitKind(unit) === 'coordinates' ? 'Coordinates' : 'Value'}
+            caption={unit !== undefined ? valueHint(unit) : 'Choose a category first'}
             required
           />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -289,33 +289,6 @@ export function ClaimFields({ recordCategories, firstCategories, claimantId, adm
         )}
       </Section>
 
-      {!isFirst && !admin && category && category.ruleSets.length > 0 && (
-        <Section title="Rules" description="Confirm that the attempt followed each rule of this category.">
-          {category.ruleSets.map(rs => (
-            <div key={rs} className="stack gap-2">
-              <span className="text-sm font-medium">{RULE_CHECKLISTS[rs].title}</span>
-              {RULE_CHECKLISTS[rs].items.map((item, i) => {
-                const id = `${rs}:${i}`;
-                const checked = values.ruleConfirmations.includes(id);
-                return (
-                  <label key={id} className="flex gap-2 items-start text-sm">
-                    <input
-                      type="checkbox"
-                      className="mt-1"
-                      checked={checked}
-                      onChange={() => setFieldValue('ruleConfirmations', checked
-                        ? values.ruleConfirmations.filter(x => x !== id)
-                        : [...values.ruleConfirmations, id])}
-                    />
-                    <span>{item}</span>
-                  </label>
-                );
-              })}
-            </div>
-          ))}
-        </Section>
-      )}
-
       {!admin && (
         <Section title="Ethics">
           <FormikCheckboxField id="ethicsConfirmed" name="ethicsConfirmed" label={ETHICS_STATEMENT} />
@@ -372,7 +345,7 @@ export default function ClaimForm({ recordCategories, firstCategories, initialVa
           )}
           {message && <section className="p-4 sm:p-0"><Alert variant="success">{message}</Alert></section>}
 
-          <PathResetter onChange={() => { setFieldValue('categoryId', ''); setFieldValue('ruleConfirmations', []); }} path={values.path} />
+          <PathResetter onChange={() => setFieldValue('categoryId', '')} path={values.path} />
           <ClaimFields recordCategories={recordCategories} firstCategories={firstCategories} claimantId={claimantId} />
 
           <section className="p-4 sm:p-0 flex gap-3 flex-wrap">

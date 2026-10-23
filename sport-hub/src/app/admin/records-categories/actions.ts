@@ -3,17 +3,37 @@
 import { revalidatePath } from 'next/cache';
 import { invalidateWorldRecordsCache } from '@lib/data-services';
 import { actorOf, requireRecordsPermission } from '@lib/records-auth';
-import { addCategoryAudit, getFirstCategories, getFirstCategory, getRecordCategories, getRecordCategory, putCategory } from '@lib/records-service';
-import type { FirstCategoryRecord, FirstCategoryStatus, RecordCategoryRecord, RecordCategoryStatus, RecordRuleSet, RecordUnit } from '@lib/relational-types';
+import { parseRecordValue, unitKind } from '@lib/records-logic';
+import {
+  addCategoryAudit,
+  getEntriesByCategory,
+  getFirstCategories,
+  getFirstCategory,
+  getRecordCategories,
+  getRecordCategory,
+  putCategory,
+  putEntry,
+  recomputeRecordStatuses,
+} from '@lib/records-service';
+import { RECORD_CATEGORY_GROUPS } from '@lib/relational-types';
+import type {
+  FirstCategoryRecord,
+  FirstCategoryStatus,
+  RecordCategoryGroup,
+  RecordCategoryRecord,
+  RecordCategoryStatus,
+  RecordEntryRecord,
+  RecordUnit,
+} from '@lib/relational-types';
 
 export interface CategoryUpdate {
   name?: string;
-  group?: string;
-  lineType?: string;
+  description?: string;
+  group?: RecordCategoryGroup;
+  unit?: RecordUnit;
+  direction?: 'higher' | 'lower';
   status?: RecordCategoryStatus;
   order?: number;
-  joint?: boolean;
-  ruleSets?: RecordRuleSet[];
   comment?: string;
 }
 
@@ -22,6 +42,19 @@ const done = () => {
   revalidatePath('/admin/records-categories');
   revalidatePath('/world_records');
 };
+
+/**
+ * Re-parses the values of a category's entries after its unit changed, so they
+ * compare correctly, and re-derives which entries are current.
+ */
+async function reparseEntries(category: RecordCategoryRecord) {
+  const entries = (await getEntriesByCategory(category.categoryId)).filter((e): e is RecordEntryRecord => e.kind === 'record');
+  await Promise.all(entries.map(entry => {
+    const text = entry.value.original ?? (entry.value.amount !== undefined ? String(entry.value.amount) : '');
+    return putEntry({ ...entry, value: parseRecordValue(category, text), updatedAt: Date.now() });
+  }));
+  await recomputeRecordStatuses(category);
+}
 
 /** Edit a record category. Status changes are admin decisions and are logged (FR-C1, FR-C5). */
 export async function updateRecordCategory(categoryId: string, update: CategoryUpdate) {
@@ -32,15 +65,21 @@ export async function updateRecordCategory(categoryId: string, update: CategoryU
     const changes: string[] = [];
     const next: RecordCategoryRecord = { ...category };
     if (update.name !== undefined && update.name.trim() && update.name.trim() !== category.name) { next.name = update.name.trim(); changes.push(`name "${category.name}" → "${next.name}"`); }
-    if (update.group !== undefined && update.group.trim() !== category.group) { next.group = update.group.trim(); changes.push(`group → "${next.group}"`); }
-    if (update.lineType !== undefined && update.lineType.trim() !== category.lineType) { next.lineType = update.lineType.trim(); changes.push(`line type → "${next.lineType}"`); }
+    if (update.description !== undefined && update.description.trim() !== (category.description ?? '')) { next.description = update.description.trim() || undefined; changes.push('description edited'); }
+    if (update.group && update.group !== category.group) {
+      if (!RECORD_CATEGORY_GROUPS.includes(update.group)) return { success: false, error: 'Unknown group' };
+      next.group = update.group; changes.push(`group ${category.group} → ${update.group}`);
+    }
+    if (update.unit !== undefined && update.unit.trim() && update.unit.trim() !== category.unit) { next.unit = update.unit.trim(); changes.push(`unit "${category.unit}" → "${next.unit}"`); }
+    if (update.direction && update.direction !== category.direction) { next.direction = update.direction; changes.push(`${update.direction} is better`); }
     if (update.status && update.status !== category.status) { next.status = update.status; changes.push(`status ${category.status} → ${update.status}`); }
     if (update.order !== undefined && update.order !== category.order) { next.order = update.order; changes.push(`order → ${update.order}`); }
-    if (update.joint !== undefined && update.joint !== !!category.joint) { next.joint = update.joint; changes.push(`joint → ${update.joint}`); }
-    if (update.ruleSets && update.ruleSets.join() !== category.ruleSets.join()) { next.ruleSets = update.ruleSets; changes.push(`rules → ${update.ruleSets.join(', ') || 'none'}`); }
     if (changes.length === 0) return { success: true };
     next.updatedAt = Date.now();
     await putCategory(next);
+    const reparse = unitKind(next.unit) !== unitKind(category.unit) || (next.group === 'Altitude') !== (category.group === 'Altitude');
+    if (reparse) await reparseEntries(next);
+    else if (next.direction !== category.direction) await recomputeRecordStatuses(next);
     await addCategoryAudit(next, {
       action: update.status && update.status !== category.status ? 'status_changed' : 'edited',
       comment: [changes.join('; '), update.comment].filter(Boolean).join('. '),
@@ -55,14 +94,10 @@ export async function updateRecordCategory(categoryId: string, update: CategoryU
 
 export interface NewRecordCategory {
   name: string;
-  group: string;
-  lineType: string;
-  direction: 'higher' | 'lower';
-  valueType: 'number' | 'coordinates';
+  description: string;
+  group: RecordCategoryGroup;
   unit: RecordUnit;
-  leashed: boolean;
-  joint: boolean;
-  ruleSets: RecordRuleSet[];
+  direction: 'higher' | 'lower';
   status: RecordCategoryStatus;
 }
 
@@ -72,6 +107,8 @@ export async function createRecordCategory(input: NewRecordCategory) {
   try {
     const session = await requireRecordsPermission('records:manage');
     if (!input.name.trim()) return { success: false, error: 'A name is required' };
+    if (!input.unit.trim()) return { success: false, error: 'A unit is required' };
+    if (!RECORD_CATEGORY_GROUPS.includes(input.group)) return { success: false, error: 'Unknown group' };
     const existing = await getRecordCategories();
     let categoryId = slugify(input.name);
     if (existing.some(c => c.categoryId === categoryId)) categoryId = `${categoryId}-${Date.now().toString(36)}`;
@@ -81,14 +118,10 @@ export async function createRecordCategory(input: NewRecordCategory) {
       sortKey: `RecordCategory:${categoryId}`,
       categoryId,
       name: input.name.trim(),
-      group: input.group.trim() || 'Other',
-      lineType: input.lineType.trim(),
+      description: input.description.trim() || undefined,
+      group: input.group,
+      unit: input.unit.trim(),
       direction: input.direction,
-      valueType: input.valueType,
-      unit: input.unit,
-      leashed: input.leashed,
-      joint: input.joint || undefined,
-      ruleSets: input.ruleSets,
       status: input.status,
       order: Math.max(0, ...existing.map(c => c.order)) + 1,
       createdAt: now,

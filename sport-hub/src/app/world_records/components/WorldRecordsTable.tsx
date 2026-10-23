@@ -19,6 +19,7 @@ import {
   dateSortingFn,
 } from './cellFormatters';
 import { AdminEditLink } from './AdminEditLink';
+import { RECORD_CATEGORY_GROUPS } from '@lib/relational-types';
 
 const columnHelper = createColumnHelper<WorldRecord>();
 
@@ -110,21 +111,22 @@ type WorldRecordsTableProps = {
 
 const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
   const { isDesktop } = useClientMediaQuery();
-  const [selectedLineType, setSelectedLineType] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState('');
   const [view, setView] = useState<View>('current');
 
-  const lineTypeOptions = useMemo(() => {
-    const types = [...new Set(data.map(r => r.lineType).filter(Boolean))].sort();
-    return types.map(t => ({ value: t, label: t }));
+  const groupOptions = useMemo(() => {
+    const groups = new Set(data.map(r => r.categoryGroup).filter(Boolean));
+    const known: string[] = RECORD_CATEGORY_GROUPS.filter(g => groups.has(g));
+    return [...known, ...[...groups].filter(g => !known.includes(g)).sort()];
   }, [data]);
 
   const filteredData = useMemo(() => {
     return data.filter(row => {
       if (!inView(row, view)) return false;
-      if (selectedLineType && row.lineType !== selectedLineType) return false;
+      if (selectedGroup && row.categoryGroup !== selectedGroup) return false;
       return true;
     });
-  }, [data, selectedLineType, view]);
+  }, [data, selectedGroup, view]);
 
   return (
     <Table
@@ -139,15 +141,15 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
             </select>
           </div>
           <div className={tableStyles.columnFilter}>
-            <label htmlFor="wr-line-type">Type of Line</label>
+            <label htmlFor="wr-group">Group</label>
             <select
-              id="wr-line-type"
-              value={selectedLineType}
-              onChange={e => setSelectedLineType(e.target.value)}
+              id="wr-group"
+              value={selectedGroup}
+              onChange={e => setSelectedGroup(e.target.value)}
             >
               <option value="">All</option>
-              {lineTypeOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              {groupOptions.map(g => (
+                <option key={g} value={g}>{g}</option>
               ))}
             </select>
           </div>
