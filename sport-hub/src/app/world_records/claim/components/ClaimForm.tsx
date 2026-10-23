@@ -361,6 +361,7 @@ export default function ClaimForm({ recordCategories, firstCategories, initialVa
             <Button type="submit" variant="primary" disabled={isSubmitting} onClick={() => setIntent('submit')}>
               {isSubmitting && intent === 'submit' ? <Spinner size="small" color="white" /> : 'Submit for review'}
             </Button>
+            <Button as="link" href="/world_records/my-claims" variant="secondary">Return to My Claims</Button>
             {values.entryId && (status ?? 'draft') === 'draft' && (
               <Button
                 type="button"
