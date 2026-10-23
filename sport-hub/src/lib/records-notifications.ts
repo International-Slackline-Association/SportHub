@@ -8,6 +8,8 @@ import { getRecordCategory } from './records-service';
 import { formatEntryDate, formatRecordValue, LIST_LABELS } from './records-logic';
 import { getUser } from './user-service';
 import { sendMail, siteUrl } from './mailer';
+import { RULE_CHECKLISTS } from './records-rules';
+import { getCountryByCode } from '@utils/countries';
 import type { RecordEntryRecord, WorldEntryRecord } from './relational-types';
 
 export type ClaimEvent = 'submitted' | 'approved' | 'changes_requested' | 'rejected';
@@ -29,9 +31,52 @@ async function athleteEmails(entry: WorldEntryRecord): Promise<string[]> {
   ];
 }
 
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const country = (code?: string) => (code && getCountryByCode(code)?.name) || code?.toUpperCase();
+
+/** Witnesses whose contact is an email address (it can also be a phone number). */
+const witnessEmails = (entry: WorldEntryRecord) =>
+  entry.kind === 'record' ? entry.witnesses.map(w => w.contact.trim()).filter(c => EMAIL.test(c)) : [];
+
+/** Everything on the claim, for the submission emails. */
+function fullDetails(entry: WorldEntryRecord): string[] {
+  const lines: string[] = [];
+  const add = (label: string, value?: string | false) => { if (value) lines.push(`${label}: ${value}`); };
+  if (entry.kind === 'record') {
+    if (entry.newCategoryProposal) {
+      const p = entry.newCategoryProposal;
+      lines.push('', 'Proposed new category:');
+      add('  Name', p.name);
+      add('  What is measured', p.measurement);
+      add('  Unit', `${p.unit}, ${p.direction} is better`);
+      add('  Why distinct', p.justification);
+    }
+    add('Setup', entry.setup);
+    add('Further specs', entry.furtherSpecs);
+    if (entry.witnesses.length > 0) lines.push('', 'Witnesses:', ...entry.witnesses.map(w => `  ${w.name} (${w.role}), ${w.contact}`));
+    add('No full video because', entry.noFullVideoReason);
+    const rules = (entry.ruleConfirmations ?? []).map(id => {
+      const [rs, i] = id.split(':');
+      return RULE_CHECKLISTS[rs as keyof typeof RULE_CHECKLISTS]?.items[Number(i)];
+    }).filter(Boolean);
+    if (rules.length > 0) lines.push('', 'Rules confirmed by the claimant:', ...rules.map(r => `  - ${r}`));
+  } else {
+    add('Why it is a first', entry.whyFirst);
+    add('Similar tricks', entry.similarTricks);
+    add('Line', entry.lineDetails);
+    add('In competition', entry.inCompetition ? 'yes' : 'no');
+    add('Full control at initiation and termination', entry.controlConfirmed && 'confirmed');
+  }
+  lines.push('');
+  add('Submitted by', entry.claimantName);
+  add('Consent of all athletes', entry.consentConfirmed && 'confirmed');
+  add('ISA ethics guidelines and Code of Conduct', entry.ethicsConfirmed && 'confirmed');
+  return lines;
+}
+
 async function summary(entry: WorldEntryRecord): Promise<{ title: string; lines: string[] }> {
-  const athletes = entry.athletes.map(a => `${a.name}${a.country ? ` (${a.country.toUpperCase()})` : ''}`).join(', ');
-  const where = [entry.locationName, entry.locationCountry?.toUpperCase()].filter(Boolean).join(', ');
+  const athletes = entry.athletes.map(a => `${a.name}${a.country ? ` (${country(a.country)})` : ''}`).join(', ');
+  const where = [entry.locationName, country(entry.locationCountry)].filter(Boolean).join(', ');
   const lines = [`Athletes: ${athletes}${entry.athletes.length > 1 ? ' (one joint performance)' : ''}`, `List: ${LIST_LABELS[entry.list]}`];
   let title: string;
   if (entry.kind === 'record') {
@@ -68,18 +113,25 @@ export async function notifyClaimEvent(event: ClaimEvent, entry: WorldEntryRecor
     const mails: Parameters<typeof sendMail>[0][] = [];
 
     switch (event) {
-      case 'submitted':
+      case 'submitted': {
+        const all = [details, ...fullDetails(entry)].join('\n');
         mails.push({
           to: recipients,
           subject: `ISA received your claim: ${title}`,
-          text: `The ISA received this claim and will review it.\n\n${details}\n\nYou can follow its status on ${myClaims}`,
+          text: `The ISA received this claim and will review it. Please check that everything below is correct; if not, reply to ${reviewTeam()}.\n\n${all}\n\nYou can follow its status on ${myClaims}`,
+        });
+        mails.push({
+          to: witnessEmails(entry),
+          subject: `You were named as a witness: ${title}`,
+          text: `${entry.claimantName ?? 'An athlete'} submitted this claim to the ISA and named you as a witness. The ISA may contact you to confirm what you saw. If something below is not correct, please write to ${reviewTeam()}.\n\n${all}`,
         });
         mails.push({
           to: [reviewTeam()],
           subject: `New claim to review: ${title}`,
-          text: `${entry.claimantName ?? 'Someone'} submitted a claim.\n\n${details}\n\nReview it: ${siteUrl(`/admin/records-review/${entry.kind}/${entry.entryId}`)}`,
+          text: `${entry.claimantName ?? 'Someone'} submitted a claim.\n\n${all}\n\nReview it: ${siteUrl(`/admin/records-review/${entry.kind}/${entry.entryId}`)}`,
         });
         break;
+      }
       case 'approved': {
         const previous = await superseded(entry, context.supersedes ?? []);
         const publicLink = siteUrl('/world_records');

@@ -325,7 +325,9 @@ leashed and the line has a backup.
   - **approved / published**: with a link to the public entry;
   - **changes requested**: with the reviewer's comment and a link to edit the claim;
   - **rejected**: with the reviewer's reason.
-  Recipients are the claimant and every athlete on the claim who has an email. The current
+  Recipients are the claimant and every athlete on the claim who has an email.
+  On submission the email holds all claim data (incl. witnesses, setup, rules confirmed) and also goes to
+  every witness whose contact is an email address. The current
   status is always visible in the app too (a "My claims" list).
 - FR-28 When a claim is submitted (draft → pending, including resubmission after changes
   requested), an email goes to **records@slacklineinternational.org**.
