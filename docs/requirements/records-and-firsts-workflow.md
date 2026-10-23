@@ -128,7 +128,7 @@ discontinued, and the material-specific ones (Polyester, Polyamide), are loaded 
 matched to these categories; rows that match none are listed for an admin to resolve.
 
 - FR-C1 Each category stores: name, superlative direction (higher-is-better or
-  lower-is-better), measurement unit, leashed/unleashed, rule checklist (§7.4), and status
+  lower-is-better), value type (a number with a unit, or coordinates), leashed/unleashed, rule checklist (§7.4), and status
   (Active / Unchallenged / Archived).
 
 ### 6.2 World first categories
@@ -336,10 +336,10 @@ Records and firsts are different kinds of claim and are stored with different fi
 |---|---|---|
 | Category | yes (path a) | picked from Active and Unchallenged categories |
 | New category proposal | yes (path b) | name, what is measured and how, unit, higher/lower is better, why it is a distinct superlative |
-| Value + unit | yes | structured so records can be compared; the unit comes from the category |
+| Value | yes | structured so records can be compared. A number with a unit (the unit comes from the category), or for geographic categories (e.g. most northern / southern highline) the coordinates themselves |
 | Athlete(s) | yes | one or more SportHub users (shared records, FR-9b). Gender category and country are not entered; they come from each athlete's data (FR-9a). |
 | Date of attempt | yes | |
-| Location / spot | yes | name, country, coordinates (needed for height above sea level and "most northern/southern") |
+| Location / spot | yes | name and country. Coordinates are not a separate field: where a category's value is a location, the coordinates are the value |
 | Event | no | optional link to a SportHub event |
 | Setup | no | free text: webbing, anchors, leash and backup |
 | Further specs | no | free text, e.g. line height on a length record |
