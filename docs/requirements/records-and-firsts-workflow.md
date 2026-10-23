@@ -51,6 +51,8 @@ Out of scope:
   communicate them for risk reasons, so they cannot be claimed.
 - Line "crossings" (walks with falls or catches). Only sends count.
 - Combos as world firsts. Only singular tricks.
+- The framework's "Rankings" record categories (most yearly wins, most competitions won). They are
+  ignored; none exist in the current sheet.
 - Guinness World Records submission. ISA approval is a prerequisite for Guinness, but the Guinness
   process (and its fee) stays with the athlete.
 - Evidence file uploads (planned after v1, see FR-14).
@@ -109,13 +111,9 @@ Initial list (from the framework):
 | Endurance | – | distance or duration | Slackline distance in 1 h, Highline distance in 24 h, Slackline distance in 24 h, Highline distance in 72 h, Highline distance blind without falling, Slackline distance in 31 days, Longest standing/walking duration, Longest surfing duration, Longest living on a highline |
 | Trick | – | count, height, duration or distance | High jump over pole, Most front flips in a row, Longest handstand (slackline), Longest handstand (highline), Longest juggling walk 3 clubs, Longest juggling walk 5 clubs, Longest juggling duration, Longest football control, Most consecutive skips, Longest one-arm elbow lever, Most spins on Davinci slackline in 1 min |
 | Rigging | – | length, count or latitude | Longest solo rig & derig, Most lines solo rigged & sent in 24 h, Most lines rigged & sent in 24 h (group), Most northern/southern highline |
-| Rankings | – | count | Most yearly wins in a discipline, Most competitions won in a discipline |
 
 - FR-C1 Each category stores: group, sub-category, superlative direction (higher-is-better or
   lower-is-better), measurement unit, leashed/unleashed, active/discontinued.
-- FR-C2 Rankings records could later be computed from SportHub's own contest data instead of
-  being claimed. **Open:** claim them like other records in v1, or leave them out until they can
-  be derived?
 
 ### 6.2 World first categories
 
@@ -301,8 +299,7 @@ lets the records working group get access later without code changes.
 
 ## 11. Open questions
 
-1. Rankings records: claim them in v1, or derive them later from contest data? (FR-C2)
-2. Unchallenged claims: keep them pending, or add an "on hold" state? (FR-19)
-3. Certificates: generate in SportHub, or keep the existing account.slacklineinternational.org
+1. Unchallenged claims: keep them pending, or add an "on hold" state? (FR-19)
+2. Certificates: generate in SportHub, or keep the existing account.slacklineinternational.org
    download? (FR-26)
-4. Is the "announce attempt" step (FR-1) wanted in v1, or later?
+3. Is the "announce attempt" step (FR-1) wanted in v1, or later?
