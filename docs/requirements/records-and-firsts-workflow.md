@@ -44,7 +44,7 @@ and "World Firsts" tabs of the ISA certificates Google Sheet.
 In scope:
 - **World** records and **world** firsts only.
 - Record categories and firsts categories as defined by the ISA framework (§6).
-- Male and female records, tracked separately. The framework says the inferior of the two carries
+- Male and female records and firsts, tracked separately. The framework says the inferior of the two carries
   the gender-specific title.
 
 Out of scope:
@@ -133,8 +133,8 @@ matched to these categories; rows that match none are listed for an admin to res
 
 ### 6.2 World first categories
 
-Trickline, Highline Freestyle, Rodeoline, and Static (not yet recorded). Admins can extend the list. Firsts can't be beaten, so their categories only use **Active** and
-**Archived**. The framework says it does not matter whether a first was landed in training or in
+Trickline, Highline Freestyle, Rodeoline, and Static (not yet recorded). Admins can extend the list.
+Firsts can't be beaten, so their categories only use **Active** and **Archived**. The framework says it does not matter whether a first was landed in training or in
 competition, as long as evidence is sufficient, so "in competition" is only an optional field.
 
 ## 7. Functional requirements
@@ -173,16 +173,16 @@ competition, as long as evidence is sufficient, so "in competition" is only an o
   athletes are not allowed. An athlete who has no account yet has to register before the claim can
   be submitted. The claimant does not have to be one of the athletes (e.g. a team member or an
   affiliated person can claim on their behalf).
-- FR-9b **Shared records:** a record or first can be shared by several people (e.g. a tandem
+- FR-9b **Shared records and firsts:** a record or first can be shared by several people (e.g. a tandem
   highline, a team rigging record, a first landed by two athletes). The claimant selects
   **one or more athletes** on the claim, and all of them hold the record equally. Consequences:
   - the entry is shown once on `/world_records`, listing every athlete, and appears on each
     athlete's profile;
   - each athlete gets the emails (FR-27) and their own certificate (FR-26);
-  - there is **no mixed list**. Each athlete's record goes on the list for their gender: women
-    on the women's list, men on the men's list. A shared record with both men and women appears
-    on both lists, each time listing the athletes of that gender (and the full team as context);
-  - the record is tracked per list, so it is beaten, and becomes historical, separately on the
+  - there is **no mixed list**, for records and for firsts alike. Each athlete's record or first
+    goes on the list for their gender: women on the women's list, men on the men's list. A shared
+    entry with both men and women appears on both lists, each time listing the athletes of that gender (and the full team as context);
+  - a record is tracked per list, so it is beaten, and becomes historical, separately on the
     men's and on the women's list.
 - FR-9a Each athlete's **gender category and country come from the athlete database** (the
   athlete's SportHub profile / ISA user record), not from the claim form. They are copied onto the
@@ -281,6 +281,12 @@ leashed and the line has a backup.
   the current values whenever a record is approved or archived, it is not stored by hand. If a
   category has a record on only one list, that record is simply **World Record**, and if both are
   exactly equal both are **World Record**.
+- FR-23b **Firsts lists.** World Firsts are separated by gender in the same way as records: a first
+  by a woman is on the women's list, a first by a man on the men's list. Because a first cannot be
+  beaten, there is no "better" comparison and no gender-specific title; each entry is just a
+  **World First** on its list. The same trick can therefore be a first on each list (the first
+  woman and the first man to land it), and the reviewer sees existing firsts of both lists when
+  checking that a trick is distinct (FR-20).
 - FR-24 The records page can show history per category (previous holders and values).
 - FR-25 Approval invalidates the world-records cache so the entry appears right away.
 - FR-26 **Certificates:** when a claim is approved, SportHub generates a personalised World Record /
@@ -404,12 +410,11 @@ lets the Sport Commission's records group get access later without code changes.
 - Specs: structured value + unit (needed to compare records).
 - Evidence: full video and at least two witnesses for records (ISA framework); links only in v1, uploads later.
 - No mixed list: records go on the men's or women's list by the athlete's gender; shared records appear on both when the team is mixed.
+- World firsts are separated by gender the same way as records, without gendered titles (FR-23b).
 - Record titles: the better of men's / women's record is "World Record", the other is "Women's" / "Men's World Record" (FR-23a).
 - Initial categories are seeded from the April 2025 v1 list.
 - Rules follow the ISA framework October 2026 v2 (checked against it in this version).
 
 ## 11. Open questions
 
-1. **Gender for firsts.** The October 2026 framework says "World Firsts are not(?) collected
-   separately for male and female", with a question mark. Should SportHub show firsts split by
-   gender, or as one list? (The athlete's gender is stored on the claim either way.)
+None at the moment.
