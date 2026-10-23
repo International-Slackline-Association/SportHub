@@ -125,7 +125,7 @@ function IssueCard({ issue, recordCategories, firstCategories }: { issue: Import
               Link athlete
             </Button>
           )}
-          <Button size="small" variant="ghost" disabled={busy} onClick={() => run(() => dismissImportIssue(issue.sortKey))}>
+          <Button size="small" variant="secondary" disabled={busy} onClick={() => run(() => dismissImportIssue(issue.sortKey))}>
             {NOT_IMPORTED.includes(issue.reason) ? 'Skip, do not import' : 'Mark as checked'}
           </Button>
         </div>

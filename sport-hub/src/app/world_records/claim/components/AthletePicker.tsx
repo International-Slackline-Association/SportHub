@@ -123,7 +123,7 @@ export default function AthletePicker({ index, onRemove }: { index: number; onRe
         </div>
       )}
       {!athlete.userId && !athlete.pendingUser && query.length > 0 && query.length < 3 && (
-        <Button type="button" variant="ghost" size="small" onClick={addNew}>Add as new athlete</Button>
+        <Button type="button" variant="secondary" size="small" onClick={addNew}>Add as new athlete</Button>
       )}
     </div>
   );

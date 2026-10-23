@@ -60,7 +60,7 @@ export default function AdminEditForm({ kind, entryId, initialValues, recordCate
             <Button type="submit" variant="primary" disabled={isSubmitting}>
               {isSubmitting ? <Spinner size="small" color="white" /> : 'Save changes'}
             </Button>
-            <Button as="link" href={back} variant="ghost">Cancel</Button>
+            <Button as="link" href={back} variant="secondary">Cancel</Button>
           </section>
         </Form>
       )}

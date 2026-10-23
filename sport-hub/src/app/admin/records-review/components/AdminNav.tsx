@@ -5,7 +5,7 @@ const LINKS = [
   { href: '/admin/records-manage/records', label: 'Modify Records', variant: 'secondary' },
   { href: '/admin/records-categories', label: 'Modify Categories', variant: 'secondary' },
   { href: '/admin/records-manage/firsts', label: 'Modify Firsts', variant: 'secondary' },
-  { href: '/admin/records-import', label: 'Import review', variant: 'ghost' },
+  { href: '/admin/records-import', label: 'Import review', variant: 'secondary' },
 ] as const;
 
 /** Admin shortcuts. The link to the page you are on is left out. */

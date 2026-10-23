@@ -97,7 +97,7 @@ function RecordCategoryRow({ category, onError }: { category: RecordCategoryReco
             )}
             <div className="flex gap-2">
               <Button size="small" variant="primary" disabled={busy || !draft.name.trim() || !draft.unit.trim()} onClick={() => save(draft)}>Save</Button>
-              <Button size="small" variant="ghost" onClick={() => { setDraft(initial); setEditing(false); }}>Cancel</Button>
+              <Button size="small" variant="secondary" onClick={() => { setDraft(initial); setEditing(false); }}>Cancel</Button>
             </div>
           </div>
         ) : (
@@ -160,7 +160,7 @@ function NewCategoryForm({ onError }: { onError: (e: string | null) => void }) {
         >
           Create
         </Button>
-        <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+        <Button variant="secondary" onClick={() => setOpen(false)}>Cancel</Button>
       </div>
     </div>
   );
@@ -195,7 +195,7 @@ function FirstCategoryRow({ category, onError }: { category: FirstCategoryRecord
             <label className="text-xs flex gap-1 items-center">Order <input type="number" className={`${inputClass} w-20`} value={draft.order} onChange={e => setDraft({ ...draft, order: Number(e.target.value) })} /></label>
             <div className="flex gap-2">
               <Button size="small" variant="primary" disabled={busy} onClick={() => save(draft)}>Save</Button>
-              <Button size="small" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
+              <Button size="small" variant="secondary" onClick={() => setEditing(false)}>Cancel</Button>
             </div>
           </div>
         ) : (
@@ -256,7 +256,7 @@ function NewFirstCategoryForm({ onError }: { onError: (e: string | null) => void
         >
           Create
         </Button>
-        <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+        <Button variant="secondary" onClick={() => setOpen(false)}>Cancel</Button>
       </div>
     </div>
   );
