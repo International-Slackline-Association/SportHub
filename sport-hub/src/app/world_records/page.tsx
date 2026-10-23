@@ -18,7 +18,7 @@ export default async function Page() {
   return (
     <PageLayout title="World Records" heroImage={randomS3Image('WORLD_RECORDS')}>
       <section className="p-4 sm:p-0 flex gap-3 flex-wrap items-center">
-        <Button as="link" href="/world_records/claim" variant="primary">Claim a world record or first</Button>
+        <Button as="link" href="/world_records/claim" variant="primary">Claim World Record or World First</Button>
         <Button as="link" href="/world_records/my-claims" variant="ghost">My claims</Button>
       </section>
       <section className="p-4 sm:p-0">

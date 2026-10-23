@@ -160,7 +160,7 @@ competition, as long as evidence is sufficient, so "in competition" is only an o
   an in-app "announce attempt" step with an email to ISA and a reviewer warning on claims that skipped it.
 
 ### 7.2 Submission
-- FR-3 A signed-in user starts a claim with **one** button, "Claim a world record or first", on
+- FR-3 A signed-in user starts a claim with **one** button, "Claim World Record or World First", on
   `/world_records` and on "My claims" (`/world_records/my-claims`), and from the dashboard. The form itself
   then asks what is claimed (FR-4).
 - FR-4 The form starts by asking what the claimant wants to do, as three clearly separate paths:
