@@ -81,7 +81,12 @@ function RecordCategoryRow({ category, onError }: { category: RecordCategoryReco
   };
 
   return (
-    <tr className="border-b border-gray-100 align-top">
+    <tr
+      className={`border-b border-gray-100 align-top ${editing ? '' : 'cursor-pointer hover:bg-gray-50'}`}
+      onClick={() => { if (!editing) setEditing(true); }}
+      onKeyDown={e => { if (!editing && e.key === 'Enter' && e.target === e.currentTarget) setEditing(true); }}
+      tabIndex={editing ? undefined : 0}
+    >
       <td className="py-2 pr-2">
         {editing ? (
           <div className="stack gap-2">
@@ -105,7 +110,7 @@ function RecordCategoryRow({ category, onError }: { category: RecordCategoryReco
       </td>
       <td className="py-2 pr-2 text-xs">{category.group}</td>
       <td className="py-2 pr-2 text-xs whitespace-nowrap">{category.unit} · {category.direction} is better</td>
-      <td className="py-2 pr-2">
+      <td className="py-2 pr-2" onClick={e => e.stopPropagation()}>
         <select
           className={inputClass}
           value={category.status}
@@ -120,7 +125,6 @@ function RecordCategoryRow({ category, onError }: { category: RecordCategoryReco
           {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
       </td>
-      <td className="py-2">{!editing && <button type="button" className="text-sm text-blue-600 underline" onClick={() => setEditing(true)}>Edit</button>}</td>
     </tr>
   );
 }
@@ -177,7 +181,12 @@ function FirstCategoryRow({ category, onError }: { category: FirstCategoryRecord
   };
 
   return (
-    <tr className="border-b border-gray-100 align-top">
+    <tr
+      className={`border-b border-gray-100 align-top ${editing ? '' : 'cursor-pointer hover:bg-gray-50'}`}
+      onClick={() => { if (!editing) setEditing(true); }}
+      onKeyDown={e => { if (!editing && e.key === 'Enter' && e.target === e.currentTarget) setEditing(true); }}
+      tabIndex={editing ? undefined : 0}
+    >
       <td className="py-2 pr-2">
         {editing ? (
           <div className="stack gap-1">
@@ -196,7 +205,7 @@ function FirstCategoryRow({ category, onError }: { category: FirstCategoryRecord
           </div>
         )}
       </td>
-      <td className="py-2 pr-2">
+      <td className="py-2 pr-2" onClick={e => e.stopPropagation()}>
         <select
           className={inputClass}
           value={category.status}
@@ -211,7 +220,6 @@ function FirstCategoryRow({ category, onError }: { category: FirstCategoryRecord
           {FIRST_STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
       </td>
-      <td className="py-2">{!editing && <button type="button" className="text-sm text-blue-600 underline" onClick={() => setEditing(true)}>Edit</button>}</td>
     </tr>
   );
 }
@@ -280,7 +288,6 @@ export default function CategoriesEditor({ recordCategories, firstCategories }: 
                 <th className="py-2 pr-2">Group</th>
                 <th className="py-2 pr-2">Unit</th>
                 <th className="py-2 pr-2">Status</th>
-                <th className="py-2" />
               </tr>
             </thead>
             <tbody>
@@ -299,7 +306,6 @@ export default function CategoriesEditor({ recordCategories, firstCategories }: 
               <tr className="text-left border-b border-gray-200">
                 <th className="py-2 pr-2">Discipline</th>
                 <th className="py-2 pr-2">Status</th>
-                <th className="py-2" />
               </tr>
             </thead>
             <tbody>
