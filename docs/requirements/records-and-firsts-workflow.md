@@ -93,8 +93,9 @@ category that is still *Unchallenged*.
 
 ### 6.1 Record categories
 
-A record is defined by exactly **one superlative + one modality + one sub-category**
-(e.g. "Highline length – Urban"). Categories are a controlled list managed by admins
+A record category is a single named entry in a flat list (e.g. "Highline length – Urban",
+"Fastest 100 m speed highline"). There is no further hierarchy. Each category has one
+superlative and one modality, as the ISA framework requires. The list is managed by admins
 ("New subcategories can be added by the ISA Sport Commission").
 
 #### Category status
@@ -120,7 +121,7 @@ Every record category has exactly one status:
 The initial categories are taken from the ISA framework, which lists them in its section "World record
 categories". They are loaded as seed data, with the framework's discontinued ones set to Archived.
 
-- FR-C1 Each category stores: group, sub-category, superlative direction (higher-is-better or
+- FR-C1 Each category stores: name, superlative direction (higher-is-better or
   lower-is-better), measurement unit, leashed/unleashed, rule checklist (§7.4), witness minimum,
   and status (Active / Unchallenged / Archived).
 
@@ -147,7 +148,7 @@ so the data model should allow a context field.
   - **(a) New record in an existing category**: the claimant picks the category from the list of
     Active and Unchallenged categories. Nothing else about the category is entered; its unit,
     rules and witness minimum come from the category.
-  - **(b) Record in a new category**: the claimant proposes a new category (group, sub-category,
+  - **(b) Record in a new category**: the claimant proposes a new category (name,
     what is measured and how, why it is a distinct superlative) together with the record itself.
     The reviewer decides on the category and the record in the same review. If the category is
     accepted, an admin creates it as Unchallenged (FR-C3).
@@ -216,7 +217,7 @@ Measurements:
   reviewer judgment; the framework sets no fixed threshold.
 - FR-19 For a new-category claim (path b), the review screen shows the proposed category next to
   similar existing ones, so the reviewer can accept it, map the claim to an existing category,
-  or reject it. The framework requires one superlative, one modality and one sub-category, and
+  or reject it. The framework requires one superlative and one modality per category, and
   says a record must be **challenged** to be relevant; new categories therefore start as
   Unchallenged (§6.1).
 - FR-20 For firsts, the review screen shows the framework's criteria: innovative / iconic,
@@ -275,7 +276,7 @@ Measurements:
 
 | Field | Record | First | Notes |
 |---|---|---|---|
-| Category (group + sub-category) | ✓ | | from §6.1 |
+| Category | ✓ | | from §6.1 |
 | First category | | ✓ | from §6.2 |
 | Trick name | | ✓ | required; a first needs a clear name |
 | Description | (✓) | ✓ | |
