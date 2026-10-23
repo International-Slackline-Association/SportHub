@@ -1,7 +1,7 @@
 # Requirements: World Records & World Firsts Workflow
 
-Status: **Draft v3** (for discussion, no implementation yet)
-Branch: `workflow_records_firsts`
+Status: **v4** (all questions settled with Jonas on 2026-10-23, ready for implementation)
+Branch: `workflow_records_firsts` (implementation on `claude/project-thread-sqkxer`)
 
 Source of the rules below: ISA Sport Commission, *Slackline World Records and World Firsts*,
 October 2026 v2 (authors Thomas Buckingham and Jonas Umlauft; also published at
@@ -44,8 +44,8 @@ and "World Firsts" tabs of the ISA certificates Google Sheet.
 In scope:
 - **World** records and **world** firsts only.
 - Record categories and firsts categories as defined by the ISA framework (§6).
-- Male and female records and firsts, tracked separately. The framework says the inferior of the two carries
-  the gender-specific title.
+- Men's, women's and mixed records and firsts, tracked as separate lists (§7.2 FR-9b). The framework says the
+  inferior carries the gender-specific title (FR-23a).
 
 Out of scope:
 - Continental and national records. The ISA does not record them; national governing bodies do.
@@ -69,26 +69,30 @@ Out of scope:
 |---|---|
 | Visitor | Anyone. Can browse published records and firsts. |
 | Claimant (signed-in user with a SportHub account) | The athlete, or a person affiliated with the attempt, who claims it. The ISA never starts a claim on someone's behalf. |
-| Athlete(s) | The person or people who set the record / landed the first. Each needs a SportHub account. May differ from the claimant, who also needs one. |
+| Athlete(s) | The person or people who set the record / landed the first. Each is a SportHub profile, either an existing one or one entered on the claim (FR-9). May differ from the claimant, who needs a signed-in account. |
 | Reviewer | ISA admins (`role: admin`) in v1, acting for the Sport Commission, which is the final deciding body. |
-| Admin | Full control: can create, edit, retire, or reclassify entries directly. |
+| Admin | Can edit, reclassify, archive and correct entries, manage categories, and resolve the import review list. Admins do not create new entries from scratch: the ISA never starts a claim on someone's behalf. |
 
 ## 5. Lifecycle
 
 ```
-draft ──submit──▶ pending ──approve──▶ published ──superseded──▶ historical
-  ▲                 │  │
-  └──changes req.───┘  └──reject──▶ rejected (void)
+draft ──submit──▶ pending ──approve──▶ published ──beaten (records only)──▶ historical
+  ▲   ◀─withdraw──  │  │  │
+  │                 │  │  └──reject──▶ rejected (void)
+  │                 ▼  │
+  └─resubmit── changes_requested
 ```
 
 - **draft**: saved by the claimant, only visible to them.
-- **pending**: awaiting review, visible to the claimant, athletes, and reviewers.
-- **changes requested**: reviewer sends back with comments; claimant edits and resubmits.
+- **pending** ("under review" in the UI): awaiting review, visible to the claimant, athletes, and reviewers.
+  The claimant can withdraw it, which puts it back to draft.
+- **changes requested**: a status of its own. The reviewer sends the claim back with a comment; the claimant
+  edits and resubmits, which puts it back to pending.
 - **published**: shown publicly.
 - **rejected / void**: closed with a reason (e.g. didn't meet ISA standards, not significant,
   fair-play violation). Visible to claimant and athletes, not public.
-- **historical**: a newer record in the same category beat this one. Still shown as record
-  history.
+- **historical**: a newer record on the same list beat this one. Still shown as record
+  history. Only records become historical; a first cannot be beaten and stays published.
 
 Claim status is separate from **category status** (§6.1): a claim can be approved into a
 category that is still *Unchallenged*.
@@ -129,7 +133,11 @@ matched to these categories; rows that match none are listed for an admin to res
 
 - FR-C1 Each category stores: name, superlative direction (higher-is-better or
   lower-is-better), value type (a number with a unit, or coordinates), leashed/unleashed, rule checklist (§7.4), and status
-  (Active / Unchallenged / Archived).
+  (Active / Unchallenged / Archived). The witness minimum is the same for every record (2, FR-12), so it is not
+  stored per category.
+- FR-C6 **Geographic category:** "most northern / most southern highline" is **one** category. Its value is the
+  spot's coordinates, and the record with the larger **absolute latitude** wins (north or south). Longitude is
+  stored but not compared.
 
 ### 6.2 World first categories
 
@@ -143,7 +151,7 @@ competition, as long as evidence is sufficient, so "in competition" is only an o
 - FR-1 Announcing an attempt in SportHub is **not part of v1**. Athletes keep emailing
   records@slacklineinternational.org before an attempt, as the ISA framework asks. The claim form
   reminds them of this, and the reviewer can ask the claimant whether ISA was contacted in
-  advance (the framework says records without this "may be disqualified"). A later version could add
+  advance (the framework asks for this because definitions are often ambiguous). A later version could add
   an in-app "announce attempt" step with an email to ISA and a reviewer warning on claims that skipped it.
 
 ### 7.2 Submission
@@ -151,8 +159,8 @@ competition, as long as evidence is sufficient, so "in competition" is only an o
   from their profile.
 - FR-4 The form starts by asking what the claimant wants to do, as three clearly separate paths:
   - **(a) New record in an existing category**: the claimant picks the category from the list of
-    Active and Unchallenged categories. Nothing else about the category is entered; its unit,
-    rules and witness minimum come from the category.
+    Active and Unchallenged categories. Nothing else about the category is entered; its unit
+    and rules come from the category.
   - **(b) Record in a new category**: the claimant proposes a new category (name,
     what is measured and how, why it is a distinct superlative) together with the record itself.
     The reviewer decides on the category and the record in the same review. If the category is
@@ -161,42 +169,57 @@ competition, as long as evidence is sufficient, so "in competition" is only an o
 - FR-4a The rest of the form adapts to the chosen path and category (fields in §8).
 - FR-4b A new-category request that the reviewer rejects can be turned into a claim for an
   existing category instead, if the reviewer finds a matching one.
-- FR-5 For records, the form shows the current record in the chosen category so the claimant
-  sees the mark to beat. The claimed value must beat it in the category's direction; the form
-  blocks values that don't.
+- FR-5 For records, the form shows the current record on the claim's list (men's, women's or mixed, FR-9b) so
+  the claimant sees the mark to beat. The claimed value must **beat or equal** it in the category's direction;
+  the form blocks values below it. A claim that equals the current record makes the athlete(s) **co-holders**
+  (FR-9c).
 - FR-6 The claimant confirms a checklist of the category's rules before submitting (§7.4).
 - FR-7 The claimant confirms the claim follows the ISA ethics guidelines and Code of Conduct.
 - FR-8 The claimant can save a draft, withdraw a pending claim, and edit a claim when changes
   are requested.
-- FR-9 A **SportHub account is required** to claim a record or first, and every athlete on a claim
-  must have a SportHub account too. Athletes are picked from existing SportHub users; free-text
-  athletes are not allowed. An athlete who has no account yet has to register before the claim can
-  be submitted. The claimant does not have to be one of the athletes (e.g. a team member or an
-  affiliated person can claim on their behalf).
-- FR-9b **Shared records and firsts:** a record or first can be shared by several people (e.g. a tandem
-  highline, a team rigging record, a first landed by two athletes). The claimant selects
-  **one or more athletes** on the claim, and all of them hold the record equally. Consequences:
+- FR-9 A **signed-in SportHub account is required** to claim a record or first. Every athlete on a claim
+  is a SportHub profile: the claimant picks existing profiles (signed in or not, e.g. athletes migrated from
+  the rankings), or enters a new athlete (name, surname, email, gender, country), like the "pending user" step
+  of event submission. A new athlete's profile is created when the claim is approved. The claimant does not
+  have to be one of the athletes (e.g. a team member or an affiliated person can claim on their behalf).
+- FR-9d **Gender required:** every athlete must have gender male or female on their profile (or on the new
+  athlete entry). An athlete with no gender or "other" blocks submission for now, with a link to fix the
+  profile.
+- FR-9e **Consent:** athletes are not asked to confirm a claim; they are informed by the "submitted" email
+  (FR-27). If the claimant is not the athlete, or several athletes are on the claim, the claimant must confirm
+  that they have the consent of every athlete named on it.
+- FR-9b **Records and firsts with multiple athletes:** a record or first can be **one joint performance by
+  several people** (e.g. a tandem highline, a group rigging record, a first landed by two athletes together).
+  The claimant selects **one or more athletes** on the claim, and all of them hold it equally. Consequences:
   - the entry is shown once on `/world_records`, listing every athlete, and appears on each
     athlete's profile;
   - each athlete gets the emails (FR-27) and their own certificate (FR-26);
-  - there is **no mixed list**, for records and for firsts alike. Each athlete's record or first
-    goes on the list for their gender: women on the women's list, men on the men's list. A shared
-    entry with both men and women appears on both lists, each time listing the athletes of that gender (and the full team as context);
-  - a record is tracked per list, so it is beaten, and becomes historical, separately on the
-    men's and on the women's list.
+  - the entry's **list** follows the athletes' gender: all men → **men's** list, all women → **women's** list,
+    men and women together → **mixed** list. Single-athlete entries are always on the men's or women's list.
+    This applies to records and firsts alike;
+  - a record is tracked per list, so it is beaten, and becomes historical, separately on the men's, women's and
+    mixed lists.
+- FR-9c **Co-holders (shared records):** several athletes who reach the **same value separately** (e.g. six
+  people each sending the same 1900 m highline) are **co-holders**. Each one is a separate claim with its own
+  evidence, video and witnesses, and a separate entry. Equal current values on a list are all shown as the
+  current record; only a strictly better value makes them historical.
+- FR-9f **UI wording:** the claim form makes the difference between FR-9b and FR-9c explicit at the athlete
+  step. Adding more than one athlete asks the claimant to confirm it was **one joint performance**, and says
+  that athletes who did the same thing separately (co-holders) must each submit their own claim.
 - FR-9a Each athlete's **gender category and country come from the athlete database** (the
   athlete's SportHub profile / ISA user record), not from the claim form. They are copied onto the
   claim when it is submitted, so the published entry keeps showing the values that applied at the
   time. Where a claim has several athletes, each athlete has their own values (e.g. a mixed team).
-  The lists a claim appears on (men's, women's) are derived from the athletes' gender.
+  The list a claim appears on (men's, women's or mixed) is derived from the athletes' gender (FR-9b).
 
 ### 7.3 Evidence
 - FR-10 **Full video documentation is required** for every record, ideally from multiple angles.
   The form requires at least one video link and allows several.
 - FR-11 If full video is not possible, the claimant must explain why. The claim is still
   submitted, flagged for the reviewer.
-- FR-12 **Witnesses:** at least two named bystanders, who have the knowledge and experience for the
-  role and know what their role is. Name and contact for each, and their role during the attempt.
+- FR-12 **Witnesses:** at least two named bystanders for every record (October 2026 framework; no category
+  needs more), who have the knowledge and experience for the role and know what their role is. Name and
+  contact for each, and their role during the attempt.
 - FR-13 Firsts require at least one video of the trick being landed.
 - FR-14 v1 accepts **links only** (YouTube, Vimeo, Instagram, Google Drive, …). File uploads to S3
   (for permanent archiving of evidence) are a planned later extension; the data model should allow
@@ -265,33 +288,31 @@ leashed and the line has a backup.
   distinct from existing tricks, requires advanced skill, significant leap forward, has a clear
   name, and full control at initiation and termination. Reviewers can link the claim to similar
   existing firsts for comparison.
-- FR-21 On approving a record that beats an existing one on the same men's or women's list, the
-  old one becomes **historical** on that list automatically (FR-9b).
+- FR-21 On approving a record that beats the current one on the same list (men's, women's or mixed), the
+  old one becomes **historical** on that list automatically (FR-9b). A record that equals the current one
+  joins it as co-holder (FR-9c) and nothing becomes historical.
+- FR-21a When approving a first, the reviewer links it to the same trick on the other lists, if it exists
+  (needed for the titles in FR-23b).
 - FR-22 Every status change is logged with who, when, and the comment (audit trail).
 
 ### 7.6 Publishing & display
 - FR-23 Published entries appear on `/world_records` and on each linked athlete's profile.
-- FR-23a **Record titles.** Within a category, the better of the current men's and women's records
-  is titled **World Record**, and the other one carries the gender-specific title:
-  - if the men's record is better, the women's record is titled **Women's World Record** and the
-    men's record **World Record**;
-  - if the women's record is better, the men's record is titled **Men's World Record** and the
-    women's record **World Record**.
-  "Better" follows the category's direction (higher or lower is better). The title is computed from
-  the current values whenever a record is approved or archived, it is not stored by hand. If a
-  category has a record on only one list, that record is simply **World Record**, and if both are
-  exactly equal both are **World Record**.
-- FR-23b **Firsts lists.** World Firsts are separated by gender in the same way as records: a first
-  by a woman is on the women's list, a first by a man on the men's list. Because a first cannot be
-  beaten, there is no "better" comparison and no gender-specific title; each entry is just a
-  **World First** on its list. The same trick can therefore be a first on each list (the first
-  woman and the first man to land it), and the reviewer sees existing firsts of both lists when
-  checking that a trick is distinct (FR-20).
+- FR-23a **Record titles.** Within a category, the best of the current men's, women's and mixed records
+  is titled **World Record**, and the others carry the list-specific title: **Men's World Record**,
+  **Women's World Record** or **Mixed World Record**. "Best" follows the category's direction (higher or lower
+  is better). The title is computed from the current values whenever a record is approved or archived, it is
+  not stored by hand. If a category has a record on only one list, that record is simply **World Record**, and
+  lists whose records are exactly equal to the best are all **World Record**.
+- FR-23b **Firsts lists and titles.** World Firsts are separated into men's, women's and mixed lists in the
+  same way as records. A first cannot be beaten, so the title follows the date instead: the **earliest**
+  landing of a trick across the lists is **World First**, and the later landings of the same trick on the
+  other lists are **Men's / Women's / Mixed World First**. This needs firsts of the same trick to be linked
+  (FR-21a). The reviewer sees existing firsts of all lists when checking that a trick is distinct (FR-20).
 - FR-24 The records page can show history per category (previous holders and values).
 - FR-25 Approval invalidates the world-records cache so the entry appears right away.
 - FR-26 **Certificates:** when a claim is approved, SportHub generates a personalised World Record /
-  World First certificate (PDF) for each athlete on the claim, using the existing ISA certificate
-  design. Athletes download it from their profile and from "My claims". Admins can regenerate it
+  World First certificate (PDF) for each athlete on the claim. v1 uses a **placeholder layout**, to be
+  replaced by the ISA certificate design once the template is available. Athletes download it from their profile and from "My claims". Admins can regenerate it
   (e.g. after correcting a name). This replaces the download at account.slacklineinternational.org.
   Certificates for imported (historical) entries are generated on demand.
 
@@ -314,21 +335,31 @@ leashed and the line has a backup.
   value are included. Communication is resource-intensive for a volunteer organisation, so the
   email should go out as soon as the claim is approved.
 - FR-30 All ISA recipient addresses are configurable (environment variables), not hard-coded.
-- FR-31 A failed email send must not block or roll back the action; it is logged. (Needs a mail
-  provider, e.g. AWS SES.)
+- FR-31 A failed email send must not block or roll back the action; it is logged.
+- FR-32 Emails are sent over **SMTP** from an existing ISA mailbox. Host, port, user, password and sender
+  address are environment variables. Locally (and whenever SMTP is not configured) emails are only logged,
+  never sent.
 
 ### 7.8 Migration
 - FR-33 Existing sheet rows are imported once into SportHub as published entries, mapped to the
-  categories in §6. Rows that don't map cleanly are listed for an admin to fix.
+  categories in §6. Rows that don't map to a category (e.g. "Longest Highline Indoor sent") or don't parse
+  cleanly go to an **import review list** in the admin area, where an admin creates a category or maps the row
+  to an existing one. Nothing is guessed or dropped.
+- FR-33a The sheet has one row per athlete. Rows with the same category, value and date are merged into one
+  entry with multiple athletes (FR-9b) **only** in categories that are joint by nature (Tandem highline, most
+  lines rigged and sent in 24 h in a group). All other rows become separate co-holder entries (FR-9c). The
+  admin can merge or split entries afterwards. The old Cert IDs are kept per athlete.
+- FR-33b Imported firsts of the same trick on different lists are linked by trick name and line type; unclear
+  matches go to the import review list.
 - FR-34 Once the workflow is live, SportHub is the only source of truth and the Google Sheet is
   retired.
 - FR-35 The Google Sheets read path for records/firsts (`getWorldRecordsSheet`,
   `getWorldFirstsSheet`, the sheet join in `getWorldRecords` / `getWorldFirsts`) is removed
   after the import is verified.
 - FR-36 The import maps each row's "ISA Email" to a SportHub user where possible. Rows without a
-  match keep the athlete name as text and are listed for an admin to link manually.
-  This is the only case where an athlete is stored without an account (historical entries); new
-  claims always need one (FR-9).
+  match keep the athlete name, gender and country from the sheet as text and are listed for an admin to link
+  manually. This is the only case where an athlete is stored without a profile (historical entries); new
+  claims always have one (FR-9).
 - FR-37 The free-text "specs" of imported rows are parsed into value + unit where possible; the
   original text is kept for reference.
 
@@ -343,7 +374,8 @@ Records and firsts are different kinds of claim and are stored with different fi
 | Category | yes (path a) | picked from Active and Unchallenged categories |
 | New category proposal | yes (path b) | name, what is measured and how, unit, higher/lower is better, why it is a distinct superlative |
 | Value | yes | structured so records can be compared. A number with a unit (the unit comes from the category), or for geographic categories (e.g. most northern / southern highline) the coordinates themselves |
-| Athlete(s) | yes | one or more SportHub users (shared records, FR-9b). Gender category and country are not entered; they come from each athlete's data (FR-9a). |
+| Athlete(s) | yes | one or more SportHub profiles, existing or entered as new (FR-9). More than one only for a joint performance (FR-9b); co-holders claim separately (FR-9c). Gender and country are not entered; they come from each athlete's data (FR-9a). |
+| Consent confirmation | conditional | required when the claimant is not the athlete or there are several athletes (FR-9e) |
 | Date of attempt | yes | |
 | Location / spot | yes | name and country. Coordinates are not a separate field: where a category's value is a location, the coordinates are the value |
 | Event | no | optional link to a SportHub event |
@@ -364,7 +396,8 @@ Records and firsts are different kinds of claim and are stored with different fi
 | Description | yes | what the trick is and how it is performed |
 | Why it is a first | yes | short justification against the framework's criteria (innovative, distinct, advanced skill, significant) |
 | Similar existing tricks | no | tricks the claimant considers closest, and how this one differs |
-| Athlete(s) | yes | one or more SportHub users (shared records, FR-9b). Gender category and country are not entered; they come from each athlete's data (FR-9a). |
+| Athlete(s) | yes | one or more SportHub profiles, existing or entered as new (FR-9). More than one only for a joint performance (FR-9b). Gender and country are not entered; they come from each athlete's data (FR-9a). |
+| Consent confirmation | conditional | required when the claimant is not the athlete or there are several athletes (FR-9e) |
 | Date landed | yes | |
 | Location / spot | no | name and country |
 | In competition? | no | optional: in competition (with an optional link to a SportHub event) or not. Not required because the framework does not yet separate competition and training firsts |
@@ -381,9 +414,14 @@ against the criteria in FR-20.
 Claimant (the signed-in user), claim type, status, submission and decision timestamps, review
 comments, and the audit log (FR-22).
 
-Storage proposal (to confirm in design): a new DynamoDB table or record types
-`Record:{id}` / `First:{id}` with a status field, and `RecordCategory:{id}` for the controlled
-lists, following the `PendingScoreEdit` pattern for audit entries.
+Storage (decided):
+- A new DynamoDB table `sporthub-records` holds only what does not exist yet: record categories, first
+  categories, record and first entries (claims) with their status, and the audit log.
+- Athletes are **not** stored in a new table. Entries reference existing `sporthub-users` profiles by user ID
+  and keep a snapshot of each athlete's name, gender and country at submission (FR-9a).
+- To list an athlete's records and firsts without a scan, each athlete gets a `Record:{id}` / `First:{id}`
+  item under their profile in `sporthub-users`, like the existing `Participation:*` items.
+- The table is created locally by `pnpm db:setup`. In production, someone with AWS access creates it.
 
 ## 9. Permissions
 
@@ -409,11 +447,17 @@ lets the Sport Commission's records group get access later without code changes.
 - Ranking record categories are ignored.
 - Specs: structured value + unit (needed to compare records).
 - Evidence: full video and at least two witnesses for records (ISA framework); links only in v1, uploads later.
-- No mixed list: records go on the men's or women's list by the athlete's gender; shared records appear on both when the team is mixed.
-- World firsts are separated by gender the same way as records, without gendered titles (FR-23b).
-- Record titles: the better of men's / women's record is "World Record", the other is "Women's" / "Men's World Record" (FR-23a).
+- Men's, women's and mixed lists: single athletes go on the men's or women's list; a record or first with multiple athletes goes on the mixed list when men and women are on it (FR-9b).
+- Equal values: co-holders, each with a separate claim and evidence (FR-9c). A record or first with multiple athletes is one joint performance (FR-9b). The UI makes the difference explicit (FR-9f).
+- Titles: the best current record across the three lists is "World Record", the others "Men's / Women's / Mixed World Record" (FR-23a). For firsts, the earliest landing of a trick is "World First", later ones on other lists get the list-specific title (FR-23b).
+- Athletes: existing SportHub profiles, or new athletes entered on the claim and created on approval (FR-9). Male or female gender required (FR-9d). Claimant confirms consent when claiming for others (FR-9e).
+- Witnesses: always at least 2 (October 2026 framework).
+- Geographic record: one category, compared by absolute latitude (FR-C6).
+- Emails over SMTP from an ISA mailbox (FR-32). Certificates with a placeholder layout for now (FR-26).
+- Storage: new table `sporthub-records`; athletes reuse `sporthub-users` (§8.3).
 - Initial categories are seeded from the April 2025 v1 list.
-- Rules follow the ISA framework October 2026 v2 (checked against it in this version).
+- Rules follow the ISA framework October 2026 v2 (checked against it in this version). Where the
+  framework contradicted itself on firsts by gender, Jonas fixed the framework: firsts are tracked by gender.
 
 ## 11. Open questions
 
