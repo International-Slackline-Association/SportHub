@@ -332,7 +332,7 @@ export default function ClaimForm({ recordCategories, firstCategories, initialVa
         router.replace(`/world_records/claim?kind=${result.kind}&id=${result.entryId}`, { scroll: false });
       }}
     >
-      {({ isSubmitting, values, setFieldValue }) => (
+      {({ isSubmitting, values, setFieldValue, dirty }) => (
         <Form className="stack gap-8">
           {reviewComment && (
             <section className="p-4 sm:p-0">
@@ -361,7 +361,16 @@ export default function ClaimForm({ recordCategories, firstCategories, initialVa
             <Button type="submit" variant="primary" disabled={isSubmitting} onClick={() => setIntent('submit')}>
               {isSubmitting && intent === 'submit' ? <Spinner size="small" color="white" /> : 'Submit for review'}
             </Button>
-            <Button as="link" href="/world_records/my-claims" variant="secondary">Return to My Claims</Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                if (dirty && !confirm('Leave without saving? Your unsaved changes are lost.')) return;
+                router.push('/world_records/my-claims');
+              }}
+            >
+              Return to My Claims
+            </Button>
             {values.entryId && (status ?? 'draft') === 'draft' && (
               <Button
                 type="button"
