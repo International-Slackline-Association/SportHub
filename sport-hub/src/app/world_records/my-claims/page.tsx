@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import PageLayout from '@ui/PageLayout';
 import Button from '@ui/Button';
 import { Alert } from '@ui/Alert';
@@ -84,7 +83,7 @@ export default async function MyClaimsPage({ searchParams }: Props) {
         )}
       </section>
       <section className="p-4 sm:p-0">
-        <Link href="/world_records" className="text-blue-600 hover:underline">Back to world records</Link>
+        <Button as="link" href="/world_records" variant="secondary" size="small">Back to Records &amp; Firsts</Button>
       </section>
     </PageLayout>
   );
