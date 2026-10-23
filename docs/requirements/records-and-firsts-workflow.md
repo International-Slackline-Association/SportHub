@@ -89,7 +89,11 @@ draft ──submit──▶ pending ──approve──▶ published ──super
 
 ### 5.5 Migration
 - FR-19 Existing sheet rows are imported once into SportHub as published entries.
-- FR-20 **Open:** after import, does the sheet stop being the source of truth, or do both live side by side for a while?
+- FR-20 Once the workflow is live, SportHub is the only source of truth and the Google Sheet is retired.
+- FR-21 The Google Sheets read path for records/firsts (`getWorldRecordsSheet`, `getWorldFirstsSheet`,
+  the sheet join in `getWorldRecords` / `getWorldFirsts`) is removed after the import is verified.
+- FR-22 The import maps each row's "ISA Email" to a SportHub user where possible. Rows without a match
+  keep the athlete name as text and are listed for an admin to link manually.
 
 ## 6. Data captured
 
@@ -137,6 +141,6 @@ lets a separate records committee be added later without code changes.
 3. Evidence: links only, or uploads too?
 4. Structured specs (numbers + units) vs free text?
 5. Notifications: email in v1, or in-app status only?
-6. Does the Google Sheet stay as source of truth, get imported once and retired, or run in parallel?
+6. ~~Google Sheet future?~~ Decided: imported once, then retired.
 7. Are there official ISA rules for what counts as a record / first that the form must enforce (e.g. minimum evidence, rigging standards, leash rules, walking style: full man, onsight, free solo)?
 8. National / continental records: in scope?
