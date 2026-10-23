@@ -85,21 +85,43 @@ Out of scope:
 - **published**: shown publicly.
 - **rejected / void**: closed with a reason (e.g. didn't meet ISA standards, not significant,
   fair-play violation). Visible to claimant and athletes, not public.
-- **historical**: a newer record in the same category beat this one, or the category was
-  discontinued. Still shown as record history.
+- **historical**: a newer record in the same category beat this one. Still shown as record
+  history.
+
+Claim status is separate from **category status** (§6.1): a claim can be approved into a
+category that is still *Unchallenged*.
 
 ## 6. Categories
 
 ### 6.1 Record categories
 
 A record is defined by exactly **one superlative + one modality + one sub-category**
-(e.g. "Highline length – Urban"). Categories are a controlled list that admins can extend
-("New subcategories can be added by the ISA Sport Commission"). Discontinued categories stay
-in the list for history but cannot be selected for new claims.
+(e.g. "Highline length – Urban"). Categories are a controlled list managed by admins
+("New subcategories can be added by the ISA Sport Commission").
 
-Initial list (from the framework):
+#### Category status
 
-| Group | Leash | Measured | Sub-categories (✝ = historical, discontinued) |
+Every record category has exactly one status:
+
+| Status | Meaning | New claims? | Shown publicly? |
+|---|---|---|---|
+| **Active** | Established category that others compete in. | Yes | Yes, as a world record |
+| **Unchallenged** | New category with a single record so far; nobody else has attempted it yet. This is the "on hold" state. | Yes | Yes, but clearly labelled "Unchallenged" and kept apart from the active world records |
+| **Archived** | Discontinued category (e.g. Polyester / Polyamide splits). | No | Yes, as history |
+
+- FR-C2 Only admins change a category's status. Nothing changes it automatically, not even a second
+  record being submitted to an Unchallenged category. When that happens, the reviewer is prompted
+  to decide whether to set the category to Active.
+- FR-C3 A category created from a new-category request (FR-4 path b) starts as **Unchallenged** when the
+  admin approves it.
+- FR-C4 Archived categories are not offered in the submission form, but their records stay
+  visible on `/world_records` and athlete profiles.
+- FR-C5 Admins can create, rename, and re-order categories, and change their status, in an admin
+  page (e.g. `/admin/records-categories`). Every status change is logged.
+
+Initial list (from the framework, all Active unless marked; ✝ = Archived):
+
+| Group | Leash | Measured | Sub-categories |
 |---|---|---|---|
 | Longline length over ground | unleashed | length (m) | Overall, Polyester ✝, Polyamide ✝, Humanline, Jumping |
 | Water-midline length | leashed | length (m) | Overall, Polyester ✝, Polyamide ✝ |
@@ -113,12 +135,14 @@ Initial list (from the framework):
 | Rigging | – | length, count or latitude | Longest solo rig & derig, Most lines solo rigged & sent in 24 h, Most lines rigged & sent in 24 h (group), Most northern/southern highline |
 
 - FR-C1 Each category stores: group, sub-category, superlative direction (higher-is-better or
-  lower-is-better), measurement unit, leashed/unleashed, active/discontinued.
+  lower-is-better), measurement unit, leashed/unleashed, rule checklist (§7.4), witness minimum,
+  and status (Active / Unchallenged / Archived).
 
 ### 6.2 World first categories
 
 Freestyle Trickline, Freestyle Highline, Rodeoline, Static (not yet recorded). Male and female.
-Admins can extend the list. In future the framework may split "in competition" vs "in training",
+Admins can extend the list. Firsts can't be beaten, so their categories only use **Active** and
+**Archived**. In future the framework may split "in competition" vs "in training",
 so the data model should allow a context field.
 
 ## 7. Functional requirements
@@ -135,7 +159,18 @@ so the data model should allow a context field.
 ### 7.2 Submission
 - FR-3 A signed-in user can start a World Record or World First claim from `/world_records` and
   from their profile.
-- FR-4 The form adapts to the claim type and category (fields in §8).
+- FR-4 The form starts by asking what the claimant wants to do, as three clearly separate paths:
+  - **(a) New record in an existing category**: the claimant picks the category from the list of
+    Active and Unchallenged categories. Nothing else about the category is entered; its unit,
+    rules and witness minimum come from the category.
+  - **(b) Record in a new category**: the claimant proposes a new category (group, sub-category,
+    what is measured and how, why it is a distinct superlative) together with the record itself.
+    The reviewer decides on the category and the record in the same review. If the category is
+    accepted, an admin creates it as Unchallenged (FR-C3).
+  - **(c) World First**: the claimant picks a first category.
+- FR-4a The rest of the form adapts to the chosen path and category (fields in §8).
+- FR-4b A new-category request that the reviewer rejects can be turned into a claim for an
+  existing category instead, if the reviewer finds a matching one.
 - FR-5 For records, the form shows the current record in the chosen category so the claimant
   sees the mark to beat. The claimed value must beat it in the category's direction; the form
   blocks values that don't.
@@ -195,9 +230,11 @@ Measurements:
 - FR-18 The review screen shows the previous record holder and value, and the difference to the
   claim, so the reviewer can judge whether the increase is **significant**. Significance is a
   reviewer judgment; the framework sets no fixed threshold.
-- FR-19 For a new category or sub-category, the reviewer can mark whether it is **challenged**
-  (others are attempting it). An unchallenged single claim can be held back without being
-  rejected. **Open:** how should that state look (keep pending, or a separate "on hold")?
+- FR-19 For a new-category claim (path b), the review screen shows the proposed category next to
+  similar existing ones, so the reviewer can accept it, map the claim to an existing category,
+  or reject it. The framework requires one superlative, one modality and one sub-category, and
+  says a record must be **challenged** to be relevant; new categories therefore start as
+  Unchallenged (§6.1).
 - FR-20 For firsts, the review screen shows the framework's criteria: innovative / iconic,
   distinct from existing tricks, requires advanced skill, significant leap forward, has a clear
   name. Reviewers can link the claim to similar existing firsts for comparison.
@@ -294,12 +331,14 @@ lets the records working group get access later without code changes.
 - Emails: records@ on submission and announcement, communication@ on approval, athletes on every status change.
 - National/continental records: out of scope (ISA framework).
 - Free solo highline records: not accepted (ISA framework).
+- Record categories have a status: Active, Unchallenged, Archived. Only admins change it.
+- The submission form separates "existing category" from "new category" claims.
+- Ranking record categories are ignored.
 - Specs: structured value + unit (needed to compare records).
 - Evidence: full video and at least two witnesses for records (ISA framework); links only in v1, uploads later.
 
 ## 11. Open questions
 
-1. Unchallenged claims: keep them pending, or add an "on hold" state? (FR-19)
-2. Certificates: generate in SportHub, or keep the existing account.slacklineinternational.org
+1. Certificates: generate in SportHub, or keep the existing account.slacklineinternational.org
    download? (FR-26)
-3. Is the "announce attempt" step (FR-1) wanted in v1, or later?
+2. Is the "announce attempt" step (FR-1) wanted in v1, or later?
