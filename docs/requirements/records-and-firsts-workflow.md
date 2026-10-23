@@ -339,6 +339,9 @@ leashed and the line has a backup.
 - FR-32 Emails are sent over **SMTP** from an existing ISA mailbox. Host, port, user, password and sender
   address are environment variables. Locally (and whenever SMTP is not configured) emails are only logged,
   never sent.
+  Variables: `SMTP_HOST`, `SMTP_PORT` (default 587, 465 = TLS), `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`,
+  `RECORDS_REVIEW_EMAIL` (default records@…), `RECORDS_COMMUNICATION_EMAIL` (default communication@…),
+  and `SITE_URL` for links in emails (falls back to `AUTH_URL`).
 
 ### 7.8 Migration
 - FR-33 Existing sheet rows are imported once into SportHub as published entries, mapped to the
