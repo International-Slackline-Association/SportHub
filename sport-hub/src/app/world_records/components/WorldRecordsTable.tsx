@@ -6,42 +6,34 @@ import { WorldRecord } from '@lib/data-services';
 import Table from '@ui/Table';
 import tableStyles from '@ui/Table/styles.module.css';
 import { useClientMediaQuery } from '@utils/useClientMediaQuery';
-import { CountryFlag } from '@ui/CountryFlag';
-import { textToTitleCase } from '@utils/strings';
 import Link from 'next/link';
-import { countryCellFormatter, linkCellFormatter, nameCellFormatter } from './cellFormatters';
-
-const linkClassName = "underline text-blue-600 hover:text-blue-800 visited:text-purple-600";
+import {
+  AthleteNames,
+  athletesCellFormatter,
+  linkCellFormatter,
+  linkClassName,
+  LIST_FILTER_OPTIONS,
+  listCellFormatter,
+  TitleBadge,
+  titleCellFormatter,
+  dateSortingFn,
+} from './cellFormatters';
 
 const columnHelper = createColumnHelper<WorldRecord>();
 
 const sharedColumns = [
-  columnHelper.accessor('recordType', {
-    header: 'Record Type',
+  columnHelper.accessor('categoryName', {
+    header: 'Category',
     enableColumnFilter: true,
     meta: { filterVariant: 'autocomplete' },
     size: 160,
   }),
-  columnHelper.accessor('country', {
-    id: 'country',
-    header: 'Country',
-    enableColumnFilter: true,
-    cell: countryCellFormatter,
-    meta: { filterVariant: 'select' },
-    size: 80,
-  }),
-  columnHelper.accessor('gender', {
-    header: 'Gender',
+  columnHelper.accessor('list', {
+    header: 'List',
     enableColumnFilter: true,
     filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
-    cell: info => textToTitleCase(info.getValue()),
-    meta: {
-      filterVariant: 'select',
-      filterOptions: [
-        { value: 'MEN',   label: 'Men' },
-        { value: 'WOMEN', label: 'Women' },
-      ],
-    },
+    cell: listCellFormatter,
+    meta: { filterVariant: 'select', filterOptions: LIST_FILTER_OPTIONS },
     size: 40,
   }),
 ] as const;
@@ -52,46 +44,37 @@ const columns = [
     id: 'worldRecord',
     header: 'World Record',
     cell: info => {
-      const { date, recordType, specs, name, country, gender, links } = info.row.original;
+      const { date, title, categoryName, value, athletes, links } = info.row.original;
       return (
         <div className="stack">
-          <span className="text-xs text-gray-400">{date}</span>
-          <span className="font-medium pb-2">{recordType}</span>
+          <div className="cluster justify-between items-center gap-2">
+            <span className="text-xs text-gray-400">{date}</span>
+            <TitleBadge title={title} />
+          </div>
+          <span className="font-medium pb-2">{categoryName}</span>
           <div className="cluster justify-between items-end gap-2">
-            <div className="stack">
-              <span className="font-medium">
-                {info.row.original.athleteUserId
-                  ? <Link href={`/athlete/${info.row.original.athleteUserId}`} className={linkClassName}>{name || '—'}</Link>
-                  : name || '—'
-                }
-              </span>
-              <div className="cluster gap-2 items-center">
-                <CountryFlag country={country} />
-                <span className="text-xs text-gray-400" style={{ paddingTop: 2 }}>{textToTitleCase(gender)}</span>
-              </div>
-            </div>
-            <span className="text-md">{specs}</span>
+            <AthleteNames athletes={athletes} />
+            <span className="text-md">{value}</span>
           </div>
           <div className="cluster gap-2 text-xs">
-            {links?.map((link, idx) => 
-              link && (
-                <Link className={linkClassName} href={link} key={`link_${idx}`} target="_newtab">
-                  Link {idx + 1}
-                </Link>
-              )
-            )}
+            {links.map((link, idx) => (
+              <Link className={linkClassName} href={link} key={`link_${idx}`} target="_newtab">
+                Link {idx + 1}
+              </Link>
+            ))}
           </div>
         </div>
       );
     },
   }),
   // Desktop-only columns
-  columnHelper.accessor('date', { header: 'Date', size: 40 }),
-  columnHelper.accessor('specs', { header: 'Specs', size: 120 }),
-  columnHelper.accessor('name', {
-    header: 'Name',
-    cell: nameCellFormatter,
-    size: 80,
+  columnHelper.accessor('title', { header: 'Title', cell: titleCellFormatter, size: 80 }),
+  columnHelper.accessor('date', { header: 'Date', sortingFn: dateSortingFn, size: 40 }),
+  columnHelper.accessor('value', { header: 'Record', size: 80 }),
+  columnHelper.accessor('athletes', {
+    header: 'Athletes',
+    cell: athletesCellFormatter,
+    size: 120,
   }),
   columnHelper.accessor('links', {
     header: "Links",
@@ -102,6 +85,23 @@ const columns = [
   ...sharedColumns,
 ];
 
+type View = 'current' | 'unchallenged' | 'history';
+
+const VIEW_OPTIONS: { value: View; label: string }[] = [
+  { value: 'current', label: 'Current world records' },
+  { value: 'unchallenged', label: 'Unchallenged categories' },
+  { value: 'history', label: 'Record history' },
+];
+
+/** Current: active categories only. Unchallenged: shown apart from the active records (§6.1). History: everything. */
+const inView = (row: WorldRecord, view: View) => {
+  switch (view) {
+    case 'current': return row.isCurrent && row.categoryStatus === 'active';
+    case 'unchallenged': return row.isCurrent && row.categoryStatus === 'unchallenged';
+    case 'history': return true;
+  }
+};
+
 type WorldRecordsTableProps = {
   data: WorldRecord[];
 };
@@ -109,6 +109,7 @@ type WorldRecordsTableProps = {
 const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
   const { isDesktop } = useClientMediaQuery();
   const [selectedLineType, setSelectedLineType] = useState('');
+  const [view, setView] = useState<View>('current');
 
   const lineTypeOptions = useMemo(() => {
     const types = [...new Set(data.map(r => r.lineType).filter(Boolean))].sort();
@@ -117,27 +118,38 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
 
   const filteredData = useMemo(() => {
     return data.filter(row => {
+      if (!inView(row, view)) return false;
       if (selectedLineType && row.lineType !== selectedLineType) return false;
       return true;
     });
-  }, [data, selectedLineType]);
+  }, [data, selectedLineType, view]);
 
   return (
     <Table
       extraFilters={
-        <div className={tableStyles.columnFilter}>
-          <label htmlFor="wr-line-type">Type of Line</label>
-          <select
-            id="wr-line-type"
-            value={selectedLineType}
-            onChange={e => setSelectedLineType(e.target.value)}
-          >
-            <option value="">All</option>
-            {lineTypeOptions.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
+        <>
+          <div className={tableStyles.columnFilter}>
+            <label htmlFor="wr-view">Show</label>
+            <select id="wr-view" value={view} onChange={e => setView(e.target.value as View)}>
+              {VIEW_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className={tableStyles.columnFilter}>
+            <label htmlFor="wr-line-type">Type of Line</label>
+            <select
+              id="wr-line-type"
+              value={selectedLineType}
+              onChange={e => setSelectedLineType(e.target.value)}
+            >
+              <option value="">All</option>
+              {lineTypeOptions.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+        </>
       }
       options={{
         columns,
@@ -145,17 +157,17 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
         initialState: {
           sorting: [{ id: 'date', desc: true }],
           columnOrder: isDesktop
-            ? ['date', 'recordType', 'specs', 'name', 'country', 'gender', 'links']
-            : ['worldRecord', 'recordType', 'country', 'gender'],
+            ? ['title', 'categoryName', 'value', 'athletes', 'list', 'date', 'links']
+            : ['worldRecord', 'categoryName', 'list'],
           columnVisibility: {
-            worldRecord: !isDesktop,
-            date:        !!isDesktop,
-            specs:       !!isDesktop,
-            name:        !!isDesktop,
-            recordType:  !!isDesktop,
-            country:     !!isDesktop,
-            gender:      !!isDesktop,
-            links:       !!isDesktop,
+            worldRecord:  !isDesktop,
+            title:        !!isDesktop,
+            date:         !!isDesktop,
+            value:        !!isDesktop,
+            athletes:     !!isDesktop,
+            categoryName: !!isDesktop,
+            list:         !!isDesktop,
+            links:        !!isDesktop,
           },
         }
       }}
@@ -164,4 +176,3 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
 };
 
 export default WorldRecordsTable;
-

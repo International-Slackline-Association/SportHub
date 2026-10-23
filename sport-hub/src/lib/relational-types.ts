@@ -240,6 +240,212 @@ export interface PendingScoreEditRecord extends EventTableRecord {
 export type EventRecord = EventMetadataRecord | ContestRecord | PendingScoreEditRecord;
 
 // ============================================================================
+// RECORDS TABLE RECORDS (world records & world firsts)
+// ============================================================================
+
+/**
+ * Base interface for all records table items.
+ * PK patterns: "RecordCategory" | "FirstCategory" | "Record:{id}" | "First:{id}" | "ImportIssue"
+ */
+interface RecordsTableItem {
+  pk: string;
+  sortKey: string;
+}
+
+/** Men's, women's or mixed list. Mixed only exists for entries with multiple athletes. */
+export type RecordList = 'MEN' | 'WOMEN' | 'MIXED';
+
+export type RecordCategoryStatus = 'active' | 'unchallenged' | 'archived';
+export type FirstCategoryStatus = 'active' | 'archived';
+
+/** Claim lifecycle. "historical" only applies to records (a first cannot be beaten). */
+export type ClaimStatus = 'draft' | 'pending' | 'changes_requested' | 'published' | 'rejected' | 'historical';
+
+export type RecordValueType = 'number' | 'coordinates';
+/** Base unit a numeric value is stored in: metres, seconds, or a plain count. */
+export type RecordUnit = 'm' | 's' | 'count';
+
+/** Rule checklists shown on the claim form and to the reviewer (requirements §7.4). */
+export type RecordRuleSet =
+  | 'highline_send'
+  | 'longline_send'
+  | 'waterline'
+  | 'urban_highline'
+  | 'speedline'
+  | 'measurements';
+
+/**
+ * Record category (pk = "RecordCategory", sortKey = "RecordCategory:{categoryId}")
+ * Flat list managed by admins. All categories share one partition so the whole
+ * list loads with a single query.
+ */
+export interface RecordCategoryRecord extends RecordsTableItem {
+  pk: 'RecordCategory';
+  categoryId: string;
+  name: string;
+  group: string;                 // Display grouping only, e.g. "Highline length"
+  lineType: string;              // e.g. "Highline", "Longline", "Waterline", "Trickline"
+  direction: 'higher' | 'lower'; // Which way is better
+  valueType: RecordValueType;
+  unit: RecordUnit;              // Ignored for coordinates (compared by absolute latitude)
+  leashed: boolean;
+  ruleSets: RecordRuleSet[];
+  status: RecordCategoryStatus;
+  joint?: boolean;               // Joint by nature (tandem, group rigging): sheet rows are merged on import
+  order: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+/** World first category (pk = "FirstCategory", sortKey = "FirstCategory:{categoryId}") */
+export interface FirstCategoryRecord extends RecordsTableItem {
+  pk: 'FirstCategory';
+  categoryId: string;
+  name: string;                  // "Trickline" | "Highline Freestyle" | "Rodeoline" | "Static"
+  terminationRule?: string;      // Control at termination, shown as checklist item
+  status: FirstCategoryStatus;
+  order: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+/**
+ * Athlete on a record or first. Gender and country are a snapshot taken at
+ * submission (or from the sheet on import) so a published entry keeps the
+ * values that applied at the time.
+ */
+export interface EntryAthlete {
+  userId?: string;               // SportHub user; missing only for unmatched imported rows
+  name: string;
+  gender: 'MEN' | 'WOMEN';
+  country?: string;
+  certId?: string;               // Certificate id from the ISA sheet (imported entries)
+  pendingUser?: PendingUserData; // New athlete entered on the claim; profile created on approval
+}
+
+/** A record value: a number in the category's unit, or coordinates. */
+export interface RecordValue {
+  amount?: number;
+  latitude?: number;
+  longitude?: number;
+  original?: string;             // Free text as submitted or imported (sheet "Specs")
+}
+
+export interface RecordWitness {
+  name: string;
+  contact: string;
+  role: string;
+}
+
+/** Evidence is links only in v1; "file" is reserved for S3 uploads later. */
+export interface RecordEvidence {
+  type: 'link' | 'file';
+  url: string;
+  label?: string;
+}
+
+export interface NewCategoryProposal {
+  name: string;
+  measurement: string;           // What is measured and how
+  unit: RecordUnit;
+  direction: 'higher' | 'lower';
+  justification: string;         // Why it is a distinct superlative
+}
+
+/** Fields shared by record and first entries. */
+interface EntryBase extends RecordsTableItem {
+  sortKey: 'Metadata';
+  entryId: string;
+  status: ClaimStatus;
+  statusKey: string;             // "{kind}#{status}" for statusKey-index GSI
+  dateSortKey: string;           // "{date}#{entryId}" for GSI sort order
+  categoryId: string;
+  categoryName: string;          // Snapshot for display
+  list: RecordList;
+  athletes: EntryAthlete[];
+  date: string;                  // ISO yyyy-mm-dd ("" when unknown on import)
+  locationName?: string;
+  locationCountry?: string;
+  eventId?: string;
+  evidence: RecordEvidence[];
+  ethicsConfirmed?: boolean;
+  consentConfirmed?: boolean;    // Required when claiming for others or several athletes
+  claimantUserId?: string;
+  claimantName?: string;
+  source: 'claim' | 'import';
+  reviewComment?: string;
+  submittedAt?: number;
+  decidedAt?: number;
+  decidedBy?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+/** World record entry (pk = "Record:{entryId}", sortKey = "Metadata") */
+export interface RecordEntryRecord extends EntryBase {
+  kind: 'record';
+  value: RecordValue;
+  setup?: string;
+  furtherSpecs?: string;
+  witnesses: RecordWitness[];
+  noFullVideoReason?: string;
+  ruleConfirmations?: RecordRuleSet[];
+  newCategoryProposal?: NewCategoryProposal;
+}
+
+/** World first entry (pk = "First:{entryId}", sortKey = "Metadata") */
+export interface FirstEntryRecord extends EntryBase {
+  kind: 'first';
+  trickName: string;
+  description?: string;
+  whyFirst?: string;
+  similarTricks?: string;
+  lineDetails?: string;
+  inCompetition?: boolean;
+  controlConfirmed?: boolean;
+  trickGroupId?: string;         // Links the same trick across lists (titles, FR-23b)
+}
+
+export type WorldEntryRecord = RecordEntryRecord | FirstEntryRecord;
+
+/** Audit log entry (pk = entry pk, sortKey = "Audit:{iso timestamp}:{suffix}") */
+export interface EntryAuditRecord extends RecordsTableItem {
+  action: string;                // "submitted" | "approved" | "imported" | "status_changed" | ...
+  fromStatus?: ClaimStatus;
+  toStatus?: ClaimStatus;
+  byUserId?: string;
+  byName?: string;
+  comment?: string;
+  at: number;
+}
+
+/**
+ * Import review item (pk = "ImportIssue", sortKey = "ImportIssue:{kind}:{certId}")
+ * Sheet rows an admin needs to look at: no category, unparsed value, no matching user, ...
+ */
+export interface ImportIssueRecord extends RecordsTableItem {
+  pk: 'ImportIssue';
+  kind: 'record' | 'first';
+  certId: string;
+  reason: 'no_category' | 'value_unparsed' | 'no_user_match' | 'first_link_unclear' | 'possible_duplicate' | 'invalid_row';
+  detail: string;
+  row: Record<string, string>;
+  entryId?: string;
+  resolved: boolean;
+  createdAt: number;
+}
+
+/**
+ * Per-athlete pointer in the users table (sortKey = "Record:{entryId}" | "First:{entryId}")
+ * Lets a profile list its records and firsts without scanning the records table.
+ */
+export interface AthleteEntryLinkRecord extends UserTableRecord {
+  entryId: string;
+  kind: 'record' | 'first';
+  createdAt: number;
+}
+
+// ============================================================================
 // EMBEDDED TYPES (used within records)
 // ============================================================================
 

@@ -6,48 +6,40 @@ import { WorldFirst } from '@lib/data-services';
 import Table from '@ui/Table';
 import tableStyles from '@ui/Table/styles.module.css';
 import { useClientMediaQuery } from '@utils/useClientMediaQuery';
-import { CountryFlag } from '@ui/CountryFlag';
-import { textToTitleCase } from '@utils/strings';
 import Link from 'next/link';
-import { countryCellFormatter, linkCellFormatter, nameCellFormatter } from './cellFormatters';
-
-const linkClassName = "underline text-blue-600 hover:text-blue-800 visited:text-purple-600";
+import {
+  AthleteNames,
+  athletesCellFormatter,
+  dateSortingFn,
+  linkCellFormatter,
+  linkClassName,
+  LIST_FILTER_OPTIONS,
+  listCellFormatter,
+  TitleBadge,
+  titleCellFormatter,
+} from './cellFormatters';
 
 const columnHelper = createColumnHelper<WorldFirst>();
 
 const sharedColumns = [
-  columnHelper.accessor('typeOfFirst', {
-    header: 'World First Type',
+  columnHelper.accessor('categoryName', {
+    header: 'Category',
     enableColumnFilter: true,
     meta: { filterVariant: 'select' },
-    size: 40,
+    size: 60,
   }),
-  columnHelper.accessor('description', {
-    header: 'Description',
+  columnHelper.accessor('trickName', {
+    header: 'Trick',
     enableColumnFilter: true,
     meta: { filterVariant: 'autocomplete' },
-    size: 80,
+    size: 100,
   }),
-  columnHelper.accessor('country', {
-    id: 'country',
-    header: 'Country',
-    enableColumnFilter: true,
-    cell: countryCellFormatter,
-    meta: { filterVariant: 'select' },
-    size: 80,
-  }),
-  columnHelper.accessor('gender', {
-    header: 'Gender',
+  columnHelper.accessor('list', {
+    header: 'List',
     enableColumnFilter: true,
     filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
-    cell: info => textToTitleCase(info.getValue()),
-    meta: {
-      filterVariant: 'select',
-      filterOptions: [
-        { value: 'MEN',   label: 'Men' },
-        { value: 'WOMEN', label: 'Women' },
-      ],
-    },
+    cell: listCellFormatter,
+    meta: { filterVariant: 'select', filterOptions: LIST_FILTER_OPTIONS },
     size: 40,
   }),
 ];
@@ -58,49 +50,36 @@ const columns = [
     id: 'worldFirst',
     header: 'World First',
     cell: info => {
-      const { date, description, typeOfFirst, specs, name, country, gender, links } = info.row.original;
+      const { date, title, categoryName, trickName, lineDetails, athletes, links } = info.row.original;
       return (
         <div className="stack">
           <div className="cluster items-center justify-between text-gray-400">
             <span className="text-xs">{date}</span>
-            <div className="cluster gap-2 items-center text-sm">
-              <span>{typeOfFirst}</span>
-              <span>{specs}</span>
-            </div>
+            <TitleBadge title={title} />
           </div>
           <div className="cluster items-center justify-between">
-            <span className="font-medium">
-              {info.row.original.athleteUserId
-                ? <Link href={`/athlete/${info.row.original.athleteUserId}`} className={linkClassName}>{name}</Link>
-                : name
-              }
-            </span>
-            <span>{description}</span>
+            <span className="font-medium">{trickName}</span>
+            <span className="text-sm text-gray-500">{lineDetails || categoryName}</span>
           </div>
-          <div className="cluster gap-2 items-center">
-            <CountryFlag country={country} defaultValue="" />
-            <span className="text-xs text-gray-400" style={{ paddingTop: 2 }}>{textToTitleCase(gender)}</span>
-          </div>
+          <AthleteNames athletes={athletes} />
           <div className="cluster gap-2 text-xs">
-            {links?.map((link, idx) => 
-              link && (
-                <Link className={linkClassName} href={link} key={`link_${idx}`} target="_newtab">
-                  Link {idx + 1}
-                </Link>
-              )
-            )}
+            {links.map((link, idx) => (
+              <Link className={linkClassName} href={link} key={`link_${idx}`} target="_newtab">
+                Link {idx + 1}
+              </Link>
+            ))}
           </div>
         </div>
       );
     },
   }),
   // Desktop-only columns
-  columnHelper.accessor('date', { header: 'Date', size: 40 }),
-  columnHelper.accessor('specs', { header: 'Specs', size: 80 }),
-  columnHelper.accessor('name', {
-    header: 'Name',
-    cell: nameCellFormatter,
-    size: 80,
+  columnHelper.accessor('title', { header: 'Title', cell: titleCellFormatter, size: 80 }),
+  columnHelper.accessor('date', { header: 'Date', sortingFn: dateSortingFn, size: 40 }),
+  columnHelper.accessor('athletes', {
+    header: 'Athletes',
+    cell: athletesCellFormatter,
+    size: 100,
   }),
   columnHelper.accessor('links', {
     header: "Links",
@@ -117,30 +96,30 @@ type WorldFirstsTableProps = {
 
 const WorldFirstsTable = ({ data }: WorldFirstsTableProps) => {
   const { isDesktop } = useClientMediaQuery();
-  const [selectedLineType, setSelectedLineType] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
 
-  const lineTypeOptions = useMemo(() => {
-    const types = [...new Set(data.map(r => r.lineType).filter(Boolean))].sort();
-    return types.map(t => ({ value: t, label: t }));
+  const categoryOptions = useMemo(() => {
+    const names = [...new Set(data.map(r => r.categoryName).filter(Boolean))].sort();
+    return names.map(t => ({ value: t, label: t }));
   }, [data]);
 
   const filteredData = useMemo(() => {
-    if (!selectedLineType) return data;
-    return data.filter(row => row.lineType === selectedLineType);
-  }, [data, selectedLineType]);
+    if (!selectedCategory) return data;
+    return data.filter(row => row.categoryName === selectedCategory);
+  }, [data, selectedCategory]);
 
   return (
     <Table
       extraFilters={
         <div className={tableStyles.columnFilter}>
-          <label htmlFor="wf-line-type">Type of Line</label>
+          <label htmlFor="wf-category">Category</label>
           <select
-            id="wf-line-type"
-            value={selectedLineType}
-            onChange={e => setSelectedLineType(e.target.value)}
+            id="wf-category"
+            value={selectedCategory}
+            onChange={e => setSelectedCategory(e.target.value)}
           >
             <option value="">All</option>
-            {lineTypeOptions.map(opt => (
+            {categoryOptions.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
@@ -150,18 +129,19 @@ const WorldFirstsTable = ({ data }: WorldFirstsTableProps) => {
         columns,
         data: filteredData,
         initialState: {
+          sorting: [{ id: 'date', desc: true }],
           columnOrder: isDesktop
-            ? ['date', 'typeOfFirst', 'specs', 'description', 'name', 'country', 'gender']
-            : ['worldFirst', 'typeOfFirst', 'description', 'country', 'gender'],
+            ? ['title', 'trickName', 'categoryName', 'athletes', 'list', 'date', 'links']
+            : ['worldFirst', 'trickName', 'categoryName', 'list'],
           columnVisibility: {
-            worldFirst:  !isDesktop,
-            date:        !!isDesktop,
-            specs:       !!isDesktop,
-            name:        !!isDesktop,
-            typeOfFirst: !!isDesktop,
-            description: !!isDesktop,
-            country:     !!isDesktop,
-            gender:      !!isDesktop,
+            worldFirst:   !isDesktop,
+            title:        !!isDesktop,
+            date:         !!isDesktop,
+            athletes:     !!isDesktop,
+            trickName:    !!isDesktop,
+            categoryName: !!isDesktop,
+            list:         !!isDesktop,
+            links:        !!isDesktop,
           },
         },
       }}

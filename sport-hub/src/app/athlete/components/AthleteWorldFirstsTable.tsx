@@ -1,8 +1,12 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { WorldFirst } from '@lib/data-services';
 import Table from '@ui/Table';
-import { textToTitleCase } from '@utils/strings';
-import { linkCellFormatter } from 'src/app/world_records/components/cellFormatters';
+import {
+  dateSortingFn,
+  linkCellFormatter,
+  listCellFormatter,
+  titleCellFormatter,
+} from 'src/app/world_records/components/cellFormatters';
 import { Alert } from '@ui/Alert';
 
 const columnHelper = createColumnHelper<WorldFirst>();
@@ -10,23 +14,25 @@ const columns = [
   columnHelper.accessor('date', {
     header: 'Date',
     enableSorting: true,
+    sortingFn: dateSortingFn,
     size: 40,
   }),
-  columnHelper.accessor('typeOfFirst', {
-    header: 'World First Type',
-    size: 60,
-  }),
-  columnHelper.accessor('specs', {
-    header: 'Specs',
+  columnHelper.accessor('title', {
+    header: 'Title',
+    cell: titleCellFormatter,
     size: 80,
   }),
-  columnHelper.accessor('description', {
-    header: 'Description',
+  columnHelper.accessor('trickName', {
+    header: 'Trick',
     size: 120,
   }),
-  columnHelper.accessor('gender', {
-    header: 'Gender',
-    cell: info => textToTitleCase(info.getValue()),
+  columnHelper.accessor('categoryName', {
+    header: 'Category',
+    size: 60,
+  }),
+  columnHelper.accessor('list', {
+    header: 'List',
+    cell: listCellFormatter,
     size: 40,
   }),
   columnHelper.accessor('links', {
