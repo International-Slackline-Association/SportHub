@@ -130,7 +130,7 @@ categories". They are loaded as seed data, with the framework's discontinued one
 Freestyle Trickline, Freestyle Highline, Rodeoline, Static (not yet recorded). Male and female.
 Admins can extend the list. Firsts can't be beaten, so their categories only use **Active** and
 **Archived**. In future the framework may split "in competition" vs "in training",
-so the data model should allow a context field.
+so the data model keeps this as an optional field.
 
 ## 7. Functional requirements
 
@@ -317,7 +317,7 @@ Records and firsts are different kinds of claim and are stored with different fi
 | Athlete(s) | yes | SportHub users. Gender category and country are not entered; they come from each athlete's data (FR-9a). |
 | Date landed | yes | |
 | Location / spot | no | name and country |
-| Context | yes | in competition (optionally linked to a SportHub event), in training, or other |
+| In competition? | no | optional: in competition (with an optional link to a SportHub event) or not. Not required because the framework does not yet separate competition and training firsts |
 | Line details | no | line type and length or height where relevant |
 | Evidence links | yes | at least one video link showing the trick being landed |
 | Ethics confirmation | yes | FR-7 |
