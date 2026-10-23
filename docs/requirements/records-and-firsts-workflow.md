@@ -40,7 +40,7 @@ and "World Firsts" tabs in the ISA certificates Google Sheet.
 |---|---|
 | Visitor | Anyone. Can browse published records and firsts. |
 | Athlete (signed-in user) | Submits claims for themselves (and possibly co-athletes). |
-| Reviewer | Verifies claims. **Open:** ISA admin only, or a dedicated "records committee" permission? |
+| Reviewer | Verifies claims. For v1 this is ISA admins (`role: admin`). A dedicated reviewer group may come later. |
 | Admin | Full control, can create/edit/retire entries directly. |
 
 ## 4. Lifecycle
@@ -118,8 +118,11 @@ pattern for audit entries.
 
 Proposed new permissions in `src/types/rbac.ts`:
 - `records:submit` — any signed-in user (implicit, like own-profile edit)
-- `records:review` — reviewers
+- `records:review` — granted to `admin` only in v1
 - `records:manage` — admins (direct create/edit/delete)
+
+Keeping `records:review` as its own permission (even though only admins hold it for now)
+lets a separate records committee be added later without code changes.
 
 ## 8. Non-goals (v1)
 
@@ -130,7 +133,7 @@ Proposed new permissions in `src/types/rbac.ts`:
 ## 9. Open questions
 
 1. Is this reading right: athletes submit, ISA reviews, approved entries get published?
-2. Who reviews? ISA admins, or a separate group that needs its own permission?
+2. ~~Who reviews?~~ Decided: ISA admins for v1.
 3. Evidence: links only, or uploads too?
 4. Structured specs (numbers + units) vs free text?
 5. Notifications: email in v1, or in-app status only?
