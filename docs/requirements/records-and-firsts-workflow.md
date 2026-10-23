@@ -123,9 +123,11 @@ Every record category has exactly one status:
 - FR-C5 Admins can create, rename, and re-order categories, and change their status, in an admin
   page (e.g. `/admin/records-categories`). Every status change is logged.
 
-The initial set of categories is loaded as seed data. The October 2026 framework no longer lists
-the categories (the April 2025 v1 did), so the seed list is built from the categories already used
-in the Google Sheet and the v1 list. The material-specific ones are loaded as Archived.
+The initial set of categories is loaded as seed data from the **April 2025 v1 framework list**
+(the October 2026 framework no longer lists categories). Categories that v1 marks as historical or
+discontinued, and the material-specific ones (Polyester, Polyamide), are loaded as Archived. The
+"Rankings" categories from v1 are not loaded. Records imported from the Google Sheet (FR-33) are
+matched to these categories; rows that match none are listed for an admin to resolve.
 
 - FR-C1 Each category stores: name, superlative direction (higher-is-better or
   lower-is-better), measurement unit, leashed/unleashed, rule checklist (§7.4), and status
@@ -394,6 +396,7 @@ lets the Sport Commission's records group get access later without code changes.
 - Specs: structured value + unit (needed to compare records).
 - Evidence: full video and at least two witnesses for records (ISA framework); links only in v1, uploads later.
 - No mixed list: records go on the men's or women's list by the athlete's gender; shared records appear on both when the team is mixed.
+- Initial categories are seeded from the April 2025 v1 list.
 - Rules follow the ISA framework October 2026 v2 (checked against it in this version).
 
 ## 11. Open questions
@@ -401,9 +404,6 @@ lets the Sport Commission's records group get access later without code changes.
 1. **Gender for firsts.** The October 2026 framework says "World Firsts are not(?) collected
    separately for male and female", with a question mark. Should SportHub show firsts split by
    gender, or as one list? (The athlete's gender is stored on the claim either way.)
-2. **Category seed list.** The October 2026 framework has no list of record categories. Is it OK to
-   seed from the April 2025 list and the record types used in the Google Sheet, or is there a
-   current list?
-3. **Gender-specific titles.** The framework says the inferior of the male and female record carries
+2. **Gender-specific titles.** The framework says the inferior of the male and female record carries
    the gender-specific title. Should the records page show the lower one as, say, "Women's record"
    and the higher one as the plain "World record"?
