@@ -280,9 +280,9 @@ leashed and the line has a backup.
   - if the women's record is better, the men's record is titled **Men's World Record** and the
     women's record **World Record**.
   "Better" follows the category's direction (higher or lower is better). The title is computed from
-  the current values whenever a record is approved or archived, it is not stored by hand. Assumptions
-  to confirm: if a category has a record on only one list, that record is simply **World Record**,
-  and if both are exactly equal both are **World Record**.
+  the current values whenever a record is approved or archived, it is not stored by hand. If a
+  category has a record on only one list, that record is simply **World Record**, and if both are
+  exactly equal both are **World Record**.
 - FR-24 The records page can show history per category (previous holders and values).
 - FR-25 Approval invalidates the world-records cache so the entry appears right away.
 - FR-26 **Certificates:** when a claim is approved, SportHub generates a personalised World Record /
