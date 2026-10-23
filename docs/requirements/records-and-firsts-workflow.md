@@ -163,14 +163,15 @@ so the data model should allow a context field.
 - FR-7 The claimant confirms the claim follows the ISA ethics guidelines and Code of Conduct.
 - FR-8 The claimant can save a draft, withdraw a pending claim, and edit a claim when changes
   are requested.
-- FR-9 Athletes are picked from SportHub users, or entered by name and email if not registered.
-  The claimant does not have to be one of the athletes.
+- FR-9 A **SportHub account is required** to claim a record or first, and every athlete on a claim
+  must have a SportHub account too. Athletes are picked from existing SportHub users; free-text
+  athletes are not allowed. An athlete who has no account yet has to register before the claim can
+  be submitted. The claimant does not have to be one of the athletes (e.g. a team member or an
+  affiliated person can claim on their behalf).
 - FR-9a Each athlete's **gender category and country come from the athlete database** (the
   athlete's SportHub profile / ISA user record), not from the claim form. They are copied onto the
   claim when it is submitted, so the published entry keeps showing the values that applied at the
   time. Where a claim has several athletes, each athlete has their own values (e.g. a mixed team).
-  Athletes without an account are entered by the claimant with name, email, gender and country,
-  and these values are replaced by the database values once the athlete registers and is linked.
   The claim's men / women classification is derived from the athletes' gender.
 
 ### 7.3 Evidence
@@ -276,6 +277,8 @@ Measurements:
   after the import is verified.
 - FR-36 The import maps each row's "ISA Email" to a SportHub user where possible. Rows without a
   match keep the athlete name as text and are listed for an admin to link manually.
+  This is the only case where an athlete is stored without an account (historical entries); new
+  claims always need one (FR-9).
 - FR-37 The free-text "specs" of imported rows are parsed into value + unit where possible; the
   original text is kept for reference.
 
@@ -290,7 +293,7 @@ Records and firsts are different kinds of claim and are stored with different fi
 | Category | yes (path a) | picked from Active and Unchallenged categories |
 | New category proposal | yes (path b) | name, what is measured and how, unit, higher/lower is better, why it is a distinct superlative |
 | Value + unit | yes | structured so records can be compared; the unit comes from the category |
-| Athlete(s) | yes | SportHub users. Gender category and country are not entered; they come from each athlete's data (FR-9a). For an athlete without an account: name, email, gender and country |
+| Athlete(s) | yes | SportHub users. Gender category and country are not entered; they come from each athlete's data (FR-9a). |
 | Date of attempt | yes | |
 | Location / spot | yes | name, country, coordinates (needed for height above sea level and "most northern/southern") |
 | Event | no | optional link to a SportHub event |
@@ -311,7 +314,7 @@ Records and firsts are different kinds of claim and are stored with different fi
 | Description | yes | what the trick is and how it is performed |
 | Why it is a first | yes | short justification against the framework's criteria (innovative, distinct, advanced skill, significant) |
 | Similar existing tricks | no | tricks the claimant considers closest, and how this one differs |
-| Athlete(s) | yes | SportHub users. Gender category and country are not entered; they come from each athlete's data (FR-9a). For an athlete without an account: name, email, gender and country |
+| Athlete(s) | yes | SportHub users. Gender category and country are not entered; they come from each athlete's data (FR-9a). |
 | Date landed | yes | |
 | Location / spot | no | name and country |
 | Context | yes | in competition (optionally linked to a SportHub event), in training, or other |
