@@ -182,7 +182,8 @@ competition, as long as evidence is sufficient, so the claim does not ask whethe
 - FR-6 ~~The claimant confirms a checklist of the category's rules before submitting (§7.4).~~ Deferred, see open issue 1 (§11).
 - FR-7 The claimant confirms the claim follows the ISA ethics guidelines and Code of Conduct.
 - FR-8 The claimant can save a draft, withdraw a pending claim, and edit a claim when changes
-  are requested.
+  are requested. A draft can be deleted for good with a red "Delete draft" button on the claim form, after a
+  confirmation.
 - FR-9 A **signed-in SportHub account is required** to claim a record or first. Every athlete on a claim
   is a SportHub profile: the claimant picks existing profiles (signed in or not, e.g. athletes migrated from
   the rankings), or enters a new athlete (name, surname, email, gender, country), like the "pending user" step

@@ -199,6 +199,19 @@ export async function addAuditEntry(
   await dynamodb.putItem(RECORDS_TABLE, record as unknown as Record<string, unknown>);
 }
 
+/** Deletes an entry with its audit log and the claimant's "My claims" pointer. Only for drafts. */
+export async function deleteEntry(entry: WorldEntryRecord): Promise<void> {
+  const items = await queryAll<{ pk: string; sortKey: string }>({
+    KeyConditionExpression: 'pk = :pk',
+    ExpressionAttributeValues: { ':pk': entryPk(entry.kind, entry.entryId) },
+    ProjectionExpression: 'pk, sortKey',
+  });
+  await deleteItems(RECORDS_TABLE, items.map(({ pk, sortKey }) => ({ pk, sortKey })));
+  if (entry.claimantUserId) {
+    await deleteItems(USERS_TABLE, [{ userId: entry.claimantUserId, sortKey: `Claim:${entry.kind}:${entry.entryId}` }]);
+  }
+}
+
 export async function getAuditLog(kind: EntryKind, entryId: string): Promise<EntryAuditRecord[]> {
   return queryAll<EntryAuditRecord>({
     KeyConditionExpression: 'pk = :pk AND begins_with(sortKey, :prefix)',

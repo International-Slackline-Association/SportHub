@@ -10,6 +10,7 @@ import { normalizeGender } from '@utils/gender';
 import {
   addAuditEntry,
   addCategoryAudit,
+  deleteEntry,
   deleteItems,
   entryPk,
   getAuditLog,
@@ -347,6 +348,21 @@ export async function withdrawClaim(kind: EntryKind, entryId: string): Promise<C
     return { success: true, entryId, kind, message: 'Claim withdrawn. It is a draft again.' };
   } catch (error) {
     return { success: false, errors: [error instanceof Error ? error.message : 'Failed to withdraw'] };
+  }
+}
+
+/** Delete a draft for good. Only the claimant can, and only while it is a draft. */
+export async function deleteDraft(kind: EntryKind, entryId: string): Promise<ClaimActionResult> {
+  try {
+    const session = await requireSession();
+    const entry = await getEntry(kind as 'record', entryId) as WorldEntryRecord | null;
+    if (!entry || entry.claimantUserId !== session.user.id) return { success: false, errors: ['Claim not found'] };
+    if (entry.status !== 'draft') return { success: false, errors: ['Only drafts can be deleted'] };
+    await deleteEntry(entry);
+    revalidatePath('/world_records/my-claims');
+    return { success: true, entryId, kind, message: 'Draft deleted.' };
+  } catch (error) {
+    return { success: false, errors: [error instanceof Error ? error.message : 'Failed to delete the draft'] };
   }
 }
 

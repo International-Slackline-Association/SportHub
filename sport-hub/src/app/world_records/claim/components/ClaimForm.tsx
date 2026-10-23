@@ -9,8 +9,8 @@ import Spinner from '@ui/Spinner';
 import { FormikCheckboxField, FormikRadioGroup, FormikSelectField, FormikTextField, countryCodeOptions } from '@ui/Form';
 import { deriveList, LIST_LABELS, UNIT_SUGGESTIONS, unitKind, valueHint } from '@lib/records-logic';
 import { ETHICS_STATEMENT, MIN_WITNESSES } from '@lib/records-rules';
-import type { FirstCategoryRecord, RecordCategoryRecord, RecordList } from '@lib/relational-types';
-import { getAthleteGenders, getMarkToBeat, saveClaim } from '../../actions';
+import type { ClaimStatus, FirstCategoryRecord, RecordCategoryRecord, RecordList } from '@lib/relational-types';
+import { deleteDraft, getAthleteGenders, getMarkToBeat, saveClaim } from '../../actions';
 import type { ClaimFormValues, ClaimPath } from '../types';
 import AthletePicker from './AthletePicker';
 
@@ -20,6 +20,8 @@ type Props = {
   initialValues: ClaimFormValues;
   claimantId: string;
   reviewComment?: string;
+  /** Status of a saved claim; undefined for a new one. */
+  status?: ClaimStatus;
 };
 
 const PATH_OPTIONS: { value: ClaimPath; label: string }[] = [
@@ -292,8 +294,18 @@ export function ClaimFields({ recordCategories, firstCategories, claimantId, adm
   );
 }
 
-export default function ClaimForm({ recordCategories, firstCategories, initialValues, claimantId, reviewComment }: Props) {
+export default function ClaimForm({ recordCategories, firstCategories, initialValues, claimantId, reviewComment, status }: Props) {
   const router = useRouter();
+  const [deleting, setDeleting] = useState(false);
+
+  const removeDraft = async (kind: 'record' | 'first', entryId: string) => {
+    if (!confirm('Delete this draft? This cannot be undone.')) return;
+    setDeleting(true);
+    const result = await deleteDraft(kind, entryId);
+    setDeleting(false);
+    if (!result.success) { setErrors(result.errors); return; }
+    router.push('/world_records/my-claims');
+  };
   const [errors, setErrors] = useState<string[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [intent, setIntent] = useState<'draft' | 'submit'>('submit');
@@ -349,6 +361,16 @@ export default function ClaimForm({ recordCategories, firstCategories, initialVa
             <Button type="submit" variant="primary" disabled={isSubmitting} onClick={() => setIntent('submit')}>
               {isSubmitting && intent === 'submit' ? <Spinner size="small" color="white" /> : 'Submit for review'}
             </Button>
+            {values.entryId && (status ?? 'draft') === 'draft' && (
+              <Button
+                type="button"
+                variant="destructive-secondary"
+                disabled={isSubmitting || deleting}
+                onClick={() => removeDraft(values.path === 'first' ? 'first' : 'record', values.entryId!)}
+              >
+                {deleting ? <Spinner size="small" /> : 'Delete draft'}
+              </Button>
+            )}
           </section>
         </Form>
       )}

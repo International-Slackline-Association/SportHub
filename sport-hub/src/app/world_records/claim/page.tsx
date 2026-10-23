@@ -5,6 +5,7 @@ import PageLayout from '@ui/PageLayout';
 import { Alert } from '@ui/Alert';
 import { requireAuth } from '@lib/authorization';
 import { getUser } from '@lib/user-service';
+import type { ClaimStatus } from '@lib/relational-types';
 import { getClaimFormOptions, getOwnClaim } from '../actions';
 import { emptyClaim, entryToClaimValues, type ClaimFormValues } from './types';
 import ClaimForm from './components/ClaimForm';
@@ -22,6 +23,7 @@ export default async function ClaimPage({ searchParams }: Props) {
 
   let initialValues: ClaimFormValues;
   let reviewComment: string | undefined;
+  let status: ClaimStatus | undefined;
   if (id && (kind === 'record' || kind === 'first')) {
     const entry = await getOwnClaim(kind, id);
     if (!entry || !['draft', 'changes_requested'].includes(entry.status)) {
@@ -35,6 +37,7 @@ export default async function ClaimPage({ searchParams }: Props) {
       );
     }
     initialValues = entryToClaimValues(entry);
+    status = entry.status;
     if (entry.status === 'changes_requested') reviewComment = entry.reviewComment;
   } else {
     initialValues = emptyClaim(path === 'first' ? 'first' : path === 'new_category' ? 'new_category' : 'existing');
@@ -61,6 +64,7 @@ export default async function ClaimPage({ searchParams }: Props) {
         initialValues={initialValues}
         claimantId={session.user.id}
         reviewComment={reviewComment}
+        status={status}
       />
     </PageLayout>
   );
