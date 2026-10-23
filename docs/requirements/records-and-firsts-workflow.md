@@ -148,7 +148,7 @@ Trickline, Highline Freestyle, Rodeoline, and Static (not yet recorded). Admins 
 disciplines on the same admin page as record categories: name, **termination rule** (shown to the claimant as
 the control confirmation, §8.2), status and order. Changes are logged.
 Firsts can't be beaten, so their categories only use **Active** and **Archived**. The framework says it does not matter whether a first was landed in training or in
-competition, as long as evidence is sufficient, so "in competition" is only an optional field.
+competition, as long as evidence is sufficient, so the claim does not ask whether it was landed in a competition.
 
 ## 7. Functional requirements
 
@@ -432,7 +432,6 @@ Records and firsts are different kinds of claim and are stored with different fi
 | Consent confirmation | conditional | required when the claimant is not the athlete or there are several athletes (FR-9e) |
 | Date landed | yes | |
 | Location / spot | no | name and country |
-| In competition? | no | optional: in competition (with an optional link to a SportHub event) or not. Not required because the framework does not yet separate competition and training firsts |
 | Line details | no | line type and length or height where relevant |
 | Evidence links | yes | at least one video link showing the trick being landed |
 | Control confirmation | yes | full control at initiation and termination, per the discipline's termination rule (§6.2) |

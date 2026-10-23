@@ -393,7 +393,6 @@ export interface FirstEntryRecord extends EntryBase {
   whyFirst?: string;
   similarTricks?: string;
   lineDetails?: string;
-  inCompetition?: boolean;
   controlConfirmed?: boolean;
   trickGroupId?: string;         // Links the same trick across lists (titles, FR-23b)
 }

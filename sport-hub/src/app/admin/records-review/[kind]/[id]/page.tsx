@@ -77,7 +77,6 @@ export default async function ReviewClaimPage({ params }: Props) {
                 <Row label="Why it is a first">{entry.whyFirst}</Row>
                 <Row label="Similar tricks">{entry.similarTricks}</Row>
                 <Row label="Line">{entry.lineDetails}</Row>
-                <Row label="In competition">{entry.inCompetition ? 'Yes' : 'No'}</Row>
                 <Row label="Full control confirmed">{entry.controlConfirmed ? 'Yes' : 'No'}</Row>
               </>
             )}

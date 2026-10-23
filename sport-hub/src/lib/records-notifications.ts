@@ -58,7 +58,6 @@ function fullDetails(entry: WorldEntryRecord): string[] {
     add('Why it is a first', entry.whyFirst);
     add('Similar tricks', entry.similarTricks);
     add('Line', entry.lineDetails);
-    add('In competition', entry.inCompetition ? 'yes' : 'no');
     add('Full control at initiation and termination', entry.controlConfirmed && 'confirmed');
   }
   lines.push('');

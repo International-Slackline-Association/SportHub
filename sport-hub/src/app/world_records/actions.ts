@@ -270,7 +270,6 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
         whyFirst: values.whyFirst.trim() || undefined,
         similarTricks: values.similarTricks.trim() || undefined,
         lineDetails: values.lineDetails.trim() || undefined,
-        inCompetition: values.inCompetition,
         controlConfirmed: values.controlConfirmed,
       } satisfies FirstEntryRecord;
     } else {
@@ -699,7 +698,6 @@ export async function adminUpdateEntry(kind: EntryKind, entryId: string, values:
         whyFirst: values.whyFirst.trim() || undefined,
         similarTricks: values.similarTricks.trim() || undefined,
         lineDetails: values.lineDetails.trim() || undefined,
-        inCompetition: values.inCompetition,
       };
     } else {
       const proposing = values.path === 'new_category';

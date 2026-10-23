@@ -212,7 +212,6 @@ export function ClaimFields({ recordCategories, firstCategories, claimantId, adm
             <FormikTextField id="date" name="date" type="date" label="Date of the landing" required />
             <FormikTextField id="locationName" name="locationName" label="Location" />
           </div>
-          <FormikCheckboxField id="inCompetition" name="inCompetition" label="Landed in a competition" />
           <div className="stack gap-1 text-sm">
             <span className="font-medium">Rules for world firsts</span>
             <ul className="list-disc pl-5">{FIRST_GENERAL_RULES.map(r => <li key={r}>{r}</li>)}</ul>
