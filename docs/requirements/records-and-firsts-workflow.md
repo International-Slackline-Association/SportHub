@@ -315,6 +315,9 @@ leashed and the line has a backup.
   replaced by the ISA certificate design once the template is available. Athletes download it from their profile and from "My claims". Admins can regenerate it
   (e.g. after correcting a name). This replaces the download at account.slacklineinternational.org.
   Certificates for imported (historical) entries are generated on demand.
+  Implementation: every certificate is generated on demand from the current entry
+  (`/api/certificates/{record|first}/{entryId}?athlete={n}`), so a correction is reflected right away and
+  "regenerate" needs no separate step. Only published and historical entries have certificates.
 
 ### 7.7 Notifications
 - FR-27 Athletes are emailed when their claim changes status:

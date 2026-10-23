@@ -72,6 +72,11 @@ export default async function MyClaimsPage({ searchParams }: Props) {
                       </Button>
                     )}
                     {entry.status === 'pending' && <WithdrawButton kind={entry.kind} entryId={entry.entryId} />}
+                    {(entry.status === 'published' || entry.status === 'historical') && entry.athletes.map((a, i) => (
+                      <Button key={i} as="link" href={`/api/certificates/${entry.kind}/${entry.entryId}?athlete=${i}`} variant="ghost" size="small">
+                        Certificate{entry.athletes.length > 1 ? ` (${a.name})` : ''}
+                      </Button>
+                    ))}
                   </div>
                 </div>
               );

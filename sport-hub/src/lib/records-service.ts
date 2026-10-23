@@ -29,6 +29,7 @@ import {
   RECORD_LISTS,
   splitCurrentAndHistory,
 } from './records-logic';
+import { getCountryByCode } from '@utils/countries';
 
 export type EntryKind = 'record' | 'first';
 
@@ -340,6 +341,9 @@ export interface WorldFirst {
 const toDisplayAthletes = (entry: WorldEntryRecord): DisplayAthlete[] =>
   entry.athletes.map(({ userId, name, country, gender }) => ({ userId, name, country, gender }));
 
+/** Claims store ISO codes, imported rows country names. */
+const countryName = (country?: string) => (country && getCountryByCode(country)?.name) || country;
+
 const links = (entry: WorldEntryRecord) => entry.evidence.map(e => e.url).filter(Boolean);
 
 const toWorldRecords = (
@@ -375,7 +379,7 @@ const toWorldRecords = (
         list: entry.list,
         athletes: toDisplayAthletes(entry),
         date: formatEntryDate(entry.date),
-        location: [entry.locationName, entry.locationCountry].filter(Boolean).join(', '),
+        location: [entry.locationName, countryName(entry.locationCountry)].filter(Boolean).join(', '),
         links: links(entry),
       });
     }
@@ -458,4 +462,22 @@ export async function getAthletePublicWorldFirsts(userId: string): Promise<World
   const all = await getPublicWorldFirsts();
   const own = new Set(entryIds);
   return all.filter(first => own.has(first.entryId));
+}
+
+/**
+ * One published or historical entry as it appears publicly, with its title,
+ * for certificates (FR-26). Historical records keep the title of their list.
+ */
+export async function getPublicEntry(kind: 'record', entryId: string): Promise<WorldRecord | null>;
+export async function getPublicEntry(kind: 'first', entryId: string): Promise<WorldFirst | null>;
+export async function getPublicEntry(kind: EntryKind, entryId: string): Promise<WorldRecord | WorldFirst | null> {
+  if (kind === 'first') {
+    return (await getPublicWorldFirsts()).find(f => f.entryId === entryId) ?? null;
+  }
+  const entry = await getEntry('record', entryId);
+  if (!entry || (entry.status !== 'published' && entry.status !== 'historical')) return null;
+  const [category, inCategory] = await Promise.all([getRecordCategory(entry.categoryId), getEntriesByCategory(entry.categoryId)]);
+  if (!category) return null;
+  const visible = (inCategory as RecordEntryRecord[]).filter(e => e.status === 'published' || e.status === 'historical');
+  return toWorldRecords([category], visible).find(row => row.entryId === entryId) ?? null;
 }

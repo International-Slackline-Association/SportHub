@@ -59,6 +59,12 @@ export const linkCellFormatter = <T extends WorldRecord | WorldFirst>(info: Cell
   </div>
 );
 
+/** Certificate PDF of one athlete on an entry (FR-26). */
+export const certificateUrl = (kind: 'record' | 'first', entry: WorldRecord | WorldFirst, athleteId: string) => {
+  const index = entry.athletes.findIndex(a => a.userId === athleteId);
+  return index < 0 ? null : `/api/certificates/${kind}/${encodeURIComponent(entry.entryId)}?athlete=${index}`;
+};
+
 export const LIST_FILTER_OPTIONS = [
   { value: 'MEN', label: "Men's" },
   { value: 'WOMEN', label: "Women's" },

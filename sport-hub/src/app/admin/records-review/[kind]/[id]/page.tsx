@@ -86,6 +86,9 @@ export default async function ReviewClaimPage({ params }: Props) {
                   {a.userId ? <Link href={`/athlete/${a.userId}`} className="text-blue-600 hover:underline">{a.name}</Link> : a.name}
                   {` · ${a.gender === 'MEN' ? 'male' : 'female'}`}{a.country ? ` · ${a.country}` : ''}
                   {a.pendingUser && ` · new athlete (${a.pendingUser.email}), profile created on approval`}
+                  {(entry.status === 'published' || entry.status === 'historical') && (
+                    <> · <a href={`/api/certificates/${entry.kind}/${entry.entryId}?athlete=${i}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">certificate</a></>
+                  )}
                 </span>
               ))}
             </Row>
