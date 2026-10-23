@@ -50,7 +50,7 @@ export default async function MyClaimsPage({ searchParams }: Props) {
                   <div className="flex justify-between gap-x-4 gap-y-2 flex-wrap items-center">
                     <div className="stack min-w-0">
                       <span className="font-semibold">
-                        {entry.categoryName || 'No category chosen'}{entry.kind === 'record' && entry.newCategoryProposal ? ' (new category)' : ''}
+                        {entry.kind === 'record' && entry.newCategoryProposal ? '(New category) ' : ''}{entry.categoryName || 'No category chosen'}
                         {valueOf(entry) && <span className="font-normal"> · {valueOf(entry)}</span>}
                       </span>
                       <span className="text-sm text-gray-600">
