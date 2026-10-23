@@ -62,7 +62,7 @@ export default async function ReviewClaimPage({ params }: Props) {
         <div className="stack gap-6">
           <div className="stack">
             <h3 className="text-lg font-semibold mb-2">Claim</h3>
-            <Row label="Category">{isNewCategory && '(New category) '}{entry.categoryName}</Row>
+            <Row label="Category">{isNewCategory && '[New category] '}{entry.categoryName}</Row>
             {entry.kind === 'record' && entry.newCategoryProposal && (
               <>
                 <Row label="What is measured">{entry.newCategoryProposal.measurement}</Row>

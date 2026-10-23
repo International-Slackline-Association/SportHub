@@ -74,7 +74,7 @@ async function summary(entry: WorldEntryRecord): Promise<{ title: string; lines:
   if (entry.kind === 'record') {
     const category = entry.categoryId.startsWith('proposed-') ? null : await getRecordCategory(entry.categoryId);
     const value = category ? formatRecordValue(category, entry.value) : entry.value.original ?? '';
-    title = `World record: ${entry.newCategoryProposal && !category ? '(New category) ' : ''}${entry.categoryName}, ${value}`;
+    title = `World record: ${entry.newCategoryProposal && !category ? '[New category] ' : ''}${entry.categoryName}, ${value}`;
     lines.unshift(`Category: ${entry.categoryName}`, `Value: ${value}`);
   } else {
     title = `World first: ${entry.trickName} (${entry.categoryName})`;
