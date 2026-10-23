@@ -1,7 +1,7 @@
 # Requirements: World Records & World Firsts Workflow
 
-Status: **v4** (all questions settled with Jonas on 2026-10-23, ready for implementation)
-Branch: `workflow_records_firsts` (implementation on `claude/project-thread-sqkxer`)
+Status: **v5** (updated on 2026-10-23 to match the implementation after Jonas's review of the running app)
+Branch: `workflow_records_firsts` (requirements and implementation)
 
 Source of the rules below: ISA Sport Commission, *Slackline World Records and World Firsts*,
 October 2026 v2 (authors Thomas Buckingham and Jonas Umlauft; also published at
@@ -122,8 +122,8 @@ Every record category has exactly one status:
   admin approves it.
 - FR-C4 Archived categories are not offered in the submission form, but their records stay
   visible on `/world_records` and athlete profiles.
-- FR-C5 Admins can create, rename, and re-order categories, and change their status, in an admin
-  page (e.g. `/admin/records-categories`). Every status change is logged.
+- FR-C5 Admins create and edit categories at `/admin/records-categories` ("Modify Categories"): every field
+  of FR-C1 plus the display order, and the status. Every change is logged with who, when and what changed.
 
 The initial set of categories is loaded as seed data from the **April 2025 v1 framework list**
 (the October 2026 framework no longer lists categories). Categories that v1 marks as historical or
@@ -144,7 +144,9 @@ matched to these categories; rows that match none are listed for an admin to res
 
 ### 6.2 World first categories
 
-Trickline, Highline Freestyle, Rodeoline, and Static (not yet recorded). Admins can extend the list.
+Trickline, Highline Freestyle, Rodeoline, and Static (not yet recorded). Admins create and edit first
+disciplines on the same admin page as record categories: name, **termination rule** (shown to the claimant as
+the control confirmation, §8.2), status and order. Changes are logged.
 Firsts can't be beaten, so their categories only use **Active** and **Archived**. The framework says it does not matter whether a first was landed in training or in
 competition, as long as evidence is sufficient, so "in competition" is only an optional field.
 
@@ -158,8 +160,9 @@ competition, as long as evidence is sufficient, so "in competition" is only an o
   an in-app "announce attempt" step with an email to ISA and a reviewer warning on claims that skipped it.
 
 ### 7.2 Submission
-- FR-3 A signed-in user can start a World Record or World First claim from `/world_records` and
-  from their profile.
+- FR-3 A signed-in user starts a claim with **one** button, "Claim a world record or first", on
+  `/world_records` and on "My claims" (`/world_records/my-claims`), and from the dashboard. The form itself
+  then asks what is claimed (FR-4).
 - FR-4 The form starts by asking what the claimant wants to do, as three clearly separate paths:
   - **(a) New record in an existing category**: the claimant picks the category from the list of
     Active and Unchallenged categories. Nothing else about the category is entered; its unit
@@ -217,9 +220,11 @@ competition, as long as evidence is sufficient, so "in competition" is only an o
 
 ### 7.3 Evidence
 - FR-10 **Full video documentation is required** for every record, ideally from multiple angles.
-  The form requires at least one video link and allows several.
-- FR-11 If full video is not possible, the claimant must explain why. The claim is still
-  submitted, flagged for the reviewer.
+  The evidence step starts with a checkbox "There is a full video of the attempt". When it is ticked, the
+  form shows the video links field and requires at least one link (several allowed).
+- FR-11 If full video is not possible, the claimant leaves the box unticked and must explain why. The video
+  links field is then hidden and no links are stored. The claim is still submitted, and the reviewer sees the
+  reason.
 - FR-12 **Witnesses:** at least two named bystanders for every record (October 2026 framework; no category
   needs more), who have the knowledge and experience for the role and know what their role is. Name and
   contact for each, and their role during the attempt.
@@ -272,26 +277,39 @@ leashed and the line has a backup.
   "saving tricks" (e.g. Yoda, Rocket).
 
 ### 7.5 Review
-- FR-15 Reviewers see a queue at `/admin/records-review` (pattern like `/admin/event-approval`),
-  with pending claims.
+- FR-15 Reviewers see a queue at `/admin/records-review` (pattern like `/admin/event-approval`) with
+  **three separate tables**: world records, world records in a **new category** (path b), and world firsts.
+  Each table shows the category, value or trick, athletes, **gender** (men / women / mixed), **claimant**,
+  date and status, with a search field and a status filter. Clicking a row opens the claim with all its
+  details, the history, and the actions **Approve**, **Request changes**, **Reject** and **Modify**.
+- FR-15a The admin pages are linked by a row of buttons in the same order as the queue's tables:
+  **Modify Records**, **Modify Categories**, **Modify Firsts** and **Import review**. A page does not link to
+  itself; the Modify pages link back to the review queue.
+- FR-15b **Modify Records** and **Modify Firsts** (`/admin/records-manage/records|firsts`) list every entry
+  except drafts (pending, published, historical, rejected), with the same table and the same detail view as
+  the queue. A published entry can also be voided there and restored.
 - FR-16 Reviewers can approve, reject (reason required), or request changes (comment required).
-- FR-17 Reviewers can edit fields before approving (e.g. correct measurements, fix category).
+- FR-17 **Modify** lets an admin edit **all details** of a record or first, before or after approval: category,
+  value, athletes, date, location, witnesses, evidence and the other fields of §8. An optional reason is kept, the
+  change is logged as "modified", athlete profile links are updated, and published / historical statuses are
+  recomputed. On `/world_records`, admins see an **Edit** link on every row that opens Modify.
 - FR-18 The review screen shows the previous record holder and value, and the difference to the
   claim, so the reviewer can judge whether the increase is **significant**. Significance is a
   reviewer judgment; the framework sets no fixed threshold. The Sport Commission is the final
   deciding body.
 - FR-19 For a new-category claim (path b), the review screen shows the proposed category next to
   similar existing ones, so the reviewer can accept it, map the claim to an existing category,
-  or reject it. The review screen lists the framework's criteria for a world record, which the
-  reviewer checks: **measurable** (one quantitative, objective metric), **standardisable** (ISA
+  or reject it. A category created this way starts in group Other with the proposed unit and direction,
+  which the admin can adjust (FR-C5). Only for new-category claims, the review screen lists the framework's
+  criteria for a world record, which the reviewer checks: **measurable** (one quantitative, objective metric), **standardisable** (ISA
   definitions exist, e.g. what a send is), **breakable** (anyone can in principle break it),
   **significant and separable** (a minor variation such as sitting vs standing start, or 60 m vs
   65 m, is not a separate record), **challenged**, **verifiable**, and **claimed**. A category
   that is not yet challenged starts as Unchallenged (§6.1).
 - FR-20 For firsts, the review screen shows the framework's criteria: innovative / iconic,
   distinct from existing tricks, requires advanced skill, significant leap forward, has a clear
-  name, and full control at initiation and termination. Reviewers can link the claim to similar
-  existing firsts for comparison.
+  name, and full control at initiation and termination. These criteria are shown on every first review.
+  Reviewers can link the claim to similar existing firsts for comparison.
 - FR-21 On approving a record that beats the current one on the same list (men's, women's or mixed), the
   old one becomes **historical** on that list automatically (FR-9b). A record that equals the current one
   joins it as co-holder (FR-9c) and nothing becomes historical.
@@ -330,8 +348,10 @@ leashed and the line has a backup.
   - **changes requested**: with the reviewer's comment and a link to edit the claim;
   - **rejected**: with the reviewer's reason.
   Recipients are the claimant and every athlete on the claim who has an email.
-  On submission the email holds all claim data (incl. witnesses, setup, rules confirmed) and also goes to
-  every witness whose contact is an email address. The current
+  On submission the email holds all relevant claim data (category, value, date, location, athletes, setup,
+  further specs, witnesses, evidence links or the reason for no full video). A separate email with the same data
+  goes to every **witness** whose contact is an email address, asking them to write to ISA if anything is
+  wrong. The current
   status is always visible in the app too (a "My claims" list).
 - FR-28 When a claim is submitted (draft → pending, including resubmission after changes
   requested), an email goes to **records@slacklineinternational.org**.
@@ -384,8 +404,8 @@ Records and firsts are different kinds of claim and are stored with different fi
 | Field | Required | Notes |
 |---|---|---|
 | Category | yes (path a) | picked from Active and Unchallenged categories |
-| New category proposal | yes (path b) | name, what is measured and how, unit, higher/lower is better, why it is a distinct superlative |
-| Value | yes | structured so records can be compared. A number with a unit (the unit comes from the category), or for geographic categories (e.g. most northern / southern highline) the coordinates themselves |
+| New category proposal | yes (path b) | name, what is measured and how, unit (free text, with suggestions m, s, count, °), higher/lower is better, why it is a distinct superlative |
+| Value | yes | structured so records can be compared. A number in the category's unit (a time such as "1:59 min" is read as seconds), or for geographic categories (unit °, e.g. most northern / southern highline) the coordinates themselves. The form shows the category's description under the category |
 | Athlete(s) | yes | one or more SportHub profiles, existing or entered as new (FR-9). More than one only for a joint performance (FR-9b); co-holders claim separately (FR-9c). Gender and country are not entered; they come from each athlete's data (FR-9a). |
 | Consent confirmation | conditional | required when the claimant is not the athlete or there are several athletes (FR-9e) |
 | Date of attempt | yes | |
@@ -394,8 +414,9 @@ Records and firsts are different kinds of claim and are stored with different fi
 | Setup | no | free text: webbing, anchors, leash and backup |
 | Further specs | no | free text, e.g. line height on a length record |
 | Witnesses | yes | name, contact and role; at least 2 |
-| Evidence links | yes | at least one video link (FR-10 to FR-14) |
-| Reason if no full video | conditional | required when full video is missing (FR-11) |
+| Full video | yes | checkbox "There is a full video of the attempt" (FR-10) |
+| Evidence links | conditional | at least one video link when there is a full video; hidden otherwise (FR-10, FR-11, FR-14) |
+| Reason if no full video | conditional | required when there is no full video (FR-11) |
 | Ethics confirmation | yes | FR-7 |
 
 ### 8.2 World first claim
@@ -414,7 +435,7 @@ Records and firsts are different kinds of claim and are stored with different fi
 | In competition? | no | optional: in competition (with an optional link to a SportHub event) or not. Not required because the framework does not yet separate competition and training firsts |
 | Line details | no | line type and length or height where relevant |
 | Evidence links | yes | at least one video link showing the trick being landed |
-| Control confirmation | yes | full control at initiation and termination, per the category's termination rule (§7.4) |
+| Control confirmation | yes | full control at initiation and termination, per the discipline's termination rule (§6.2) |
 | Ethics confirmation | yes | FR-7 |
 
 A first has no value, no witnesses, and no rule checklist: it is a single trick and is judged
@@ -454,6 +475,11 @@ lets the Sport Commission's records group get access later without code changes.
 - Free solo highline records: not accepted (ISA framework).
 - Certificates are generated by SportHub (replacing account.slacklineinternational.org).
 - Record categories have a status: Active, Unchallenged, Archived. Only admins change it.
+- Record categories have only: name, description, group (Length, Endurance, Speed, Altitude, Other), unit,
+  direction and status (FR-C1). Line type, leashed and per-category rule checklists were dropped
+  (checklists are open issue 1).
+- Admin area: one review queue with separate tables for records, new categories and firsts; every entry can be
+  modified in full by an admin (FR-15 to FR-17).
 - The submission form separates "existing category" from "new category" claims.
 - Ranking record categories are ignored.
 - Specs: structured value + unit (needed to compare records).
