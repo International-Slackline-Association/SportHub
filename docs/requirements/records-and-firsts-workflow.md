@@ -221,7 +221,7 @@ Measurements:
   Recipients are the claimant and every athlete on the claim who has an email. The current
   status is always visible in the app too (a "My claims" list).
 - FR-28 When a claim is submitted (draft → pending, including resubmission after changes
-  requested), or an attempt is announced, an email goes to **sport@slacklineinternational.org**.
+  requested), or an attempt is announced, an email goes to **records@slacklineinternational.org**.
   It contains the claim type, athlete name(s), summary (category, value, date, location),
   evidence links, and a link to the claim in `/admin/records-review`.
 - FR-29 When a claim is approved and published, an email goes to
@@ -233,9 +233,6 @@ Measurements:
 - FR-30 All ISA recipient addresses are configurable (environment variables), not hard-coded.
 - FR-31 A failed email send must not block or roll back the action; it is logged. (Needs a mail
   provider, e.g. AWS SES.)
-- FR-32 **Open:** the framework names **records@slacklineinternational.org** as the contact for
-  records. Should that address receive the submission and announcement emails instead of, or as
-  well as, sport@?
 
 ### 7.8 Migration
 - FR-33 Existing sheet rows are imported once into SportHub as published entries, mapped to the
@@ -293,7 +290,7 @@ lets the records working group get access later without code changes.
 - Reading confirmed: athletes claim, ISA reviews, approved entries are published.
 - Reviewers: ISA admins in v1.
 - Google Sheet: imported once, then retired.
-- Emails: sport@ on submission, communication@ on approval, athletes on every status change.
+- Emails: records@ on submission and announcement, communication@ on approval, athletes on every status change.
 - National/continental records: out of scope (ISA framework).
 - Free solo highline records: not accepted (ISA framework).
 - Specs: structured value + unit (needed to compare records).
@@ -301,11 +298,9 @@ lets the records working group get access later without code changes.
 
 ## 11. Open questions
 
-1. Should records@slacklineinternational.org get the submission/announcement emails instead of,
-   or as well as, sport@? (FR-32)
-2. Evidence: links only, or file uploads too? (FR-14)
-3. Rankings records: claim them in v1, or derive them later from contest data? (FR-C2)
-4. Unchallenged claims: keep them pending, or add an "on hold" state? (FR-19)
-5. Certificates: generate in SportHub, or keep the existing account.slacklineinternational.org
+1. Evidence: links only, or file uploads too? (FR-14)
+2. Rankings records: claim them in v1, or derive them later from contest data? (FR-C2)
+3. Unchallenged claims: keep them pending, or add an "on hold" state? (FR-19)
+4. Certificates: generate in SportHub, or keep the existing account.slacklineinternational.org
    download? (FR-26)
-6. Is the "announce attempt" step (FR-1) wanted in v1, or later?
+5. Is the "announce attempt" step (FR-1) wanted in v1, or later?
