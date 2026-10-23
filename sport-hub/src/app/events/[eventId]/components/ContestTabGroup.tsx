@@ -52,7 +52,7 @@ export const ContestTabGroup = ({ contests, ...tabGroupProps }: Omit<TabGroupPro
               </div>
               <Gender value={(gender || "") as ContestGender} />
               <AgeCategory variant={(ageCategory || "") as AgeCategory} />
-              <ContestSize variant={contestSize as ContestType} />
+              <ContestSize value={contestSize as ContestType} />
             </div>
           ),
         };

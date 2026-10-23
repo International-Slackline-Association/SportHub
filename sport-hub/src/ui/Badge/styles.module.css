@@ -22,62 +22,12 @@
 
 /* Contest Size Badges */
 .contestSize {
+  gap: 4px;
+}
+
+.contestSizeBordered {
   border: 1px solid var(--color-neutral-500);
-}
-
-.contestSize .dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.contestSizeMasters {
   color: var(--color-neutral-500);
-}
-
-.contestSizeMasters .dot {
-  background-color: var(--color-neutral-500);
-}
-
-.contestSizeChallenge {
-  color: var(--color-neutral-500);
-}
-
-.contestSizeChallenge .dot {
-  background-color: var(--color-blue-500);
-}
-
-.contestSizeOpen {
-  color: var(--color-neutral-500);
-}
-
-.contestSizeOpen .dot {
-  background-color: var(--color-primary);
-}
-
-.contestSizeGrandSlam {
-  color: var(--color-neutral-500);
-}
-
-.contestSizeGrandSlam .dot {
-  background-color: var(--color-red-600);
-}
-
-.contestSizeWorldCup {
-  color: var(--color-neutral-500);
-}
-
-.contestSizeWorldCup .dot {
-  background-color: var(--color-green-950);
-}
-
-.contestSizeWorldChampionship {
-  color: var(--color-neutral-500);
-}
-
-.contestSizeWorldChampionship .dot {
-  background-color: var(--color-orange-600);
 }
 
 /* Discipline Badges */
