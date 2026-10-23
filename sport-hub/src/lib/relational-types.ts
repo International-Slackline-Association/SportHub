@@ -326,8 +326,10 @@ export interface RecordValue {
 
 export interface RecordWitness {
   name: string;
-  contact: string;
-  role: string;
+  email: string;
+  phone?: string;
+  contact?: string;              // Older claims: one "email or phone" field
+  role?: string;                 // Older claims: role during the attempt
 }
 
 /** Evidence is links only in v1; "file" is reserved for S3 uploads later. */

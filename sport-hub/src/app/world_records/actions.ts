@@ -198,9 +198,10 @@ function validateForSubmit(
   required(values.locationName, 'Location');
   required(values.locationCountry, 'Country of the location');
 
-  const witnesses = values.witnesses.filter(w => w.name.trim() || w.contact.trim() || w.role.trim());
+  const witnesses = values.witnesses.filter(w => w.name.trim() || w.email.trim() || w.phone?.trim());
   if (witnesses.length < MIN_WITNESSES) errors.push(`Name at least ${MIN_WITNESSES} witnesses`);
-  if (witnesses.some(w => !w.name.trim() || !w.contact.trim() || !w.role.trim())) errors.push('Each witness needs a name, contact and role');
+  if (witnesses.some(w => !w.name.trim() || !w.email.trim())) errors.push('Each witness needs a name and an email');
+  if (witnesses.some(w => w.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(w.email.trim()))) errors.push('Enter a valid email for each witness');
   if (!values.fullVideo && !values.noFullVideoReason.trim()) errors.push('Explain why there is no full video');
 
   return errors;
@@ -287,8 +288,8 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
         setup: values.setup.trim() || undefined,
         furtherSpecs: values.furtherSpecs.trim() || undefined,
         witnesses: values.witnesses
-          .filter(w => w.name.trim() || w.contact.trim() || w.role.trim())
-          .map(w => ({ name: w.name.trim(), contact: w.contact.trim(), role: w.role.trim() })),
+          .filter(w => w.name.trim() || w.email.trim() || w.phone?.trim())
+          .map(w => ({ name: w.name.trim(), email: w.email.trim(), phone: w.phone?.trim() || undefined })),
         noFullVideoReason: values.fullVideo ? undefined : values.noFullVideoReason.trim(),
         newCategoryProposal: isNew ? { ...values.newCategory } : undefined,
       } satisfies RecordEntryRecord;
@@ -731,8 +732,8 @@ export async function adminUpdateEntry(kind: EntryKind, entryId: string, values:
         setup: values.setup.trim() || undefined,
         furtherSpecs: values.furtherSpecs.trim() || undefined,
         witnesses: values.witnesses
-          .filter(w => w.name.trim() || w.contact.trim() || w.role.trim())
-          .map(w => ({ name: w.name.trim(), contact: w.contact.trim(), role: w.role.trim() })),
+          .filter(w => w.name.trim() || w.email.trim() || w.phone?.trim())
+          .map(w => ({ name: w.name.trim(), email: w.email.trim(), phone: w.phone?.trim() || undefined })),
         noFullVideoReason: values.fullVideo ? undefined : values.noFullVideoReason.trim() || undefined,
       };
     }

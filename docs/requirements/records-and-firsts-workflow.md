@@ -227,8 +227,8 @@ competition, as long as evidence is sufficient, so the claim does not ask whethe
   links field is then hidden and no links are stored. The claim is still submitted, and the reviewer sees the
   reason.
 - FR-12 **Witnesses:** at least two named bystanders for every record (October 2026 framework; no category
-  needs more), who have the knowledge and experience for the role and know what their role is. Name and
-  contact for each, and their role during the attempt.
+  needs more), who have the knowledge and experience for the role and know what their role is. For each: name,
+  email (required) and phone (optional). The role during the attempt is not asked.
 - FR-13 Firsts require at least one video of the trick being landed.
 - FR-14 v1 accepts **links only** (YouTube, Vimeo, Instagram, Google Drive, …). File uploads to S3
   (for permanent archiving of evidence) are a planned later extension; the data model should allow
@@ -351,7 +351,7 @@ leashed and the line has a backup.
   Recipients are the claimant and every athlete on the claim who has an email.
   On submission the email holds all relevant claim data (category, value, date, location, athletes, setup,
   further specs, witnesses, evidence links or the reason for no full video). A separate email with the same data
-  goes to every **witness** whose contact is an email address, asking them to write to ISA if anything is
+  goes to every **witness** at their email address, asking them to write to ISA if anything is
   wrong. The current
   status is always visible in the app too (a "My claims" list).
 - FR-28 When a claim is submitted (draft → pending, including resubmission after changes
@@ -414,7 +414,7 @@ Records and firsts are different kinds of claim and are stored with different fi
 | Event | no | optional link to a SportHub event |
 | Setup | no | free text: webbing, anchors, leash and backup |
 | Further specs | no | free text, e.g. line height on a length record |
-| Witnesses | yes | name, contact and role; at least 2 |
+| Witnesses | yes | name, email (required) and phone (optional); at least 2 |
 | Full video | yes | checkbox "There is a full video of the attempt" (FR-10) |
 | Evidence links | conditional | at least one video link when there is a full video; hidden otherwise (FR-10, FR-11, FR-14) |
 | Reason if no full video | conditional | required when there is no full video (FR-11) |

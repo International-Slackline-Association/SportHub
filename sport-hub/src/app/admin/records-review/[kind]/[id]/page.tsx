@@ -100,7 +100,7 @@ export default async function ReviewClaimPage({ params }: Props) {
                 <Row label="Setup">{entry.setup}</Row>
                 <Row label="Further specs">{entry.furtherSpecs}</Row>
                 <Row label="Witnesses">
-                  {entry.witnesses.length > 0 ? entry.witnesses.map((w, i) => <span key={i} className="block">{w.name} · {w.role} · {w.contact}</span>) : undefined}
+                  {entry.witnesses.length > 0 ? entry.witnesses.map((w, i) => <span key={i} className="block">{[w.name, w.email, w.phone, w.contact, w.role].filter(Boolean).join(' · ')}</span>) : undefined}
                 </Row>
                 <Row label="No full video because">{entry.noFullVideoReason}</Row>
               </>

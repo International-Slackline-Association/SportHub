@@ -62,7 +62,7 @@ export const emptyClaim = (path: ClaimPath = 'existing'): ClaimFormValues => ({
   locationCountry: '',
   setup: '',
   furtherSpecs: '',
-  witnesses: [{ name: '', contact: '', role: '' }, { name: '', contact: '', role: '' }],
+  witnesses: [{ name: '', email: '', phone: '' }, { name: '', email: '', phone: '' }],
   fullVideo: true,
   noFullVideoReason: '',
   trickName: '',
@@ -78,6 +78,18 @@ export const emptyClaim = (path: ClaimPath = 'existing'): ClaimFormValues => ({
 export type ClaimActionResult =
   | { success: true; entryId: string; kind: 'record' | 'first'; message?: string }
   | { success: false; errors: string[] };
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Witness fields for the form; older claims had one "email or phone" contact. */
+const witnessFields = (w: RecordWitness): RecordWitness => {
+  const legacy = w.contact?.trim() ?? '';
+  return {
+    name: w.name,
+    email: w.email ?? (EMAIL.test(legacy) ? legacy : ''),
+    phone: w.phone ?? (legacy && !EMAIL.test(legacy) ? legacy : ''),
+  };
+};
 
 /** Loads a saved claim back into the form (edit a draft or a claim with changes requested). */
 export function entryToClaimValues(entry: WorldEntryRecord): ClaimFormValues {
@@ -109,8 +121,8 @@ export function entryToClaimValues(entry: WorldEntryRecord): ClaimFormValues {
       lineDetails: entry.lineDetails ?? '',
     };
   }
-  const witnesses = [...entry.witnesses];
-  while (witnesses.length < 2) witnesses.push({ name: '', contact: '', role: '' });
+  const witnesses = entry.witnesses.map(witnessFields);
+  while (witnesses.length < 2) witnesses.push({ name: '', email: '', phone: '' });
   return {
     ...common,
     newCategory: entry.newCategoryProposal ? { ...entry.newCategoryProposal } : base.newCategory,

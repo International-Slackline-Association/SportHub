@@ -33,9 +33,9 @@ async function athleteEmails(entry: WorldEntryRecord): Promise<string[]> {
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const country = (code?: string) => (code && getCountryByCode(code)?.name) || code?.toUpperCase();
 
-/** Witnesses whose contact is an email address (it can also be a phone number). */
+/** Witness email addresses (older claims had one contact field that could be a phone number). */
 const witnessEmails = (entry: WorldEntryRecord) =>
-  entry.kind === 'record' ? entry.witnesses.map(w => w.contact.trim()).filter(c => EMAIL.test(c)) : [];
+  entry.kind === 'record' ? entry.witnesses.map(w => (w.email ?? w.contact ?? '').trim()).filter(c => EMAIL.test(c)) : [];
 
 /** Everything on the claim, for the submission emails. */
 function fullDetails(entry: WorldEntryRecord): string[] {
@@ -52,7 +52,7 @@ function fullDetails(entry: WorldEntryRecord): string[] {
     }
     add('Setup', entry.setup);
     add('Further specs', entry.furtherSpecs);
-    if (entry.witnesses.length > 0) lines.push('', 'Witnesses:', ...entry.witnesses.map(w => `  ${w.name} (${w.role}), ${w.contact}`));
+    if (entry.witnesses.length > 0) lines.push('', 'Witnesses:', ...entry.witnesses.map(w => `  ${[w.name, w.email, w.phone, w.contact].filter(Boolean).join(', ')}`));
     add('No full video because', entry.noFullVideoReason);
   } else {
     add('Why it is a first', entry.whyFirst);

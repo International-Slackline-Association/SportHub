@@ -242,15 +242,15 @@ export function ClaimFields({ recordCategories, firstCategories, claimantId, adm
                 {values.witnesses.map((_, i) => (
                   <div key={i} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end">
                     <FormikTextField id={`witnesses.${i}.name`} name={`witnesses.${i}.name`} label="Name" required={i < MIN_WITNESSES} />
-                    <FormikTextField id={`witnesses.${i}.contact`} name={`witnesses.${i}.contact`} label="Email or phone" required={i < MIN_WITNESSES} />
-                    <FormikTextField id={`witnesses.${i}.role`} name={`witnesses.${i}.role`} label="Role" placeholder="e.g. rigger, filmer" required={i < MIN_WITNESSES} />
+                    <FormikTextField id={`witnesses.${i}.email`} name={`witnesses.${i}.email`} type="email" label="Email" required={i < MIN_WITNESSES} />
+                    <FormikTextField id={`witnesses.${i}.phone`} name={`witnesses.${i}.phone`} type="tel" label="Phone" />
                     {i >= MIN_WITNESSES ? (
                       <button type="button" className="text-xs text-red-600 underline pb-2" onClick={() => remove(i)}>Remove</button>
                     ) : <span />}
                   </div>
                 ))}
                 <div>
-                  <Button type="button" variant="secondary" size="small" onClick={() => push({ name: '', contact: '', role: '' })}>Add a witness</Button>
+                  <Button type="button" variant="secondary" size="small" onClick={() => push({ name: '', email: '', phone: '' })}>Add a witness</Button>
                 </div>
               </div>
             )}
