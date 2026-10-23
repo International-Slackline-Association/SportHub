@@ -1,10 +1,31 @@
 import React from "react";
 import styles from "./styles.module.css";
-import { pascalCaseToTitleCase } from ".";
 import { TrophyIcon } from "@ui/Icons";
 import { cn } from "@utils/cn";
-import { getContestSizeTrophyCount } from "@utils/contestSize";
-import { snakeCaseToTitleCase } from "@utils/strings";
+import { snakeCaseToPascalCase, snakeCaseToTitleCase } from "@utils/strings";
+import { contestSizeOptions } from "@ui/Form/commonOptions";
+import { MAP_CONTEST_TYPE_ENUM_TO_NAME } from "@utils/consts";
+
+const getContestSizeOption = (
+  value: number | string | null | undefined,
+): Option<ContestType> | undefined => {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+
+  let contestSize;
+  if (Number.isInteger(value)) {
+    contestSize = MAP_CONTEST_TYPE_ENUM_TO_NAME[value as number];
+  } else {
+    contestSize = String(value).trim().toUpperCase().replace(/\s+/g, '_');
+  }
+
+  return contestSizeOptions.find(({ value }) => value === contestSize);
+};
+
+const getContestSizeTrophyCount = (contestSize: ContestType) =>
+  contestSizeOptions.findIndex(({ value }) => value === contestSize) + 1;
+
 
 interface ContestSizeProps {
   className?: string;
@@ -12,7 +33,7 @@ interface ContestSizeProps {
   singleIcon?: boolean;
   size?: "sm" | "md" | "lg";
   variant?: "normal" | "bold";
-  value: ContestType | undefined;
+  value: ContestType | string | undefined;
 }
 
 const TROPHY_SIZES = { sm: 12, md: 16, lg: 20 };
@@ -25,12 +46,14 @@ const ContestSize = ({
   variant = "bold",
   value,
 }: ContestSizeProps) => {
-  if (!value) {
+  const contestSizeOption = getContestSizeOption(value);
+
+  if (!contestSizeOption) {
     return null;
   }
 
-  const variantClass = `contestSize${pascalCaseToTitleCase(value || "")}`;
-  const numTrophies = singleIcon ? 1 : getContestSizeTrophyCount(value);
+  const variantClass = `contestSize${snakeCaseToPascalCase(value || "")}`;
+  const numTrophies = singleIcon ? 1 : getContestSizeTrophyCount(contestSizeOption.value);
   const typographyClass = variant === "normal" ? "" : styles.badgeBold;
   const boxedClass = variant === "bold" ? styles.contestSizeBordered : "";
 
@@ -42,7 +65,7 @@ const ContestSize = ({
         boxedClass,
         typographyClass,
         styles[variantClass],
-        className
+        className,
       )}
     >
       {showIcon && numTrophies > 0 && (
@@ -52,7 +75,7 @@ const ContestSize = ({
           ))}
         </span>
       )}
-      {snakeCaseToTitleCase(value)}
+      {snakeCaseToTitleCase(contestSizeOption.label)}
     </div>
   );
 };

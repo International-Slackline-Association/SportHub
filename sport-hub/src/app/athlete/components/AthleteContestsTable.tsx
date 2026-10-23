@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { DISCIPLINE_DATA } from '@utils/consts';
 import { eventGenderOptions, ageCategoryOptions } from '@ui/Form/commonOptions';
 import { ContestSize } from '@ui/Badge';
-import { normalizeContestSize } from '@utils/contestSize';
 import { formatDate } from '@utils/dates';
 import { Alert } from '@ui/Alert';
 
@@ -90,7 +89,7 @@ const columns = [
     enableColumnFilter: true,
     header: "Contest Size",
     cell: info => (
-      <ContestSize value={normalizeContestSize(info.getValue() as string)} variant="normal" />
+      <ContestSize value={info.getValue()} variant="normal" />
     ),
     meta: { filterVariant: 'contest-size', filterIncludeAll: true },
     size: 100,

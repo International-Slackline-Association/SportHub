@@ -37,10 +37,10 @@ export const judgingSystemOptions: Option[] = [
   { value: "RIGGING_MASTERS", label: "Rigging Masters" },
 ];
 
-export const contestSizeOptions: Option[] = [
-  { value: "CHALLENGE", label: "Challenge" },
-  { value: "OPEN", label: "Open" },
-  { value: "GRAND_SLAM", label: "Grand Slam" },
+export const contestSizeOptions: Option<ContestType>[] = [
+  { value: "CHALLENGE", label: "Local" },
+  { value: "OPEN", label: "Regional" },
+  { value: "GRAND_SLAM", label: "National" },
   { value: "MASTERS", label: "Masters" },
   { value: "WORLD_CUP", label: "World Cup" },
   { value: "WORLD_CHAMPIONSHIP", label: "World Championship" },

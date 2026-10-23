@@ -12,10 +12,10 @@ const FIXED_POINTS_BY_CONTEST_SIZE: Record<ContestType, fixedPoints> = {
  * Each comp level sets a fixed points for the top levels
  * places m..N (the field size) decay linearly to zero at place N+1.
  * 
- * P(k) = fixedPoints(k-1)                       for k = 1..m
- * P(k) = P(m) * (1 - ((k-m) / (N-m+1)))          for k = m..N
+ * P(r) = fixedPoints(r-1)                       for r = 1..m
+ * P(r) = P(m) * (1 - ((r-m) / (N-m+1)))          for r = m..N
  *  
- * where k = rank, m = minContestants (length of the fixedPoints list), N = numContestants, max = points of rank 1,
+ * where r = rank, m = minimum number of contestants, P(m) = points of last fixed rank m, N = number of contestants
  * 
  * e.g. for a men's Masters contest with 7 contestants:
  * the top 4 ranks will receive fixed points

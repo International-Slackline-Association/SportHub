@@ -17,7 +17,6 @@ import styles from './styles.module.css';
 import { formatDateRange } from '@utils/dates';
 import { kebabCaseToTitleCase } from '@utils/strings';
 import { ContestSize, Gender } from '@ui/Badge';
-import { normalizeContestSize } from '@utils/contestSize';
 
 const normalizeGroupField = (value: string | null | undefined) =>
   String(value ?? '')
@@ -208,12 +207,12 @@ const columns = [
     header: "Total Event Prize Value (€)",
     size: 72,
   }),
-  columnHelper.accessor((row: ContestData) => normalizeContestSize(row.contestSize) ?? row.contestSize, {
+  columnHelper.accessor("contestSize", {
     id: "size",
     enableColumnFilter: true,
     header: "Size",
     cell: info => (
-      <ContestSize className="flex-col items-start" value={info.getValue() as ContestType} variant="normal" />
+      <ContestSize className="flex-col !items-start" value={info.getValue()} variant="normal" />
     ),
     meta: { filterVariant: 'contest-size', filterIncludeAll: true },
     size: 120,

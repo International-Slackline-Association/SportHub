@@ -1,9 +1,8 @@
 import React from "react";
 import styles from "./styles.module.css";
-import { pascalCaseToTitleCase } from ".";
 import { normalizeGender } from "@utils/gender";
 import { cn } from "@utils/cn";
-import { textToTitleCase } from "@utils/strings";
+import { snakeCaseToPascalCase, textToTitleCase } from "@utils/strings";
 import { FemaleIcon, MaleIcon } from "@ui/Icons";
 
 interface GenderProps {
@@ -22,7 +21,7 @@ const Gender = ({
   variant = "bold",
   value
 }: GenderProps) => {
-  const genderClass = `gender${pascalCaseToTitleCase(value || "")}`;
+  const genderClass = `gender${snakeCaseToPascalCase(value || "")}`;
   const normalizedGender = normalizeGender(value) || "";
   const includeFemaleIcon = normalizedGender === "WOMEN" || normalizedGender === "MIXED";
   const includeMaleIcon = normalizedGender === "MEN" || normalizedGender === "MIXED";

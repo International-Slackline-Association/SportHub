@@ -1,6 +1,6 @@
 import React from "react";
 import styles from "./styles.module.css";
-import { pascalCaseToTitleCase } from ".";
+import { snakeCaseToPascalCase } from "@utils/strings";
 
 interface AgeCategoryProps {
   variant: AgeCategory;
@@ -14,7 +14,7 @@ const ageCategoryLabels: Record<AgeCategory, string> = {
 };
 
 const AgeCategory = ({ variant, className = "" }: AgeCategoryProps) => {
-  const variantClass = `age${pascalCaseToTitleCase(variant)}`;
+  const variantClass = `age${snakeCaseToPascalCase(variant)}`;
 
   return (
     <div
