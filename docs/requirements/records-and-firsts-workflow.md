@@ -84,7 +84,13 @@ draft ──submit──▶ pending ──approve──▶ published ──super
 - FR-16 Approval invalidates the world-records cache so the entry appears right away.
 
 ### 5.4 Notifications
-- FR-17 Submitter is notified on approve / reject / changes requested. **Open:** email, in-app only, or none for v1? (No email sending exists in the app today.)
+- FR-17 Athletes are emailed when their claim changes status:
+  - **submitted** — confirmation that ISA received the claim;
+  - **approved / published** — with a link to the public entry;
+  - **changes requested** — with the reviewer's comment and a link to edit the claim;
+  - **rejected** — with the reviewer's reason.
+  Recipients are the submitter and every co-athlete linked to a SportHub account with an email.
+  The current status is also always visible in the app (e.g. a "My claims" list).
 - FR-18 When an athlete submits a claim (draft → pending, including resubmission after changes
   requested), an email is sent to **sport@slacklineinternational.org**. The email contains the claim
   type (record / first), athlete name(s), short summary (line type, specs, date, location), the evidence
@@ -147,7 +153,7 @@ lets a separate records committee be added later without code changes.
 2. ~~Who reviews?~~ Decided: ISA admins for v1.
 3. Evidence: links only, or uploads too?
 4. Structured specs (numbers + units) vs free text?
-5. Notifications: decided that ISA is emailed at sport@slacklineinternational.org on each submission. Still open: is the submitter also emailed on approve / reject / changes requested, or do they only see the status in the app?
+5. ~~Notifications?~~ Decided: ISA is emailed on each submission, and athletes are emailed on submission and every status change.
 6. ~~Google Sheet future?~~ Decided: imported once, then retired.
 7. Are there official ISA rules for what counts as a record / first that the form must enforce (e.g. minimum evidence, rigging standards, leash rules, walking style: full man, onsight, free solo)?
 8. National / continental records: in scope?
