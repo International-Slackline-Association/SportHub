@@ -47,7 +47,7 @@ export default async function MyClaimsPage({ searchParams }: Props) {
               const editable = entry.status === 'draft' || entry.status === 'changes_requested';
               return (
                 <div key={`${entry.kind}-${entry.entryId}`} className="border border-gray-200 rounded-lg px-4 py-3 stack gap-2">
-                  <div className="flex justify-between gap-x-4 gap-y-2 flex-wrap items-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,3fr)_minmax(0,2fr)_auto] gap-x-4 gap-y-2 items-center">
                     <div className="stack min-w-0">
                       <span className="font-semibold">
                         {entry.kind === 'record' && entry.newCategoryProposal ? '(New category) ' : ''}{entry.categoryName || 'No category chosen'}
@@ -72,8 +72,8 @@ export default async function MyClaimsPage({ searchParams }: Props) {
                           Certificate{entry.athletes.length > 1 ? ` (${a.name})` : ''}
                         </Button>
                       ))}
-                      <ClaimStatusBadge status={entry.status} />
                     </div>
+                    <div className="sm:justify-self-end"><ClaimStatusBadge status={entry.status} /></div>
                   </div>
                   {entry.reviewComment && ['changes_requested', 'rejected'].includes(entry.status) && (
                     <Alert variant={entry.status === 'rejected' ? 'error' : 'warning'} size="SM">ISA: {entry.reviewComment}</Alert>
