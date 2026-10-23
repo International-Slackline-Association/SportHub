@@ -165,6 +165,13 @@ so the data model should allow a context field.
   are requested.
 - FR-9 Athletes are picked from SportHub users, or entered by name and email if not registered.
   The claimant does not have to be one of the athletes.
+- FR-9a Each athlete's **gender category and country come from the athlete database** (the
+  athlete's SportHub profile / ISA user record), not from the claim form. They are copied onto the
+  claim when it is submitted, so the published entry keeps showing the values that applied at the
+  time. Where a claim has several athletes, each athlete has their own values (e.g. a mixed team).
+  Athletes without an account are entered by the claimant with name, email, gender and country,
+  and these values are replaced by the database values once the athlete registers and is linked.
+  The claim's men / women classification is derived from the athletes' gender.
 
 ### 7.3 Evidence
 - FR-10 **Full video documentation is required** for every record, ideally from multiple angles.
@@ -283,9 +290,7 @@ Records and firsts are different kinds of claim and are stored with different fi
 | Category | yes (path a) | picked from Active and Unchallenged categories |
 | New category proposal | yes (path b) | name, what is measured and how, unit, higher/lower is better, why it is a distinct superlative |
 | Value + unit | yes | structured so records can be compared; the unit comes from the category |
-| Athlete(s) | yes | SportHub users, or name + email if not registered |
-| Gender category | yes | male / female |
-| Country | yes | default from the athlete's profile |
+| Athlete(s) | yes | SportHub users. Gender category and country are not entered; they come from each athlete's data (FR-9a). For an athlete without an account: name, email, gender and country |
 | Date of attempt | yes | |
 | Location / spot | yes | name, country, coordinates (needed for height above sea level and "most northern/southern") |
 | Event | no | optional link to a SportHub event |
@@ -306,9 +311,7 @@ Records and firsts are different kinds of claim and are stored with different fi
 | Description | yes | what the trick is and how it is performed |
 | Why it is a first | yes | short justification against the framework's criteria (innovative, distinct, advanced skill, significant) |
 | Similar existing tricks | no | tricks the claimant considers closest, and how this one differs |
-| Athlete(s) | yes | SportHub users, or name + email if not registered |
-| Gender category | yes | male / female |
-| Country | yes | default from the athlete's profile |
+| Athlete(s) | yes | SportHub users. Gender category and country are not entered; they come from each athlete's data (FR-9a). For an athlete without an account: name, email, gender and country |
 | Date landed | yes | |
 | Location / spot | no | name and country |
 | Context | yes | in competition (optionally linked to a SportHub event), in training, or other |
