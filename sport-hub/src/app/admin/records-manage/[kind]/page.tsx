@@ -24,7 +24,7 @@ export default async function ManageEntriesPage({ params }: Props) {
       title={kind === 'record' ? 'Modify records' : 'Modify firsts'}
       description="All entries except drafts. Click a line to see all details and modify, approve, reject or void it."
     >
-      <AdminNav />
+      <AdminNav current={`/admin/records-manage/${segment}`} />
       <section className="p-4 sm:p-0">
         <EntryTable rows={rows} showStatus filterable emptyText="No entries." />
       </section>
