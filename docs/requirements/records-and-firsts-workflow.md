@@ -68,8 +68,8 @@ Out of scope:
 | Actor | Description |
 |---|---|
 | Visitor | Anyone. Can browse published records and firsts. |
-| Claimant (signed-in user) | The athlete, or a person affiliated with the attempt, who claims it. The ISA never starts a claim on someone's behalf. |
-| Athlete(s) | The person or people who set the record / landed the first. May differ from the claimant. |
+| Claimant (signed-in user with a SportHub account) | The athlete, or a person affiliated with the attempt, who claims it. The ISA never starts a claim on someone's behalf. |
+| Athlete(s) | The person or people who set the record / landed the first. Each needs a SportHub account. May differ from the claimant, who also needs one. |
 | Reviewer | ISA admins (`role: admin`) in v1, acting for the Sport Commission, which is the final deciding body. |
 | Admin | Full control: can create, edit, retire, or reclassify entries directly. |
 
