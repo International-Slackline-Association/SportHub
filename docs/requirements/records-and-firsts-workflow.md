@@ -179,14 +179,16 @@ competition, as long as evidence is sufficient, so "in competition" is only an o
   - the entry is shown once on `/world_records`, listing every athlete, and appears on each
     athlete's profile;
   - each athlete gets the emails (FR-27) and their own certificate (FR-26);
-  - when the record is beaten, it becomes historical for all of its athletes together;
-  - the claim's men / women classification is derived from all athletes (FR-9a), so a claim with
-    both men and women is a mixed claim. **See open question 4.**
+  - there is **no mixed list**. Each athlete's record goes on the list for their gender: women
+    on the women's list, men on the men's list. A shared record with both men and women appears
+    on both lists, each time listing the athletes of that gender (and the full team as context);
+  - the record is tracked per list, so it is beaten, and becomes historical, separately on the
+    men's and on the women's list.
 - FR-9a Each athlete's **gender category and country come from the athlete database** (the
   athlete's SportHub profile / ISA user record), not from the claim form. They are copied onto the
   claim when it is submitted, so the published entry keeps showing the values that applied at the
   time. Where a claim has several athletes, each athlete has their own values (e.g. a mixed team).
-  The claim's men / women classification is derived from the athletes' gender.
+  The lists a claim appears on (men's, women's) are derived from the athletes' gender.
 
 ### 7.3 Evidence
 - FR-10 **Full video documentation is required** for every record, ideally from multiple angles.
@@ -263,8 +265,8 @@ leashed and the line has a backup.
   distinct from existing tricks, requires advanced skill, significant leap forward, has a clear
   name, and full control at initiation and termination. Reviewers can link the claim to similar
   existing firsts for comparison.
-- FR-21 On approving a record that beats an existing one, the old one becomes **historical**
-  automatically.
+- FR-21 On approving a record that beats an existing one on the same men's or women's list, the
+  old one becomes **historical** on that list automatically (FR-9b).
 - FR-22 Every status change is logged with who, when, and the comment (audit trail).
 
 ### 7.6 Publishing & display
@@ -391,6 +393,7 @@ lets the Sport Commission's records group get access later without code changes.
 - Ranking record categories are ignored.
 - Specs: structured value + unit (needed to compare records).
 - Evidence: full video and at least two witnesses for records (ISA framework); links only in v1, uploads later.
+- No mixed list: records go on the men's or women's list by the athlete's gender; shared records appear on both when the team is mixed.
 - Rules follow the ISA framework October 2026 v2 (checked against it in this version).
 
 ## 11. Open questions
@@ -404,5 +407,3 @@ lets the Sport Commission's records group get access later without code changes.
 3. **Gender-specific titles.** The framework says the inferior of the male and female record carries
    the gender-specific title. Should the records page show the lower one as, say, "Women's record"
    and the higher one as the plain "World record"?
-4. **Mixed shared records.** When a shared record has both men and women, which men / women list
-   does it belong to: a separate "mixed" list, or both lists?
