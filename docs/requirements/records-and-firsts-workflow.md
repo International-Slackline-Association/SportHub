@@ -1,12 +1,13 @@
 # Requirements: World Records & World Firsts Workflow
 
-Status: **Draft v2** (for discussion, no implementation yet)
+Status: **Draft v3** (for discussion, no implementation yet)
 Branch: `workflow_records_firsts`
 
-Source of the rules below: ISA Sport Commission, *Verification of Slackline World Records and
-Slackline World Firsts*, April 2025 v1 (published at
-https://data.slacklineinternational.org/sport/records-and-firsts-how-to/). Where this document
-and that framework differ, the framework wins.
+Source of the rules below: ISA Sport Commission, *Slackline World Records and World Firsts*,
+October 2026 v2 (authors Thomas Buckingham and Jonas Umlauft; also published at
+https://data.slacklineinternational.org/sport/records-and-firsts-how-to/). It replaces the April
+2025 v1. Where this document and that framework differ, the framework wins, and the ISA Sport
+Commission is the final deciding body on accepting a record or first.
 
 ## 1. Goal
 
@@ -43,18 +44,21 @@ and "World Firsts" tabs of the ISA certificates Google Sheet.
 In scope:
 - **World** records and **world** firsts only.
 - Record categories and firsts categories as defined by the ISA framework (§6).
-- Male and female categories (the framework keeps records "for male and female athletes").
+- Male and female records, tracked separately. The framework says the inferior of the two carries
+  the gender-specific title.
 
 Out of scope:
 - Continental and national records. The ISA does not record them; national governing bodies do.
 - Unleashed highline length/height records ("free solo"). The ISA does not document or
   communicate them for risk reasons, so they cannot be claimed.
-- Line "crossings" (walks with falls or catches). Only sends count.
+- Line "crossings" (walks with falls or catches). Only sends count (§7.4). The only exception is a
+  highline "run" (speedline), where leash falls during the run are allowed.
 - Combos as world firsts. Only singular tricks.
 - The framework's "Rankings" record categories (most yearly wins, most competitions won). They are
   ignored; none exist in the current sheet.
-- Guinness World Records submission. ISA approval is a prerequisite for Guinness, but the Guinness
-  process (and its fee) stays with the athlete.
+- Guinness World Records submission. Guinness consults the ISA as an official body but is
+  independent; its process stays with the athlete.
+- Separate records per webbing material. The framework discontinued these.
 - Evidence file uploads (planned after v1, see FR-14).
 - Announcing record attempts in the app (later).
 - Automated verification (GPS, sensors), public voting or commenting on claims.
@@ -66,15 +70,15 @@ Out of scope:
 | Visitor | Anyone. Can browse published records and firsts. |
 | Claimant (signed-in user) | The athlete, or a person affiliated with the attempt, who claims it. The ISA never starts a claim on someone's behalf. |
 | Athlete(s) | The person or people who set the record / landed the first. May differ from the claimant. |
-| Reviewer | ISA admins (`role: admin`) in v1, acting for the records working group of the Sport Commission. |
+| Reviewer | ISA admins (`role: admin`) in v1, acting for the Sport Commission, which is the final deciding body. |
 | Admin | Full control: can create, edit, retire, or reclassify entries directly. |
 
 ## 5. Lifecycle
 
 ```
-            draft ──submit──▶ pending ──approve──▶ published ──superseded──▶ historical
-                            ▲                 │  │
-                            └──changes req.───┘  └──reject──▶ rejected (void)
+draft ──submit──▶ pending ──approve──▶ published ──superseded──▶ historical
+  ▲                 │  │
+  └──changes req.───┘  └──reject──▶ rejected (void)
 ```
 
 - **draft**: saved by the claimant, only visible to them.
@@ -95,8 +99,9 @@ category that is still *Unchallenged*.
 
 A record category is a single named entry in a flat list (e.g. "Highline length – Urban",
 "Fastest 100 m speed highline"). There is no further hierarchy. Each category has one
-superlative and one modality, as the ISA framework requires. The list is managed by admins
-("New subcategories can be added by the ISA Sport Commission").
+superlative and one modality, as the ISA framework requires (so "highest and longest highline" is
+not a valid category, it is not a single metric). The list is managed by admins on behalf of the
+ISA Sport Commission.
 
 #### Category status
 
@@ -106,7 +111,7 @@ Every record category has exactly one status:
 |---|---|---|---|
 | **Active** | Established category that others compete in. | Yes | Yes, as a world record |
 | **Unchallenged** | New category with a single record so far; nobody else has attempted it yet. This is the "on hold" state. | Yes | Yes, but clearly labelled "Unchallenged" and kept apart from the active world records |
-| **Archived** | Discontinued category (e.g. Polyester / Polyamide splits). | No | Yes, as history |
+| **Archived** | Discontinued category, e.g. the old records per webbing material (Polyester, Polyamide). | No | Yes, as history |
 
 - FR-C2 Only admins change a category's status. Nothing changes it automatically, not even a second
   record being submitted to an Unchallenged category. When that happens, the reviewer is prompted
@@ -118,19 +123,19 @@ Every record category has exactly one status:
 - FR-C5 Admins can create, rename, and re-order categories, and change their status, in an admin
   page (e.g. `/admin/records-categories`). Every status change is logged.
 
-The initial categories are taken from the ISA framework, which lists them in its section "World record
-categories". They are loaded as seed data, with the framework's discontinued ones set to Archived.
+The initial set of categories is loaded as seed data. The October 2026 framework no longer lists
+the categories (the April 2025 v1 did), so the seed list is built from the categories already used
+in the Google Sheet and the v1 list. The material-specific ones are loaded as Archived.
 
 - FR-C1 Each category stores: name, superlative direction (higher-is-better or
-  lower-is-better), measurement unit, leashed/unleashed, rule checklist (§7.4), witness minimum,
-  and status (Active / Unchallenged / Archived).
+  lower-is-better), measurement unit, leashed/unleashed, rule checklist (§7.4), and status
+  (Active / Unchallenged / Archived).
 
 ### 6.2 World first categories
 
-Freestyle Trickline, Freestyle Highline, Rodeoline, Static (not yet recorded). Male and female.
-Admins can extend the list. Firsts can't be beaten, so their categories only use **Active** and
-**Archived**. In future the framework may split "in competition" vs "in training",
-so the data model keeps this as an optional field.
+Trickline, Highline Freestyle, Rodeoline, and Static (not yet recorded). Admins can extend the list. Firsts can't be beaten, so their categories only use **Active** and
+**Archived**. The framework says it does not matter whether a first was landed in training or in
+competition, as long as evidence is sufficient, so "in competition" is only an optional field.
 
 ## 7. Functional requirements
 
@@ -179,8 +184,8 @@ so the data model keeps this as an optional field.
   The form requires at least one video link and allows several.
 - FR-11 If full video is not possible, the claimant must explain why. The claim is still
   submitted, flagged for the reviewer.
-- FR-12 **Witnesses:** at least two named bystanders (three for some categories, configurable
-  per category). Name and contact for each, and their role during the attempt.
+- FR-12 **Witnesses:** at least two named bystanders, who have the knowledge and experience for the
+  role and know what their role is. Name and contact for each, and their role during the attempt.
 - FR-13 Firsts require at least one video of the trick being landed.
 - FR-14 v1 accepts **links only** (YouTube, Vimeo, Instagram, Google Drive, …). File uploads to S3
   (for permanent archiving of evidence) are a planned later extension; the data model should allow
@@ -190,30 +195,43 @@ so the data model keeps this as an optional field.
 The form shows the rules relevant to the chosen category, and the claimant ticks each one.
 The reviewer sees the same checklist.
 
-All records:
-- Must be a **send**: entire walk continuous, no falling, sitting, or touching the line with
-  anything but the feet.
-- **One way** is enough; direction does not matter.
-- **Controlled finish**: after the end mark, finish by sitting down or a controlled catch. A
-  leash fall, even deliberate, voids the attempt.
+**Highline send** (all highline length and height records):
+- The entire length of the line is walked, except for the no-fall zones, in any direction,
+  continuously, without falling, sitting, or touching the line with anything but the feet.
+- **No-fall zones** at the start and end of the line (where a leash fall is dangerous, e.g. due to
+  insufficient clearance to the ground) may be skipped, but if they are unnecessarily long the line
+  was rigged incorrectly and the attempt may be voided.
+- **Controlled finish:** the athlete ends by sitting down or with a controlled catch. A leash fall
+  voids the attempt, even a deliberate one.
 
-Highline and water-midline:
-- Start and end of the walk are **marked** on the line; the walk starts before the first mark
-  and ends past the second.
-- **No-fall zones** at the ends may be skipped, but must not be unnecessarily long.
+**Longline send:** like a highline send, but with no no-fall zones. The athlete walks from end to
+end (weblock to sewn loop).
 
-Longline:
-- **Anchor to anchor** (from weblock to sewn loop).
+**Waterline:** at least **80 %** of the line's length over a body of water. The line is not rigged
+unnecessarily high (a leash fall mid-line should potentially touch the water). The athlete is
+leashed and the line has a backup.
 
-Urban highline: at least **80 %** of the line's length over urban landscape.
+**Urban highline:** at least **80 %** of the line's length over urban landscape.
 
-Waterline: at least **80 %** of the length over water; the line should not be rigged
-unnecessarily high (a leash fall mid-line should roughly reach the water).
+**Highline run (speedline):**
+- The distance is marked on the line with tape. The athlete's full body is behind the starting
+  tape at the start; the time stops when the athlete touches the finish tape.
+- The athlete may leash-fall during the run.
+- The line length must match the running distance (a 100 m run on a 1 km line does not count).
 
-Measurements:
-- **Length** = straight anchor-to-anchor distance, not including sag, not the walked distance.
-- **Height** = height of the unloaded line, from the lower anchor to the lowest point of ground
-  or water below the line.
+**Measurements:**
+- **Line length** = straight anchor-to-anchor distance, without adding sag and without subtracting
+  the no-fall zones. It does not depend on the distance actually walked.
+- **Line height** = from the lower of the two anchors to the lowest point of ground or water below
+  the straight line between the anchors.
+
+**World firsts:**
+- A single trick, not a combo.
+- The athlete is in **full control at initiation and termination** of the trick.
+- Trickline: the athlete keeps the final position until reaching nearly static control, with no
+  saving by going to another position (e.g. chest or butt).
+- Highline Freestyle: the athlete keeps the final position for a total of 3 bounces, with no
+  "saving tricks" (e.g. Yoda, Rocket).
 
 ### 7.5 Review
 - FR-15 Reviewers see a queue at `/admin/records-review` (pattern like `/admin/event-approval`),
@@ -222,15 +240,20 @@ Measurements:
 - FR-17 Reviewers can edit fields before approving (e.g. correct measurements, fix category).
 - FR-18 The review screen shows the previous record holder and value, and the difference to the
   claim, so the reviewer can judge whether the increase is **significant**. Significance is a
-  reviewer judgment; the framework sets no fixed threshold.
+  reviewer judgment; the framework sets no fixed threshold. The Sport Commission is the final
+  deciding body.
 - FR-19 For a new-category claim (path b), the review screen shows the proposed category next to
   similar existing ones, so the reviewer can accept it, map the claim to an existing category,
-  or reject it. The framework requires one superlative and one modality per category, and
-  says a record must be **challenged** to be relevant; new categories therefore start as
-  Unchallenged (§6.1).
+  or reject it. The review screen lists the framework's criteria for a world record, which the
+  reviewer checks: **measurable** (one quantitative, objective metric), **standardisable** (ISA
+  definitions exist, e.g. what a send is), **breakable** (anyone can in principle break it),
+  **significant and separable** (a minor variation such as sitting vs standing start, or 60 m vs
+  65 m, is not a separate record), **challenged**, **verifiable**, and **claimed**. A category
+  that is not yet challenged starts as Unchallenged (§6.1).
 - FR-20 For firsts, the review screen shows the framework's criteria: innovative / iconic,
   distinct from existing tricks, requires advanced skill, significant leap forward, has a clear
-  name. Reviewers can link the claim to similar existing firsts for comparison.
+  name, and full control at initiation and termination. Reviewers can link the claim to similar
+  existing firsts for comparison.
 - FR-21 On approving a record that beats an existing one, the old one becomes **historical**
   automatically.
 - FR-22 Every status change is logged with who, when, and the comment (audit trail).
@@ -299,7 +322,7 @@ Records and firsts are different kinds of claim and are stored with different fi
 | Event | no | optional link to a SportHub event |
 | Setup | no | free text: webbing, anchors, leash and backup |
 | Further specs | no | free text, e.g. line height on a length record |
-| Witnesses | yes | name, contact and role; at least 2, or 3 where the category says so |
+| Witnesses | yes | name, contact and role; at least 2 |
 | Evidence links | yes | at least one video link (FR-10 to FR-14) |
 | Reason if no full video | conditional | required when full video is missing (FR-11) |
 | Rule checklist confirmations | yes | per the category (§7.4) |
@@ -309,7 +332,7 @@ Records and firsts are different kinds of claim and are stored with different fi
 
 | Field | Required | Notes |
 |---|---|---|
-| First category | yes | Freestyle Trickline, Freestyle Highline, Rodeoline, Static |
+| First category | yes | Trickline, Highline Freestyle, Rodeoline, Static |
 | Trick name | yes | a first needs a clear name |
 | Description | yes | what the trick is and how it is performed |
 | Why it is a first | yes | short justification against the framework's criteria (innovative, distinct, advanced skill, significant) |
@@ -320,6 +343,7 @@ Records and firsts are different kinds of claim and are stored with different fi
 | In competition? | no | optional: in competition (with an optional link to a SportHub event) or not. Not required because the framework does not yet separate competition and training firsts |
 | Line details | no | line type and length or height where relevant |
 | Evidence links | yes | at least one video link showing the trick being landed |
+| Control confirmation | yes | full control at initiation and termination, per the category's termination rule (§7.4) |
 | Ethics confirmation | yes | FR-7 |
 
 A first has no value, no witnesses, and no rule checklist: it is a single trick and is judged
@@ -342,7 +366,7 @@ Proposed new permissions in `src/types/rbac.ts`:
 - `records:manage`: admins (direct create/edit/delete, manage categories)
 
 Keeping `records:review` as its own permission (even though only admins hold it for now)
-lets the records working group get access later without code changes.
+lets the Sport Commission's records group get access later without code changes.
 
 ## 10. Decisions so far
 
@@ -358,7 +382,16 @@ lets the records working group get access later without code changes.
 - Ranking record categories are ignored.
 - Specs: structured value + unit (needed to compare records).
 - Evidence: full video and at least two witnesses for records (ISA framework); links only in v1, uploads later.
+- Rules follow the ISA framework October 2026 v2 (checked against it in this version).
 
 ## 11. Open questions
 
-None at the moment.
+1. **Gender for firsts.** The October 2026 framework says "World Firsts are not(?) collected
+   separately for male and female", with a question mark. Should SportHub show firsts split by
+   gender, or as one list? (The athlete's gender is stored on the claim either way.)
+2. **Category seed list.** The October 2026 framework has no list of record categories. Is it OK to
+   seed from the April 2025 list and the record types used in the Google Sheet, or is there a
+   current list?
+3. **Gender-specific titles.** The framework says the inferior of the male and female record carries
+   the gender-specific title. Should the records page show the lower one as, say, "Women's record"
+   and the higher one as the plain "World record"?
