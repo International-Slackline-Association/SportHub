@@ -98,10 +98,8 @@ category that is still *Unchallenged*.
 ### 6.1 Record categories
 
 A record category is a single named entry in a flat list (e.g. "Highline length – Urban",
-"Fastest 100 m speed highline"). There is no further hierarchy. Each category has one
-superlative and one modality, as the ISA framework requires (so "highest and longest highline" is
-not a valid category, it is not a single metric). The list is managed by admins on behalf of the
-ISA Sport Commission.
+"Fastest 100 m speed highline"). There is no further hierarchy. The list is managed by admins on behalf of the ISA Sport
+Commission.
 
 #### Category status
 
