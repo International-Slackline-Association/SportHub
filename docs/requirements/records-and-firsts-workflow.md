@@ -95,7 +95,12 @@ draft ──submit──▶ pending ──approve──▶ published ──super
   requested), an email is sent to **sport@slacklineinternational.org**. The email contains the claim
   type (record / first), athlete name(s), short summary (line type, specs, date, location), the evidence
   links, and a link to the claim in `/admin/records-review`.
-- FR-18a The recipient address is configurable (environment variable), not hard-coded.
+- FR-18c When a claim is approved and published, an email is sent to
+  **communication@slacklineinternational.org** so the communication team can announce it. The email
+  contains the athlete name(s) and country, claim type, line type, specs, date, location, evidence
+  links, and the link to the public entry. If the approval supersedes an existing record, the
+  previous holder and specs are included.
+- FR-18a Both ISA recipient addresses (sport, communication) are configurable (environment variable), not hard-coded.
 - FR-18b A failed email send must not block or roll back the submission; the claim is still saved as
   pending and the failure is logged. (The app has no email sending today, so this needs a mail
   provider, e.g. AWS SES.)
