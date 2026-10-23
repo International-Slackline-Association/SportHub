@@ -182,7 +182,7 @@ function FirstCategoryRow({ category, onError }: { category: FirstCategoryRecord
         {editing ? (
           <div className="stack gap-1">
             <input className={inputClass} value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} />
-            <textarea className={inputClass} rows={3} value={draft.terminationRule} placeholder="Termination rule (shown as checklist item on the claim form)" onChange={e => setDraft({ ...draft, terminationRule: e.target.value })} />
+            <textarea className={inputClass} rows={3} value={draft.terminationRule} placeholder="Termination rule: when the trick counts as landed" onChange={e => setDraft({ ...draft, terminationRule: e.target.value })} />
             <label className="text-xs flex gap-1 items-center">Order <input type="number" className={`${inputClass} w-20`} value={draft.order} onChange={e => setDraft({ ...draft, order: Number(e.target.value) })} /></label>
             <div className="flex gap-2">
               <Button size="small" variant="primary" disabled={busy} onClick={() => save(draft)}>Save</Button>
@@ -233,7 +233,7 @@ function NewFirstCategoryForm({ onError }: { onError: (e: string | null) => void
           {FIRST_STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
       </div>
-      <textarea className={inputClass} rows={3} placeholder="Termination rule (shown as checklist item on the claim form)" value={value.terminationRule} onChange={e => setValue({ ...value, terminationRule: e.target.value })} />
+      <textarea className={inputClass} rows={3} placeholder="Termination rule: when the trick counts as landed" value={value.terminationRule} onChange={e => setValue({ ...value, terminationRule: e.target.value })} />
       <div className="flex gap-2">
         <Button
           variant="primary"

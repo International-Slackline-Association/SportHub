@@ -295,7 +295,7 @@ export interface FirstCategoryRecord extends RecordsTableItem {
   pk: 'FirstCategory';
   categoryId: string;
   name: string;                  // "Trickline" | "Highline Freestyle" | "Rodeoline" | "Static"
-  terminationRule?: string;      // Control at termination, shown as checklist item
+  terminationRule?: string;      // When the trick counts as landed (control at termination)
   status: FirstCategoryStatus;
   order: number;
   createdAt: number;
@@ -393,7 +393,6 @@ export interface FirstEntryRecord extends EntryBase {
   whyFirst?: string;
   similarTricks?: string;
   lineDetails?: string;
-  controlConfirmed?: boolean;
   trickGroupId?: string;         // Links the same trick across lists (titles, FR-23b)
 }
 

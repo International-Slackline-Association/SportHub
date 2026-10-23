@@ -42,7 +42,6 @@ export interface ClaimFormValues {
   whyFirst: string;
   similarTricks: string;
   lineDetails: string;
-  controlConfirmed: boolean;
 
   // Both
   eventId: string;
@@ -71,7 +70,6 @@ export const emptyClaim = (path: ClaimPath = 'existing'): ClaimFormValues => ({
   whyFirst: '',
   similarTricks: '',
   lineDetails: '',
-  controlConfirmed: false,
   eventId: '',
   evidence: [''],
   ethicsConfirmed: false,
@@ -109,7 +107,6 @@ export function entryToClaimValues(entry: WorldEntryRecord): ClaimFormValues {
       whyFirst: entry.whyFirst ?? '',
       similarTricks: entry.similarTricks ?? '',
       lineDetails: entry.lineDetails ?? '',
-      controlConfirmed: entry.controlConfirmed ?? false,
     };
   }
   const witnesses = [...entry.witnesses];

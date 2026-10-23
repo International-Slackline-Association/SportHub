@@ -8,7 +8,7 @@ import { Alert } from '@ui/Alert';
 import Spinner from '@ui/Spinner';
 import { FormikCheckboxField, FormikRadioGroup, FormikSelectField, FormikTextField, countryCodeOptions } from '@ui/Form';
 import { deriveList, LIST_LABELS, UNIT_SUGGESTIONS, unitKind, valueHint } from '@lib/records-logic';
-import { ETHICS_STATEMENT, FIRST_GENERAL_RULES, MIN_WITNESSES } from '@lib/records-rules';
+import { ETHICS_STATEMENT, MIN_WITNESSES } from '@lib/records-rules';
 import type { FirstCategoryRecord, RecordCategoryRecord, RecordList } from '@lib/relational-types';
 import { getAthleteGenders, getMarkToBeat, saveClaim } from '../../actions';
 import type { ClaimFormValues, ClaimPath } from '../types';
@@ -212,11 +212,6 @@ export function ClaimFields({ recordCategories, firstCategories, claimantId, adm
             <FormikTextField id="date" name="date" type="date" label="Date of the landing" required />
             <FormikTextField id="locationName" name="locationName" label="Location" />
           </div>
-          <div className="stack gap-1 text-sm">
-            <span className="font-medium">Rules for world firsts</span>
-            <ul className="list-disc pl-5">{FIRST_GENERAL_RULES.map(r => <li key={r}>{r}</li>)}</ul>
-          </div>
-          {!admin && <FormikCheckboxField id="controlConfirmed" name="controlConfirmed" label="The athlete was in full control at initiation and termination of the trick." />}
         </Section>
       ) : (
         <Section title="The record">

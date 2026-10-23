@@ -145,8 +145,8 @@ matched to these categories; rows that match none are listed for an admin to res
 ### 6.2 World first categories
 
 Trickline, Highline Freestyle, Rodeoline, and Static (not yet recorded). Admins create and edit first
-disciplines on the same admin page as record categories: name, **termination rule** (shown to the claimant as
-the control confirmation, §8.2), status and order. Changes are logged.
+disciplines on the same admin page as record categories: name, **termination rule** (when a trick counts as
+landed, for the reviewer), status and order. Changes are logged.
 Firsts can't be beaten, so their categories only use **Active** and **Archived**. The framework says it does not matter whether a first was landed in training or in
 competition, as long as evidence is sufficient, so the claim does not ask whether it was landed in a competition.
 
@@ -268,7 +268,7 @@ leashed and the line has a backup.
 - **Line height** = from the lower of the two anchors to the lowest point of ground or water below
   the straight line between the anchors.
 
-**World firsts:**
+**World firsts** (checked by the reviewer, not shown as rules or a confirmation on the claim form):
 - A single trick, not a combo.
 - The athlete is in **full control at initiation and termination** of the trick.
 - Trickline: the athlete keeps the final position until reaching nearly static control, with no
@@ -434,7 +434,6 @@ Records and firsts are different kinds of claim and are stored with different fi
 | Location / spot | no | name and country |
 | Line details | no | line type and length or height where relevant |
 | Evidence links | yes | at least one video link showing the trick being landed |
-| Control confirmation | yes | full control at initiation and termination, per the discipline's termination rule (§6.2) |
 | Ethics confirmation | yes | FR-7 |
 
 A first has no value, no witnesses, and no rule checklist: it is a single trick and is judged

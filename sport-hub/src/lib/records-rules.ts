@@ -1,13 +1,7 @@
 /**
  * Texts from the ISA framework (October 2026 v2) shown on the claim form and to
- * reviewers: the rules for firsts and the criteria for world records and world
- * firsts (FR-19, FR-20).
+ * reviewers: the criteria for world records and world firsts (FR-19, FR-20).
  */
-
-export const FIRST_GENERAL_RULES = [
-  'A single trick, not a combo.',
-  'The athlete was in full control at initiation and termination of the trick.',
-];
 
 export const RECORD_CRITERIA: { name: string; text: string }[] = [
   { name: 'Measurable', text: 'A single, quantitative, objective metric makes attempts comparable.' },

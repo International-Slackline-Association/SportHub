@@ -183,7 +183,6 @@ function validateForSubmit(
     required(values.trickName, 'Trick name');
     required(values.description, 'Description');
     required(values.whyFirst, 'Why it is a first');
-    if (!values.controlConfirmed) errors.push('Confirm full control at initiation and termination of the trick');
     return errors;
   }
 
@@ -270,7 +269,6 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
         whyFirst: values.whyFirst.trim() || undefined,
         similarTricks: values.similarTricks.trim() || undefined,
         lineDetails: values.lineDetails.trim() || undefined,
-        controlConfirmed: values.controlConfirmed,
       } satisfies FirstEntryRecord;
     } else {
       const isNew = values.path === 'new_category';
