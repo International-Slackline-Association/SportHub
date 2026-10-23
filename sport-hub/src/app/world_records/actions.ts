@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { USERS_TABLE } from '@lib/dynamodb';
 import { requireRecordsPermission, requireSession } from '@lib/records-auth';
 import { getUser } from '@lib/user-service';
 import { invalidateWorldRecordsCache } from '@lib/data-services';
@@ -9,6 +10,8 @@ import { normalizeGender } from '@utils/gender';
 import {
   addAuditEntry,
   addCategoryAudit,
+  deleteItems,
+  entryPk,
   getAuditLog,
   getEntriesByCategory,
   getEntriesByStatus,
@@ -624,101 +627,6 @@ export async function requestClaimChanges(kind: EntryKind, entryId: string, comm
   return decide(kind, entryId, 'changes_requested', comment);
 }
 
-export interface EntryCorrection {
-  categoryId?: string;
-  valueText?: string;
-  date?: string;
-  locationName?: string;
-  locationCountry?: string;
-  trickName?: string;
-  description?: string;
-  lineDetails?: string;
-  evidence?: string[];
-  comment?: string;
-}
-
-/**
- * Reviewer edits before approving (FR-17), and admin corrections or
- * reclassification of published entries. Logged in the audit trail.
- */
-export async function correctEntry(kind: EntryKind, entryId: string, correction: EntryCorrection) {
-  try {
-    const session = await requireRecordsPermission('records:review');
-    const entry = await getEntry(kind as 'record', entryId) as WorldEntryRecord | null;
-    if (!entry) return { success: false, error: 'Entry not found' };
-    const isPublic = entry.status === 'published' || entry.status === 'historical';
-    if (isPublic && !(session.user.role === 'admin' || session.user.permissions?.includes('records:manage'))) {
-      return { success: false, error: 'Missing permission records:manage' };
-    }
-
-    const changes: string[] = [];
-    let updated: WorldEntryRecord = { ...entry };
-    const set = <K extends keyof EntryCorrection>(key: K, apply: (v: NonNullable<EntryCorrection[K]>) => void) => {
-      const v = correction[key];
-      if (v !== undefined) { apply(v as NonNullable<EntryCorrection[K]>); changes.push(key); }
-    };
-
-    const previousCategoryId = entry.categoryId;
-    if (updated.kind === 'record') {
-      const record = updated;
-      const category = await getRecordCategory(correction.categoryId ?? record.categoryId);
-      set('categoryId', id => {
-        if (!category) throw new Error('Category not found');
-        record.categoryId = id;
-        record.categoryName = category.name;
-        record.newCategoryProposal = undefined;
-      });
-      set('valueText', text => {
-        if (!category) throw new Error('Choose a category first');
-        record.value = parseRecordValue(category, text);
-        if (comparableValue(category, record.value) === undefined) throw new Error(`Could not read the value "${text}"`);
-      });
-      if (correction.categoryId && correction.valueText === undefined && category) {
-        record.value = parseRecordValue(category, record.value.original ?? '');
-      }
-    } else {
-      const first = updated;
-      const category = correction.categoryId ? await getFirstCategory(correction.categoryId) : null;
-      set('categoryId', id => {
-        if (!category) throw new Error('Category not found');
-        first.categoryId = id;
-        first.categoryName = category.name;
-      });
-      set('trickName', v => { first.trickName = v.trim(); });
-      set('description', v => { first.description = v.trim(); });
-      set('lineDetails', v => { first.lineDetails = v.trim(); });
-    }
-    set('date', v => { updated.date = v; });
-    set('locationName', v => { updated.locationName = v.trim(); });
-    set('locationCountry', v => { updated.locationCountry = v; });
-    set('evidence', v => { updated.evidence = v.map(url => url.trim()).filter(Boolean).map(url => ({ type: 'link' as const, url })); });
-
-    if (changes.length === 0) return { success: true };
-    updated = { ...updated, updatedAt: Date.now() };
-    await putEntry(updated);
-    await addAuditEntry(kind, entryId, {
-      action: 'corrected',
-      comment: [`Changed: ${changes.join(', ')}`, correction.comment].filter(Boolean).join('. '),
-      byUserId: session.user.id,
-      byName: session.user.name ?? session.user.email ?? undefined,
-    });
-
-    if (updated.kind === 'record' && isPublic) {
-      for (const id of new Set([previousCategoryId, updated.categoryId])) {
-        const category = await getRecordCategory(id);
-        if (category) await recomputeRecordStatuses(category);
-      }
-      revalidateRecordPages();
-    } else if (isPublic) {
-      revalidateRecordPages();
-    }
-    revalidatePath(`/admin/records-review/${kind}/${entryId}`);
-    return { success: true };
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to correct the entry' };
-  }
-}
-
 /**
  * Admin: void a published entry (e.g. a fair-play violation found later) or
  * restore it. Records re-derive published / historical afterwards.
@@ -751,5 +659,118 @@ export async function setPublicEntryStatus(kind: EntryKind, entryId: string, toS
     return { success: true };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Failed to change the status' };
+  }
+}
+
+/**
+ * Admin "Modify": edit every detail of a record or first with the claim form
+ * fields. Status, claimant and the claimant's confirmations stay as they are.
+ */
+export async function adminUpdateEntry(kind: EntryKind, entryId: string, values: ClaimFormValues, comment: string): Promise<ClaimActionResult> {
+  try {
+    const session = await requireRecordsPermission('records:review');
+    const entry = await getEntry(kind as 'record', entryId) as WorldEntryRecord | null;
+    if (!entry) return { success: false, errors: ['Entry not found'] };
+    const isPublic = entry.status === 'published' || entry.status === 'historical';
+    if (isPublic && !(session.user.role === 'admin' || session.user.permissions?.includes('records:manage'))) {
+      return { success: false, errors: ['Missing permission records:manage'] };
+    }
+    if (kindForPath(values.path) !== kind) return { success: false, errors: ['A record cannot become a first or the other way round'] };
+
+    const { athletes, errors } = await snapshotAthletes(values);
+    if (athletes.length === 0 && errors.length === 0) errors.push('Add at least one athlete');
+    const links = evidenceLinks(values);
+    for (const link of links) if (!isUrl(link)) errors.push(`"${link}" is not a valid link`);
+
+    const common = {
+      athletes,
+      list: athletes.length > 0 ? deriveList(athletes) : entry.list,
+      date: values.date,
+      locationName: values.locationName.trim() || undefined,
+      locationCountry: values.locationCountry || undefined,
+      eventId: values.eventId || undefined,
+      evidence: links.map(url => ({ type: 'link' as const, url })),
+      updatedAt: Date.now(),
+    };
+
+    let updated: WorldEntryRecord;
+    let recordCategory: RecordCategoryRecord | null = null;
+    if (entry.kind === 'first') {
+      const category = await getFirstCategory(values.categoryId);
+      if (!category) errors.push('Choose a discipline');
+      if (!values.trickName.trim()) errors.push('Trick name is required');
+      updated = {
+        ...entry,
+        ...common,
+        categoryId: values.categoryId,
+        categoryName: category?.name ?? entry.categoryName,
+        trickName: values.trickName.trim(),
+        description: values.description.trim() || undefined,
+        whyFirst: values.whyFirst.trim() || undefined,
+        similarTricks: values.similarTricks.trim() || undefined,
+        lineDetails: values.lineDetails.trim() || undefined,
+        inCompetition: values.inCompetition,
+      };
+    } else {
+      const proposing = values.path === 'new_category';
+      if (proposing && (isPublic || !entry.newCategoryProposal)) errors.push('Only a claim under review can propose a new category; choose an existing category');
+      recordCategory = proposing ? null : await getRecordCategory(values.categoryId);
+      if (!proposing && !recordCategory) errors.push('Choose a record category');
+      const unitSource = proposing
+        ? { valueType: 'number' as const, unit: values.newCategory.unit, group: '' }
+        : recordCategory ?? { valueType: 'number' as const, unit: 'm' as const, group: '' };
+      const value = parseRecordValue(unitSource, values.valueText);
+      if (comparableValue({ direction: 'higher', valueType: unitSource.valueType }, value) === undefined) errors.push(`Could not read the value "${values.valueText}"`);
+      updated = {
+        ...entry,
+        ...common,
+        categoryId: proposing ? entry.categoryId : values.categoryId,
+        categoryName: proposing ? values.newCategory.name.trim() : recordCategory?.name ?? entry.categoryName,
+        newCategoryProposal: proposing ? { ...values.newCategory } : undefined,
+        value,
+        setup: values.setup.trim() || undefined,
+        furtherSpecs: values.furtherSpecs.trim() || undefined,
+        witnesses: values.witnesses
+          .filter(w => w.name.trim() || w.contact.trim() || w.role.trim())
+          .map(w => ({ name: w.name.trim(), contact: w.contact.trim(), role: w.role.trim() })),
+        noFullVideoReason: values.fullVideo ? undefined : values.noFullVideoReason.trim() || undefined,
+      };
+    }
+    if (errors.length > 0) return { success: false, errors };
+
+    // New athletes on a published entry get their profile right away (FR-9)
+    if (isPublic) updated = { ...updated, athletes: await createPendingAthletes(updated) };
+    await putEntry(updated);
+
+    // Keep the athletes' profile pointers in step with the athletes on the entry
+    const before = new Set(entry.athletes.map(a => a.userId).filter(Boolean) as string[]);
+    const after = new Set(updated.athletes.map(a => a.userId).filter(Boolean) as string[]);
+    const removed = [...before].filter(id => !after.has(id));
+    if (removed.length > 0) await deleteItems(USERS_TABLE, removed.map(userId => ({ userId, sortKey: entryPk(kind, entryId) })));
+    if (isPublic || entry.status === 'pending') {
+      for (const userId of after) if (!before.has(userId)) await putAthleteLink(userId, kind, entryId);
+    }
+
+    const changed = Object.keys(updated).filter(k =>
+      k !== 'updatedAt' && JSON.stringify((updated as unknown as Record<string, unknown>)[k]) !== JSON.stringify((entry as unknown as Record<string, unknown>)[k]));
+    await addAuditEntry(kind, entryId, {
+      action: 'modified',
+      comment: [`Changed: ${changed.join(', ') || 'nothing'}`, comment.trim()].filter(Boolean).join('. '),
+      byUserId: session.user.id,
+      byName: session.user.name ?? session.user.email ?? undefined,
+    });
+
+    if (updated.kind === 'record' && entry.kind === 'record' && isPublic) {
+      for (const id of new Set([entry.categoryId, updated.categoryId])) {
+        const category = await getRecordCategory(id);
+        if (category) await recomputeRecordStatuses(category);
+      }
+    }
+    revalidateRecordPages();
+    revalidatePath(`/admin/records-review/${kind}/${entryId}`);
+    return { success: true, entryId, kind, message: 'Saved.' };
+  } catch (error) {
+    console.error('Error modifying entry:', error);
+    return { success: false, errors: [error instanceof Error ? error.message : 'Failed to save'] };
   }
 }

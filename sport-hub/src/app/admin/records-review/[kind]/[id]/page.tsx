@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import PageLayout from '@ui/PageLayout';
 import { Alert } from '@ui/Alert';
 import { requireAdmin } from '@lib/authorization';
-import { formatEntryDate, formatRecordValue, LIST_LABELS, RECORD_LISTS } from '@lib/records-logic';
+import { formatEntryDate, formatRecordValue, GENDER_LABELS, LIST_LABELS, RECORD_LISTS } from '@lib/records-logic';
 import { FIRST_CRITERIA, RECORD_CRITERIA, RULE_CHECKLISTS } from '@lib/records-rules';
 import type { RecordCategoryRecord } from '@lib/relational-types';
 import { getReviewContext } from 'src/app/world_records/actions';
@@ -45,8 +45,9 @@ export default async function ReviewClaimPage({ params }: Props) {
     <PageLayout title={entry.kind === 'first' ? `First: ${entry.trickName}` : `Record: ${entry.categoryName}`}>
       <section className="p-4 sm:p-0 flex gap-3 items-center flex-wrap">
         <Link href="/admin/records-review" className="text-blue-600 hover:underline text-sm">Back to the review queue</Link>
+        <Link href={`/admin/records-manage/${entry.kind === 'first' ? 'firsts' : 'records'}`} className="text-blue-600 hover:underline text-sm">All {entry.kind === 'first' ? 'firsts' : 'records'}</Link>
         <ClaimStatusBadge status={entry.status} />
-        <span className="text-sm text-gray-600">{LIST_LABELS[entry.list]} list</span>
+        <span className="text-sm text-gray-600">Gender: {GENDER_LABELS[entry.list]}</span>
         {entry.source === 'import' && <span className="text-sm text-gray-500">Imported from the sheet</span>}
       </section>
 
@@ -156,15 +157,6 @@ export default async function ReviewClaimPage({ params }: Props) {
             recordCategories={recordCategories.map(({ categoryId, name, group, status }) => ({ categoryId, name, group, status }))}
             firstCategories={firstCategories.map(({ categoryId, name }) => ({ categoryId, name }))}
             trickLinkOptions={entry.kind === 'first' ? similar.filter(s => s.id !== entry.entryId).map(s => ({ id: s.id, label: `${s.label} · ${s.detail ?? ''}` })) : []}
-            current={{
-              categoryId: isNewCategory ? '' : entry.categoryId,
-              valueText: entry.kind === 'record' ? entry.value.original ?? '' : undefined,
-              trickName: entry.kind === 'first' ? entry.trickName : undefined,
-              description: entry.kind === 'first' ? entry.description ?? '' : undefined,
-              date: entry.date,
-              locationName: entry.locationName ?? '',
-              evidence: entry.evidence.map(e => e.url),
-            }}
           />
 
           {entry.kind === 'record' && (

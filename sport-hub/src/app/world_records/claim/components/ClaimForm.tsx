@@ -108,7 +108,8 @@ function ListAndMark({ recordCategories }: { recordCategories: RecordCategoryRec
   );
 }
 
-function ClaimFields({ recordCategories, firstCategories, claimantId }: Omit<Props, 'initialValues' | 'reviewComment'>) {
+/** The claim fields. In admin mode the claimant's confirmations are hidden and the kind can't change. */
+export function ClaimFields({ recordCategories, firstCategories, claimantId, admin = false }: Omit<Props, 'initialValues' | 'reviewComment'> & { admin?: boolean }) {
   const { values, setFieldValue } = useFormikContext<ClaimFormValues>();
   const isFirst = values.path === 'first';
   const editing = !!values.entryId;
@@ -126,11 +127,11 @@ function ClaimFields({ recordCategories, firstCategories, claimantId }: Omit<Pro
 
   return (
     <>
-      <Section title="What are you claiming?">
+      <Section title={admin ? 'Category' : 'What are you claiming?'}>
         <FormikRadioGroup
           id="path"
           name="path"
-          options={editing ? PATH_OPTIONS.filter(o => (o.value === 'first') === isFirst) : PATH_OPTIONS}
+          options={editing || admin ? PATH_OPTIONS.filter(o => (o.value === 'first') === isFirst) : PATH_OPTIONS}
         />
         {values.path === 'existing' && (
           <FormikSelectField id="categoryId" name="categoryId" label="Record category" options={categoryOptions} required />
@@ -183,14 +184,14 @@ function ClaimFields({ recordCategories, firstCategories, claimantId }: Omit<Pro
             </div>
           )}
         </FieldArray>
-        {athleteCount > 1 && (
+        {athleteCount > 1 && !admin && (
           <FormikCheckboxField
             id="jointConfirmed"
             name="jointConfirmed"
             label="These athletes did this together as one joint performance. They are not co-holders who did it separately."
           />
         )}
-        {!claimantIsOnlyAthlete && (
+        {!claimantIsOnlyAthlete && !admin && (
           <FormikCheckboxField
             id="consentConfirmed"
             name="consentConfirmed"
@@ -216,7 +217,7 @@ function ClaimFields({ recordCategories, firstCategories, claimantId }: Omit<Pro
             <span className="font-medium">Rules for world firsts</span>
             <ul className="list-disc pl-5">{FIRST_GENERAL_RULES.map(r => <li key={r}>{r}</li>)}</ul>
           </div>
-          <FormikCheckboxField id="controlConfirmed" name="controlConfirmed" label="The athlete was in full control at initiation and termination of the trick." />
+          {!admin && <FormikCheckboxField id="controlConfirmed" name="controlConfirmed" label="The athlete was in full control at initiation and termination of the trick." />}
         </Section>
       ) : (
         <Section title="The record">
@@ -288,7 +289,7 @@ function ClaimFields({ recordCategories, firstCategories, claimantId }: Omit<Pro
         )}
       </Section>
 
-      {!isFirst && category && category.ruleSets.length > 0 && (
+      {!isFirst && !admin && category && category.ruleSets.length > 0 && (
         <Section title="Rules" description="Confirm that the attempt followed each rule of this category.">
           {category.ruleSets.map(rs => (
             <div key={rs} className="stack gap-2">
@@ -315,9 +316,11 @@ function ClaimFields({ recordCategories, firstCategories, claimantId }: Omit<Pro
         </Section>
       )}
 
-      <Section title="Ethics">
-        <FormikCheckboxField id="ethicsConfirmed" name="ethicsConfirmed" label={ETHICS_STATEMENT} />
-      </Section>
+      {!admin && (
+        <Section title="Ethics">
+          <FormikCheckboxField id="ethicsConfirmed" name="ethicsConfirmed" label={ETHICS_STATEMENT} />
+        </Section>
+      )}
     </>
   );
 }
@@ -387,7 +390,7 @@ export default function ClaimForm({ recordCategories, firstCategories, initialVa
 }
 
 /** Clears the category when switching between record and first paths. */
-function PathResetter({ path, onChange }: { path: ClaimPath; onChange: () => void }) {
+export function PathResetter({ path, onChange }: { path: ClaimPath; onChange: () => void }) {
   const [previous, setPrevious] = useState(path);
   useEffect(() => {
     if (path !== previous) {

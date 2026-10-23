@@ -16,6 +16,9 @@ import type {
 
 export const RECORD_LISTS: RecordList[] = ['MEN', 'WOMEN', 'MIXED'];
 
+/** The list as a gender, for admin tables. */
+export const GENDER_LABELS: Record<RecordList, string> = { MEN: 'Men', WOMEN: 'Women', MIXED: 'Mixed' };
+
 export const LIST_LABELS: Record<RecordList, string> = {
   MEN: "Men's",
   WOMEN: "Women's",

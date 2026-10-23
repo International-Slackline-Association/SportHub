@@ -7,11 +7,9 @@ import { Alert } from '@ui/Alert';
 import type { ClaimStatus, RecordCategoryRecord, FirstCategoryRecord } from '@lib/relational-types';
 import {
   approveClaim,
-  correctEntry,
   rejectClaim,
   requestClaimChanges,
   setPublicEntryStatus,
-  type EntryCorrection,
 } from 'src/app/world_records/actions';
 
 type Props = {
@@ -25,7 +23,6 @@ type Props = {
   firstCategories: Pick<FirstCategoryRecord, 'categoryId' | 'name'>[];
   /** Firsts in the same category on other lists, to link the same trick (FR-21a). */
   trickLinkOptions: { id: string; label: string }[];
-  current: EntryCorrection;
 };
 
 const inputClass = 'w-full border border-gray-300 rounded px-3 py-2 text-sm';
@@ -40,8 +37,6 @@ export default function ReviewActions(props: Props) {
   const [categoryChoice, setCategoryChoice] = useState<'create' | 'map'>('create');
   const [mapTo, setMapTo] = useState(props.similarCategoryIds[0] ?? '');
   const [trickLink, setTrickLink] = useState('');
-  const [correction, setCorrection] = useState<EntryCorrection>(props.current);
-  const [showCorrect, setShowCorrect] = useState(false);
 
   const run = async (action: () => Promise<{ success: boolean; error?: string; notice?: string }>) => {
     setBusy(true);
@@ -54,9 +49,6 @@ export default function ReviewActions(props: Props) {
     setComment('');
     router.refresh();
   };
-
-  const changedFields = (Object.keys(correction) as (keyof EntryCorrection)[])
-    .filter(k => k !== 'comment' && JSON.stringify(correction[k]) !== JSON.stringify(props.current[k]));
 
   const recordOptions = props.recordCategories.filter(c => c.status !== 'archived');
 
@@ -115,7 +107,7 @@ export default function ReviewActions(props: Props) {
                 trickGroupWithEntryId: trickLink || undefined,
               }))}
             >
-              Approve and publish
+              Approve
             </Button>
             <Button variant="secondary" disabled={busy || !comment.trim()} onClick={() => run(() => requestClaimChanges(kind, entryId, comment))}>
               Request changes
@@ -151,75 +143,13 @@ export default function ReviewActions(props: Props) {
         </div>
       )}
 
-      {['pending', 'published', 'historical'].includes(status) && (
-        <div className="stack gap-3 border border-gray-200 rounded-lg p-4">
-          <div className="flex justify-between items-center">
-            <h3 className="font-semibold">Correct or reclassify</h3>
-            <button type="button" className="text-sm text-blue-600 underline" onClick={() => setShowCorrect(!showCorrect)}>
-              {showCorrect ? 'Hide' : 'Edit fields'}
-            </button>
-          </div>
-          {showCorrect && (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                <label className="stack gap-1">Category
-                  <select className={inputClass} value={correction.categoryId ?? ''} onChange={e => setCorrection({ ...correction, categoryId: e.target.value })}>
-                    {kind === 'record' && props.isNewCategory && <option value="">(proposed new category)</option>}
-                    {kind === 'record'
-                      ? recordOptions.map(c => <option key={c.categoryId} value={c.categoryId}>{c.group} · {c.name}</option>)
-                      : props.firstCategories.map(c => <option key={c.categoryId} value={c.categoryId}>{c.name}</option>)}
-                  </select>
-                </label>
-                {kind === 'record' ? (
-                  <label className="stack gap-1">Value
-                    <input className={inputClass} value={correction.valueText ?? ''} onChange={e => setCorrection({ ...correction, valueText: e.target.value })} />
-                  </label>
-                ) : (
-                  <label className="stack gap-1">Trick name
-                    <input className={inputClass} value={correction.trickName ?? ''} onChange={e => setCorrection({ ...correction, trickName: e.target.value })} />
-                  </label>
-                )}
-                <label className="stack gap-1">Date
-                  <input type="date" className={inputClass} value={correction.date ?? ''} onChange={e => setCorrection({ ...correction, date: e.target.value })} />
-                </label>
-                <label className="stack gap-1">Location
-                  <input className={inputClass} value={correction.locationName ?? ''} onChange={e => setCorrection({ ...correction, locationName: e.target.value })} />
-                </label>
-                {kind === 'first' && (
-                  <label className="stack gap-1 sm:col-span-2">Description
-                    <textarea className={inputClass} rows={3} value={correction.description ?? ''} onChange={e => setCorrection({ ...correction, description: e.target.value })} />
-                  </label>
-                )}
-                <label className="stack gap-1 sm:col-span-2">Links (one per line)
-                  <textarea
-                    className={inputClass}
-                    rows={3}
-                    value={(correction.evidence ?? []).join('\n')}
-                    onChange={e => setCorrection({ ...correction, evidence: e.target.value.split('\n') })}
-                  />
-                </label>
-                <label className="stack gap-1 sm:col-span-2">Why (logged)
-                  <input className={inputClass} value={correction.comment ?? ''} onChange={e => setCorrection({ ...correction, comment: e.target.value })} />
-                </label>
-              </div>
-              <div>
-                <Button
-                  variant="secondary"
-                  disabled={busy || changedFields.length === 0 || (kind === 'record' && !correction.categoryId && changedFields.includes('categoryId'))}
-                  onClick={() => {
-                    const changes: EntryCorrection = { comment: correction.comment };
-                    for (const k of changedFields) (changes as Record<string, unknown>)[k] = correction[k];
-                    if (changes.evidence) changes.evidence = changes.evidence.filter(l => l.trim());
-                    return run(() => correctEntry(kind, entryId, changes));
-                  }}
-                >
-                  Save corrections
-                </Button>
-              </div>
-            </>
-          )}
+      <div className="stack gap-2 border border-gray-200 rounded-lg p-4">
+        <h3 className="font-semibold">Modify</h3>
+        <p className="text-sm text-gray-600">Edit every detail: category, value or trick, athletes, date, location, witnesses and links.</p>
+        <div>
+          <Button as="link" href={`/admin/records-review/${kind}/${encodeURIComponent(entryId)}/edit`} variant="secondary">Modify</Button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
