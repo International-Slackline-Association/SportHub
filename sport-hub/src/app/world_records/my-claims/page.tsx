@@ -42,40 +42,42 @@ export default async function MyClaimsPage({ searchParams }: Props) {
         {sorted.length === 0 ? (
           <p className="text-gray-600">You have no claims yet.</p>
         ) : (
-          <div className="stack gap-3">
+          <div className="stack gap-2">
             {sorted.map(entry => {
               const editable = entry.status === 'draft' || entry.status === 'changes_requested';
               return (
-                <div key={`${entry.kind}-${entry.entryId}`} className="border border-gray-200 rounded-lg p-4 stack gap-2">
-                  <div className="flex justify-between gap-2 flex-wrap items-start">
-                    <div className="stack gap-1">
-                      <span className="text-xs uppercase text-gray-500">{entry.kind === 'first' ? 'World first' : 'World record'} · {LIST_LABELS[entry.list]}</span>
-                      <span className="font-semibold">{entry.categoryName || 'No category chosen'}{entry.kind === 'record' && entry.newCategoryProposal ? ' (new category)' : ''}</span>
-                      <span>{valueOf(entry) || '—'}</span>
+                <div key={`${entry.kind}-${entry.entryId}`} className="border border-gray-200 rounded-lg px-4 py-3 stack gap-2">
+                  <div className="flex justify-between gap-x-4 gap-y-2 flex-wrap items-center">
+                    <div className="stack min-w-0">
+                      <span className="font-semibold">
+                        {entry.categoryName || 'No category chosen'}{entry.kind === 'record' && entry.newCategoryProposal ? ' (new category)' : ''}
+                        {valueOf(entry) && <span className="font-normal"> · {valueOf(entry)}</span>}
+                      </span>
                       <span className="text-sm text-gray-600">
-                        {entry.athletes.map(a => a.name).join(', ') || 'No athletes yet'}
+                        {entry.kind === 'first' ? 'World first' : 'World record'} · {LIST_LABELS[entry.list]}
+                        {' · '}{entry.athletes.map(a => a.name).join(', ') || 'No athletes yet'}
                         {entry.date && ` · ${formatEntryDate(entry.date)}`}
                         {entry.locationName && ` · ${entry.locationName}`}
                       </span>
                     </div>
-                    <ClaimStatusBadge status={entry.status} />
+                    <div className="flex gap-2 flex-wrap items-center">
+                      {editable && entry.claimantUserId === session?.user?.id && (
+                        <Button as="link" href={`/world_records/claim?kind=${entry.kind}&id=${entry.entryId}`} variant="secondary" size="small">
+                          {entry.status === 'draft' ? 'Edit draft' : 'Make changes'}
+                        </Button>
+                      )}
+                      {entry.status === 'pending' && <WithdrawButton kind={entry.kind} entryId={entry.entryId} />}
+                      {(entry.status === 'published' || entry.status === 'historical') && entry.athletes.map((a, i) => (
+                        <Button key={i} as="link" href={`/api/certificates/${entry.kind}/${entry.entryId}?athlete=${i}`} variant="secondary" size="small">
+                          Certificate{entry.athletes.length > 1 ? ` (${a.name})` : ''}
+                        </Button>
+                      ))}
+                      <ClaimStatusBadge status={entry.status} />
+                    </div>
                   </div>
                   {entry.reviewComment && ['changes_requested', 'rejected'].includes(entry.status) && (
                     <Alert variant={entry.status === 'rejected' ? 'error' : 'warning'} size="SM">ISA: {entry.reviewComment}</Alert>
                   )}
-                  <div className="flex gap-2 flex-wrap">
-                    {editable && entry.claimantUserId === session?.user?.id && (
-                      <Button as="link" href={`/world_records/claim?kind=${entry.kind}&id=${entry.entryId}`} variant="secondary" size="small">
-                        {entry.status === 'draft' ? 'Edit draft' : 'Make changes'}
-                      </Button>
-                    )}
-                    {entry.status === 'pending' && <WithdrawButton kind={entry.kind} entryId={entry.entryId} />}
-                    {(entry.status === 'published' || entry.status === 'historical') && entry.athletes.map((a, i) => (
-                      <Button key={i} as="link" href={`/api/certificates/${entry.kind}/${entry.entryId}?athlete=${i}`} variant="secondary" size="small">
-                        Certificate{entry.athletes.length > 1 ? ` (${a.name})` : ''}
-                      </Button>
-                    ))}
-                  </div>
                 </div>
               );
             })}
