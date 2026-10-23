@@ -180,14 +180,17 @@ export default async function ReviewClaimPage({ params }: Props) {
             </div>
           )}
 
-          <div className="stack gap-2">
-            <h3 className="font-semibold">{entry.kind === 'first' ? 'World first criteria' : 'World record criteria'}</h3>
-            <ul className="text-sm stack gap-1">
-              {(entry.kind === 'first' ? FIRST_CRITERIA : RECORD_CRITERIA).map(c => (
-                <li key={c.name}><strong>{c.name}:</strong> {c.text}</li>
-              ))}
-            </ul>
-          </div>
+          {/* Record criteria decide whether a proposed category is accepted, so they only show for new categories. */}
+          {(entry.kind === 'first' || isNewCategory) && (
+            <div className="stack gap-2">
+              <h3 className="font-semibold">{entry.kind === 'first' ? 'World first criteria' : 'World record criteria'}</h3>
+              <ul className="text-sm stack gap-1">
+                {(entry.kind === 'first' ? FIRST_CRITERIA : RECORD_CRITERIA).map(c => (
+                  <li key={c.name}><strong>{c.name}:</strong> {c.text}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </section>
     </PageLayout>
