@@ -117,20 +117,8 @@ Every record category has exactly one status:
 - FR-C5 Admins can create, rename, and re-order categories, and change their status, in an admin
   page (e.g. `/admin/records-categories`). Every status change is logged.
 
-Initial list (from the framework, all Active unless marked; ✝ = Archived):
-
-| Group | Leash | Measured | Sub-categories |
-|---|---|---|---|
-| Longline length over ground | unleashed | length (m) | Overall, Polyester ✝, Polyamide ✝, Humanline, Jumping |
-| Water-midline length | leashed | length (m) | Overall, Polyester ✝, Polyamide ✝ |
-| Mid-waterline length ✝ | unleashed | length (m) | Overall ✝ |
-| Highline length | leashed | length (m) | Overall, Polyester ✝, Polyamide ✝, Urban, Unicycle, Tandem, Blind, Humanline, Underground (cave), Between cable cars |
-| Highline height/depth | leashed | height (m) | Overall above ground/water, Urban above ground/water, Overall above sea level, Overall below sea level (underground) |
-| Speed highline | leashed | time (s) | 60 m, 100 m, 200 m, 300 m, 400 m, 100 m blindfolded |
-| Speedline over ground | unleashed | time (s) | 14.5 m, 29 m |
-| Endurance | – | distance or duration | Slackline distance in 1 h, Highline distance in 24 h, Slackline distance in 24 h, Highline distance in 72 h, Highline distance blind without falling, Slackline distance in 31 days, Longest standing/walking duration, Longest surfing duration, Longest living on a highline |
-| Trick | – | count, height, duration or distance | High jump over pole, Most front flips in a row, Longest handstand (slackline), Longest handstand (highline), Longest juggling walk 3 clubs, Longest juggling walk 5 clubs, Longest juggling duration, Longest football control, Most consecutive skips, Longest one-arm elbow lever, Most spins on Davinci slackline in 1 min |
-| Rigging | – | length, count or latitude | Longest solo rig & derig, Most lines solo rigged & sent in 24 h, Most lines rigged & sent in 24 h (group), Most northern/southern highline |
+The initial categories are taken from the ISA framework, which lists them in its section "World record
+categories". They are loaded as seed data, with the framework's discontinued ones set to Archived.
 
 - FR-C1 Each category stores: group, sub-category, superlative direction (higher-is-better or
   lower-is-better), measurement unit, leashed/unleashed, rule checklist (§7.4), witness minimum,
