@@ -38,7 +38,7 @@ export const judgingSystemOptions: Option[] = [
 ];
 
 export const contestSizeOptions: Option<ContestType>[] = [
-  { value: "CHALLENGE", label: "Local" },
+  { value: "CHALLENGE", label: "Challenge" },
   { value: "OPEN", label: "Regional" },
   { value: "GRAND_SLAM", label: "National" },
   { value: "MASTERS", label: "Masters" },
