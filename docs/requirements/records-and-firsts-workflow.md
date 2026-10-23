@@ -85,7 +85,14 @@ draft ──submit──▶ pending ──approve──▶ published ──super
 
 ### 5.4 Notifications
 - FR-17 Submitter is notified on approve / reject / changes requested. **Open:** email, in-app only, or none for v1? (No email sending exists in the app today.)
-- FR-18 Reviewers are notified of new pending claims.
+- FR-18 When an athlete submits a claim (draft → pending, including resubmission after changes
+  requested), an email is sent to **sport@slacklineinternational.org**. The email contains the claim
+  type (record / first), athlete name(s), short summary (line type, specs, date, location), the evidence
+  links, and a link to the claim in `/admin/records-review`.
+- FR-18a The recipient address is configurable (environment variable), not hard-coded.
+- FR-18b A failed email send must not block or roll back the submission; the claim is still saved as
+  pending and the failure is logged. (The app has no email sending today, so this needs a mail
+  provider, e.g. AWS SES.)
 
 ### 5.5 Migration
 - FR-19 Existing sheet rows are imported once into SportHub as published entries.
@@ -140,7 +147,7 @@ lets a separate records committee be added later without code changes.
 2. ~~Who reviews?~~ Decided: ISA admins for v1.
 3. Evidence: links only, or uploads too?
 4. Structured specs (numbers + units) vs free text?
-5. Notifications: email in v1, or in-app status only?
+5. Notifications: decided that ISA is emailed at sport@slacklineinternational.org on each submission. Still open: is the submitter also emailed on approve / reject / changes requested, or do they only see the status in the app?
 6. ~~Google Sheet future?~~ Decided: imported once, then retired.
 7. Are there official ISA rules for what counts as a record / first that the form must enforce (e.g. minimum evidence, rigging standards, leash rules, walking style: full man, onsight, free solo)?
 8. National / continental records: in scope?
