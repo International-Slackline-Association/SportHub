@@ -262,10 +262,39 @@ function NewFirstCategoryForm({ onError }: { onError: (e: string | null) => void
   );
 }
 
+type SortKey = 'order' | 'name' | 'group' | 'unit' | 'status';
+
+const compareBy = (key: SortKey, a: RecordCategoryRecord, b: RecordCategoryRecord): number => {
+  switch (key) {
+    case 'order': return a.order - b.order;
+    case 'group': return RECORD_CATEGORY_GROUPS.indexOf(a.group) - RECORD_CATEGORY_GROUPS.indexOf(b.group) || a.order - b.order;
+    case 'status': return STATUS_OPTIONS.indexOf(a.status) - STATUS_OPTIONS.indexOf(b.status) || a.order - b.order;
+    default: return a[key].localeCompare(b[key]) || a.order - b.order;
+  }
+};
+
 export default function CategoriesEditor({ recordCategories, firstCategories }: { recordCategories: RecordCategoryRecord[]; firstCategories: FirstCategoryRecord[] }) {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<RecordCategoryStatus | 'all'>('all');
-  const shown = recordCategories.filter(c => filter === 'all' || c.status === filter);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: 'order', desc: false });
+  const q = search.trim().toLowerCase();
+  const shown = recordCategories
+    .filter(c => filter === 'all' || c.status === filter)
+    .filter(c => !q || [c.name, c.description, c.group, c.unit, c.categoryId].some(v => v?.toLowerCase().includes(q)))
+    .sort((a, b) => (sort.desc ? -1 : 1) * compareBy(sort.key, a, b));
+
+  const header = (key: SortKey, label: string) => (
+    <th className="py-2 pr-2">
+      <button
+        type="button"
+        className="font-semibold hover:underline"
+        onClick={() => setSort(sort.key === key ? { key, desc: !sort.desc } : { key, desc: false })}
+      >
+        {label}{sort.key === key ? (sort.desc ? ' ▼' : ' ▲') : ''}
+      </button>
+    </th>
+  );
 
   return (
     <div className="stack gap-6">
@@ -280,17 +309,25 @@ export default function CategoriesEditor({ recordCategories, firstCategories }: 
           </select>
         </div>
         <NewCategoryForm onError={setError} />
+        <input
+          className={`${inputClass} w-full sm:max-w-sm`}
+          type="search"
+          placeholder="Search categories"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left border-b border-gray-200">
-                <th className="py-2 pr-2">Category</th>
-                <th className="py-2 pr-2">Group</th>
-                <th className="py-2 pr-2">Unit</th>
-                <th className="py-2 pr-2">Status</th>
+                {header('name', 'Category')}
+                {header('group', 'Group')}
+                {header('unit', 'Unit')}
+                {header('status', 'Status')}
               </tr>
             </thead>
             <tbody>
+              {shown.length === 0 && <tr><td colSpan={4} className="py-3 text-gray-500">No categories match.</td></tr>}
               {shown.map(c => <RecordCategoryRow key={c.categoryId} category={c} onError={setError} />)}
             </tbody>
           </table>
