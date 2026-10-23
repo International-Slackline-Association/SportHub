@@ -6,6 +6,7 @@ import { CellContext, Row } from "@tanstack/react-table";
 import { Badge } from "@ui/Badge";
 import { CountryFlag } from "@ui/CountryFlag";
 import Link from "next/link";
+import { AdminEditLink } from "./AdminEditLink";
 
 export const linkClassName = "underline text-blue-600 hover:text-blue-800 visited:text-purple-600";
 
@@ -56,6 +57,7 @@ export const linkCellFormatter = <T extends WorldRecord | WorldFirst>(info: Cell
         </Link>
       )
     )}
+    <AdminEditLink entry={info.row.original} />
   </div>
 );
 

@@ -18,6 +18,7 @@ import {
   titleCellFormatter,
   dateSortingFn,
 } from './cellFormatters';
+import { AdminEditLink } from './AdminEditLink';
 
 const columnHelper = createColumnHelper<WorldRecord>();
 
@@ -62,6 +63,7 @@ const columns = [
                 Link {idx + 1}
               </Link>
             ))}
+            <AdminEditLink entry={info.row.original} />
           </div>
         </div>
       );
