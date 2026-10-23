@@ -6,7 +6,7 @@ import { getWorldRecords, getWorldFirsts } from '@lib/data-services'
 import WorldRecordsPageContent from './components/WorldRecordsPageContent'
 
 export const metadata: Metadata = {
-  title: 'SportHub - World Records',
+  title: 'SportHub - Records & Firsts',
 }
 
 export default async function Page() {
@@ -16,7 +16,7 @@ export default async function Page() {
   ]);
 
   return (
-    <PageLayout title="World Records" heroImage={randomS3Image('WORLD_RECORDS')}>
+    <PageLayout title="Records & Firsts" heroImage={randomS3Image('WORLD_RECORDS')}>
       <section className="p-4 sm:p-0 flex gap-3 flex-wrap items-center">
         <Button as="link" href="/world_records/claim" variant="primary">Claim World Record or World First</Button>
         <Button as="link" href="/world_records/my-claims" variant="ghost">My claims</Button>
