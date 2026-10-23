@@ -2,8 +2,8 @@ import Button from '@ui/Button';
 
 const LINKS = [
   { href: '/admin/records-review', label: 'Review queue', variant: 'secondary' },
-  { href: '/admin/records-categories', label: 'Modify Categories', variant: 'secondary' },
   { href: '/admin/records-manage/records', label: 'Modify Records', variant: 'secondary' },
+  { href: '/admin/records-categories', label: 'Modify Categories', variant: 'secondary' },
   { href: '/admin/records-manage/firsts', label: 'Modify Firsts', variant: 'secondary' },
   { href: '/admin/records-import', label: 'Import review', variant: 'ghost' },
 ] as const;
