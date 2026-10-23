@@ -274,26 +274,55 @@ Measurements:
 
 ## 8. Data captured
 
-| Field | Record | First | Notes |
-|---|---|---|---|
-| Category | ✓ | | from §6.1 |
-| First category | | ✓ | from §6.2 |
-| Trick name | | ✓ | required; a first needs a clear name |
-| Description | (✓) | ✓ | |
-| Value + unit | ✓ | | structured, so records can be compared; unit from category |
-| Specs text | ✓ | ✓ | optional extra detail (e.g. line height on a length record) |
-| Athlete(s) | ✓ | ✓ | SportHub user ids or name + email |
-| Gender category | ✓ | ✓ | male / female |
-| Country | ✓ | ✓ | default from athlete profile |
-| Date of attempt | ✓ | ✓ | |
-| Location / spot (name, country, coordinates) | ✓ | ✓ | coordinates needed for "most northern/southern" and height above sea level |
-| Event | ✓ | ✓ | optional link to a SportHub event; "in competition" vs "in training" for firsts |
-| Setup (webbing, anchors, leash/backup) | ✓ | | free text |
-| Witnesses (name, contact, role) | ✓ | | min. 2, or 3 per category |
-| Evidence links | ✓ | ✓ | at least one video |
-| Rule checklist confirmations | ✓ | | per §7.4 |
-| Claimant | ✓ | ✓ | the signed-in user |
-| Status, review comments, audit log | ✓ | ✓ | |
+Records and firsts are different kinds of claim and are stored with different fields.
+
+### 8.1 World record claim
+
+| Field | Required | Notes |
+|---|---|---|
+| Category | yes (path a) | picked from Active and Unchallenged categories |
+| New category proposal | yes (path b) | name, what is measured and how, unit, higher/lower is better, why it is a distinct superlative |
+| Value + unit | yes | structured so records can be compared; the unit comes from the category |
+| Athlete(s) | yes | SportHub users, or name + email if not registered |
+| Gender category | yes | male / female |
+| Country | yes | default from the athlete's profile |
+| Date of attempt | yes | |
+| Location / spot | yes | name, country, coordinates (needed for height above sea level and "most northern/southern") |
+| Event | no | optional link to a SportHub event |
+| Setup | no | free text: webbing, anchors, leash and backup |
+| Further specs | no | free text, e.g. line height on a length record |
+| Witnesses | yes | name, contact and role; at least 2, or 3 where the category says so |
+| Evidence links | yes | at least one video link (FR-10 to FR-14) |
+| Reason if no full video | conditional | required when full video is missing (FR-11) |
+| Rule checklist confirmations | yes | per the category (§7.4) |
+| Ethics confirmation | yes | FR-7 |
+
+### 8.2 World first claim
+
+| Field | Required | Notes |
+|---|---|---|
+| First category | yes | Freestyle Trickline, Freestyle Highline, Rodeoline, Static |
+| Trick name | yes | a first needs a clear name |
+| Description | yes | what the trick is and how it is performed |
+| Why it is a first | yes | short justification against the framework's criteria (innovative, distinct, advanced skill, significant) |
+| Similar existing tricks | no | tricks the claimant considers closest, and how this one differs |
+| Athlete(s) | yes | SportHub users, or name + email if not registered |
+| Gender category | yes | male / female |
+| Country | yes | default from the athlete's profile |
+| Date landed | yes | |
+| Location / spot | no | name and country |
+| Context | yes | in competition (optionally linked to a SportHub event), in training, or other |
+| Line details | no | line type and length or height where relevant |
+| Evidence links | yes | at least one video link showing the trick being landed |
+| Ethics confirmation | yes | FR-7 |
+
+A first has no value, no witnesses, and no rule checklist: it is a single trick and is judged
+against the criteria in FR-20.
+
+### 8.3 Fields on every claim
+
+Claimant (the signed-in user), claim type, status, submission and decision timestamps, review
+comments, and the audit log (FR-22).
 
 Storage proposal (to confirm in design): a new DynamoDB table or record types
 `Record:{id}` / `First:{id}` with a status field, and `RecordCategory:{id}` for the controlled
