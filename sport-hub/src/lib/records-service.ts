@@ -63,22 +63,54 @@ const byOrder = <T extends { order: number }>(a: T, b: T) => a.order - b.order;
 
 export async function getRecordCategories(): Promise<RecordCategoryRecord[]> {
   const items = await queryAll<RecordCategoryRecord>({
-    KeyConditionExpression: 'pk = :pk',
-    ExpressionAttributeValues: { ':pk': 'RecordCategory' },
+    KeyConditionExpression: 'pk = :pk AND begins_with(sortKey, :prefix)',
+    ExpressionAttributeValues: { ':pk': 'RecordCategory', ':prefix': 'RecordCategory:' },
   });
   return items.sort(byOrder);
 }
 
 export async function getFirstCategories(): Promise<FirstCategoryRecord[]> {
   const items = await queryAll<FirstCategoryRecord>({
-    KeyConditionExpression: 'pk = :pk',
-    ExpressionAttributeValues: { ':pk': 'FirstCategory' },
+    KeyConditionExpression: 'pk = :pk AND begins_with(sortKey, :prefix)',
+    ExpressionAttributeValues: { ':pk': 'FirstCategory', ':prefix': 'FirstCategory:' },
   });
   return items.sort(byOrder);
 }
 
+export async function getRecordCategory(categoryId: string): Promise<RecordCategoryRecord | null> {
+  const item = await dynamodb.getItem(RECORDS_TABLE, { pk: 'RecordCategory', sortKey: `RecordCategory:${categoryId}` });
+  return (item as RecordCategoryRecord | undefined) ?? null;
+}
+
+export async function getFirstCategory(categoryId: string): Promise<FirstCategoryRecord | null> {
+  const item = await dynamodb.getItem(RECORDS_TABLE, { pk: 'FirstCategory', sortKey: `FirstCategory:${categoryId}` });
+  return (item as FirstCategoryRecord | undefined) ?? null;
+}
+
 export async function putCategory(category: RecordCategoryRecord | FirstCategoryRecord): Promise<void> {
   await dynamodb.putItem(RECORDS_TABLE, category as unknown as Record<string, unknown>);
+}
+
+/** Category changes are logged in the category partition (FR-C5): sortKey "Audit:{categoryId}:{iso}". */
+export async function addCategoryAudit(
+  category: Pick<RecordCategoryRecord | FirstCategoryRecord, 'pk' | 'categoryId'>,
+  audit: Omit<EntryAuditRecord, 'pk' | 'sortKey' | 'at'>,
+): Promise<void> {
+  const at = Date.now();
+  const record: EntryAuditRecord = {
+    ...audit,
+    pk: category.pk,
+    sortKey: `Audit:${category.categoryId}:${new Date(at).toISOString()}`,
+    at,
+  };
+  await dynamodb.putItem(RECORDS_TABLE, record as unknown as Record<string, unknown>);
+}
+
+export async function getCategoryAuditLog(pk: 'RecordCategory' | 'FirstCategory', categoryId: string): Promise<EntryAuditRecord[]> {
+  return queryAll<EntryAuditRecord>({
+    KeyConditionExpression: 'pk = :pk AND begins_with(sortKey, :prefix)',
+    ExpressionAttributeValues: { ':pk': pk, ':prefix': `Audit:${categoryId}:` },
+  });
 }
 
 // ============================================================================
@@ -212,8 +244,36 @@ export async function getAthleteEntryIds(userId: string, kind: EntryKind): Promi
   return items.map(item => (item as AthleteEntryLinkRecord).entryId);
 }
 
+/**
+ * Claim pointer for the claimant (sortKey = "Claim:{kind}:{entryId}"), so "My claims"
+ * lists claims a person submitted for others without a scan.
+ */
+export async function putClaimantLink(userId: string, kind: EntryKind, entryId: string): Promise<void> {
+  await dynamodb.putItem(USERS_TABLE, {
+    userId,
+    sortKey: `Claim:${kind}:${entryId}`,
+    entryId,
+    kind,
+    createdAt: Date.now(),
+  });
+}
+
+/** Entries a user claimed or is an athlete on, any status. */
+export async function getUserClaims(userId: string): Promise<WorldEntryRecord[]> {
+  const items = (await Promise.all(['Claim:', 'Record:', 'First:'].map(prefix =>
+    dynamodb.queryItems(USERS_TABLE, 'userId = :uid AND begins_with(sortKey, :prefix)', { ':uid': userId, ':prefix': prefix }),
+  ))).flat() as AthleteEntryLinkRecord[];
+  const ids = { record: new Set<string>(), first: new Set<string>() };
+  for (const item of items) ids[item.kind].add(item.entryId);
+  const [records, firsts] = await Promise.all([
+    getEntriesBatch('record', [...ids.record]),
+    getEntriesBatch('first', [...ids.first]),
+  ]);
+  return [...records, ...firsts].sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
 /** Batch-loads entry metadata (BatchGet takes at most 100 keys per call). */
-async function getEntriesBatch(kind: EntryKind, entryIds: string[]): Promise<WorldEntryRecord[]> {
+export async function getEntriesBatch(kind: EntryKind, entryIds: string[]): Promise<WorldEntryRecord[]> {
   const results: WorldEntryRecord[] = [];
   for (let i = 0; i < entryIds.length; i += 100) {
     const keys = entryIds.slice(i, i + 100).map(id => ({ pk: entryPk(kind, id), sortKey: 'Metadata' }));

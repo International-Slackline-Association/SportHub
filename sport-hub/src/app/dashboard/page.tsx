@@ -58,6 +58,15 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
+        {/* World records and firsts */}
+        <div className="bg-white shadow rounded-lg p-4 flex items-center justify-between gap-4 flex-wrap">
+          <span className="font-medium text-sm">World records and world firsts</span>
+          <div className="flex gap-4">
+            <Link href="/world_records/claim" className="text-sm text-blue-600 hover:underline font-medium">Submit a claim</Link>
+            <Link href="/world_records/my-claims" className="text-sm text-blue-600 hover:underline font-medium">My claims →</Link>
+          </div>
+        </div>
+
         {/* Organizer Section */}
         {profileResult.success && profileResult.user?.userSubTypes?.includes('organizer') ? (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center justify-between gap-4">

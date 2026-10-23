@@ -389,7 +389,7 @@ export interface RecordEntryRecord extends EntryBase {
   furtherSpecs?: string;
   witnesses: RecordWitness[];
   noFullVideoReason?: string;
-  ruleConfirmations?: RecordRuleSet[];
+  ruleConfirmations?: string[];   // Confirmed checklist items, "{ruleSet}:{index}"
   newCategoryProposal?: NewCategoryProposal;
 }
 

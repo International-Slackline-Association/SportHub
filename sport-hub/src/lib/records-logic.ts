@@ -215,6 +215,12 @@ const parseSeconds = (text: string): number | undefined => {
   const sec = t.match(/^(\d+(?:[.,:]\d+)?)\s*(?:s|sec|secs|seconds)$/);
   if (sec) return parseLooseNumber(sec[1].replace(':', '.'));
 
+  // Claim form input without unit: "12:18.5" (min:sec) or plain seconds "44.05"
+  const clock = t.match(/^(\d+):(\d{2}(?:[.,]\d+)?)$/);
+  if (clock) return Number(clock[1]) * 60 + parseLooseNumber(clock[2]);
+  const bare = t.match(/^(\d+(?:[.,]\d+)?)$/);
+  if (bare) return parseLooseNumber(bare[1]);
+
   return undefined;
 };
 
