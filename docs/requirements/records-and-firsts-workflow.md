@@ -273,6 +273,16 @@ leashed and the line has a backup.
 
 ### 7.6 Publishing & display
 - FR-23 Published entries appear on `/world_records` and on each linked athlete's profile.
+- FR-23a **Record titles.** Within a category, the better of the current men's and women's records
+  is titled **World Record**, and the other one carries the gender-specific title:
+  - if the men's record is better, the women's record is titled **Women's World Record** and the
+    men's record **World Record**;
+  - if the women's record is better, the men's record is titled **Men's World Record** and the
+    women's record **World Record**.
+  "Better" follows the category's direction (higher or lower is better). The title is computed from
+  the current values whenever a record is approved or archived, it is not stored by hand. Assumptions
+  to confirm: if a category has a record on only one list, that record is simply **World Record**,
+  and if both are exactly equal both are **World Record**.
 - FR-24 The records page can show history per category (previous holders and values).
 - FR-25 Approval invalidates the world-records cache so the entry appears right away.
 - FR-26 **Certificates:** when a claim is approved, SportHub generates a personalised World Record /
@@ -396,6 +406,7 @@ lets the Sport Commission's records group get access later without code changes.
 - Specs: structured value + unit (needed to compare records).
 - Evidence: full video and at least two witnesses for records (ISA framework); links only in v1, uploads later.
 - No mixed list: records go on the men's or women's list by the athlete's gender; shared records appear on both when the team is mixed.
+- Record titles: the better of men's / women's record is "World Record", the other is "Women's" / "Men's World Record" (FR-23a).
 - Initial categories are seeded from the April 2025 v1 list.
 - Rules follow the ISA framework October 2026 v2 (checked against it in this version).
 
@@ -404,6 +415,3 @@ lets the Sport Commission's records group get access later without code changes.
 1. **Gender for firsts.** The October 2026 framework says "World Firsts are not(?) collected
    separately for male and female", with a question mark. Should SportHub show firsts split by
    gender, or as one list? (The athlete's gender is stored on the claim either way.)
-2. **Gender-specific titles.** The framework says the inferior of the male and female record carries
-   the gender-specific title. Should the records page show the lower one as, say, "Women's record"
-   and the higher one as the plain "World record"?
