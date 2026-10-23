@@ -53,6 +53,7 @@ Out of scope:
 - Combos as world firsts. Only singular tricks.
 - Guinness World Records submission. ISA approval is a prerequisite for Guinness, but the Guinness
   process (and its fee) stays with the athlete.
+- Evidence file uploads (planned after v1, see FR-14).
 - Automated verification (GPS, sensors), public voting or commenting on claims.
 
 ## 4. Actors
@@ -155,7 +156,9 @@ so the data model should allow a context field.
 - FR-12 **Witnesses:** at least two named bystanders (three for some categories, configurable
   per category). Name and contact for each, and their role during the attempt.
 - FR-13 Firsts require at least one video of the trick being landed.
-- FR-14 **Open:** links only (YouTube, Vimeo, Drive, Instagram), or also file uploads to S3?
+- FR-14 v1 accepts **links only** (YouTube, Vimeo, Instagram, Google Drive, …). File uploads to S3
+  (for permanent archiving of evidence) are a planned later extension; the data model should allow
+  evidence entries of type link or file.
 
 ### 7.4 Category rules shown as checklist items
 The form shows the rules relevant to the chosen category, and the claimant ticks each one.
@@ -294,13 +297,12 @@ lets the records working group get access later without code changes.
 - National/continental records: out of scope (ISA framework).
 - Free solo highline records: not accepted (ISA framework).
 - Specs: structured value + unit (needed to compare records).
-- Evidence: full video and at least two witnesses for records (ISA framework).
+- Evidence: full video and at least two witnesses for records (ISA framework); links only in v1, uploads later.
 
 ## 11. Open questions
 
-1. Evidence: links only, or file uploads too? (FR-14)
-2. Rankings records: claim them in v1, or derive them later from contest data? (FR-C2)
-3. Unchallenged claims: keep them pending, or add an "on hold" state? (FR-19)
-4. Certificates: generate in SportHub, or keep the existing account.slacklineinternational.org
+1. Rankings records: claim them in v1, or derive them later from contest data? (FR-C2)
+2. Unchallenged claims: keep them pending, or add an "on hold" state? (FR-19)
+3. Certificates: generate in SportHub, or keep the existing account.slacklineinternational.org
    download? (FR-26)
-5. Is the "announce attempt" step (FR-1) wanted in v1, or later?
+4. Is the "announce attempt" step (FR-1) wanted in v1, or later?
