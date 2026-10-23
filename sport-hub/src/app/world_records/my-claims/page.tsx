@@ -37,8 +37,7 @@ export default async function MyClaimsPage({ searchParams }: Props) {
         </section>
       )}
       <section className="p-4 sm:p-0 flex gap-3 flex-wrap">
-        <Button as="link" href="/world_records/claim" variant="primary">Claim a world record</Button>
-        <Button as="link" href="/world_records/claim?path=first" variant="secondary">Claim a world first</Button>
+        <Button as="link" href="/world_records/claim" variant="primary">Claim a world record or first</Button>
       </section>
       <section className="p-4 sm:p-0">
         {sorted.length === 0 ? (

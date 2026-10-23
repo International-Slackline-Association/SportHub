@@ -57,6 +57,10 @@ const kindForPath = (path: ClaimFormValues['path']): EntryKind => (path === 'fir
 
 const newEntryId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
+/** Records without a full video have no video links (the form hides them). */
+const evidenceLinks = (values: ClaimFormValues) =>
+  values.path !== 'first' && !values.fullVideo ? [] : values.evidence.map(l => l.trim()).filter(Boolean);
+
 const isUrl = (value: string) => /^https?:\/\/\S+$/i.test(value.trim());
 
 const revalidateRecordPages = () => {
@@ -163,8 +167,8 @@ function validateForSubmit(
     errors.push('Confirm that you have the consent of every athlete on this claim');
   }
 
-  const links = values.evidence.map(l => l.trim()).filter(Boolean);
-  if (links.length === 0) errors.push(kind === 'first' ? 'Add at least one video link showing the trick being landed' : 'Add at least one video link');
+  const links = evidenceLinks(values);
+  if (links.length === 0 && (kind === 'first' || values.fullVideo)) errors.push(kind === 'first' ? 'Add at least one video link showing the trick being landed' : 'Add at least one video link');
   for (const link of links) if (!isUrl(link)) errors.push(`"${link}" is not a valid link`);
 
   required(values.date, 'Date');
@@ -243,7 +247,7 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
       locationName: values.locationName.trim() || undefined,
       locationCountry: values.locationCountry || undefined,
       eventId: values.eventId || undefined,
-      evidence: values.evidence.map(url => url.trim()).filter(Boolean).map(url => ({ type: 'link' as const, url })),
+      evidence: evidenceLinks(values).map(url => ({ type: 'link' as const, url })),
       ethicsConfirmed: values.ethicsConfirmed,
       consentConfirmed: values.consentConfirmed,
       claimantUserId: claimantId,

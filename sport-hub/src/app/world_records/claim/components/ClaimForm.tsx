@@ -263,26 +263,28 @@ function ClaimFields({ recordCategories, firstCategories, claimantId }: Omit<Pro
 
       <Section
         title="Video and evidence"
-        description={isFirst ? 'At least one video link showing the trick being landed.' : 'At least one video link. A full, uncut video of the attempt is expected.'}
+        description={isFirst ? 'At least one video link showing the trick being landed.' : 'A full, uncut video of the attempt is expected.'}
       >
-        <FieldArray name="evidence">
-          {({ push, remove }) => (
-            <div className="stack gap-2">
-              {values.evidence.map((_, i) => (
-                <div key={i} className="flex gap-2 items-end">
-                  <FormikTextField className="flex-1" id={`evidence.${i}`} name={`evidence.${i}`} label={i === 0 ? 'Video link' : `Link ${i + 1}`} placeholder="https://" required={i === 0} />
-                  {i > 0 && <button type="button" className="text-xs text-red-600 underline pb-2" onClick={() => remove(i)}>Remove</button>}
-                </div>
-              ))}
-              <div><Button type="button" variant="secondary" size="small" onClick={() => push('')}>Add a link</Button></div>
-            </div>
-          )}
-        </FieldArray>
         {!isFirst && (
           <>
             <FormikCheckboxField id="fullVideo" name="fullVideo" label="There is a full video of the attempt" />
             {!values.fullVideo && <TextArea name="noFullVideoReason" label="Why is there no full video?" required />}
           </>
+        )}
+        {(isFirst || values.fullVideo) && (
+          <FieldArray name="evidence">
+            {({ push, remove }) => (
+              <div className="stack gap-2">
+                {values.evidence.map((_, i) => (
+                  <div key={i} className="flex gap-2 items-end">
+                    <FormikTextField className="flex-1" id={`evidence.${i}`} name={`evidence.${i}`} label={i === 0 ? 'Video link' : `Link ${i + 1}`} placeholder="https://" required={i === 0} />
+                    {i > 0 && <button type="button" className="text-xs text-red-600 underline pb-2" onClick={() => remove(i)}>Remove</button>}
+                  </div>
+                ))}
+                <div><Button type="button" variant="secondary" size="small" onClick={() => push('')}>Add a link</Button></div>
+              </div>
+            )}
+          </FieldArray>
         )}
       </Section>
 
