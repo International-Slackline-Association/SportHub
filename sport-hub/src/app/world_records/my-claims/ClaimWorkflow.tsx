@@ -12,7 +12,7 @@ const COLORS: Record<ClaimStatus, { fill: string; stroke: string; text: string }
 };
 
 const W = 160;
-const H = 48;
+const H = 40;
 
 /** Top-left corner of each step in the diagram. */
 const NODES: Record<ClaimStatus, { x: number; y: number }> = {
@@ -20,8 +20,8 @@ const NODES: Record<ClaimStatus, { x: number; y: number }> = {
   pending: { x: 260, y: 30 },
   published: { x: 510, y: 30 },
   historical: { x: 760, y: 30 },
-  changes_requested: { x: 260, y: 190 },
-  rejected: { x: 510, y: 190 },
+  changes_requested: { x: 260, y: 140 },
+  rejected: { x: 510, y: 140 },
 };
 
 const STEPS: { status: ClaimStatus; text: string }[] = [
@@ -48,13 +48,13 @@ function Arrow({ d, label, lx, ly, anchor = 'middle' }: { d: string; label: stri
  */
 export default function ClaimWorkflow({ counts }: { counts: Partial<Record<ClaimStatus, number>> }) {
   return (
-    <div className="border border-gray-200 rounded-lg p-4 stack gap-3">
+    <div className="border border-gray-200 rounded-lg p-4 stack gap-2">
       <div className="stack gap-1">
         <h3 className="font-semibold">How a claim works</h3>
         <p className="text-sm text-gray-600">The highlighted steps show where your claims are now, with how many are in each step.</p>
       </div>
       <div className="overflow-x-auto">
-        <svg viewBox="0 0 930 250" className="w-full min-w-[640px]" role="img" aria-label="Claim workflow: draft, under review, published, historical; under review can lead to changes requested, rejected, or back to draft">
+        <svg viewBox="0 0 930 190" className="w-full max-w-3xl min-w-[560px]" role="img" aria-label="Claim workflow: draft, under review, published, historical; under review can lead to changes requested, rejected, or back to draft">
           <defs>
             <marker id="claim-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
               <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280" />
@@ -62,17 +62,17 @@ export default function ClaimWorkflow({ counts }: { counts: Partial<Record<Claim
           </defs>
 
           {/* Draft ⇄ Under review */}
-          <Arrow d={`M ${10 + W} 46 L 258 46`} label="Submit" lx={215} ly={38} />
-          <Arrow d={`M 258 66 L ${12 + W} 66`} label="Withdraw" lx={215} ly={86} />
+          <Arrow d={`M ${10 + W} 42 L 258 42`} label="Submit" lx={215} ly={35} />
+          <Arrow d={`M 258 60 L ${12 + W} 60`} label="Withdraw" lx={215} ly={80} />
           {/* Under review → Published → Historical */}
-          <Arrow d={`M ${260 + W} 54 L 508 54`} label="Approved" lx={465} ly={46} />
-          <Arrow d={`M ${510 + W} 54 L 758 54`} label="Beaten" lx={715} ly={46} />
-          <text x={715} y={74} textAnchor="middle" fontSize={11} fill="#6b7280">(records only)</text>
+          <Arrow d={`M ${260 + W} 50 L 508 50`} label="Approved" lx={465} ly={42} />
+          <Arrow d={`M ${510 + W} 50 L 758 50`} label="Beaten" lx={715} ly={42} />
+          <text x={715} y={68} textAnchor="middle" fontSize={11} fill="#6b7280">(records only)</text>
           {/* Under review ⇄ Changes requested */}
-          <Arrow d="M 315 78 L 315 188" label="Changes requested" lx={308} ly={138} anchor="end" />
-          <Arrow d="M 365 190 L 365 80" label="Resubmit" lx={373} ly={138} anchor="start" />
+          <Arrow d="M 315 70 L 315 138" label="Changes requested" lx={308} ly={109} anchor="end" />
+          <Arrow d="M 365 140 L 365 72" label="Resubmit" lx={373} ly={109} anchor="start" />
           {/* Under review → Rejected */}
-          <Arrow d={`M ${260 + W} 70 L 540 188`} label="Rejected" lx={500} ly={120} anchor="start" />
+          <Arrow d={`M ${260 + W} 66 L 530 138`} label="Rejected" lx={492} ly={98} anchor="start" />
 
           {(Object.keys(NODES) as ClaimStatus[]).map(status => {
             const { x, y } = NODES[status];
