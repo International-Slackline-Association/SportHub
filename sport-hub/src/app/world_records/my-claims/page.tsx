@@ -93,7 +93,7 @@ export default async function MyClaimsPage({ searchParams }: Props) {
         )}
       </section>
       <section className="p-4 sm:p-0">
-        <Button as="link" href="/world_records" variant="secondary" size="small">Back to Records &amp; Firsts</Button>
+        <Button as="link" href="/world_records" variant="secondary" size="small">Go to Records &amp; Firsts</Button>
       </section>
     </PageLayout>
   );
