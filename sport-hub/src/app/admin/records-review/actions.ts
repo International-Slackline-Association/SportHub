@@ -401,7 +401,7 @@ export async function adminUpdateEntry(kind: EntryKind, entryId: string, values:
     if (isPublic) await requireRecordsPermission('records:manage');
     if (kindForPath(values.path) !== kind) return { success: false, errors: ['A record cannot become a first or the other way round'] };
 
-    const { athletes, errors } = await snapshotAthletes(values);
+    const { athletes, errors } = await snapshotAthletes(values, entry.athletes);
     if (athletes.length === 0 && errors.length === 0) errors.push('Add at least one athlete');
     const common = commonFieldsFrom(values);
     for (const { url } of common.evidence) if (!isUrl(url)) errors.push(`"${url}" is not a valid link`);

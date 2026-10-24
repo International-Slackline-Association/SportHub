@@ -100,10 +100,18 @@ export function parseClaimValue(
  * submission (FR-9a). New athletes bring them on the claim (FR-9). Only male or
  * female is accepted for now (FR-9d). Athletes that can't be resolved are left
  * out of `athletes` and explained in `errors`.
+ *
+ * `existing` are the athletes already on the entry (admin Modify): imported
+ * athletes without a SportHub profile are kept by name (FR-36), so an admin can
+ * edit such an entry without linking them first.
  */
-export async function snapshotAthletes(values: ClaimFormValues): Promise<{ athletes: EntryAthlete[]; errors: string[] }> {
+export async function snapshotAthletes(
+  values: ClaimFormValues,
+  existing: EntryAthlete[] = [],
+): Promise<{ athletes: EntryAthlete[]; errors: string[] }> {
   const errors: string[] = [];
   const athletes: EntryAthlete[] = [];
+  const nameOnly = existing.filter(a => !a.userId && !a.pendingUser);
   for (const athlete of values.athletes) {
     if (athlete.userId) {
       const profile = await getUser(athlete.userId);
@@ -124,6 +132,8 @@ export async function snapshotAthletes(values: ClaimFormValues): Promise<{ athle
       if (gender !== 'MEN' && gender !== 'WOMEN') { errors.push(`Choose male or female for ${name}`); continue; }
       athletes.push({ name, gender, country: p.country, pendingUser: p });
     } else if (athlete.name) {
+      const kept = nameOnly.findIndex(a => a.name === athlete.name);
+      if (kept >= 0) { athletes.push(nameOnly.splice(kept, 1)[0]); continue; }
       errors.push(`Pick "${athlete.name}" from the SportHub users or add them as a new athlete`);
     }
   }

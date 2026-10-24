@@ -10,6 +10,7 @@ import { FIRST_CRITERIA, RECORD_CRITERIA } from '@lib/records-rules';
 import type { RecordCategoryRecord } from '@lib/relational-types';
 import { getReviewContext } from 'src/app/admin/records-review/actions';
 import { ClaimStatusBadge } from 'src/app/world_records/components/claimStatus';
+import { getCountryByCode } from '@utils/countries';
 import ReviewActions from './ReviewActions';
 
 export const metadata: Metadata = {
@@ -17,6 +18,9 @@ export const metadata: Metadata = {
 };
 
 type Props = { params: Promise<{ kind: string; id: string }> };
+
+/** Claims store ISO codes, imported rows country names. */
+const countryName = (country?: string) => (country && getCountryByCode(country)?.name) || country;
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   if (children === undefined || children === null || children === '') return null;
@@ -84,7 +88,7 @@ export default async function ReviewClaimPage({ params }: Props) {
               {entry.athletes.map((a, i) => (
                 <span key={i} className="block">
                   {a.userId ? <Link href={`/athlete/${a.userId}`} className="text-blue-600 hover:underline">{a.name}</Link> : a.name}
-                  {` · ${a.gender === 'MEN' ? 'male' : 'female'}`}{a.country ? ` · ${a.country}` : ''}
+                  {` · ${a.gender === 'MEN' ? 'male' : 'female'}`}{a.country ? ` · ${countryName(a.country)}` : ''}
                   {a.pendingUser && ` · new athlete (${a.pendingUser.email}), profile created on approval`}
                   {(entry.status === 'published' || entry.status === 'historical') && (
                     <> · <a href={`/api/certificates/${entry.kind}/${entry.entryId}?athlete=${i}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">certificate</a></>
@@ -94,7 +98,7 @@ export default async function ReviewClaimPage({ params }: Props) {
             </Row>
             {entry.athletes.length > 1 && <Row label="Joint performance">Confirmed by the claimant</Row>}
             <Row label="Date">{entry.date ? formatEntryDate(entry.date) : undefined}</Row>
-            <Row label="Location">{[entry.locationName, entry.locationCountry].filter(Boolean).join(', ')}</Row>
+            <Row label="Location">{[entry.locationName, countryName(entry.locationCountry)].filter(Boolean).join(', ')}</Row>
             {entry.kind === 'record' && (
               <>
                 <Row label="Setup">{entry.setup}</Row>
