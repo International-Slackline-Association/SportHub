@@ -25,3 +25,6 @@ export const ETHICS_STATEMENT =
   'I confirm this claim follows the ISA ethics guidelines for records (respect for nature and public spaces, safety, fair play, transparency) and the ISA Code of Conduct.';
 
 export const MIN_WITNESSES = 2;
+
+/** The ISA records team. Emails go to RECORDS_REVIEW_EMAIL when set (FR-30); this is the default and what the form shows. */
+export const RECORDS_TEAM_EMAIL = 'records@slacklineinternational.org';

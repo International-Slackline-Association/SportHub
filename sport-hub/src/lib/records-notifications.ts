@@ -8,6 +8,7 @@ import { getRecordCategory } from './records-service';
 import { formatEntryDate, formatRecordValue, LIST_LABELS } from './records-logic';
 import { getUser } from './user-service';
 import { sendMail, siteUrl } from './mailer';
+import { RECORDS_TEAM_EMAIL } from './records-rules';
 import { getCountryByCode } from '@utils/countries';
 import type { RecordEntryRecord, WorldEntryRecord } from './relational-types';
 
@@ -18,7 +19,7 @@ export interface ClaimEventContext {
   supersedes?: RecordEntryRecord[];   // Records this approval made historical
 }
 
-const reviewTeam = () => process.env.RECORDS_REVIEW_EMAIL || 'records@slacklineinternational.org';
+const reviewTeam = () => process.env.RECORDS_REVIEW_EMAIL || RECORDS_TEAM_EMAIL;
 const communicationTeam = () => process.env.RECORDS_COMMUNICATION_EMAIL || 'communication@slacklineinternational.org';
 
 async function athleteEmails(entry: WorldEntryRecord): Promise<string[]> {

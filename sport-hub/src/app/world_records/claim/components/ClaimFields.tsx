@@ -12,7 +12,7 @@ import Button from '@ui/Button';
 import { Alert } from '@ui/Alert';
 import { FormikCheckboxField, FormikRadioGroup, FormikSelectField, FormikTextField, countryCodeOptions } from '@ui/Form';
 import { deriveList, LIST_LABELS, UNIT_SUGGESTIONS, unitKind, valueHint } from '@lib/records-logic';
-import { ETHICS_STATEMENT, MIN_WITNESSES } from '@lib/records-rules';
+import { ETHICS_STATEMENT, MIN_WITNESSES, RECORDS_TEAM_EMAIL } from '@lib/records-rules';
 import type { FirstCategoryRecord, RecordCategoryRecord, RecordList } from '@lib/relational-types';
 import { getAthleteGenders, getMarkToBeat } from '../../actions';
 import type { ClaimFormValues, ClaimPath } from '../types';
@@ -127,6 +127,12 @@ export default function ClaimFields({ recordCategories, firstCategories, claiman
           name="path"
           options={editing || admin ? PATH_OPTIONS.filter(o => (o.value === 'first') === isFirst) : PATH_OPTIONS}
         />
+        {/* FR-1: attempts are announced by email, not in the app (v1) */}
+        {!isFirst && !admin && (
+          <Alert variant="info" size="SM" showIcon={false}>
+            Planning a record attempt? As the ISA framework asks, email <a href={`mailto:${RECORDS_TEAM_EMAIL}`} className="underline">&nbsp;{RECORDS_TEAM_EMAIL}&nbsp;</a> before the attempt, so the definitions can be agreed in advance.
+          </Alert>
+        )}
         {values.path === 'existing' && (
           <div className="stack gap-1">
             <FormikSelectField id="categoryId" name="categoryId" label="Record category" options={categoryOptions} required />
