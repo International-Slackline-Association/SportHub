@@ -94,6 +94,10 @@ draft ──submit──▶ pending ──approve──▶ published ──beate
 - **historical**: a newer record on the same list beat this one. Still shown as record
   history. Only records become historical; a first cannot be beaten and stays published.
 
+- FR-L1 **"My claims" shows this workflow** as a diagram above the claim list, with the same step names and
+  colours as the status badges. Steps that hold some of the athlete's claims are highlighted with how many
+  claims are in that step, and a "What each step means" section explains each status in one sentence.
+
 Claim status is separate from **category status** (§6.1): a claim can be approved into a
 category that is still *Unchallenged*.
 

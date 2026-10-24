@@ -5,10 +5,11 @@ import { Alert } from '@ui/Alert';
 import { auth } from '@lib/auth';
 import { getRecordCategories } from '@lib/records-service';
 import { formatEntryDate, formatRecordValue, LIST_LABELS } from '@lib/records-logic';
-import type { WorldEntryRecord } from '@lib/relational-types';
+import type { ClaimStatus, WorldEntryRecord } from '@lib/relational-types';
 import { getMyClaims } from '../actions';
 import { ClaimStatusBadge } from '../components/claimStatus';
 import WithdrawButton from './WithdrawButton';
+import ClaimWorkflow from './ClaimWorkflow';
 
 export const metadata: Metadata = {
   title: 'SportHub - My Record Claims',
@@ -21,6 +22,8 @@ export default async function MyClaimsPage({ searchParams }: Props) {
   const [session, claims, categories] = await Promise.all([auth(), getMyClaims(), getRecordCategories()]);
   const categoryById = new Map(categories.map(c => [c.categoryId, c]));
   const sorted = [...claims].sort((a, b) => b.updatedAt - a.updatedAt);
+  const counts: Partial<Record<ClaimStatus, number>> = {};
+  for (const claim of claims) counts[claim.status] = (counts[claim.status] ?? 0) + 1;
 
   const valueOf = (entry: WorldEntryRecord) => {
     if (entry.kind === 'first') return entry.trickName;
@@ -37,6 +40,9 @@ export default async function MyClaimsPage({ searchParams }: Props) {
       )}
       <section className="p-4 sm:p-0 flex gap-3 flex-wrap">
         <Button as="link" href="/world_records/claim" variant="primary">Claim World Record or World First</Button>
+      </section>
+      <section className="p-4 sm:p-0">
+        <ClaimWorkflow counts={counts} />
       </section>
       <section className="p-4 sm:p-0">
         {sorted.length === 0 ? (
