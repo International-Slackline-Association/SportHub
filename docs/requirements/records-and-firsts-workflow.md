@@ -113,6 +113,8 @@ and first termination are **not** shown as a checklist on the form (open issue 1
 - **Titles.** Records: the best current value across the three lists is "World Record", the others "Men's / Women's
   / Mixed World Record" (ties share the title). Firsts: the earliest landing of a linked trick is "World First",
   later ones on other lists carry the list title. Computed, never stored.
+- **Export:** `/admin/records-export` downloads records, firsts, athletes and categories as CSV (all entries except
+  drafts, including witness contacts, so admins only).
 - Every status change is in the audit log (who, when, comment); approval clears the world-records cache.
 - **Certificates** (PDF, placeholder layout until the ISA design exists) are generated on demand per athlete for
   published and historical entries at `/api/certificates/{record|first}/{id}?athlete={n}`, linked from the

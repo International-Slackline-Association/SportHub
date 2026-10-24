@@ -17,6 +17,7 @@ How the World Records & World Firsts workflow is built, for reviewers. Requireme
 | Category actions | `app/admin/records-categories/actions.ts` | Create and edit record and first categories (`records:manage`). |
 | Import actions | `app/admin/records-import/actions.ts` | Resolve the import review list (`records:manage`). |
 | Emails | `lib/records-notifications.ts`, `lib/mailer.ts` | One function per claim event; SMTP or log only. Never throws. |
+| CSV export | `lib/records-export.ts`, `app/api/admin/records-export/[dataset]/route.ts` | Records, firsts, athletes and categories as CSV for admins (`/admin/records-export`). |
 | Certificates | `lib/records-certificates.ts`, `app/api/certificates/[kind]/[id]/route.ts` | Placeholder PDF, generated on demand for public entries. |
 | Auth | `lib/records-auth.ts` | `requireSession`, `requireRecordsPermission`, `actorOf` for audit items. |
 
