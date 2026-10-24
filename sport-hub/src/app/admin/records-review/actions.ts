@@ -23,9 +23,11 @@ import {
   getFirstCategory,
   getRecordCategories,
   getRecordCategory,
+  lockForDecision,
   putCategory,
   putEntry,
   recomputeRecordStatuses,
+  releaseDecisionLock,
   syncAthleteLinks,
   type EntryKind,
 } from '@lib/records-service';
@@ -259,27 +261,39 @@ export async function approveClaim(kind: EntryKind, entryId: string, options: Ap
     if (!entry) return { success: false, error: 'Claim not found' };
     if (entry.status !== 'pending') return { success: false, error: 'Only claims under review can be approved' };
 
-    let recordCategory: RecordCategoryRecord | null = null;
-    if (entry.kind === 'record') {
-      const resolved = await resolveApprovalCategory(entry, options, actor);
-      if ('error' in resolved) return { success: false, error: resolved.error };
-      ({ entry, category: recordCategory } = resolved);
-    } else if (options.trickGroupWithEntryId) {
-      const trickGroupId = await linkSameTrick(entryId, options.trickGroupWithEntryId);
-      if (trickGroupId) entry = { ...entry, trickGroupId };
-    }
+    // Approving creates profiles and categories before the final write, so take
+    // the decision lock first: a second reviewer can't decide the claim meanwhile
+    const lockToken = await lockForDecision(kind, entryId, 'pending');
+    if (!lockToken) return { success: false, error: 'Another reviewer is deciding this claim or already did. Reload the page.' };
 
-    const now = Date.now();
-    const approved: WorldEntryRecord = {
-      ...entry,
-      athletes: await createPendingAthletes(entry),
-      status: 'published',
-      reviewComment: options.comment || undefined,
-      decidedAt: now,
-      decidedBy: actor.byName ?? actor.byUserId,
-      updatedAt: now,
-    };
-    await putEntry(approved);
+    let recordCategory: RecordCategoryRecord | null = null;
+    let approved: WorldEntryRecord;
+    let written = false;
+    try {
+      if (entry.kind === 'record') {
+        const resolved = await resolveApprovalCategory(entry, options, actor);
+        if ('error' in resolved) return { success: false, error: resolved.error };
+        ({ entry, category: recordCategory } = resolved);
+      } else if (options.trickGroupWithEntryId) {
+        const trickGroupId = await linkSameTrick(entryId, options.trickGroupWithEntryId);
+        if (trickGroupId) entry = { ...entry, trickGroupId };
+      }
+
+      const now = Date.now();
+      approved = {
+        ...entry,
+        athletes: await createPendingAthletes(entry),
+        status: 'published',
+        reviewComment: options.comment || undefined,
+        decidedAt: now,
+        decidedBy: actor.byName ?? actor.byUserId,
+        updatedAt: now,
+      };
+      await putEntry(approved, { expectedStatus: 'pending', lockToken });
+      written = true;
+    } finally {
+      if (!written) await releaseDecisionLock(kind, entryId, lockToken);
+    }
     await syncAthleteLinks(kind, entryId, entry.athletes, approved.athletes);
     await addAuditEntry(kind, entryId, { action: 'approved', fromStatus: 'pending', toStatus: 'published', comment: options.comment, ...actor });
 
@@ -323,7 +337,7 @@ async function decide(kind: EntryKind, entryId: string, toStatus: 'rejected' | '
       decidedBy: actor.byName ?? actor.byUserId,
       updatedAt: Date.now(),
     };
-    await putEntry(updated);
+    await putEntry(updated, { expectedStatus: 'pending' });
     await addAuditEntry(kind, entryId, { action: toStatus, fromStatus: 'pending', toStatus, comment: text, ...actor });
     await notifyClaimEvent(toStatus, updated, { comment: text });
     revalidateRecordPages();
@@ -364,7 +378,7 @@ export async function setPublicEntryStatus(kind: EntryKind, entryId: string, toS
       reviewComment: text,
       voidedAt: voiding ? Date.now() : undefined,
       updatedAt: Date.now(),
-    });
+    }, { expectedStatus: entry.status });
     await addAuditEntry(kind, entryId, {
       action: voiding ? 'voided' : 'restored',
       fromStatus: entry.status,
@@ -446,7 +460,7 @@ export async function adminUpdateEntry(kind: EntryKind, entryId: string, values:
 
     // New athletes on a published entry get their profile right away (FR-9)
     if (isPublic) updated = { ...updated, athletes: await createPendingAthletes(updated) };
-    await putEntry(updated);
+    await putEntry(updated, { expectedStatus: entry.status });
     await syncAthleteLinks(kind, entryId, entry.athletes, updated.athletes);
 
     const changed = Object.keys(updated).filter(k =>

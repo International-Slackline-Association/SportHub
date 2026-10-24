@@ -12,7 +12,7 @@ import Button from '@ui/Button';
 import { Alert } from '@ui/Alert';
 import { FormikCheckboxField, FormikRadioGroup, FormikSelectField, FormikTextField, countryCodeOptions } from '@ui/Form';
 import { deriveList, LIST_LABELS, UNIT_SUGGESTIONS, unitKind, valueHint } from '@lib/records-logic';
-import { ETHICS_STATEMENT, MIN_WITNESSES, RECORDS_TEAM_EMAIL } from '@lib/records-rules';
+import { ETHICS_STATEMENT, MAX_ATHLETES, MAX_WITNESSES, MIN_WITNESSES, RECORDS_TEAM_EMAIL } from '@lib/records-rules';
 import type { FirstCategoryRecord, RecordCategoryRecord, RecordList } from '@lib/relational-types';
 import { getAthleteGenders, getMarkToBeat } from '../../actions';
 import type { ClaimFormValues, ClaimPath } from '../types';
@@ -184,11 +184,13 @@ export default function ClaimFields({ recordCategories, firstCategories, claiman
               {values.athletes.map((_, i) => (
                 <AthletePicker key={i} index={i} onRemove={athleteCount > 1 ? () => remove(i) : undefined} />
               ))}
-              <div>
-                <Button type="button" variant="secondary" size="small" onClick={() => push({ name: '' })}>
-                  Add an athlete to this joint performance
-                </Button>
-              </div>
+              {athleteCount < MAX_ATHLETES && (
+                <div>
+                  <Button type="button" variant="secondary" size="small" onClick={() => push({ name: '' })}>
+                    Add an athlete to this joint performance
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </FieldArray>
@@ -255,9 +257,11 @@ export default function ClaimFields({ recordCategories, firstCategories, claiman
                     ) : <span />}
                   </div>
                 ))}
-                <div>
-                  <Button type="button" variant="secondary" size="small" onClick={() => push({ name: '', email: '', phone: '' })}>Add a witness</Button>
-                </div>
+                {values.witnesses.length < MAX_WITNESSES && (
+                  <div>
+                    <Button type="button" variant="secondary" size="small" onClick={() => push({ name: '', email: '', phone: '' })}>Add a witness</Button>
+                  </div>
+                )}
               </div>
             )}
           </FieldArray>

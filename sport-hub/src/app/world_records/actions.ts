@@ -13,6 +13,7 @@ import { getUser } from '@lib/user-service';
 import { normalizeGender } from '@utils/gender';
 import {
   addAuditEntry,
+  countSubmission,
   deleteEntry,
   getEntry,
   getFirstCategories,
@@ -38,6 +39,7 @@ import {
   validateForSubmit,
 } from '@lib/records-claims';
 import { notifyClaimEvent } from '@lib/records-notifications';
+import { MAX_SUBMISSIONS_PER_DAY, RECORDS_TEAM_EMAIL } from '@lib/records-rules';
 import type { ClaimStatus, WorldEntryRecord } from '@lib/relational-types';
 import type { ClaimActionResult, ClaimFormValues } from './claim/types';
 
@@ -176,7 +178,15 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
 
     if (errors.length > 0) return { success: false, errors };
 
-    await putEntry(entry);
+    // Every submission sends emails, so submissions per account per day are capped
+    if (submit && !(await countSubmission(claimantId, MAX_SUBMISSIONS_PER_DAY))) {
+      return {
+        success: false,
+        errors: [`You can submit at most ${MAX_SUBMISSIONS_PER_DAY} claims per day. Save it as a draft and submit it tomorrow, or write to ${RECORDS_TEAM_EMAIL}.`],
+      };
+    }
+
+    await putEntry(entry, existing ? { expectedStatus: existing.status } : {});
     if (!existing) await putClaimantLink(claimantId, kind, entryId);
     if (submit) {
       // Athletes see a claim from submission on; athletes removed on resubmission lose it
@@ -212,7 +222,7 @@ export async function withdrawClaim(kind: EntryKind, entryId: string): Promise<C
     const entry = await getClaimOf(session.user.id, kind, entryId);
     if (!entry) return { success: false, errors: ['Claim not found'] };
     if (entry.status !== 'pending') return { success: false, errors: ['Only claims under review can be withdrawn'] };
-    await putEntry({ ...entry, status: 'draft', updatedAt: Date.now() });
+    await putEntry({ ...entry, status: 'draft', updatedAt: Date.now() }, { expectedStatus: 'pending' });
     await addAuditEntry(kind, entryId, { action: 'withdrawn', fromStatus: 'pending', toStatus: 'draft', ...actorOf(session) });
     revalidateClaimPages();
     return { success: true, entryId, kind, message: 'Claim withdrawn. It is a draft again.' };

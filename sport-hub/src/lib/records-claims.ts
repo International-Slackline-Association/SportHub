@@ -12,7 +12,7 @@ import { normalizeGender } from '@utils/gender';
 import { createUser } from '@ui/UserForm/actions';
 import { getEntriesByCategory, type EntryKind } from './records-service';
 import { comparableValue, parseRecordValue, splitCurrentAndHistory } from './records-logic';
-import { MIN_WITNESSES } from './records-rules';
+import { MAX_ATHLETES, MAX_WITNESSES, MIN_WITNESSES } from './records-rules';
 import type {
   EntryAthlete,
   FirstCategoryRecord,
@@ -189,6 +189,7 @@ export function validateForSubmit(
   const required = (value: string, label: string) => { if (!value?.trim()) errors.push(`${label} is required`); };
 
   if (athletes.length === 0) errors.push('Add at least one athlete');
+  if (athletes.length > MAX_ATHLETES) errors.push(`A claim can have at most ${MAX_ATHLETES} athletes`);
   if (athletes.length > 1 && !values.jointConfirmed) {
     errors.push('Confirm that the athletes did this as one joint performance. Co-holders who did it separately submit their own claims.');
   }
@@ -229,6 +230,7 @@ export function validateForSubmit(
 
   const witnesses = toWitnesses(values);
   if (witnesses.length < MIN_WITNESSES) errors.push(`Name at least ${MIN_WITNESSES} witnesses`);
+  if (witnesses.length > MAX_WITNESSES) errors.push(`Name at most ${MAX_WITNESSES} witnesses`);
   if (witnesses.some(w => !w.name || !w.email)) errors.push('Each witness needs a name and an email');
   if (witnesses.some(w => w.email && !EMAIL.test(w.email))) errors.push('Enter a valid email for each witness');
   if (!values.fullVideo && !values.noFullVideoReason.trim()) errors.push('Explain why there is no full video');

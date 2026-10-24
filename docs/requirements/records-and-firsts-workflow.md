@@ -95,7 +95,8 @@ the current mark; a record must **beat or equal** it.
 | "There is a full video" ticked → at least one video link; unticked → reason required, no links | At least one video link of the landing |
 | Ethics and Code of Conduct confirmation | Ethics and Code of Conduct confirmation |
 
-Links must be http(s) (files later); dates cannot be in the future. The framework's rules for sends, measurements
+Links must be http(s) (files later); dates cannot be in the future. If two people act on the same claim at once
+(e.g. two reviewers), only the first succeeds; the second is asked to reload. The framework's rules for sends, measurements
 and first termination are **not** shown as a checklist on the form (open issue 1).
 
 ## 6. Review and publishing
@@ -120,7 +121,8 @@ and first termination are **not** shown as a checklist on the form (open issue 1
 ## 7. Notifications
 
 Sent over SMTP (`SMTP_*` variables, links use `SITE_URL`); without SMTP, or locally, mails are only logged. A failed
-email never blocks the action.
+email never blocks the action. Because claims email addresses the claimant types in, each account can submit at most
+5 claims per day, with at most 10 athletes and 10 witnesses per claim.
 
 | Event | To | Content |
 |---|---|---|
@@ -147,7 +149,4 @@ email never blocks the action.
 3. **Retire the Google Sheet fallback** in `data-services.ts` once the import is verified on production data.
 4. **Sport Commission access:** actions check `records:review` / `records:manage`, but admin pages still require
    `role: admin`.
-5. **Email abuse:** any signed-in user can make SportHub email any address entered as witness or new athlete
-   (rate limit, or email witnesses only after a first review?).
-6. **Concurrent review:** two reviewers deciding the same claim at once both succeed (needs a conditional write).
-7. **Athletes with gender "other" or none** can't be on a claim for now.
+5. **Athletes with gender "other" or none** can't be on a claim for now.

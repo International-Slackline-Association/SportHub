@@ -28,3 +28,12 @@ export const MIN_WITNESSES = 2;
 
 /** The ISA records team. Emails go to RECORDS_REVIEW_EMAIL when set (FR-30); this is the default and what the form shows. */
 export const RECORDS_TEAM_EMAIL = 'records@slacklineinternational.org';
+
+/**
+ * Email rate limits. Every submission emails the athletes and each witness at
+ * addresses the claimant typed in, so the number of submissions per account per
+ * day, and the number of addresses per claim, are capped.
+ */
+export const MAX_SUBMISSIONS_PER_DAY = 5;
+export const MAX_WITNESSES = 10;
+export const MAX_ATHLETES = 10;

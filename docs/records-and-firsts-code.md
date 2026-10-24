@@ -33,6 +33,7 @@ since server actions can be called directly.
 | `Record:{id}` / `First:{id}` | `Metadata` | Entry (claim, published or historical record / first) |
 | same | `Audit:{iso}:{rand}` | Entry audit log |
 | `ImportIssue` | `ImportIssue:{kind}:{certId}:{reason}` | Import review item |
+| `RateLimit` | `Submit:{userId}:{yyyy-mm-dd}` | Submissions per user per day |
 
 GSIs: `statusKey-index` (`{kind}#{status}`, sorted by `{date}#{id}`) for the public lists and the queue;
 `category-index` (`categoryId`) for everything in one category. Record and first category ids share this index,
@@ -51,6 +52,11 @@ instead of scanning.
    historical → email. Firsts can be linked to the same trick on another list (`trickGroupId`).
 3. **Titles** are computed at read time in `toWorldRecords` / `toWorldFirsts`, never stored.
 4. **Void / restore** (`setPublicEntryStatus`): voiding sets `voidedAt`; only voided entries can be restored.
+5. **Concurrency:** status changes use `putEntry(entry, { expectedStatus })`, a conditional write, so the second of two
+   simultaneous decisions fails with `ConcurrentChangeError`. Approval first takes a decision lock
+   (`lockForDecision`, stale after 2 minutes) because it creates profiles and categories before its final write.
+6. **Email rate limit:** `countSubmission` counts submissions per user per UTC day (`RateLimit` items); limits are in
+   `records-rules.ts` (5 submissions a day, 10 athletes, 10 witnesses).
 
 ## Commands
 

@@ -7,7 +7,7 @@
  * "Record:{id}" / "First:{id}" pointer item under their profile.
  */
 
-import { BatchWriteCommand, QueryCommand, type QueryCommandInput } from '@aws-sdk/lib-dynamodb';
+import { BatchWriteCommand, PutCommand, QueryCommand, UpdateCommand, type QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 import { ddbClient, dynamodb, getTableName, RECORDS_TABLE, USERS_TABLE } from './dynamodb';
 import type {
   AthleteEntryLinkRecord,
@@ -130,16 +130,105 @@ export async function getEntry(kind: EntryKind, entryId: string): Promise<WorldE
   return (item as WorldEntryRecord | undefined) ?? null;
 }
 
-/** Writes an entry, keeping its GSI keys in sync with status and date. */
-export async function putEntry(entry: WorldEntryRecord): Promise<void> {
+/** A decision lock older than this is treated as abandoned (e.g. the server crashed mid-approval). */
+const DECISION_LOCK_MS = 2 * 60 * 1000;
+
+export interface PutEntryOptions {
+  /**
+   * Only write if the stored entry still has this status, so two people acting
+   * on the same entry at once can't both succeed. The second gets
+   * ConcurrentChangeError.
+   */
+  expectedStatus?: ClaimStatus;
+  /** The caller holds the decision lock with this token (see lockForDecision). */
+  lockToken?: string;
+}
+
+/** Someone else changed or is deciding the entry; the caller should reload. */
+export class ConcurrentChangeError extends Error {
+  constructor() {
+    super('Someone else changed this claim in the meantime. Reload the page and try again.');
+    this.name = 'ConcurrentChangeError';
+  }
+}
+
+const isConditionFailure = (error: unknown) => (error as { name?: string }).name === 'ConditionalCheckFailedException';
+
+/**
+ * Writes an entry, keeping its GSI keys in sync with status and date. Any
+ * decision lock is dropped, so the lock holder's final write releases it.
+ */
+export async function putEntry(entry: WorldEntryRecord, options: PutEntryOptions = {}): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { decisionLockAt, decisionLockToken, ...rest } = entry as WorldEntryRecord & { decisionLockAt?: number; decisionLockToken?: string };
   const item: WorldEntryRecord = {
-    ...entry,
+    ...rest,
     pk: entryPk(entry.kind, entry.entryId),
     sortKey: 'Metadata',
     statusKey: statusKeyFor(entry.kind, entry.status),
     dateSortKey: dateSortKeyFor(entry.date, entry.entryId),
   };
-  await dynamodb.putItem(RECORDS_TABLE, item as unknown as Record<string, unknown>);
+  if (!options.expectedStatus) {
+    await dynamodb.putItem(RECORDS_TABLE, item as unknown as Record<string, unknown>);
+    return;
+  }
+  const lockCondition = options.lockToken
+    ? 'decisionLockToken = :token'
+    : '(attribute_not_exists(decisionLockAt) OR decisionLockAt < :stale)';
+  try {
+    await ddbClient.send(new PutCommand({
+      TableName: getTableName(RECORDS_TABLE),
+      Item: item,
+      ConditionExpression: `#status = :expected AND ${lockCondition}`,
+      ExpressionAttributeNames: { '#status': 'status' },
+      ExpressionAttributeValues: {
+        ':expected': options.expectedStatus,
+        ...(options.lockToken ? { ':token': options.lockToken } : { ':stale': Date.now() - DECISION_LOCK_MS }),
+      },
+    }));
+  } catch (error) {
+    if (isConditionFailure(error)) throw new ConcurrentChangeError();
+    throw error;
+  }
+}
+
+/**
+ * Takes the decision lock on an entry that has `expectedStatus`, before an
+ * approval with side effects (creating profiles or a category, emails).
+ * Returns a token for the final putEntry, or null if the entry has another
+ * status or someone else is deciding it right now.
+ */
+export async function lockForDecision(kind: EntryKind, entryId: string, expectedStatus: ClaimStatus): Promise<string | null> {
+  const token = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  try {
+    await ddbClient.send(new UpdateCommand({
+      TableName: getTableName(RECORDS_TABLE),
+      Key: { pk: entryPk(kind, entryId), sortKey: 'Metadata' },
+      UpdateExpression: 'SET decisionLockAt = :now, decisionLockToken = :token',
+      ConditionExpression: '#status = :expected AND (attribute_not_exists(decisionLockAt) OR decisionLockAt < :stale)',
+      ExpressionAttributeNames: { '#status': 'status' },
+      ExpressionAttributeValues: { ':now': Date.now(), ':token': token, ':expected': expectedStatus, ':stale': Date.now() - DECISION_LOCK_MS },
+    }));
+    return token;
+  } catch (error) {
+    if (isConditionFailure(error)) return null;
+    throw error;
+  }
+}
+
+/** Releases a decision lock the caller still holds (after a failed or abandoned decision). */
+export async function releaseDecisionLock(kind: EntryKind, entryId: string, token: string): Promise<void> {
+  try {
+    await ddbClient.send(new UpdateCommand({
+      TableName: getTableName(RECORDS_TABLE),
+      Key: { pk: entryPk(kind, entryId), sortKey: 'Metadata' },
+      UpdateExpression: 'REMOVE decisionLockAt, decisionLockToken',
+      ConditionExpression: 'decisionLockToken = :token',
+      ExpressionAttributeValues: { ':token': token },
+    }));
+  } catch (error) {
+    if (!isConditionFailure(error)) throw error;
+  }
 }
 
 export async function getEntriesByStatus(kind: 'record', status: ClaimStatus): Promise<RecordEntryRecord[]>;
@@ -189,7 +278,7 @@ export async function recomputeRecordStatuses(category: RecordCategoryRecord): P
       }
     }
   }
-  await Promise.all(changed.map(putEntry));
+  await Promise.all(changed.map(entry => putEntry(entry)));
   return changed;
 }
 
@@ -233,6 +322,34 @@ export async function getAuditLog(kind: EntryKind, entryId: string): Promise<Ent
     KeyConditionExpression: 'pk = :pk AND begins_with(sortKey, :prefix)',
     ExpressionAttributeValues: { ':pk': entryPk(kind, entryId), ':prefix': 'Audit:' },
   });
+}
+
+// ============================================================================
+// RATE LIMIT
+// ============================================================================
+
+/**
+ * Counts one claim submission for a user today (UTC) and returns false once
+ * `max` is reached. Each submission emails the athletes and witnesses, so this
+ * caps how many emails one account can make SportHub send.
+ * Item: pk = "RateLimit", sortKey = "Submit:{userId}:{yyyy-mm-dd}".
+ */
+export async function countSubmission(userId: string, max: number): Promise<boolean> {
+  const day = new Date().toISOString().slice(0, 10);
+  try {
+    await ddbClient.send(new UpdateCommand({
+      TableName: getTableName(RECORDS_TABLE),
+      Key: { pk: 'RateLimit', sortKey: `Submit:${userId}:${day}` },
+      UpdateExpression: 'ADD #count :one',
+      ConditionExpression: 'attribute_not_exists(#count) OR #count < :max',
+      ExpressionAttributeNames: { '#count': 'count' },
+      ExpressionAttributeValues: { ':one': 1, ':max': max },
+    }));
+    return true;
+  } catch (error) {
+    if (isConditionFailure(error)) return false;
+    throw error;
+  }
 }
 
 // ============================================================================
