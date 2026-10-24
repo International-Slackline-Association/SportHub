@@ -24,7 +24,7 @@ async function getIssue(sortKey: string): Promise<ImportIssueRecord | null> {
   return (item as ImportIssueRecord | undefined) ?? null;
 }
 
-const done = () => {
+const revalidateImportPages = () => {
   invalidateWorldRecordsCache();
   revalidatePath('/admin/records-import');
   revalidatePath('/world_records');
@@ -42,7 +42,7 @@ export async function dismissImportIssue(sortKey: string) {
     const issue = await getIssue(sortKey);
     if (!issue) return { success: false, error: 'Item not found' };
     await putImportIssue({ ...issue, resolved: true });
-    done();
+    revalidateImportPages();
     return { success: true };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Failed' };
@@ -69,7 +69,7 @@ export async function importIssueRow(sortKey: string, input: ImportRowInput) {
     if (!issue) return { success: false, error: 'Item not found' };
     const row = issue.row;
     const entryId = `imp-${issue.certId}`;
-    if (await getEntry(issue.kind as 'record', entryId)) return { success: false, error: `Entry ${entryId} already exists` };
+    if (await getEntry(issue.kind, entryId)) return { success: false, error: `Entry ${entryId} already exists` };
 
     const profile = input.userId ? await getUser(input.userId) : null;
     if (input.userId && !profile) return { success: false, error: 'SportHub user not found' };
@@ -129,7 +129,7 @@ export async function importIssueRow(sortKey: string, input: ImportRowInput) {
     if (athlete.userId) await putAthleteLink(athlete.userId, issue.kind, entryId);
     await addAuditEntry(issue.kind, entryId, { action: 'imported', toStatus: 'published', comment: `From the import review list (${issue.reason})`, ...actorOf(session) });
     await putImportIssue({ ...issue, resolved: true, entryId });
-    done();
+    revalidateImportPages();
     return { success: true, entryId };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Failed to import the row' };
@@ -142,7 +142,7 @@ export async function linkImportAthlete(sortKey: string, userId: string) {
     const session = await requireRecordsPermission('records:manage');
     const issue = await getIssue(sortKey);
     if (!issue?.entryId) return { success: false, error: 'Item not found' };
-    const [entry, profile] = await Promise.all([getEntry(issue.kind as 'record', issue.entryId) as Promise<WorldEntryRecord | null>, getUser(userId)]);
+    const [entry, profile] = await Promise.all([getEntry(issue.kind, issue.entryId), getUser(userId)]);
     if (!entry) return { success: false, error: 'Entry not found' };
     if (!profile) return { success: false, error: 'SportHub user not found' };
     const index = entry.athletes.findIndex(a => a.certId === issue.certId && !a.userId);
@@ -152,7 +152,7 @@ export async function linkImportAthlete(sortKey: string, userId: string) {
     await putAthleteLink(profile.userId, issue.kind, entry.entryId);
     await addAuditEntry(issue.kind, entry.entryId, { action: 'athlete_linked', comment: `${athletes[index].name} → ${profile.userId}`, ...actorOf(session) });
     await putImportIssue({ ...issue, resolved: true });
-    done();
+    revalidateImportPages();
     return { success: true };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Failed to link the athlete' };

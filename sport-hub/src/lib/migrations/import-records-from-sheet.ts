@@ -10,7 +10,8 @@
  *   merged into one entry with multiple athletes only in joint categories (tandem,
  *   group rigging). Everything else is a separate (co-holder) entry.
  * - Published vs historical is derived per category and list from the values.
- * - Entry ids are derived from the sheet Cert IDs, so re-running overwrites instead of duplicating.
+ * - Entry ids are derived from the sheet Cert IDs, so re-running overwrites entries instead of
+ *   duplicating them. It does add another "imported" audit item per entry and re-opens review items.
  *
  * Usage:
  *   DYNAMODB_LOCAL=true tsx src/lib/migrations/import-records-from-sheet.ts --dry-run
@@ -124,10 +125,10 @@ const RECORD_TYPE_MAP: Record<string, string> = {
   'most spins on four slacklines in one minute': 'trick-davinci-spins',
 };
 
-/** "Type of Line" on the World Firsts tab → first category id. */
 /** Categories that are joint by nature: sheet rows with the same value and date are one performance (FR-33a). */
 const JOINT_CATEGORY_IDS = new Set(['highline-length-tandem', 'rigging-group-most-lines-24h']);
 
+/** "Type of Line" on the World Firsts tab → first category id. */
 const FIRST_LINE_TYPE_MAP: Record<string, string> = {
   'freestyle highline': 'highline-freestyle',
   'freestyle trickline': 'trickline',
@@ -219,19 +220,20 @@ const athleteFrom = (row: SheetRow, userIdByEmail: Map<string, string>): EntryAt
   };
 };
 
-function transform(
-  sheet: { records: SheetRow[]; firsts: SheetRow[] },
+/**
+ * Sheet "World Records" rows → record entries: map the category, read the value,
+ * merge joint performances, flag likely duplicates, and derive published vs historical.
+ */
+function transformRecords(
+  rows: SheetRow[],
   recordCategories: RecordCategoryRecord[],
-  firstCategories: FirstCategoryRecord[],
   userIdByEmail: Map<string, string>,
-): ImportResult {
-  const now = Date.now();
-  const issues: ImportIssueRecord[] = [];
+  issues: ImportIssueRecord[],
+  now: number,
+): RecordEntryRecord[] {
   const categoryById = new Map(recordCategories.map(c => [c.categoryId, c]));
-
-  // ---- Records
   const pending: { category: RecordCategoryRecord; row: SheetRow; athlete: EntryAthlete; entry: RecordEntryRecord }[] = [];
-  for (const row of sheet.records) {
+  for (const row of rows) {
     const categoryId = mapRecordCategory(row['Record type'], row['Extra']);
     const category = categoryId ? categoryById.get(categoryId) : undefined;
     if (!category) {
@@ -308,11 +310,24 @@ function transform(
       for (const entry of history) entry.status = 'historical';
     }
   }
+  return records;
+}
 
-  // ---- Firsts
+/**
+ * Sheet "World Firsts" rows → first entries, with the same trick on different
+ * lists linked by a shared trickGroupId (FR-33b).
+ */
+function transformFirsts(
+  rows: SheetRow[],
+  firstCategories: FirstCategoryRecord[],
+  userIdByEmail: Map<string, string>,
+  issues: ImportIssueRecord[],
+  now: number,
+): FirstEntryRecord[] {
+  const rowOf = (first: FirstEntryRecord) => rows.find(r => `imp-${r['Cert ID']}` === first.entryId)!;
   const firstCategoryIds = new Set(firstCategories.map(c => c.categoryId));
   const firsts: FirstEntryRecord[] = [];
-  for (const row of sheet.firsts) {
+  for (const row of rows) {
     const categoryId = FIRST_LINE_TYPE_MAP[norm(row['Type of Line'])];
     if (!categoryId || !firstCategoryIds.has(categoryId)) {
       issues.push(issue('first', row, 'no_category', `No first category for type of line "${row['Type of Line'] || '(empty)'}"`));
@@ -362,19 +377,30 @@ function transform(
     const lists = group.map(f => f.list);
     if (new Set(lists).size !== lists.length) {
       for (const first of group) {
-        const row = sheet.firsts.find(r => `imp-${r['Cert ID']}` === first.entryId)!;
-        issues.push(issue('first', row, 'first_link_unclear', `"${first.trickName}" appears more than once on the same list`, first.entryId));
+        issues.push(issue('first', rowOf(first), 'first_link_unclear', `"${first.trickName}" appears more than once on the same list`, first.entryId));
       }
       continue;
     }
     for (const first of group) first.trickGroupId = `trick-${key.replace(/[^a-z0-9]+/g, '-')}`;
     const missingDate = group.filter(f => !f.date);
     for (const first of missingDate) {
-      const row = sheet.firsts.find(r => `imp-${r['Cert ID']}` === first.entryId)!;
-      issues.push(issue('first', row, 'first_link_unclear', `"${first.trickName}" has no date, so its title (World First or list title) can't be decided`, first.entryId));
+      issues.push(issue('first', rowOf(first), 'first_link_unclear', `"${first.trickName}" has no date, so its title (World First or list title) can't be decided`, first.entryId));
     }
   }
 
+  return firsts;
+}
+
+function transform(
+  sheet: { records: SheetRow[]; firsts: SheetRow[] },
+  recordCategories: RecordCategoryRecord[],
+  firstCategories: FirstCategoryRecord[],
+  userIdByEmail: Map<string, string>,
+): ImportResult {
+  const now = Date.now();
+  const issues: ImportIssueRecord[] = [];
+  const records = transformRecords(sheet.records, recordCategories, userIdByEmail, issues, now);
+  const firsts = transformFirsts(sheet.firsts, firstCategories, userIdByEmail, issues, now);
   return { records, firsts, issues };
 }
 

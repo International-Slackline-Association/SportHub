@@ -302,6 +302,10 @@ export const parseRecordValue = (
   return { amount: amount !== undefined && Number.isFinite(amount) ? amount : undefined, original };
 };
 
+/** URL-safe id from a name, e.g. for new categories ("Highline – Urban" → "highline-urban"). */
+export const slugify = (s: string) =>
+  s.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
 /** Sheet dates are DD.MM.YYYY or DD/MM/YYYY; returns ISO yyyy-mm-dd, or "" if unparseable. */
 export const parseSheetDate = (raw: string): string => {
   const m = raw?.trim().match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/);

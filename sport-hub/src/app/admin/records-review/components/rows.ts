@@ -31,6 +31,6 @@ export async function getAllEntries(kind: 'record' | 'first'): Promise<WorldEntr
   const statuses: ClaimStatus[] = kind === 'record'
     ? ['pending', 'changes_requested', 'published', 'historical', 'rejected']
     : ['pending', 'changes_requested', 'published', 'rejected'];
-  const lists = await Promise.all(statuses.map(s => getEntriesByStatus(kind as 'record', s) as Promise<WorldEntryRecord[]>));
+  const lists = await Promise.all(statuses.map(s => getEntriesByStatus(kind, s)));
   return lists.flat().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 }

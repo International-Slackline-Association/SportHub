@@ -372,6 +372,7 @@ interface EntryBase extends RecordsTableItem {
   submittedAt?: number;
   decidedAt?: number;
   decidedBy?: string;
+  voidedAt?: number;             // Set when an admin voids a published entry; only voided entries can be restored
   createdAt: number;
   updatedAt: number;
 }
@@ -412,7 +413,7 @@ export interface EntryAuditRecord extends RecordsTableItem {
 }
 
 /**
- * Import review item (pk = "ImportIssue", sortKey = "ImportIssue:{kind}:{certId}")
+ * Import review item (pk = "ImportIssue", sortKey = "ImportIssue:{kind}:{certId}:{reason}")
  * Sheet rows an admin needs to look at: no category, unparsed value, no matching user, ...
  */
 export interface ImportIssueRecord extends RecordsTableItem {

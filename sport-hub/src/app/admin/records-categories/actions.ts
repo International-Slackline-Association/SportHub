@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { invalidateWorldRecordsCache } from '@lib/data-services';
 import { actorOf, requireRecordsPermission } from '@lib/records-auth';
-import { parseRecordValue, unitKind } from '@lib/records-logic';
+import { parseRecordValue, slugify, unitKind } from '@lib/records-logic';
 import {
   addCategoryAudit,
   getEntriesByCategory,
@@ -22,7 +22,6 @@ import type {
   RecordCategoryGroup,
   RecordCategoryRecord,
   RecordCategoryStatus,
-  RecordEntryRecord,
   RecordUnit,
 } from '@lib/relational-types';
 
@@ -37,18 +36,30 @@ export interface CategoryUpdate {
   comment?: string;
 }
 
-const done = () => {
+const revalidateCategoryPages = () => {
   invalidateWorldRecordsCache();
   revalidatePath('/admin/records-categories');
   revalidatePath('/world_records');
 };
+
+// Server actions take untrusted input: check enum fields before they are stored
+const RECORD_STATUSES: RecordCategoryStatus[] = ['active', 'unchallenged', 'archived'];
+const FIRST_STATUSES: FirstCategoryStatus[] = ['active', 'archived'];
+const DIRECTIONS = ['higher', 'lower'];
+
+function invalidRecordCategoryInput(input: Partial<Pick<CategoryUpdate, 'group' | 'direction' | 'status'>>): string | null {
+  if (input.group !== undefined && !RECORD_CATEGORY_GROUPS.includes(input.group)) return 'Unknown group';
+  if (input.direction !== undefined && !DIRECTIONS.includes(input.direction)) return 'Unknown direction';
+  if (input.status !== undefined && !RECORD_STATUSES.includes(input.status)) return 'Unknown status';
+  return null;
+}
 
 /**
  * Re-parses the values of a category's entries after its unit changed, so they
  * compare correctly, and re-derives which entries are current.
  */
 async function reparseEntries(category: RecordCategoryRecord) {
-  const entries = (await getEntriesByCategory(category.categoryId)).filter((e): e is RecordEntryRecord => e.kind === 'record');
+  const entries = await getEntriesByCategory('record', category.categoryId);
   await Promise.all(entries.map(entry => {
     const text = entry.value.original ?? (entry.value.amount !== undefined ? String(entry.value.amount) : '');
     return putEntry({ ...entry, value: parseRecordValue(category, text), updatedAt: Date.now() });
@@ -60,16 +71,15 @@ async function reparseEntries(category: RecordCategoryRecord) {
 export async function updateRecordCategory(categoryId: string, update: CategoryUpdate) {
   try {
     const session = await requireRecordsPermission('records:manage');
+    const invalid = invalidRecordCategoryInput(update);
+    if (invalid) return { success: false, error: invalid };
     const category = await getRecordCategory(categoryId);
     if (!category) return { success: false, error: 'Category not found' };
     const changes: string[] = [];
     const next: RecordCategoryRecord = { ...category };
     if (update.name !== undefined && update.name.trim() && update.name.trim() !== category.name) { next.name = update.name.trim(); changes.push(`name "${category.name}" → "${next.name}"`); }
     if (update.description !== undefined && update.description.trim() !== (category.description ?? '')) { next.description = update.description.trim() || undefined; changes.push('description edited'); }
-    if (update.group && update.group !== category.group) {
-      if (!RECORD_CATEGORY_GROUPS.includes(update.group)) return { success: false, error: 'Unknown group' };
-      next.group = update.group; changes.push(`group ${category.group} → ${update.group}`);
-    }
+    if (update.group && update.group !== category.group) { next.group = update.group; changes.push(`group ${category.group} → ${update.group}`); }
     if (update.unit !== undefined && update.unit.trim() && update.unit.trim() !== category.unit) { next.unit = update.unit.trim(); changes.push(`unit "${category.unit}" → "${next.unit}"`); }
     if (update.direction && update.direction !== category.direction) { next.direction = update.direction; changes.push(`${update.direction} is better`); }
     if (update.status && update.status !== category.status) { next.status = update.status; changes.push(`status ${category.status} → ${update.status}`); }
@@ -85,7 +95,7 @@ export async function updateRecordCategory(categoryId: string, update: CategoryU
       comment: [changes.join('; '), update.comment].filter(Boolean).join('. '),
       ...actorOf(session),
     });
-    done();
+    revalidateCategoryPages();
     return { success: true };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Failed to update the category' };
@@ -101,14 +111,13 @@ export interface NewRecordCategory {
   status: RecordCategoryStatus;
 }
 
-const slugify = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-
 export async function createRecordCategory(input: NewRecordCategory) {
   try {
     const session = await requireRecordsPermission('records:manage');
     if (!input.name.trim()) return { success: false, error: 'A name is required' };
     if (!input.unit.trim()) return { success: false, error: 'A unit is required' };
-    if (!RECORD_CATEGORY_GROUPS.includes(input.group)) return { success: false, error: 'Unknown group' };
+    const invalid = invalidRecordCategoryInput(input);
+    if (invalid) return { success: false, error: invalid };
     const existing = await getRecordCategories();
     let categoryId = slugify(input.name);
     if (existing.some(c => c.categoryId === categoryId)) categoryId = `${categoryId}-${Date.now().toString(36)}`;
@@ -129,7 +138,7 @@ export async function createRecordCategory(input: NewRecordCategory) {
     };
     await putCategory(category);
     await addCategoryAudit(category, { action: 'created', ...actorOf(session) });
-    done();
+    revalidateCategoryPages();
     return { success: true, categoryId };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Failed to create the category' };
@@ -140,6 +149,7 @@ export async function createRecordCategory(input: NewRecordCategory) {
 export async function updateFirstCategory(categoryId: string, update: { name?: string; status?: FirstCategoryStatus; terminationRule?: string; order?: number; comment?: string }) {
   try {
     const session = await requireRecordsPermission('records:manage');
+    if (update.status !== undefined && !FIRST_STATUSES.includes(update.status)) return { success: false, error: 'Unknown status' };
     const category = await getFirstCategory(categoryId);
     if (!category) return { success: false, error: 'Category not found' };
     const changes: string[] = [];
@@ -156,7 +166,7 @@ export async function updateFirstCategory(categoryId: string, update: { name?: s
       comment: [changes.join('; '), update.comment].filter(Boolean).join('. '),
       ...actorOf(session),
     });
-    done();
+    revalidateCategoryPages();
     return { success: true };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Failed to update the category' };
@@ -173,6 +183,7 @@ export async function createFirstCategory(input: NewFirstCategory) {
   try {
     const session = await requireRecordsPermission('records:manage');
     if (!input.name.trim()) return { success: false, error: 'A name is required' };
+    if (!FIRST_STATUSES.includes(input.status)) return { success: false, error: 'Unknown status' };
     const existing = await getFirstCategories();
     let categoryId = slugify(input.name);
     if (existing.some(c => c.categoryId === categoryId)) categoryId = `${categoryId}-${Date.now().toString(36)}`;
@@ -190,7 +201,7 @@ export async function createFirstCategory(input: NewFirstCategory) {
     };
     await putCategory(category);
     await addCategoryAudit(category, { action: 'created', ...actorOf(session) });
-    done();
+    revalidateCategoryPages();
     return { success: true, categoryId };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Failed to create the category' };

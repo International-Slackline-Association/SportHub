@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import PageLayout from '@ui/PageLayout';
 import { requireAdmin } from '@lib/authorization';
-import { getReviewQueue } from 'src/app/world_records/actions';
+import { getReviewQueue } from 'src/app/admin/records-review/actions';
 import AdminNav from './components/AdminNav';
 import EntryTable from './components/EntryTable';
 import { toEntryRows } from './components/rows';

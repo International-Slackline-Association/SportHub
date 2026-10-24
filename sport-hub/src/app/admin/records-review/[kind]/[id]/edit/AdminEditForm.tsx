@@ -7,8 +7,8 @@ import Button from '@ui/Button';
 import { Alert } from '@ui/Alert';
 import Spinner from '@ui/Spinner';
 import type { FirstCategoryRecord, RecordCategoryRecord } from '@lib/relational-types';
-import { adminUpdateEntry } from 'src/app/world_records/actions';
-import { ClaimFields, PathResetter } from 'src/app/world_records/claim/components/ClaimForm';
+import { adminUpdateEntry } from 'src/app/admin/records-review/actions';
+import ClaimFields, { PathResetter } from 'src/app/world_records/claim/components/ClaimFields';
 import type { ClaimFormValues } from 'src/app/world_records/claim/types';
 
 type Props = {

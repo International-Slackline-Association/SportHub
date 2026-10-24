@@ -51,6 +51,8 @@ export default async function MyClaimsPage({ searchParams }: Props) {
           <div className="stack gap-2">
             {sorted.map(entry => {
               const editable = entry.status === 'draft' || entry.status === 'changes_requested';
+              // Athletes see claims made for them, but only the claimant can change or withdraw them
+              const isClaimant = entry.claimantUserId === session?.user?.id;
               return (
                 <div key={`${entry.kind}-${entry.entryId}`} className="border border-gray-200 rounded-lg px-4 py-3 stack gap-2">
                   <div className="flex flex-wrap gap-x-6 gap-y-2 items-center">
@@ -67,12 +69,12 @@ export default async function MyClaimsPage({ searchParams }: Props) {
                       </span>
                     </div>
                     <div className="flex gap-2 flex-wrap items-center">
-                      {editable && entry.claimantUserId === session?.user?.id && (
+                      {editable && isClaimant && (
                         <Button as="link" href={`/world_records/claim?kind=${entry.kind}&id=${entry.entryId}`} variant="secondary" size="small">
                           {entry.status === 'draft' ? 'Edit draft' : 'Make changes'}
                         </Button>
                       )}
-                      {entry.status === 'pending' && <WithdrawButton kind={entry.kind} entryId={entry.entryId} />}
+                      {entry.status === 'pending' && isClaimant && <WithdrawButton kind={entry.kind} entryId={entry.entryId} />}
                       {(entry.status === 'published' || entry.status === 'historical') && entry.athletes.map((a, i) => (
                         <Button key={i} as="link" href={`/api/certificates/${entry.kind}/${entry.entryId}?athlete=${i}`} variant="secondary" size="small">
                           Certificate{entry.athletes.length > 1 ? ` (${a.name})` : ''}

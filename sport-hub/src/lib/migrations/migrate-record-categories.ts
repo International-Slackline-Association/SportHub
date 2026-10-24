@@ -78,7 +78,7 @@ async function main() {
 
   let changedEntries = 0;
   for (const category of categories) {
-    const entries = await service.getEntriesByCategory(category.categoryId);
+    const entries = await service.getEntriesByCategory('record', category.categoryId);
     for (const entry of entries) {
       if (!('ruleConfirmations' in entry)) continue;
       changedEntries++;

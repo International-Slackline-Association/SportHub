@@ -12,6 +12,7 @@ import { ddbClient, dynamodb, getTableName, RECORDS_TABLE, USERS_TABLE } from '.
 import type {
   AthleteEntryLinkRecord,
   ClaimStatus,
+  EntryAthlete,
   EntryAuditRecord,
   FirstCategoryRecord,
   FirstEntryRecord,
@@ -60,6 +61,9 @@ async function queryAll<T>(input: Omit<QueryCommandInput, 'TableName'>): Promise
 // CATEGORIES
 // ============================================================================
 
+/** Random suffix so two audit items written in the same millisecond don't overwrite each other. */
+const auditSuffix = () => Math.random().toString(36).slice(2, 8);
+
 const byOrder = <T extends { order: number }>(a: T, b: T) => a.order - b.order;
 
 export async function getRecordCategories(): Promise<RecordCategoryRecord[]> {
@@ -101,7 +105,7 @@ export async function addCategoryAudit(
   const record: EntryAuditRecord = {
     ...audit,
     pk: category.pk,
-    sortKey: `Audit:${category.categoryId}:${new Date(at).toISOString()}`,
+    sortKey: `Audit:${category.categoryId}:${new Date(at).toISOString()}:${auditSuffix()}`,
     at,
   };
   await dynamodb.putItem(RECORDS_TABLE, record as unknown as Record<string, unknown>);
@@ -120,6 +124,7 @@ export async function getCategoryAuditLog(pk: 'RecordCategory' | 'FirstCategory'
 
 export async function getEntry(kind: 'record', entryId: string): Promise<RecordEntryRecord | null>;
 export async function getEntry(kind: 'first', entryId: string): Promise<FirstEntryRecord | null>;
+export async function getEntry(kind: EntryKind, entryId: string): Promise<WorldEntryRecord | null>;
 export async function getEntry(kind: EntryKind, entryId: string): Promise<WorldEntryRecord | null> {
   const item = await dynamodb.getItem(RECORDS_TABLE, { pk: entryPk(kind, entryId), sortKey: 'Metadata' });
   return (item as WorldEntryRecord | undefined) ?? null;
@@ -139,6 +144,7 @@ export async function putEntry(entry: WorldEntryRecord): Promise<void> {
 
 export async function getEntriesByStatus(kind: 'record', status: ClaimStatus): Promise<RecordEntryRecord[]>;
 export async function getEntriesByStatus(kind: 'first', status: ClaimStatus): Promise<FirstEntryRecord[]>;
+export async function getEntriesByStatus(kind: EntryKind, status: ClaimStatus): Promise<WorldEntryRecord[]>;
 export async function getEntriesByStatus(kind: EntryKind, status: ClaimStatus): Promise<WorldEntryRecord[]> {
   return queryAll<WorldEntryRecord>({
     IndexName: 'statusKey-index',
@@ -148,15 +154,23 @@ export async function getEntriesByStatus(kind: EntryKind, status: ClaimStatus): 
   });
 }
 
-/** All entries of one category (any status), newest first. */
-export async function getEntriesByCategory(categoryId: string): Promise<WorldEntryRecord[]> {
-  return queryAll<WorldEntryRecord>({
+/**
+ * All entries of one category (any status), newest first. Record and first
+ * category ids share the category-index, so entries are filtered by kind.
+ */
+export async function getEntriesByCategory(kind: 'record', categoryId: string): Promise<RecordEntryRecord[]>;
+export async function getEntriesByCategory(kind: 'first', categoryId: string): Promise<FirstEntryRecord[]>;
+export async function getEntriesByCategory(kind: EntryKind, categoryId: string): Promise<WorldEntryRecord[]> {
+  const items = await queryAll<WorldEntryRecord>({
     IndexName: 'category-index',
     KeyConditionExpression: 'categoryId = :c',
     ExpressionAttributeValues: { ':c': categoryId },
     ScanIndexForward: false,
   });
+  return items.filter(e => e.kind === kind);
 }
+
+const isPublicStatus = (status: ClaimStatus) => status === 'published' || status === 'historical';
 
 /**
  * Re-derives published vs historical for one record category, per list:
@@ -164,8 +178,7 @@ export async function getEntriesByCategory(categoryId: string): Promise<WorldEnt
  * Returns the entries whose status changed.
  */
 export async function recomputeRecordStatuses(category: RecordCategoryRecord): Promise<RecordEntryRecord[]> {
-  const entries = (await getEntriesByCategory(category.categoryId))
-    .filter((e): e is RecordEntryRecord => e.kind === 'record' && (e.status === 'published' || e.status === 'historical'));
+  const entries = (await getEntriesByCategory('record', category.categoryId)).filter(e => isPublicStatus(e.status));
 
   const changed: RecordEntryRecord[] = [];
   for (const list of RECORD_LISTS) {
@@ -193,13 +206,16 @@ export async function addAuditEntry(
   const record: EntryAuditRecord = {
     ...audit,
     pk: entryPk(kind, entryId),
-    sortKey: `Audit:${new Date(at).toISOString()}:${Math.random().toString(36).slice(2, 8)}`,
+    sortKey: `Audit:${new Date(at).toISOString()}:${auditSuffix()}`,
     at,
   };
   await dynamodb.putItem(RECORDS_TABLE, record as unknown as Record<string, unknown>);
 }
 
-/** Deletes an entry with its audit log and the claimant's "My claims" pointer. Only for drafts. */
+/**
+ * Deletes an entry with its audit log, the claimant's "My claims" pointer and
+ * the athletes' pointers (a withdrawn claim has them). Only for drafts.
+ */
 export async function deleteEntry(entry: WorldEntryRecord): Promise<void> {
   const items = await queryAll<{ pk: string; sortKey: string }>({
     KeyConditionExpression: 'pk = :pk',
@@ -207,9 +223,9 @@ export async function deleteEntry(entry: WorldEntryRecord): Promise<void> {
     ProjectionExpression: 'pk, sortKey',
   });
   await deleteItems(RECORDS_TABLE, items.map(({ pk, sortKey }) => ({ pk, sortKey })));
-  if (entry.claimantUserId) {
-    await deleteItems(USERS_TABLE, [{ userId: entry.claimantUserId, sortKey: `Claim:${entry.kind}:${entry.entryId}` }]);
-  }
+  const pointers = athleteUserIds(entry.athletes).map(userId => ({ userId, sortKey: entryPk(entry.kind, entry.entryId) }));
+  if (entry.claimantUserId) pointers.push({ userId: entry.claimantUserId, sortKey: `Claim:${entry.kind}:${entry.entryId}` });
+  await deleteItems(USERS_TABLE, pointers);
 }
 
 export async function getAuditLog(kind: EntryKind, entryId: string): Promise<EntryAuditRecord[]> {
@@ -247,6 +263,26 @@ export async function putAthleteLink(userId: string, kind: EntryKind, entryId: s
     createdAt: Date.now(),
   };
   await dynamodb.putItem(USERS_TABLE, link as unknown as Record<string, unknown>);
+}
+
+const athleteUserIds = (athletes: Pick<EntryAthlete, 'userId'>[]) =>
+  [...new Set(athletes.map(a => a.userId).filter((id): id is string => !!id))];
+
+/**
+ * Keeps the athletes' profile pointers in step with the athletes on an entry:
+ * removes pointers of athletes no longer on it and adds the new ones.
+ */
+export async function syncAthleteLinks(
+  kind: EntryKind,
+  entryId: string,
+  before: Pick<EntryAthlete, 'userId'>[],
+  after: Pick<EntryAthlete, 'userId'>[],
+): Promise<void> {
+  const previous = athleteUserIds(before);
+  const next = athleteUserIds(after);
+  const removed = previous.filter(id => !next.includes(id));
+  await deleteItems(USERS_TABLE, removed.map(userId => ({ userId, sortKey: entryPk(kind, entryId) })));
+  await Promise.all(next.map(userId => putAthleteLink(userId, kind, entryId)));
 }
 
 export async function getAthleteEntryIds(userId: string, kind: EntryKind): Promise<string[]> {
@@ -362,7 +398,6 @@ const toWorldRecords = (
   categories: RecordCategoryRecord[],
   entries: RecordEntryRecord[],
 ): WorldRecord[] => {
-  const categoryById = new Map(categories.map(c => [c.categoryId, c]));
   const rows: WorldRecord[] = [];
 
   for (const category of categories) {
@@ -385,7 +420,7 @@ const toWorldRecords = (
         categoryName: category.name,
         categoryGroup: category.group,
         categoryStatus: category.status,
-        value: formatRecordValue(categoryById.get(entry.categoryId) ?? category, entry.value),
+        value: formatRecordValue(category, entry.value),
         specs: [entry.value.original, entry.furtherSpecs, entry.setup].filter(Boolean).join(' · '),
         list: entry.list,
         athletes: toDisplayAthletes(entry),
@@ -453,17 +488,19 @@ export async function getPublicWorldFirsts(): Promise<WorldFirst[]> {
 export async function getAthletePublicWorldRecords(userId: string): Promise<WorldRecord[]> {
   const entryIds = new Set(await getAthleteEntryIds(userId, 'record'));
   if (entryIds.size === 0) return [];
-  const own = (await getEntriesBatch('record', [...entryIds])) as RecordEntryRecord[];
+  // A pointer alone is not enough: the athlete must still be on the entry
+  const own = ((await getEntriesBatch('record', [...entryIds])) as RecordEntryRecord[])
+    .filter(e => e.athletes.some(a => a.userId === userId));
+  const ownIds = new Set(own.map(e => e.entryId));
   const categoryIds = new Set(own.map(e => e.categoryId));
 
   const [categories, ...perCategory] = await Promise.all([
     getRecordCategories(),
-    ...[...categoryIds].map(getEntriesByCategory),
+    ...[...categoryIds].map(id => getEntriesByCategory('record', id)),
   ]);
-  const visible = (perCategory.flat() as RecordEntryRecord[])
-    .filter(e => e.status === 'published' || e.status === 'historical');
+  const visible = perCategory.flat().filter(e => isPublicStatus(e.status));
   return toWorldRecords(categories.filter(c => categoryIds.has(c.categoryId)), visible)
-    .filter(row => entryIds.has(row.entryId));
+    .filter(row => ownIds.has(row.entryId));
 }
 
 export async function getAthletePublicWorldFirsts(userId: string): Promise<WorldFirst[]> {
@@ -472,12 +509,13 @@ export async function getAthletePublicWorldFirsts(userId: string): Promise<World
   // Titles depend on the same trick on other lists, so title against all published firsts
   const all = await getPublicWorldFirsts();
   const own = new Set(entryIds);
-  return all.filter(first => own.has(first.entryId));
+  return all.filter(first => own.has(first.entryId) && first.athletes.some(a => a.userId === userId));
 }
 
 /**
  * One published or historical entry as it appears publicly, with its title,
- * for certificates (FR-26). Historical records keep the title of their list.
+ * for certificates (FR-26). Historical records have no current title; the
+ * certificate falls back to the list title.
  */
 export async function getPublicEntry(kind: 'record', entryId: string): Promise<WorldRecord | null>;
 export async function getPublicEntry(kind: 'first', entryId: string): Promise<WorldFirst | null>;
@@ -486,9 +524,9 @@ export async function getPublicEntry(kind: EntryKind, entryId: string): Promise<
     return (await getPublicWorldFirsts()).find(f => f.entryId === entryId) ?? null;
   }
   const entry = await getEntry('record', entryId);
-  if (!entry || (entry.status !== 'published' && entry.status !== 'historical')) return null;
-  const [category, inCategory] = await Promise.all([getRecordCategory(entry.categoryId), getEntriesByCategory(entry.categoryId)]);
+  if (!entry || !isPublicStatus(entry.status)) return null;
+  const [category, inCategory] = await Promise.all([getRecordCategory(entry.categoryId), getEntriesByCategory('record', entry.categoryId)]);
   if (!category) return null;
-  const visible = (inCategory as RecordEntryRecord[]).filter(e => e.status === 'published' || e.status === 'historical');
+  const visible = inCategory.filter(e => isPublicStatus(e.status));
   return toWorldRecords([category], visible).find(row => row.entryId === entryId) ?? null;
 }

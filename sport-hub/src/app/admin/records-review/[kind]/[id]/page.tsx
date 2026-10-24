@@ -8,7 +8,7 @@ import { requireAdmin } from '@lib/authorization';
 import { formatEntryDate, formatRecordValue, GENDER_LABELS, LIST_LABELS, RECORD_LISTS } from '@lib/records-logic';
 import { FIRST_CRITERIA, RECORD_CRITERIA } from '@lib/records-rules';
 import type { RecordCategoryRecord } from '@lib/relational-types';
-import { getReviewContext } from 'src/app/world_records/actions';
+import { getReviewContext } from 'src/app/admin/records-review/actions';
 import { ClaimStatusBadge } from 'src/app/world_records/components/claimStatus';
 import ReviewActions from './ReviewActions';
 
@@ -136,6 +136,7 @@ export default async function ReviewClaimPage({ params }: Props) {
             kind={entry.kind}
             entryId={entry.entryId}
             status={entry.status}
+            voided={entry.voidedAt !== undefined}
             isNewCategory={isNewCategory}
             proposedName={entry.kind === 'record' ? entry.newCategoryProposal?.name : undefined}
             similarCategoryIds={entry.kind === 'record' ? similar.map(s => s.id) : []}

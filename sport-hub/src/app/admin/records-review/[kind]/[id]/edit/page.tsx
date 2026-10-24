@@ -4,7 +4,6 @@ import { notFound } from 'next/navigation';
 import PageLayout from '@ui/PageLayout';
 import { requireAdmin } from '@lib/authorization';
 import { getRecordCategories, getFirstCategories, getEntry } from '@lib/records-service';
-import type { WorldEntryRecord } from '@lib/relational-types';
 import { entryToClaimValues } from 'src/app/world_records/claim/types';
 import AdminEditForm from './AdminEditForm';
 
@@ -20,7 +19,7 @@ export default async function ModifyEntryPage({ params }: Props) {
   if (kind !== 'record' && kind !== 'first') notFound();
   const entryId = decodeURIComponent(id);
   const [entry, recordCategories, firstCategories] = await Promise.all([
-    getEntry(kind as 'record', entryId) as Promise<WorldEntryRecord | null>,
+    getEntry(kind, entryId),
     getRecordCategories(),
     getFirstCategories(),
   ]);

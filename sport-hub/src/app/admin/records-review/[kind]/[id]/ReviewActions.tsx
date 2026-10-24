@@ -10,12 +10,14 @@ import {
   rejectClaim,
   requestClaimChanges,
   setPublicEntryStatus,
-} from 'src/app/world_records/actions';
+} from 'src/app/admin/records-review/actions';
 
 type Props = {
   kind: 'record' | 'first';
   entryId: string;
   status: ClaimStatus;
+  /** Only an entry an admin voided after publication can be restored. */
+  voided: boolean;
   isNewCategory: boolean;
   proposedName?: string;
   similarCategoryIds: string[];
@@ -131,7 +133,7 @@ export default function ReviewActions(props: Props) {
           </div>
         </div>
       )}
-      {status === 'rejected' && (
+      {status === 'rejected' && props.voided && (
         <div className="stack gap-2 border border-gray-200 rounded-lg p-4">
           <h3 className="font-semibold">Restore</h3>
           <textarea className={inputClass} rows={2} placeholder="Reason (required)" value={comment} onChange={e => setComment(e.target.value)} />
