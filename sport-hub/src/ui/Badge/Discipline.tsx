@@ -1,6 +1,6 @@
 import React from "react";
 import styles from "./styles.module.css";
-import { pascalCaseToTitleCase } from ".";
+import { snakeCaseToPascalCase } from "@utils/strings";
 import { DISCIPLINE_DATA, MAP_DISCIPLINE_ENUM_TO_NAME } from "@utils/consts";
 
 interface DisciplineProps {
@@ -15,7 +15,7 @@ const Discipline = ({ variant, className = "" }: DisciplineProps) => {
     modifiedVariant = MAP_DISCIPLINE_ENUM_TO_NAME[Number(variant)] || variant;
   }
 
-  const variantClass = `discipline${pascalCaseToTitleCase(modifiedVariant)}`;
+  const variantClass = `discipline${snakeCaseToPascalCase(modifiedVariant)}`;
 
   return (
     <div

@@ -8,6 +8,11 @@ export const snakeCaseToTitleCase = (text: string) =>
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 
+// SAMPLE_WORD -> SampleWord
+export const snakeCaseToPascalCase = (str: string) => str.split('_').map(word =>
+    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+  ).join('');
+
 // sample-word -> Sample Word
 export const kebabCaseToTitleCase = (text: string) =>
   text

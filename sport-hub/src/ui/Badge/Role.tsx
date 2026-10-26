@@ -1,7 +1,7 @@
 import React from "react";
 import styles from "./styles.module.css";
 import Image from 'next/image';
-import { pascalCaseToTitleCase } from ".";
+import { snakeCaseToPascalCase } from "@utils/strings";
 
 interface RoleProps {
   variant: Role;
@@ -16,7 +16,7 @@ const roleLabels: Record<Role, string> = {
 };
 
 const Role = ({ variant, className = "" }: RoleProps) => {
-  const variantClass = `role${pascalCaseToTitleCase(variant)}`;
+  const variantClass = `role${snakeCaseToPascalCase(variant)}`;
 
   return (
     <div
