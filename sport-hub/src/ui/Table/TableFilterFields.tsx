@@ -2,7 +2,7 @@ import { Column, Row } from "@tanstack/react-table";
 import styles from "./styles.module.css";
 import Autocomplete from "@ui/Form/Autocomplete";
 import { COUNTRIES } from "@utils/countries";
-import { ContestsGenderDropdown, DisciplineDropdown } from "@ui/Form";
+import { ContestsGenderDropdown, DisciplineDropdown, RecordsGenderDropdown } from "@ui/Form";
 import { useState } from "react";
 import formStyles from "@ui/Form/styles.module.css";
 import { cn } from "@utils/cn";
@@ -84,9 +84,12 @@ const SelectTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) =>
   const explicitOptions = column.columnDef.meta?.filterOptions;
 
   // Use explicit options when provided (e.g. full discipline/size lists from consts).
-  // Otherwise derive unique values from the current data rows.
+  // Otherwise derive unique values from the current data rows (each item of an array value counts on its own).
   const options: { value: string; label: string }[] = explicitOptions
-    ?? [...new Set(rows.map(row => String(row.getValue(column.id))))].sort().map(v => ({ value: v, label: v }));
+    ?? [...new Set(rows.flatMap(row => {
+      const value = row.getValue(column.id);
+      return Array.isArray(value) ? value.map(String) : [String(value)];
+    }))].sort().map(v => ({ value: v, label: v }));
 
   const noAll = column.columnDef.meta?.filterNoAll;
 
@@ -294,6 +297,20 @@ const ContestGenderTableFilter = <TData,>({ column }: TableFilterProps<TData>) =
   );
 };
 
+const RecordGenderTableFilter = <TData,>({ column }: TableFilterProps<TData>) => {
+  const id = column.id;
+
+  return (
+    <RecordsGenderDropdown
+      className={styles.columnFilter}
+      id={id}
+      onChange={value => column.setFilterValue(
+        value === "All" ? undefined : value as RecordGender
+      )}
+    />
+  );
+};
+
 const TableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
   const filterVariant = column.columnDef?.meta?.filterVariant;
 
@@ -319,6 +336,10 @@ const TableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
 
   if (filterVariant === "contest-gender") {
     return <ContestGenderTableFilter column={column} rows={rows} />;
+  }
+
+  if (filterVariant === "record-gender") {
+    return <RecordGenderTableFilter column={column} rows={rows} />;
   }
 
   return <SelectTableFilter column={column} rows={rows} />;

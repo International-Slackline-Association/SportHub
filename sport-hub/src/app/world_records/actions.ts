@@ -26,10 +26,10 @@ import {
   syncAthleteLinks,
   type EntryKind,
 } from '@lib/records-service';
-import { compareRecordValues, deriveList, formatRecordValue, LIST_LABELS } from '@lib/records-logic';
+import { compareRecordValues, deriveGender, formatRecordValue, GENDER_TITLE_LABELS } from '@lib/records-logic';
 import {
   commonFieldsFrom,
-  currentOnList,
+  currentForGender,
   firstFieldsFrom,
   kindForPath,
   newEntryId,
@@ -75,11 +75,11 @@ export async function getMarkToBeat(categoryId: string, genders: ('MEN' | 'WOMEN
   await requireSession();
   const category = await getRecordCategory(categoryId);
   if (!category || genders.length === 0) return null;
-  const list = deriveList(genders.map(gender => ({ gender })));
-  const current = await currentOnList(category, list);
+  const gender = deriveGender(genders.map(g => ({ gender: g })));
+  const current = await currentForGender(category, gender);
   return {
-    list,
-    listLabel: LIST_LABELS[list],
+    gender,
+    genderLabel: GENDER_TITLE_LABELS[gender],
     value: current[0] ? formatRecordValue(category, current[0].value) : null,
     holders: current.flatMap(e => e.athletes.map(a => a.name)),
   };
@@ -125,12 +125,12 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
 
     const entryId = existing?.entryId ?? newEntryId();
     const now = Date.now();
-    const list = athletes.length > 0 ? deriveList(athletes) : 'MEN';
+    const gender = athletes.length > 0 ? deriveGender(athletes) : 'MEN';
     const base = {
       pk: '', sortKey: 'Metadata' as const, statusKey: '', dateSortKey: '',
       entryId,
       status: (submit ? 'pending' : existing?.status ?? 'draft') as ClaimStatus,
-      list,
+      gender,
       athletes,
       ...commonFieldsFrom(values),
       ethicsConfirmed: values.ethicsConfirmed,
@@ -169,9 +169,9 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
 
       // The value must beat or equal the current mark on its list (FR-5)
       if (submit && recordCategory && errors.length === 0) {
-        const current = await currentOnList(recordCategory, list);
+        const current = await currentForGender(recordCategory, gender);
         if (current[0] && compareRecordValues(recordCategory, value, current[0].value) < 0) {
-          errors.push(`The current ${LIST_LABELS[list].toLowerCase()} record is ${formatRecordValue(recordCategory, current[0].value)}. A claim has to beat or equal it.`);
+          errors.push(`The current ${GENDER_TITLE_LABELS[gender].toLowerCase()} record is ${formatRecordValue(recordCategory, current[0].value)}. A claim has to beat or equal it.`);
         }
       }
     }

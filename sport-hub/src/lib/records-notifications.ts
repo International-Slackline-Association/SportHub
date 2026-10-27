@@ -5,7 +5,7 @@
  */
 
 import { getRecordCategory } from './records-service';
-import { formatEntryDate, formatRecordValue, LIST_LABELS } from './records-logic';
+import { formatEntryDate, formatRecordValue, GENDER_TITLE_LABELS } from './records-logic';
 import { getUser } from './user-service';
 import { sendMail, siteUrl } from './mailer';
 import { RECORDS_TEAM_EMAIL } from './records-rules';
@@ -70,7 +70,7 @@ function fullDetails(entry: WorldEntryRecord): string[] {
 async function summary(entry: WorldEntryRecord): Promise<{ title: string; lines: string[] }> {
   const athletes = entry.athletes.map(a => `${a.name}${a.country ? ` (${country(a.country)})` : ''}`).join(', ');
   const where = [entry.locationName, country(entry.locationCountry)].filter(Boolean).join(', ');
-  const lines = [`Athletes: ${athletes}${entry.athletes.length > 1 ? ' (one joint performance)' : ''}`, `List: ${LIST_LABELS[entry.list]}`];
+  const lines = [`Athletes: ${athletes}${entry.athletes.length > 1 ? ' (one joint performance)' : ''}`, `List: ${GENDER_TITLE_LABELS[entry.gender]}`];
   let title: string;
   if (entry.kind === 'record') {
     const category = entry.categoryId.startsWith('proposed-') ? null : await getRecordCategory(entry.categoryId);

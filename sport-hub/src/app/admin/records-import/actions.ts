@@ -85,7 +85,7 @@ export async function importIssueRow(sortKey: string, input: ImportRowInput) {
       pk: '', sortKey: 'Metadata' as const, statusKey: '', dateSortKey: '',
       entryId,
       status: 'published' as const,
-      list: input.gender,
+      gender: input.gender,
       athletes: [athlete],
       date: input.date || parseSheetDate(row['Date'] ?? ''),
       evidence: [row['Link 1'], row['Link 2']].filter(Boolean).map(url => ({ type: 'link' as const, url })),

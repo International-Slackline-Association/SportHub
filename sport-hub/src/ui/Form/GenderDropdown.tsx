@@ -103,3 +103,18 @@ export function ContestsGenderDropdown(props: GenderDropdownProps) {
     />
   );
 }
+
+export function RecordsGenderDropdown(props: GenderDropdownProps) {
+  return (
+    <GenderDropdown
+      {...props}
+      initialValue="All"
+      options={[
+        { value: 'All', label: 'All' },
+        { value: 'MEN', label: 'Men' },
+        { value: 'WOMEN', label: 'Women' },
+        { value: 'MIXED', label: 'Mixed' }
+      ]}
+    />
+  );
+}

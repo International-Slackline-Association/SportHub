@@ -11,9 +11,9 @@ import { Field, FieldArray, useFormikContext } from 'formik';
 import Button from '@ui/Button';
 import { Alert } from '@ui/Alert';
 import { FormikCheckboxField, FormikRadioGroup, FormikSelectField, FormikTextField, countryCodeOptions } from '@ui/Form';
-import { deriveList, LIST_LABELS, UNIT_SUGGESTIONS, unitKind, valueHint } from '@lib/records-logic';
+import { deriveGender, GENDER_TITLE_LABELS, UNIT_SUGGESTIONS, unitKind, valueHint } from '@lib/records-logic';
 import { ETHICS_STATEMENT, MAX_ATHLETES, MAX_WITNESSES, MIN_WITNESSES, RECORDS_TEAM_EMAIL } from '@lib/records-rules';
-import type { FirstCategoryRecord, RecordCategoryRecord, RecordList } from '@lib/relational-types';
+import type { FirstCategoryRecord, RecordCategoryRecord } from '@lib/relational-types';
 import { getAthleteGenders, getMarkToBeat } from '../../actions';
 import type { ClaimFormValues, ClaimPath } from '../types';
 import AthletePicker from './AthletePicker';
@@ -74,7 +74,7 @@ function ListAndMark({ recordCategories }: { recordCategories: RecordCategoryRec
   });
   const missing = values.athletes.filter((a, i) => (a.userId || a.pendingUser) && genders[i] !== 'MEN' && genders[i] !== 'WOMEN');
   const known = genders.filter((g): g is 'MEN' | 'WOMEN' => g === 'MEN' || g === 'WOMEN');
-  const list: RecordList | null = known.length > 0 && missing.length === 0 ? deriveList(known.map(gender => ({ gender }))) : null;
+  const list: RecordGender | null = known.length > 0 && missing.length === 0 ? deriveGender(known.map(gender => ({ gender }))) : null;
   const gendersKey = known.join(',');
 
   const category = values.path === 'existing' ? recordCategories.find(c => c.categoryId === values.categoryId) : undefined;
@@ -94,7 +94,7 @@ function ListAndMark({ recordCategories }: { recordCategories: RecordCategoryRec
       ))}
       {list && (
         <Alert variant="info" size="SM" showIcon={false}>
-          This claim goes on the <strong>&nbsp;{LIST_LABELS[list].toLowerCase()}&nbsp;</strong> list.
+          This claim goes on the <strong>&nbsp;{GENDER_TITLE_LABELS[list].toLowerCase()}&nbsp;</strong> list.
           {mark?.value && <> Current record: <strong>&nbsp;{mark.value}&nbsp;</strong> by {mark.holders.join(', ')}. Your value must beat or equal it.</>}
           {category && mark && !mark.value && <> There is no record on this list yet.</>}
         </Alert>

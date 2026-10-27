@@ -3,12 +3,11 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { WorldRecord } from '@lib/data-services';
 import Table from '@ui/Table';
 import {
-  dateSortingFn,
   certificateUrl,
-  linkCellFormatter,
-  linkClassName,
-  listCellFormatter,
-  titleCellFormatter,
+  dateSortingFn,
+  genderCellFormatter,
+  Links,
+  TitleBadge,
 } from 'src/app/world_records/components/cellFormatters';
 import { Alert } from '@ui/Alert';
 
@@ -20,36 +19,30 @@ const buildColumns = (athleteId?: string) => [
     sortingFn: dateSortingFn,
     size: 40,
   }),
-  columnHelper.accessor('title', {
-    header: 'Title',
-    cell: titleCellFormatter,
-    size: 80,
-  }),
   columnHelper.accessor('categoryName', {
     header: 'Category',
+    cell: info => (
+      <div className="stack gap-1 items-start">
+        <span>{info.getValue()}</span>
+        <TitleBadge title={info.row.original.title} />
+      </div>
+    ),
   }),
   columnHelper.accessor('value', {
     header: 'Record',
     size: 80,
   }),
-  columnHelper.accessor('list', {
-    header: 'List',
-    cell: listCellFormatter,
+  columnHelper.accessor('gender', {
+    header: 'Gender',
+    cell: genderCellFormatter,
     size: 40,
   }),
   columnHelper.accessor('links', {
     header: "Links",
-    cell: linkCellFormatter,
+    cell: ({ row }) => (
+      <Links entry={row.original} certificate={athleteId ? certificateUrl('record', row.original, athleteId) : null} />
+    ),
     size: 40,
-  }),
-  columnHelper.display({
-    id: 'certificate',
-    header: 'Certificate',
-    size: 40,
-    cell: ({ row }) => {
-      const url = athleteId ? certificateUrl('record', row.original, athleteId) : null;
-      return url ? <a className={linkClassName} href={url} target="_blank" rel="noreferrer">PDF</a> : null;
-    },
   }),
 ];
 

@@ -18,8 +18,6 @@ const CONTEST_TYPE_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
 import { UserRecord } from './relational-types';
 import { getWorldRecordsSheet, getWorldFirstsSheet } from './google-sheets';
 import {
-  getAthletePublicWorldFirsts,
-  getAthletePublicWorldRecords,
   getPublicWorldFirsts,
   getPublicWorldRecords,
   hasRecordsData,
@@ -684,7 +682,7 @@ async function getWorldRecordsFromSheet(): Promise<WorldRecord[]> {
     categoryStatus: 'active',
     value: row.specs,
     specs: '',
-    list: sheetGender(row.gender),
+    gender: sheetGender(row.gender),
     athletes: [{ userId: emailToUserId.get(row.athleteEmail), name: row.name, country: row.country, gender: sheetGender(row.gender) }],
     date: row.date,
     location: row.eventName,
@@ -702,7 +700,7 @@ async function getWorldFirstsFromSheet(): Promise<WorldFirst[]> {
     trickName: row.description,
     description: '',
     lineDetails: row.specs,
-    list: sheetGender(row.gender),
+    gender: sheetGender(row.gender),
     athletes: [{ userId: emailToUserId.get(row.athleteEmail), name: row.name, country: row.country, gender: sheetGender(row.gender) }],
     date: row.date,
     links: (row.links ?? []).filter(Boolean) as string[],
@@ -750,26 +748,17 @@ export async function getWorldFirsts(): Promise<WorldFirst[]> {
   }
 }
 
-/** World records of one athlete (by userId), titled in the context of their category. */
+/**
+ * World records of one athlete (by userId). Filters the cached public list, so
+ * profiles cost no extra queries and show the same titles as /world_records.
+ */
 export async function getAthleteWorldRecords(athleteId: string): Promise<WorldRecord[]> {
-  try {
-    if (await hasRecordsData()) return await getAthletePublicWorldRecords(athleteId);
-    return (await getWorldRecords()).filter(r => r.athletes.some(a => a.userId === athleteId));
-  } catch (error) {
-    console.error('Error fetching athlete world records:', error);
-    return [];
-  }
+  return (await getWorldRecords()).filter(r => r.athletes.some(a => a.userId === athleteId));
 }
 
-/** World firsts of one athlete (by userId). */
+/** World firsts of one athlete (by userId), from the cached public list. */
 export async function getAthleteWorldFirsts(athleteId: string): Promise<WorldFirst[]> {
-  try {
-    if (await hasRecordsData()) return await getAthletePublicWorldFirsts(athleteId);
-    return (await getWorldFirsts()).filter(r => r.athletes.some(a => a.userId === athleteId));
-  } catch (error) {
-    console.error('Error fetching athlete world firsts:', error);
-    return [];
-  }
+  return (await getWorldFirsts()).filter(f => f.athletes.some(a => a.userId === athleteId));
 }
 
 // ===========================================

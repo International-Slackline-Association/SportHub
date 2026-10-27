@@ -31,7 +31,7 @@ import type {
   RecordEvidence,
 } from '../relational-types';
 import { buildFirstCategoryRecords, buildRecordCategoryRecords } from '../records-categories';
-import { deriveList, parseRecordValue, parseSheetDate, splitCurrentAndHistory, unitKind, RECORD_LISTS } from '../records-logic';
+import { deriveGender, parseRecordValue, parseSheetDate, splitCurrentAndHistory, unitKind, RECORD_GENDERS } from '../records-logic';
 
 if (existsSync('.env.local')) process.loadEnvFile('.env.local');
 
@@ -265,7 +265,7 @@ function transformRecords(
         status: 'published',
         categoryId: category.categoryId,
         categoryName: category.name,
-        list: athlete.gender,
+        gender: athlete.gender,
         athletes: [athlete],
         date: parseSheetDate(row['Date']),
         value,
@@ -289,7 +289,7 @@ function transformRecords(
     if (!existing) { jointGroups.set(key, entry); records.push(entry); continue; }
     existing.athletes.push(athlete);
     existing.evidence = [...existing.evidence, ...entry.evidence.filter(e => !existing.evidence.some(x => x.url === e.url))];
-    existing.list = deriveList(existing.athletes);
+    existing.gender = deriveGender(existing.athletes);
   }
 
   // Same athlete with the same value twice in a category is most likely one record entered twice
@@ -304,8 +304,8 @@ function transformRecords(
 
   // Published vs historical per category and list
   for (const category of recordCategories) {
-    for (const list of RECORD_LISTS) {
-      const group = records.filter(r => r.categoryId === category.categoryId && r.list === list);
+    for (const list of RECORD_GENDERS) {
+      const group = records.filter(r => r.categoryId === category.categoryId && r.gender === list);
       const { history } = splitCurrentAndHistory(category, group);
       for (const entry of history) entry.status = 'historical';
     }
@@ -354,7 +354,7 @@ function transformFirsts(
       status: 'published',
       categoryId,
       categoryName: firstCategories.find(c => c.categoryId === categoryId)!.name,
-      list: athlete.gender,
+      gender: athlete.gender,
       athletes: [athlete],
       date: parseSheetDate(row['Date']),
       trickName,
@@ -374,7 +374,7 @@ function transformFirsts(
   }
   for (const [key, group] of byTrick) {
     if (group.length < 2) continue;
-    const lists = group.map(f => f.list);
+    const lists = group.map(f => f.gender);
     if (new Set(lists).size !== lists.length) {
       for (const first of group) {
         issues.push(issue('first', rowOf(first), 'first_link_unclear', `"${first.trickName}" appears more than once on the same list`, first.entryId));

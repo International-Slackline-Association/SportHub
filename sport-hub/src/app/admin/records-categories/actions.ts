@@ -22,14 +22,13 @@ import type {
   RecordCategoryGroup,
   RecordCategoryRecord,
   RecordCategoryStatus,
-  RecordUnit,
 } from '@lib/relational-types';
 
 export interface CategoryUpdate {
   name?: string;
   description?: string;
   group?: RecordCategoryGroup;
-  unit?: RecordUnit;
+  unit?: string;
   direction?: 'higher' | 'lower';
   status?: RecordCategoryStatus;
   order?: number;
@@ -106,7 +105,7 @@ export interface NewRecordCategory {
   name: string;
   description: string;
   group: RecordCategoryGroup;
-  unit: RecordUnit;
+  unit: string;
   direction: 'higher' | 'lower';
   status: RecordCategoryStatus;
 }

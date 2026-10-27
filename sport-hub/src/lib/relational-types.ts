@@ -252,21 +252,11 @@ interface RecordsTableItem {
   sortKey: string;
 }
 
-/** Men's, women's or mixed list. Mixed only exists for entries with multiple athletes. */
-export type RecordList = 'MEN' | 'WOMEN' | 'MIXED';
-
 export type RecordCategoryStatus = 'active' | 'unchallenged' | 'archived';
 export type FirstCategoryStatus = 'active' | 'archived';
 
 /** Claim lifecycle. "historical" only applies to records (a first cannot be beaten). */
 export type ClaimStatus = 'draft' | 'pending' | 'changes_requested' | 'published' | 'rejected' | 'historical';
-
-/**
- * Unit of a record category, free text. "m", "s" (time, entered as e.g. "1h 20min")
- * and "count" get dedicated parsing; "°" means coordinates (compared by absolute
- * latitude); anything else is a plain number shown with the unit.
- */
-export type RecordUnit = string;
 
 export const RECORD_CATEGORY_GROUPS = ['Length', 'Endurance', 'Speed', 'Altitude', 'Other'] as const;
 export type RecordCategoryGroup = (typeof RECORD_CATEGORY_GROUPS)[number];
@@ -283,7 +273,7 @@ export interface RecordCategoryRecord extends RecordsTableItem {
   description?: string;
   group: RecordCategoryGroup;
   direction: 'higher' | 'lower'; // Which way is better
-  unit: RecordUnit;
+  unit: string;                  // Free text. "m", "s" (time), "count" and "°" (coordinates) get dedicated parsing (unitKind)
   status: RecordCategoryStatus;
   order: number;                 // Display order
   createdAt: number;
@@ -342,7 +332,7 @@ export interface RecordEvidence {
 export interface NewCategoryProposal {
   name: string;
   measurement: string;           // What is measured and how
-  unit: RecordUnit;
+  unit: string;                  // Free text. "m", "s" (time), "count" and "°" (coordinates) get dedicated parsing (unitKind)
   direction: 'higher' | 'lower';
   justification: string;         // Why it is a distinct superlative
 }
@@ -356,7 +346,7 @@ interface EntryBase extends RecordsTableItem {
   dateSortKey: string;           // "{date}#{entryId}" for GSI sort order
   categoryId: string;
   categoryName: string;          // Snapshot for display
-  list: RecordList;
+  gender: RecordGender;
   athletes: EntryAthlete[];
   date: string;                  // ISO yyyy-mm-dd ("" when unknown on import)
   locationName?: string;

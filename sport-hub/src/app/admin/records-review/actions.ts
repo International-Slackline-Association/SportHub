@@ -33,11 +33,11 @@ import {
 } from '@lib/records-service';
 import {
   comparableValue,
-  deriveList,
+  deriveGender,
   formatRecordValue,
-  LIST_LABELS,
+  GENDER_TITLE_LABELS,
   parseRecordValue,
-  RECORD_LISTS,
+  RECORD_GENDERS,
   slugify,
   splitCurrentAndHistory,
 } from '@lib/records-logic';
@@ -57,7 +57,6 @@ import type {
   FirstCategoryRecord,
   RecordCategoryRecord,
   RecordEntryRecord,
-  RecordList,
   WorldEntryRecord,
 } from '@lib/relational-types';
 import type { ClaimActionResult, ClaimFormValues } from 'src/app/world_records/claim/types';
@@ -94,7 +93,7 @@ export interface ReviewContext {
   audit: EntryAuditRecord[];
   category: RecordCategoryRecord | FirstCategoryRecord | null;
   /** Current record per list in the category, for significance (FR-18). */
-  currentByList: Partial<Record<RecordList, { value: string; holders: string[]; date: string }>>;
+  currentByGender: Partial<Record<RecordGender, { value: string; holders: string[]; date: string }>>;
   /** Records: other categories with similar names (FR-19). Firsts: existing firsts in the category (FR-20). */
   similar: { id: string; label: string; detail?: string }[];
   recordCategories: RecordCategoryRecord[];
@@ -129,7 +128,7 @@ export async function getReviewContext(kind: EntryKind, entryId: string): Promis
 
   const context: ReviewContext = {
     entry, audit, recordCategories, firstCategories,
-    category: null, currentByList: {}, similar: [], unchallengedPrompt: false,
+    category: null, currentByGender: {}, similar: [], unchallengedPrompt: false,
   };
 
   if (entry.kind === 'first') {
@@ -137,7 +136,7 @@ export async function getReviewContext(kind: EntryKind, entryId: string): Promis
     const firsts = (await getEntriesByCategory('first', entry.categoryId)).filter(e => e.status === 'published');
     context.similar = firsts.map(f => ({
       id: f.entryId,
-      label: `${f.trickName} (${LIST_LABELS[f.list]})`,
+      label: `${f.trickName} (${GENDER_TITLE_LABELS[f.gender]})`,
       detail: `${f.athletes.map(a => a.name).join(', ')}${f.trickGroupId ? ` · group ${f.trickGroupId}` : ''}`,
     }));
     return context;
@@ -148,10 +147,10 @@ export async function getReviewContext(kind: EntryKind, entryId: string): Promis
   if (recordCategory) {
     const published = (await getEntriesByCategory('record', recordCategory.categoryId))
       .filter(e => e.status === 'published' && e.entryId !== entry.entryId);
-    for (const list of RECORD_LISTS) {
-      const { current } = splitCurrentAndHistory(recordCategory, published.filter(e => e.list === list));
+    for (const list of RECORD_GENDERS) {
+      const { current } = splitCurrentAndHistory(recordCategory, published.filter(e => e.gender === list));
       if (current[0]) {
-        context.currentByList[list] = {
+        context.currentByGender[list] = {
           value: formatRecordValue(recordCategory, current[0].value),
           holders: current.flatMap(e => e.athletes.map(a => a.name)),
           date: current[0].date,
@@ -423,7 +422,7 @@ export async function adminUpdateEntry(kind: EntryKind, entryId: string, values:
     const shared = {
       ...common,
       athletes,
-      list: athletes.length > 0 ? deriveList(athletes) : entry.list,
+      gender: athletes.length > 0 ? deriveGender(athletes) : entry.gender,
       updatedAt: Date.now(),
     };
 

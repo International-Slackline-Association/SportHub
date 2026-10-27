@@ -18,7 +18,7 @@ export async function toEntryRows(entries: WorldEntryRecord[]): Promise<EntryRow
       category: e.categoryName,
       claim: e.kind === 'first' ? e.trickName : category ? formatRecordValue(category, e.value) : e.value.original ?? '',
       athletes: e.athletes.map(a => a.name).join(', '),
-      list: e.list,
+      gender: e.gender,
       claimant: e.claimantName ?? (e.source === 'import' ? 'Imported' : ''),
       newCategory: e.kind === 'record' && !!e.newCategoryProposal && !category,
     };

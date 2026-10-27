@@ -65,7 +65,7 @@ instead of scanning.
 |---|---|
 | `pnpm db:setup` | Creates the local tables, including `sporthub-records`. |
 | `pnpm records:import:dry-run` / `:execute` | One-time import of the certificates sheet into the local table, with a report. `--file` reads a JSON export instead of the sheet. |
-| `pnpm records:categories:migrate` | Local migration to the simplified category fields. |
+| `pnpm records:categories:migrate` | Local migration to the simplified category fields; also renames the entry field `list` to `gender`. |
 | `pnpm test:records` | Unit tests for `records-logic.ts` (node:test via tsx). |
 
 Email settings: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `RECORDS_REVIEW_EMAIL`,

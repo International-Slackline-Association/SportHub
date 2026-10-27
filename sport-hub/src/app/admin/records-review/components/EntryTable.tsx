@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ClaimStatusBadge, CLAIM_STATUS_LABELS } from 'src/app/world_records/components/claimStatus';
-import type { ClaimStatus, RecordList } from '@lib/relational-types';
+import type { ClaimStatus } from '@lib/relational-types';
 import { GENDER_LABELS } from '@lib/records-logic';
 
 export interface EntryRow {
@@ -15,7 +15,7 @@ export interface EntryRow {
   category: string;
   claim: string;             // Value or trick name
   athletes: string;
-  list: RecordList;
+  gender: RecordGender;
   claimant: string;
   newCategory: boolean;       // Record claim proposing a new category
 }
@@ -86,7 +86,7 @@ export default function EntryTable({ rows, showStatus = false, filterable = fals
                     <td className="py-2 pr-3 font-medium text-blue-700">{r.claim || '—'}</td>
                     <td className="py-2 pr-3 whitespace-nowrap">{r.date}</td>
                     <td className="py-2 pr-3">{r.athletes}</td>
-                    <td className="py-2 pr-3">{GENDER_LABELS[r.list]}</td>
+                    <td className="py-2 pr-3">{GENDER_LABELS[r.gender]}</td>
                     <td className="py-2 pr-3">{r.claimant || '—'}</td>
                     {showStatus && <td className="py-2 pr-3"><ClaimStatusBadge status={r.status} /></td>}
                   </tr>

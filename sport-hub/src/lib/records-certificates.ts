@@ -5,7 +5,7 @@
  */
 
 import { PDFDocument, rgb, StandardFonts, type PDFFont, type PDFPage } from 'pdf-lib';
-import { LIST_LABELS } from './records-logic';
+import { GENDER_TITLE_LABELS } from './records-logic';
 import type { DisplayAthlete, WorldFirst, WorldRecord } from './records-service';
 import { getCountryByCode } from '@utils/countries';
 
@@ -42,7 +42,7 @@ export async function buildCertificatePdf(
   page.drawRectangle({ x: 24, y: 24, width: width - 48, height: height - 48, borderColor: TEAL, borderWidth: 4 });
   page.drawRectangle({ x: 34, y: 34, width: width - 68, height: height - 68, borderColor: TEAL, borderWidth: 1 });
 
-  const title = entry.title || `${LIST_LABELS[entry.list]} ${kind === 'first' ? 'World First' : 'World Record'}`;
+  const title = entry.title || `${GENDER_TITLE_LABELS[entry.gender]} ${kind === 'first' ? 'World First' : 'World Record'}`;
   centered(page, 'INTERNATIONAL SLACKLINE ASSOCIATION', height - 90, bold, 14, TEAL);
   centered(page, 'CERTIFICATE', height - 135, bold, 34);
   centered(page, title, height - 175, regular, 20, TEAL);

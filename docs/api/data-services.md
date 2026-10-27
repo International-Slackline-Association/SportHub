@@ -77,64 +77,62 @@ async function getAllEvents(): Promise<{
 const { success, events } = await getAllEvents();
 ```
 
-### World Records
+### World Records & World Firsts
 
-#### `getWorldRecords()`
+Public lists for `/world_records` and athlete profiles. They read the `sporthub-records` table through
+`lib/records-service.ts` (see `docs/records-and-firsts-code.md`); environments where the table has not been seeded
+yet fall back to the Google Sheets rows mapped to the same shape. Both lists are cached for a day under
+`world-records` / `world-firsts`; `invalidateWorldRecordsCache()` drops them after a review decision.
 
-Get world records data.
-
-**Signature**:
 ```typescript
-async function getWorldRecords(): Promise<WorldRecord[]>
+async function getWorldRecords(): Promise<WorldRecord[]>          // published + historical records
+async function getWorldFirsts(): Promise<WorldFirst[]>            // published firsts
+async function getAthleteWorldRecords(userId: string): Promise<WorldRecord[]>  // filters the cached list
+async function getAthleteWorldFirsts(userId: string): Promise<WorldFirst[]>    // filters the cached list
 ```
 
-**Returns**:
+**Shapes** (defined in `lib/records-service.ts`, re-exported from `data-services`):
 ```typescript
+type RecordGender = 'MEN' | 'WOMEN' | 'MIXED';  // global.d.ts; MIXED only for joint performances
+
+interface DisplayAthlete {
+  userId?: string;       // SportHub user, links to /athlete/{userId}
+  name: string;
+  country?: string;      // Country name or ISO code
+  gender: 'MEN' | 'WOMEN';
+}
+
 interface WorldRecord {
-  id: string;
-  type: string;        // e.g., "Longest Wave"
-  record: string;      // e.g., "3.7 km"
-  athlete: string;
-  date: string;
+  entryId: string;
+  title: string;         // "World Record", "Women's World Record", ... ("" for history)
+  isCurrent: boolean;    // false for historical records and archived categories
+  categoryId: string;
+  categoryName: string;  // e.g. "Highline length"
+  categoryGroup: string; // Length | Endurance | Speed | Altitude | Other
+  categoryStatus: 'active' | 'unchallenged' | 'archived';
+  value: string;         // Formatted, e.g. "1,900 m"
+  specs: string;         // Further details (original text, setup)
+  gender: RecordGender;
+  athletes: DisplayAthlete[];  // several for a joint performance
+  date: string;          // DD/MM/YYYY
   location: string;
-  discipline: string;
+  links: string[];
 }
-```
 
-**Example**:
-```typescript
-const records = await getWorldRecords();
-```
-
-**Note**: Currently returns hardcoded data. Future: query world-records table.
-
-#### `getWorldFirsts()`
-
-Get world firsts data.
-
-**Signature**:
-```typescript
-async function getWorldFirsts(): Promise<WorldFirst[]>
-```
-
-**Returns**:
-```typescript
 interface WorldFirst {
-  id: string;
-  achievement: string;
-  athlete: string;
-  date: string;
-  location: string;
-  discipline: string;
+  entryId: string;
+  title: string;         // "World First", or e.g. "Women's World First" for a later landing on another gender
+  categoryId: string;
+  categoryName: string;  // e.g. "Trickline"
+  trickName: string;
+  description: string;
+  lineDetails: string;
+  gender: RecordGender;
+  athletes: DisplayAthlete[];
+  date: string;          // DD/MM/YYYY
+  links: string[];
 }
 ```
-
-**Example**:
-```typescript
-const firsts = await getWorldFirsts();
-```
-
-**Note**: Currently returns hardcoded data. Future: query world-firsts table.
 
 ### Rankings Data
 

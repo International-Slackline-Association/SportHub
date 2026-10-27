@@ -9,27 +9,26 @@ import type {
   FirstEntryRecord,
   RecordCategoryRecord,
   RecordEntryRecord,
-  RecordList,
-  RecordUnit,
   RecordValue,
 } from './relational-types';
 
-export const RECORD_LISTS: RecordList[] = ['MEN', 'WOMEN', 'MIXED'];
+export const RECORD_GENDERS: RecordGender[] = ['MEN', 'WOMEN', 'MIXED'];
 
-/** The list as a gender, for admin tables. */
-export const GENDER_LABELS: Record<RecordList, string> = { MEN: 'Men', WOMEN: 'Women', MIXED: 'Mixed' };
+/** Gender of a record or first, for tables. */
+export const GENDER_LABELS: Record<RecordGender, string> = { MEN: 'Men', WOMEN: 'Women', MIXED: 'Mixed' };
 
-export const LIST_LABELS: Record<RecordList, string> = {
+/** Prefix of a gender-specific title, e.g. "Women's World Record". */
+export const GENDER_TITLE_LABELS: Record<RecordGender, string> = {
   MEN: "Men's",
   WOMEN: "Women's",
   MIXED: 'Mixed',
 };
 
 /**
- * The list an entry belongs on follows its athletes (FR-9b):
+ * The gender of an entry follows its athletes (FR-9b):
  * all men → men's, all women → women's, men and women together → mixed.
  */
-export const deriveList = (athletes: Pick<EntryAthlete, 'gender'>[]): RecordList => {
+export const deriveGender = (athletes: Pick<EntryAthlete, 'gender'>[]): RecordGender => {
   const genders = new Set(athletes.map(a => a.gender));
   if (genders.size === 1) return genders.has('MEN') ? 'MEN' : 'WOMEN';
   return 'MIXED';
@@ -41,7 +40,7 @@ export const deriveList = (athletes: Pick<EntryAthlete, 'gender'>[]): RecordList
  */
 export type UnitKind = 'm' | 's' | 'count' | 'coordinates' | 'number';
 
-export const unitKind = (unit: RecordUnit | undefined): UnitKind => {
+export const unitKind = (unit: string | undefined): UnitKind => {
   const u = (unit ?? '').trim().toLowerCase();
   if (['m', 'meter', 'meters', 'metre', 'metres'].includes(u)) return 'm';
   if (['s', 'sec', 'secs', 'second', 'seconds', 'time', 'duration'].includes(u)) return 's';
@@ -100,17 +99,17 @@ export const splitCurrentAndHistory = <T extends Pick<RecordEntryRecord, 'value'
  */
 export const computeRecordTitles = (
   category: CategoryRule,
-  currentByList: Partial<Record<RecordList, RecordValue>>,
-): Partial<Record<RecordList, string>> => {
-  const lists = RECORD_LISTS.filter(list => currentByList[list] !== undefined);
+  currentByGender: Partial<Record<RecordGender, RecordValue>>,
+): Partial<Record<RecordGender, string>> => {
+  const lists = RECORD_GENDERS.filter(list => currentByGender[list] !== undefined);
   if (lists.length === 0) return {};
-  const bestList = lists.reduce((top, list) =>
-    compareRecordValues(category, currentByList[list]!, currentByList[top]!) > 0 ? list : top);
+  const bestGender = lists.reduce((top, list) =>
+    compareRecordValues(category, currentByGender[list]!, currentByGender[top]!) > 0 ? list : top);
   return Object.fromEntries(lists.map(list => [
     list,
-    compareRecordValues(category, currentByList[list]!, currentByList[bestList]!) === 0
+    compareRecordValues(category, currentByGender[list]!, currentByGender[bestGender]!) === 0
       ? 'World Record'
-      : `${LIST_LABELS[list]} World Record`,
+      : `${GENDER_TITLE_LABELS[list]} World Record`,
   ]));
 };
 
@@ -120,7 +119,7 @@ export const computeRecordTitles = (
  * Returns a title per entryId.
  */
 export const computeFirstTitles = (
-  firsts: Pick<FirstEntryRecord, 'entryId' | 'trickGroupId' | 'date' | 'list'>[],
+  firsts: Pick<FirstEntryRecord, 'entryId' | 'trickGroupId' | 'date' | 'gender'>[],
 ): Record<string, string> => {
   const groups = new Map<string, typeof firsts>();
   for (const first of firsts) {
@@ -134,7 +133,7 @@ export const computeFirstTitles = (
     const earliest = dated.length > 0 ? dated.reduce((min, f) => (f.date < min ? f.date : min), dated[0].date) : '';
     for (const first of group) {
       const isEarliest = group.length === 1 || !first.date || first.date === earliest;
-      titles[first.entryId] = isEarliest ? 'World First' : `${LIST_LABELS[first.list]} World First`;
+      titles[first.entryId] = isEarliest ? 'World First' : `${GENDER_TITLE_LABELS[first.gender]} World First`;
     }
   }
   return titles;
@@ -183,7 +182,7 @@ export const formatRecordValue = (
 };
 
 /** Hint for the value field of the claim form. */
-export const valueHint = (unit: RecordUnit | undefined): string => {
+export const valueHint = (unit: string | undefined): string => {
   switch (unitKind(unit)) {
     case 'm': return 'In metres, e.g. 2710 or 1,038.5';
     case 's': return 'A time, e.g. 1:59 min, 12 min 18 sec or 48.67';

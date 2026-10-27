@@ -8,20 +8,41 @@ import tableStyles from '@ui/Table/styles.module.css';
 import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import Link from 'next/link';
 import {
+  athleteCountriesAccessor,
+  athleteNamesAccessor,
+  athleteNamesCellFormatter,
   AthleteNames,
-  athletesCellFormatter,
+  countriesCellFormatter,
+  countriesSortingFn,
+  dateSortingFn,
+  genderCellFormatter,
+  genderFilterFn,
   linkCellFormatter,
   linkClassName,
-  LIST_FILTER_OPTIONS,
-  listCellFormatter,
   TitleBadge,
   titleCellFormatter,
-  dateSortingFn,
 } from './cellFormatters';
 import { AdminEditLink } from './AdminEditLink';
 import { RECORD_CATEGORY_GROUPS } from '@lib/relational-types';
 
 const columnHelper = createColumnHelper<WorldRecord>();
+
+type View = 'current' | 'unchallenged' | 'history';
+
+const VIEW_OPTIONS: { value: View; label: string }[] = [
+  { value: 'current', label: 'Current world records' },
+  { value: 'unchallenged', label: 'Unchallenged categories' },
+  { value: 'history', label: 'Record history' },
+];
+
+/** Current: active categories only. Unchallenged: shown apart from the active records (§6.1). History: everything. */
+const inView = (row: WorldRecord, view: View) => {
+  switch (view) {
+    case 'current': return row.isCurrent && row.categoryStatus === 'active';
+    case 'unchallenged': return row.isCurrent && row.categoryStatus === 'unchallenged';
+    case 'history': return true;
+  }
+};
 
 const sharedColumns = [
   columnHelper.accessor('categoryName', {
@@ -30,13 +51,31 @@ const sharedColumns = [
     meta: { filterVariant: 'autocomplete' },
     size: 160,
   }),
-  columnHelper.accessor('list', {
-    header: 'List',
+  columnHelper.accessor(athleteCountriesAccessor, {
+    id: 'country',
+    header: 'Country',
     enableColumnFilter: true,
-    filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
-    cell: listCellFormatter,
-    meta: { filterVariant: 'select', filterOptions: LIST_FILTER_OPTIONS },
+    cell: countriesCellFormatter,
+    sortingFn: countriesSortingFn,
+    filterFn: 'arrIncludes',
+    meta: { filterVariant: 'select' },
+    size: 80,
+  }),
+  columnHelper.accessor('gender', {
+    header: 'Gender',
+    enableColumnFilter: true,
+    filterFn: genderFilterFn,
+    cell: genderCellFormatter,
+    meta: { filterVariant: 'record-gender' },
     size: 40,
+  }),
+  columnHelper.accessor('title', {
+    header: 'Title',
+    enableColumnFilter: true,
+    cell: titleCellFormatter,
+    filterFn: (row, _columnId, view: View) => inView(row.original, view),
+    meta: { filterVariant: 'select', filterOptions: VIEW_OPTIONS, filterNoAll: true },
+    size: 80,
   }),
 ] as const;
 
@@ -71,13 +110,13 @@ const columns = [
     },
   }),
   // Desktop-only columns
-  columnHelper.accessor('title', { header: 'Title', cell: titleCellFormatter, size: 80 }),
   columnHelper.accessor('date', { header: 'Date', sortingFn: dateSortingFn, size: 40 }),
   columnHelper.accessor('value', { header: 'Record', size: 80 }),
-  columnHelper.accessor('athletes', {
-    header: 'Athletes',
-    cell: athletesCellFormatter,
-    size: 120,
+  columnHelper.accessor(athleteNamesAccessor, {
+    id: 'name',
+    header: 'Name',
+    cell: athleteNamesCellFormatter,
+    size: 100,
   }),
   columnHelper.accessor('links', {
     header: "Links",
@@ -88,23 +127,6 @@ const columns = [
   ...sharedColumns,
 ];
 
-type View = 'current' | 'unchallenged' | 'history';
-
-const VIEW_OPTIONS: { value: View; label: string }[] = [
-  { value: 'current', label: 'Current world records' },
-  { value: 'unchallenged', label: 'Unchallenged categories' },
-  { value: 'history', label: 'Record history' },
-];
-
-/** Current: active categories only. Unchallenged: shown apart from the active records (§6.1). History: everything. */
-const inView = (row: WorldRecord, view: View) => {
-  switch (view) {
-    case 'current': return row.isCurrent && row.categoryStatus === 'active';
-    case 'unchallenged': return row.isCurrent && row.categoryStatus === 'unchallenged';
-    case 'history': return true;
-  }
-};
-
 type WorldRecordsTableProps = {
   data: WorldRecord[];
 };
@@ -112,7 +134,6 @@ type WorldRecordsTableProps = {
 const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
   const { isDesktop } = useClientMediaQuery();
   const [selectedGroup, setSelectedGroup] = useState('');
-  const [view, setView] = useState<View>('current');
 
   const groupOptions = useMemo(() => {
     const groups = new Set(data.map(r => r.categoryGroup).filter(Boolean));
@@ -120,57 +141,46 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
     return [...known, ...[...groups].filter(g => !known.includes(g)).sort()];
   }, [data]);
 
-  const filteredData = useMemo(() => {
-    return data.filter(row => {
-      if (!inView(row, view)) return false;
-      if (selectedGroup && row.categoryGroup !== selectedGroup) return false;
-      return true;
-    });
-  }, [data, selectedGroup, view]);
+  const filteredData = useMemo(
+    () => selectedGroup ? data.filter(row => row.categoryGroup === selectedGroup) : data,
+    [data, selectedGroup],
+  );
 
   return (
     <Table
       extraFilters={
-        <>
-          <div className={tableStyles.columnFilter}>
-            <label htmlFor="wr-view">Show</label>
-            <select id="wr-view" value={view} onChange={e => setView(e.target.value as View)}>
-              {VIEW_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className={tableStyles.columnFilter}>
-            <label htmlFor="wr-group">Group</label>
-            <select
-              id="wr-group"
-              value={selectedGroup}
-              onChange={e => setSelectedGroup(e.target.value)}
-            >
-              <option value="">All</option>
-              {groupOptions.map(g => (
-                <option key={g} value={g}>{g}</option>
-              ))}
-            </select>
-          </div>
-        </>
+        <div className={tableStyles.columnFilter}>
+          <label htmlFor="wr-group">Group</label>
+          <select
+            id="wr-group"
+            value={selectedGroup}
+            onChange={e => setSelectedGroup(e.target.value)}
+          >
+            <option value="">All</option>
+            {groupOptions.map(g => (
+              <option key={g} value={g}>{g}</option>
+            ))}
+          </select>
+        </div>
       }
       options={{
         columns,
         data: filteredData,
         initialState: {
           sorting: [{ id: 'date', desc: true }],
+          columnFilters: [{ id: 'title', value: 'current' }],
           columnOrder: isDesktop
-            ? ['title', 'categoryName', 'value', 'athletes', 'list', 'date', 'links']
-            : ['worldRecord', 'categoryName', 'list'],
+            ? ['title', 'categoryName', 'value', 'name', 'country', 'gender', 'date', 'links']
+            : ['worldRecord', 'title', 'categoryName', 'country', 'gender'],
           columnVisibility: {
             worldRecord:  !isDesktop,
             title:        !!isDesktop,
             date:         !!isDesktop,
             value:        !!isDesktop,
-            athletes:     !!isDesktop,
+            name:         !!isDesktop,
+            country:      !!isDesktop,
             categoryName: !!isDesktop,
-            list:         !!isDesktop,
+            gender:       !!isDesktop,
             links:        !!isDesktop,
           },
         }

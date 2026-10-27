@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import PageLayout from '@ui/PageLayout';
 import { Alert } from '@ui/Alert';
 import { requireAdmin } from '@lib/authorization';
-import { formatEntryDate, formatRecordValue, GENDER_LABELS, LIST_LABELS, RECORD_LISTS } from '@lib/records-logic';
+import { formatEntryDate, formatRecordValue, GENDER_LABELS, GENDER_TITLE_LABELS, RECORD_GENDERS } from '@lib/records-logic';
 import { FIRST_CRITERIA, RECORD_CRITERIA } from '@lib/records-rules';
 import type { RecordCategoryRecord } from '@lib/relational-types';
 import { getReviewContext } from 'src/app/admin/records-review/actions';
@@ -38,7 +38,7 @@ export default async function ReviewClaimPage({ params }: Props) {
   if (kind !== 'record' && kind !== 'first') notFound();
   const context = await getReviewContext(kind, id);
   if (!context) notFound();
-  const { entry, audit, category, currentByList, similar, recordCategories, firstCategories, unchallengedPrompt } = context;
+  const { entry, audit, category, currentByGender, similar, recordCategories, firstCategories, unchallengedPrompt } = context;
 
   const recordCategory = entry.kind === 'record' ? (category as RecordCategoryRecord | null) : null;
   const isNewCategory = entry.kind === 'record' && !!entry.newCategoryProposal && entry.categoryId.startsWith('proposed-');
@@ -52,7 +52,7 @@ export default async function ReviewClaimPage({ params }: Props) {
         <Button as="link" href="/admin/records-review" variant="secondary" size="small">Back to the review queue</Button>
         <Link href={`/admin/records-manage/${entry.kind === 'first' ? 'firsts' : 'records'}`} className="text-blue-600 hover:underline text-sm">All {entry.kind === 'first' ? 'firsts' : 'records'}</Link>
         <ClaimStatusBadge status={entry.status} />
-        <span className="text-sm text-gray-600">Gender: {GENDER_LABELS[entry.list]}</span>
+        <span className="text-sm text-gray-600">Gender: {GENDER_LABELS[entry.gender]}</span>
         {entry.source === 'import' && <span className="text-sm text-gray-500">Imported from the sheet</span>}
       </section>
 
@@ -152,10 +152,10 @@ export default async function ReviewClaimPage({ params }: Props) {
           {entry.kind === 'record' && (
             <div className="stack gap-2">
               <h3 className="font-semibold">Current records in this category</h3>
-              {isNewCategory ? <p className="text-sm text-gray-500">New category, no records yet.</p> : RECORD_LISTS.map(list => (
+              {isNewCategory ? <p className="text-sm text-gray-500">New category, no records yet.</p> : RECORD_GENDERS.map(list => (
                 <div key={list} className="text-sm">
-                  <span className="font-medium">{LIST_LABELS[list]}:</span>{' '}
-                  {currentByList[list] ? `${currentByList[list]!.value} by ${currentByList[list]!.holders.join(', ')} (${formatEntryDate(currentByList[list]!.date)})` : 'none'}
+                  <span className="font-medium">{GENDER_TITLE_LABELS[list]}:</span>{' '}
+                  {currentByGender[list] ? `${currentByGender[list]!.value} by ${currentByGender[list]!.holders.join(', ')} (${formatEntryDate(currentByGender[list]!.date)})` : 'none'}
                 </div>
               ))}
             </div>

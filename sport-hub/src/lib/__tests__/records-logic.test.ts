@@ -9,7 +9,7 @@ import {
   compareRecordValues,
   computeFirstTitles,
   computeRecordTitles,
-  deriveList,
+  deriveGender,
   formatRecordValue,
   parseCoordinates,
   parseRecordValue,
@@ -23,10 +23,10 @@ const length = { unit: 'm', direction: 'higher' as const };
 const speed = { unit: 's', direction: 'lower' as const };
 const geo = { unit: '°', direction: 'higher' as const };
 
-test('deriveList follows the athletes (FR-9b)', () => {
-  assert.equal(deriveList([{ gender: 'MEN' }]), 'MEN');
-  assert.equal(deriveList([{ gender: 'WOMEN' }, { gender: 'WOMEN' }]), 'WOMEN');
-  assert.equal(deriveList([{ gender: 'MEN' }, { gender: 'WOMEN' }]), 'MIXED');
+test('deriveGender follows the athletes (FR-9b)', () => {
+  assert.equal(deriveGender([{ gender: 'MEN' }]), 'MEN');
+  assert.equal(deriveGender([{ gender: 'WOMEN' }, { gender: 'WOMEN' }]), 'WOMEN');
+  assert.equal(deriveGender([{ gender: 'MEN' }, { gender: 'WOMEN' }]), 'MIXED');
 });
 
 test('unitKind reads free-text units', () => {
@@ -66,9 +66,9 @@ test('computeRecordTitles gives the best list "World Record" (FR-23a)', () => {
 
 test('computeFirstTitles gives the earliest landing "World First" (FR-23b)', () => {
   const titles = computeFirstTitles([
-    { entryId: '1', trickGroupId: 'g', date: '2020-01-01', list: 'MEN' },
-    { entryId: '2', trickGroupId: 'g', date: '2022-05-01', list: 'WOMEN' },
-    { entryId: '3', date: '2023-01-01', list: 'WOMEN' },
+    { entryId: '1', trickGroupId: 'g', date: '2020-01-01', gender: 'MEN' },
+    { entryId: '2', trickGroupId: 'g', date: '2022-05-01', gender: 'WOMEN' },
+    { entryId: '3', date: '2023-01-01', gender: 'WOMEN' },
   ]);
   assert.deepEqual(titles, { 1: 'World First', 2: "Women's World First", 3: 'World First' });
 });

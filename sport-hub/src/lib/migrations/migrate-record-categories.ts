@@ -8,13 +8,14 @@
  * - Coordinate categories get the unit "°".
  * - Drops the removed fields (line type, leashed, joint, rule checklists, value type)
  *   from categories, and the rule confirmations from record entries.
+ * - Renames the "list" field of record and first entries to "gender".
  *
  * Usage:
  *   DYNAMODB_LOCAL=true tsx src/lib/migrations/migrate-record-categories.ts --dry-run
  *   DYNAMODB_LOCAL=true tsx src/lib/migrations/migrate-record-categories.ts --execute
  */
 
-import type { RecordCategoryGroup, RecordCategoryRecord, RecordEntryRecord } from '../relational-types';
+import type { ClaimStatus, RecordCategoryGroup, RecordCategoryRecord, WorldEntryRecord } from '../relational-types';
 import { RECORD_CATEGORY_GROUPS } from '../relational-types';
 import { RECORD_CATEGORY_SEEDS } from '../records-categories';
 
@@ -61,6 +62,16 @@ export const migrateCategory = (old: LegacyCategory): RecordCategoryRecord => {
   };
 };
 
+type LegacyEntry = WorldEntryRecord & { list?: RecordGender; ruleConfirmations?: string[] };
+
+/** Entry without the rule confirmations and with "list" renamed to "gender", or null when already migrated. */
+export const migrateEntry = (old: LegacyEntry): WorldEntryRecord | null => {
+  if (!('list' in old) && !('ruleConfirmations' in old)) return null;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { list, ruleConfirmations, ...rest } = old;
+  return { ...rest, gender: old.gender ?? list ?? 'MEN' } as WorldEntryRecord;
+};
+
 async function main() {
   if (process.env.DYNAMODB_LOCAL !== 'true') throw new Error('This migration only runs against the local database (DYNAMODB_LOCAL=true)');
   const { dynamodb, RECORDS_TABLE } = await import('../dynamodb');
@@ -76,16 +87,17 @@ async function main() {
     if (execute) await dynamodb.putItem(RECORDS_TABLE, next as unknown as Record<string, unknown>);
   }
 
+  const statuses: ClaimStatus[] = ['draft', 'pending', 'changes_requested', 'published', 'rejected', 'historical'];
+  const entries = (await Promise.all(
+    (['record', 'first'] as const).flatMap(kind => statuses.map(status => service.getEntriesByStatus(kind, status))),
+  )).flat();
+
   let changedEntries = 0;
-  for (const category of categories) {
-    const entries = await service.getEntriesByCategory('record', category.categoryId);
-    for (const entry of entries) {
-      if (!('ruleConfirmations' in entry)) continue;
-      changedEntries++;
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { ruleConfirmations, ...rest } = entry as RecordEntryRecord & { ruleConfirmations?: string[] };
-      if (execute) await dynamodb.putItem(RECORDS_TABLE, rest as unknown as Record<string, unknown>);
-    }
+  for (const entry of entries) {
+    const next = migrateEntry(entry as LegacyEntry);
+    if (!next) continue;
+    changedEntries++;
+    if (execute) await dynamodb.putItem(RECORDS_TABLE, next as unknown as Record<string, unknown>);
   }
 
   console.log(`\n${execute ? '✅ Updated' : 'Dry run: would update'} ${changedCategories} categories and ${changedEntries} entries.`);

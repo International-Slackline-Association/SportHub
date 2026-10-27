@@ -1,22 +1,23 @@
 "use client";
 
-import { useMemo, useState } from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
 import { WorldFirst } from '@lib/data-services';
 import Table from '@ui/Table';
-import tableStyles from '@ui/Table/styles.module.css';
 import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import Link from 'next/link';
 import {
+  athleteCountriesAccessor,
+  athleteNamesAccessor,
+  athleteNamesCellFormatter,
   AthleteNames,
-  athletesCellFormatter,
+  countriesCellFormatter,
+  countriesSortingFn,
   dateSortingFn,
+  genderCellFormatter,
+  genderFilterFn,
   linkCellFormatter,
   linkClassName,
-  LIST_FILTER_OPTIONS,
-  listCellFormatter,
   TitleBadge,
-  titleCellFormatter,
 } from './cellFormatters';
 import { AdminEditLink } from './AdminEditLink';
 
@@ -32,15 +33,32 @@ const sharedColumns = [
   columnHelper.accessor('trickName', {
     header: 'Trick',
     enableColumnFilter: true,
+    // Later landings on another gender carry their own title, e.g. "Women's World First"
+    cell: info => (
+      <div className="stack gap-1 items-start">
+        <span>{info.getValue()}</span>
+        {info.row.original.title !== 'World First' && <TitleBadge title={info.row.original.title} />}
+      </div>
+    ),
     meta: { filterVariant: 'autocomplete' },
     size: 100,
   }),
-  columnHelper.accessor('list', {
-    header: 'List',
+  columnHelper.accessor(athleteCountriesAccessor, {
+    id: 'country',
+    header: 'Country',
     enableColumnFilter: true,
-    filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
-    cell: listCellFormatter,
-    meta: { filterVariant: 'select', filterOptions: LIST_FILTER_OPTIONS },
+    cell: countriesCellFormatter,
+    sortingFn: countriesSortingFn,
+    filterFn: 'arrIncludes',
+    meta: { filterVariant: 'select' },
+    size: 80,
+  }),
+  columnHelper.accessor('gender', {
+    header: 'Gender',
+    enableColumnFilter: true,
+    filterFn: genderFilterFn,
+    cell: genderCellFormatter,
+    meta: { filterVariant: 'record-gender' },
     size: 40,
   }),
 ];
@@ -56,7 +74,7 @@ const columns = [
         <div className="stack">
           <div className="cluster items-center justify-between text-gray-400">
             <span className="text-xs">{date}</span>
-            <TitleBadge title={title} />
+            {title !== 'World First' && <TitleBadge title={title} />}
           </div>
           <div className="cluster items-center justify-between">
             <span className="font-medium">{trickName}</span>
@@ -76,11 +94,11 @@ const columns = [
     },
   }),
   // Desktop-only columns
-  columnHelper.accessor('title', { header: 'Title', cell: titleCellFormatter, size: 80 }),
   columnHelper.accessor('date', { header: 'Date', sortingFn: dateSortingFn, size: 40 }),
-  columnHelper.accessor('athletes', {
-    header: 'Athletes',
-    cell: athletesCellFormatter,
+  columnHelper.accessor(athleteNamesAccessor, {
+    id: 'name',
+    header: 'Name',
+    cell: athleteNamesCellFormatter,
     size: 100,
   }),
   columnHelper.accessor('links', {
@@ -98,51 +116,25 @@ type WorldFirstsTableProps = {
 
 const WorldFirstsTable = ({ data }: WorldFirstsTableProps) => {
   const { isDesktop } = useClientMediaQuery();
-  const [selectedCategory, setSelectedCategory] = useState('');
-
-  const categoryOptions = useMemo(() => {
-    const names = [...new Set(data.map(r => r.categoryName).filter(Boolean))].sort();
-    return names.map(t => ({ value: t, label: t }));
-  }, [data]);
-
-  const filteredData = useMemo(() => {
-    if (!selectedCategory) return data;
-    return data.filter(row => row.categoryName === selectedCategory);
-  }, [data, selectedCategory]);
 
   return (
     <Table
-      extraFilters={
-        <div className={tableStyles.columnFilter}>
-          <label htmlFor="wf-category">Category</label>
-          <select
-            id="wf-category"
-            value={selectedCategory}
-            onChange={e => setSelectedCategory(e.target.value)}
-          >
-            <option value="">All</option>
-            {categoryOptions.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
-      }
       options={{
         columns,
-        data: filteredData,
+        data,
         initialState: {
           sorting: [{ id: 'date', desc: true }],
           columnOrder: isDesktop
-            ? ['title', 'trickName', 'categoryName', 'athletes', 'list', 'date', 'links']
-            : ['worldFirst', 'trickName', 'categoryName', 'list'],
+            ? ['trickName', 'categoryName', 'name', 'country', 'gender', 'date', 'links']
+            : ['worldFirst', 'trickName', 'categoryName', 'country', 'gender'],
           columnVisibility: {
             worldFirst:   !isDesktop,
-            title:        !!isDesktop,
             date:         !!isDesktop,
-            athletes:     !!isDesktop,
+            name:         !!isDesktop,
+            country:      !!isDesktop,
             trickName:    !!isDesktop,
             categoryName: !!isDesktop,
-            list:         !!isDesktop,
+            gender:       !!isDesktop,
             links:        !!isDesktop,
           },
         },

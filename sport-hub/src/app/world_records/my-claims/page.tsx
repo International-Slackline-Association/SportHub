@@ -4,7 +4,7 @@ import Button from '@ui/Button';
 import { Alert } from '@ui/Alert';
 import { auth } from '@lib/auth';
 import { getRecordCategories } from '@lib/records-service';
-import { formatEntryDate, formatRecordValue, LIST_LABELS } from '@lib/records-logic';
+import { formatEntryDate, formatRecordValue, GENDER_TITLE_LABELS } from '@lib/records-logic';
 import type { ClaimStatus, WorldEntryRecord } from '@lib/relational-types';
 import { getMyClaims } from '../actions';
 import { ClaimStatusBadge } from '../components/claimStatus';
@@ -62,7 +62,7 @@ export default async function MyClaimsPage({ searchParams }: Props) {
                         {valueOf(entry) && <span className="font-normal"> · {valueOf(entry)}</span>}
                       </span>
                       <span className="text-sm text-gray-600">
-                        {entry.kind === 'first' ? 'World first' : 'World record'} · {LIST_LABELS[entry.list]}
+                        {entry.kind === 'first' ? 'World first' : 'World record'} · {GENDER_TITLE_LABELS[entry.gender]}
                         {' · '}{entry.athletes.map(a => a.name).join(', ') || 'No athletes yet'}
                         {entry.date && ` · ${formatEntryDate(entry.date)}`}
                         {entry.locationName && ` · ${entry.locationName}`}

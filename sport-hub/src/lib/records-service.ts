@@ -19,7 +19,6 @@ import type {
   ImportIssueRecord,
   RecordCategoryRecord,
   RecordEntryRecord,
-  RecordList,
   WorldEntryRecord,
 } from './relational-types';
 import {
@@ -27,7 +26,7 @@ import {
   computeRecordTitles,
   formatEntryDate,
   formatRecordValue,
-  RECORD_LISTS,
+  RECORD_GENDERS,
   splitCurrentAndHistory,
 } from './records-logic';
 import { getCountryByCode } from '@utils/countries';
@@ -270,8 +269,8 @@ export async function recomputeRecordStatuses(category: RecordCategoryRecord): P
   const entries = (await getEntriesByCategory('record', category.categoryId)).filter(e => isPublicStatus(e.status));
 
   const changed: RecordEntryRecord[] = [];
-  for (const list of RECORD_LISTS) {
-    const { current, history } = splitCurrentAndHistory(category, entries.filter(e => e.list === list));
+  for (const list of RECORD_GENDERS) {
+    const { current, history } = splitCurrentAndHistory(category, entries.filter(e => e.gender === list));
     for (const [group, status] of [[current, 'published'], [history, 'historical']] as const) {
       for (const entry of group) {
         if (entry.status !== status) changed.push({ ...entry, status, updatedAt: Date.now() });
@@ -482,7 +481,7 @@ export interface WorldRecord {
   categoryStatus: RecordCategoryRecord['status'];
   value: string;                 // Formatted, e.g. "1,900 m"
   specs: string;                 // Further details (original sheet text, setup)
-  list: RecordList;
+  gender: RecordGender;
   athletes: DisplayAthlete[];
   date: string;                  // DD/MM/YYYY
   location: string;
@@ -497,7 +496,7 @@ export interface WorldFirst {
   trickName: string;
   description: string;
   lineDetails: string;
-  list: RecordList;
+  gender: RecordGender;
   athletes: DisplayAthlete[];
   date: string;
   links: string[];
@@ -522,16 +521,16 @@ const toWorldRecords = (
     if (inCategory.length === 0) continue;
 
     const current = inCategory.filter(e => e.status === 'published');
-    const currentByList: Partial<Record<RecordList, RecordEntryRecord['value']>> = {};
-    for (const entry of current) currentByList[entry.list] ??= entry.value;
+    const currentByGender: Partial<Record<RecordGender, RecordEntryRecord['value']>> = {};
+    for (const entry of current) currentByGender[entry.gender] ??= entry.value;
     // Archived categories are history only: their records carry no current title
-    const titles = category.status === 'archived' ? {} : computeRecordTitles(category, currentByList);
+    const titles = category.status === 'archived' ? {} : computeRecordTitles(category, currentByGender);
 
     for (const entry of inCategory) {
       const isCurrent = entry.status === 'published' && category.status !== 'archived';
       rows.push({
         entryId: entry.entryId,
-        title: isCurrent ? titles[entry.list] ?? 'World Record' : '',
+        title: isCurrent ? titles[entry.gender] ?? 'World Record' : '',
         isCurrent,
         categoryId: category.categoryId,
         categoryName: category.name,
@@ -539,7 +538,7 @@ const toWorldRecords = (
         categoryStatus: category.status,
         value: formatRecordValue(category, entry.value),
         specs: [entry.value.original, entry.furtherSpecs, entry.setup].filter(Boolean).join(' · '),
-        list: entry.list,
+        gender: entry.gender,
         athletes: toDisplayAthletes(entry),
         date: formatEntryDate(entry.date),
         location: [entry.locationName, countryName(entry.locationCountry)].filter(Boolean).join(', '),
@@ -561,7 +560,7 @@ const toWorldFirsts = (categories: FirstCategoryRecord[], entries: FirstEntryRec
     trickName: entry.trickName,
     description: entry.description ?? '',
     lineDetails: entry.lineDetails ?? '',
-    list: entry.list,
+    gender: entry.gender,
     athletes: toDisplayAthletes(entry),
     date: formatEntryDate(entry.date),
     links: links(entry),
@@ -596,37 +595,6 @@ export async function getPublicWorldFirsts(): Promise<WorldFirst[]> {
     getEntriesByStatus('first', 'published'),
   ]);
   return toWorldFirsts(categories, published);
-}
-
-/**
- * Records of one athlete, titled in the context of their whole category so the
- * profile shows the same title as /world_records.
- */
-export async function getAthletePublicWorldRecords(userId: string): Promise<WorldRecord[]> {
-  const entryIds = new Set(await getAthleteEntryIds(userId, 'record'));
-  if (entryIds.size === 0) return [];
-  // A pointer alone is not enough: the athlete must still be on the entry
-  const own = ((await getEntriesBatch('record', [...entryIds])) as RecordEntryRecord[])
-    .filter(e => e.athletes.some(a => a.userId === userId));
-  const ownIds = new Set(own.map(e => e.entryId));
-  const categoryIds = new Set(own.map(e => e.categoryId));
-
-  const [categories, ...perCategory] = await Promise.all([
-    getRecordCategories(),
-    ...[...categoryIds].map(id => getEntriesByCategory('record', id)),
-  ]);
-  const visible = perCategory.flat().filter(e => isPublicStatus(e.status));
-  return toWorldRecords(categories.filter(c => categoryIds.has(c.categoryId)), visible)
-    .filter(row => ownIds.has(row.entryId));
-}
-
-export async function getAthletePublicWorldFirsts(userId: string): Promise<WorldFirst[]> {
-  const entryIds = await getAthleteEntryIds(userId, 'first');
-  if (entryIds.length === 0) return [];
-  // Titles depend on the same trick on other lists, so title against all published firsts
-  const all = await getPublicWorldFirsts();
-  const own = new Set(entryIds);
-  return all.filter(first => own.has(first.entryId) && first.athletes.some(a => a.userId === userId));
 }
 
 /**

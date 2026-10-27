@@ -67,4 +67,7 @@ type ContestType = "WORLD_CHAMPIONSHIP" | "WORLD_CUP" | "MASTERS" | "GRAND_SLAM"
 
 type ContestGender = "MIXED" | "MEN_ONLY" | "WOMEN_ONLY";
 
+/** Men's, women's or mixed world record / world first. Mixed only for joint performances of men and women. */
+type RecordGender = "MEN" | "WOMEN" | "MIXED";
+
 type JudgingSystem = "ISA_FREESTYLE" | "ISA_SPEED" | "OTHER";
