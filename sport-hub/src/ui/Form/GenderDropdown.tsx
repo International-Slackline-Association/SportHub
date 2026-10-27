@@ -9,6 +9,8 @@ export interface GenderDropdownProps {
   className?: string;
   id?: string;
   initialValue?: string;
+  /** Controlled value, e.g. a table filter that can be reset from outside. */
+  value?: string;
   onChange?: (value: string) => void;
 }
 
@@ -18,8 +20,10 @@ const GenderDropdown = ({
   initialValue = 'WOMEN',
   options,
   onChange,
+  value: controlledValue,
 }: GenderDropdownProps & { options: Option[] }) => {
-  const [value, setValue] = useState(initialValue);
+  const [internalValue, setValue] = useState(initialValue);
+  const value = controlledValue ?? internalValue;
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 

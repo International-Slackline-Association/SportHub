@@ -290,6 +290,7 @@ const ContestGenderTableFilter = <TData,>({ column }: TableFilterProps<TData>) =
     <ContestsGenderDropdown
       className={styles.columnFilter}
       id={id}
+      value={(column.getFilterValue() as string | undefined) ?? "All"}
       onChange={value => column.setFilterValue(
         value === "All" ? undefined : value as ContestGender
       )}
@@ -304,6 +305,7 @@ const RecordGenderTableFilter = <TData,>({ column }: TableFilterProps<TData>) =>
     <RecordsGenderDropdown
       className={styles.columnFilter}
       id={id}
+      value={(column.getFilterValue() as string | undefined) ?? "All"}
       onChange={value => column.setFilterValue(
         value === "All" ? undefined : value as ContestGender
       )}
