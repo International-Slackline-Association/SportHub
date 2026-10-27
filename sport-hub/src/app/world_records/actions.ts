@@ -125,7 +125,7 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
 
     const entryId = existing?.entryId ?? newEntryId();
     const now = Date.now();
-    const gender = athletes.length > 0 ? deriveGender(athletes) : 'MEN';
+    const gender = athletes.length > 0 ? deriveGender(athletes) : 'MEN_ONLY';
     const base = {
       pk: '', sortKey: 'Metadata' as const, statusKey: '', dateSortKey: '',
       entryId,

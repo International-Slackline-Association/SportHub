@@ -24,8 +24,8 @@ const speed = { unit: 's', direction: 'lower' as const };
 const geo = { unit: '°', direction: 'higher' as const };
 
 test('deriveGender follows the athletes (FR-9b)', () => {
-  assert.equal(deriveGender([{ gender: 'MEN' }]), 'MEN');
-  assert.equal(deriveGender([{ gender: 'WOMEN' }, { gender: 'WOMEN' }]), 'WOMEN');
+  assert.equal(deriveGender([{ gender: 'MEN' }]), 'MEN_ONLY');
+  assert.equal(deriveGender([{ gender: 'WOMEN' }, { gender: 'WOMEN' }]), 'WOMEN_ONLY');
   assert.equal(deriveGender([{ gender: 'MEN' }, { gender: 'WOMEN' }]), 'MIXED');
 });
 
@@ -59,10 +59,10 @@ test('splitCurrentAndHistory keeps equal bests as co-holders (FR-9c)', () => {
 });
 
 test('titles follow the gender only (FR-23a/b)', () => {
-  assert.equal(recordTitle('MEN'), "Men's World Record");
-  assert.equal(recordTitle('WOMEN'), "Women's World Record");
+  assert.equal(recordTitle('MEN_ONLY'), "Men's World Record");
+  assert.equal(recordTitle('WOMEN_ONLY'), "Women's World Record");
   assert.equal(recordTitle('MIXED'), 'Mixed World Record');
-  assert.equal(firstTitle('WOMEN'), "Women's World First");
+  assert.equal(firstTitle('WOMEN_ONLY'), "Women's World First");
 });
 
 test('parseRecordValue reads sheet and form values', () => {

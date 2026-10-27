@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { invalidateWorldRecordsCache } from '@lib/data-services';
 import { dynamodb, RECORDS_TABLE } from '@lib/dynamodb';
 import { actorOf, requireRecordsPermission } from '@lib/records-auth';
-import { comparableValue, parseRecordValue, parseSheetDate } from '@lib/records-logic';
+import { comparableValue, deriveGender, parseRecordValue, parseSheetDate } from '@lib/records-logic';
 import {
   addAuditEntry,
   getEntry,
@@ -85,7 +85,7 @@ export async function importIssueRow(sortKey: string, input: ImportRowInput) {
       pk: '', sortKey: 'Metadata' as const, statusKey: '', dateSortKey: '',
       entryId,
       status: 'published' as const,
-      gender: input.gender,
+      gender: deriveGender([athlete]),
       athletes: [athlete],
       date: input.date || parseSheetDate(row['Date'] ?? ''),
       evidence: [row['Link 1'], row['Link 2']].filter(Boolean).map(url => ({ type: 'link' as const, url })),

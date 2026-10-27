@@ -167,7 +167,7 @@ export async function createPendingAthletes(entry: WorldEntryRecord): Promise<En
 // ============================================================================
 
 /** Current mark on one list of a category: the best published value, ties are co-holders. */
-export async function currentForGender(category: RecordCategoryRecord, list: RecordGender): Promise<RecordEntryRecord[]> {
+export async function currentForGender(category: RecordCategoryRecord, list: ContestGender): Promise<RecordEntryRecord[]> {
   const entries = (await getEntriesByCategory('record', category.categoryId))
     .filter(e => e.status === 'published' && e.gender === list);
   return splitCurrentAndHistory(category, entries).current;

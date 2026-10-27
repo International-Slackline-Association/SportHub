@@ -346,7 +346,7 @@ interface EntryBase extends RecordsTableItem {
   dateSortKey: string;           // "{date}#{entryId}" for GSI sort order
   categoryId: string;
   categoryName: string;          // Snapshot for display
-  gender: RecordGender;
+  gender: ContestGender;
   athletes: EntryAthlete[];
   date: string;                  // ISO yyyy-mm-dd ("" when unknown on import)
   locationName?: string;

@@ -665,6 +665,7 @@ const buildEmailToUserIdMap = async () =>
   }, new Map<string, string>());
 
 const sheetGender = (gender: Gender): 'MEN' | 'WOMEN' => (gender === 'WOMEN' ? 'WOMEN' : 'MEN');
+const sheetEntryGender = (gender: Gender): ContestGender => (gender === 'WOMEN' ? 'WOMEN_ONLY' : 'MEN_ONLY');
 
 /**
  * Fallback while the records table has not been imported in an environment:
@@ -675,7 +676,7 @@ async function getWorldRecordsFromSheet(): Promise<WorldRecord[]> {
   const [rows, emailToUserId] = await Promise.all([getWorldRecordsSheet(), buildEmailToUserIdMap()]);
   return rows.map((row, idx) => ({
     entryId: `sheet-${idx}`,
-    title: recordTitle(sheetGender(row.gender)),
+    title: recordTitle(sheetEntryGender(row.gender)),
     isCurrent: true,
     categoryId: row.recordType,
     categoryName: row.recordType,
@@ -683,7 +684,7 @@ async function getWorldRecordsFromSheet(): Promise<WorldRecord[]> {
     categoryStatus: 'active',
     value: row.specs,
     specs: '',
-    gender: sheetGender(row.gender),
+    gender: sheetEntryGender(row.gender),
     athletes: [{ userId: emailToUserId.get(row.athleteEmail), name: row.name, country: row.country, gender: sheetGender(row.gender) }],
     date: row.date,
     location: row.eventName,
@@ -695,13 +696,13 @@ async function getWorldFirstsFromSheet(): Promise<WorldFirst[]> {
   const [rows, emailToUserId] = await Promise.all([getWorldFirstsSheet(), buildEmailToUserIdMap()]);
   return rows.map((row, idx) => ({
     entryId: `sheet-${idx}`,
-    title: firstTitle(sheetGender(row.gender)),
+    title: firstTitle(sheetEntryGender(row.gender)),
     categoryId: row.lineType,
     categoryName: row.lineType,
     trickName: row.description,
     description: '',
     lineDetails: row.specs,
-    gender: sheetGender(row.gender),
+    gender: sheetEntryGender(row.gender),
     athletes: [{ userId: emailToUserId.get(row.athleteEmail), name: row.name, country: row.country, gender: sheetGender(row.gender) }],
     date: row.date,
     links: (row.links ?? []).filter(Boolean) as string[],

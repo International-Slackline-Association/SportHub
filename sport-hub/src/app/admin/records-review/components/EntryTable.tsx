@@ -15,7 +15,7 @@ export interface EntryRow {
   category: string;
   claim: string;             // Value or trick name
   athletes: string;
-  gender: RecordGender;
+  gender: ContestGender;
   claimant: string;
   newCategory: boolean;       // Record claim proposing a new category
 }

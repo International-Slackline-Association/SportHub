@@ -11,15 +11,15 @@ import type {
   RecordValue,
 } from './relational-types';
 
-export const RECORD_GENDERS: RecordGender[] = ['MEN', 'WOMEN', 'MIXED'];
+export const RECORD_GENDERS: ContestGender[] = ['MEN_ONLY', 'WOMEN_ONLY', 'MIXED'];
 
 /** Gender of a record or first, for tables. */
-export const GENDER_LABELS: Record<RecordGender, string> = { MEN: 'Men', WOMEN: 'Women', MIXED: 'Mixed' };
+export const GENDER_LABELS: Record<ContestGender, string> = { MEN_ONLY: 'Men', WOMEN_ONLY: 'Women', MIXED: 'Mixed' };
 
 /** Prefix of a gender-specific title, e.g. "Women's World Record". */
-export const GENDER_TITLE_LABELS: Record<RecordGender, string> = {
-  MEN: "Men's",
-  WOMEN: "Women's",
+export const GENDER_TITLE_LABELS: Record<ContestGender, string> = {
+  MEN_ONLY: "Men's",
+  WOMEN_ONLY: "Women's",
   MIXED: 'Mixed',
 };
 
@@ -27,9 +27,9 @@ export const GENDER_TITLE_LABELS: Record<RecordGender, string> = {
  * The gender of an entry follows its athletes (FR-9b):
  * all men → men's, all women → women's, men and women together → mixed.
  */
-export const deriveGender = (athletes: Pick<EntryAthlete, 'gender'>[]): RecordGender => {
+export const deriveGender = (athletes: Pick<EntryAthlete, 'gender'>[]): ContestGender => {
   const genders = new Set(athletes.map(a => a.gender));
-  if (genders.size === 1) return genders.has('MEN') ? 'MEN' : 'WOMEN';
+  if (genders.size === 1) return genders.has('MEN') ? 'MEN_ONLY' : 'WOMEN_ONLY';
   return 'MIXED';
 };
 
@@ -96,8 +96,8 @@ export const splitCurrentAndHistory = <T extends Pick<RecordEntryRecord, 'value'
  * Titles (FR-23a/b) follow the gender only: men's, women's and mixed titles stand
  * side by side, whichever value is better or which landing came first.
  */
-export const recordTitle = (gender: RecordGender) => `${GENDER_TITLE_LABELS[gender]} World Record`;
-export const firstTitle = (gender: RecordGender) => `${GENDER_TITLE_LABELS[gender]} World First`;
+export const recordTitle = (gender: ContestGender) => `${GENDER_TITLE_LABELS[gender]} World Record`;
+export const firstTitle = (gender: ContestGender) => `${GENDER_TITLE_LABELS[gender]} World First`;
 
 // ============================================================================
 // VALUE FORMATTING

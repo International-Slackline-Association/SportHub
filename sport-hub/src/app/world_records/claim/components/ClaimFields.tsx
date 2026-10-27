@@ -74,7 +74,7 @@ function GenderAndMark({ recordCategories }: { recordCategories: RecordCategoryR
   });
   const missing = values.athletes.filter((a, i) => (a.userId || a.pendingUser) && genders[i] !== 'MEN' && genders[i] !== 'WOMEN');
   const known = genders.filter((g): g is 'MEN' | 'WOMEN' => g === 'MEN' || g === 'WOMEN');
-  const gender: RecordGender | null = known.length > 0 && missing.length === 0 ? deriveGender(known.map(gender => ({ gender }))) : null;
+  const gender: ContestGender | null = known.length > 0 && missing.length === 0 ? deriveGender(known.map(gender => ({ gender }))) : null;
   const gendersKey = known.join(',');
 
   const category = values.path === 'existing' ? recordCategories.find(c => c.categoryId === values.categoryId) : undefined;

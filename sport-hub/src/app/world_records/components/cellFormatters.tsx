@@ -59,7 +59,7 @@ export const countriesCellFormatter = <T extends WorldRecord | WorldFirst>(info:
 export const countriesSortingFn = <T extends WorldRecord | WorldFirst>(a: Row<T>, b: Row<T>, columnId: string) =>
   a.getValue<string[]>(columnId).join(', ').localeCompare(b.getValue<string[]>(columnId).join(', '));
 
-export const genderCellFormatter = <T extends WorldRecord | WorldFirst>(info: CellContext<T, RecordGender>) =>
+export const genderCellFormatter = <T extends WorldRecord | WorldFirst>(info: CellContext<T, ContestGender>) =>
   <Gender value={info.getValue()} variant="normal" />;
 
 export const genderFilterFn = <T extends WorldRecord | WorldFirst>(row: Row<T>, columnId: string, filterValue: string) =>

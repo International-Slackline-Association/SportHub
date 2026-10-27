@@ -481,7 +481,7 @@ export interface WorldRecord {
   categoryStatus: RecordCategoryRecord['status'];
   value: string;                 // Formatted, e.g. "1,900 m"
   specs: string;                 // Further details (original sheet text, setup)
-  gender: RecordGender;
+  gender: ContestGender;
   athletes: DisplayAthlete[];
   date: string;                  // DD/MM/YYYY
   location: string;
@@ -496,7 +496,7 @@ export interface WorldFirst {
   trickName: string;
   description: string;
   lineDetails: string;
-  gender: RecordGender;
+  gender: ContestGender;
   athletes: DisplayAthlete[];
   date: string;
   links: string[];

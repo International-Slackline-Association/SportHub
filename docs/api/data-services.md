@@ -93,7 +93,7 @@ async function getAthleteWorldFirsts(userId: string): Promise<WorldFirst[]>    /
 
 **Shapes** (defined in `lib/records-service.ts`, re-exported from `data-services`):
 ```typescript
-type RecordGender = 'MEN' | 'WOMEN' | 'MIXED';  // global.d.ts; MIXED only for joint performances
+type ContestGender = 'MEN_ONLY' | 'WOMEN_ONLY' | 'MIXED';  // global.d.ts, shared with contests; MIXED only for joint performances
 
 interface DisplayAthlete {
   userId?: string;       // SportHub user, links to /athlete/{userId}
@@ -112,7 +112,7 @@ interface WorldRecord {
   categoryStatus: 'active' | 'unchallenged' | 'archived';
   value: string;         // Formatted, e.g. "1,900 m"
   specs: string;         // Further details (original text, setup)
-  gender: RecordGender;
+  gender: ContestGender;
   athletes: DisplayAthlete[];  // several for a joint performance
   date: string;          // DD/MM/YYYY
   location: string;
@@ -127,7 +127,7 @@ interface WorldFirst {
   trickName: string;
   description: string;
   lineDetails: string;
-  gender: RecordGender;
+  gender: ContestGender;
   athletes: DisplayAthlete[];
   date: string;          // DD/MM/YYYY
   links: string[];

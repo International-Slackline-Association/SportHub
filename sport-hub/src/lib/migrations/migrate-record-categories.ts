@@ -8,7 +8,8 @@
  * - Coordinate categories get the unit "°".
  * - Drops the removed fields (line type, leashed, joint, rule checklists, value type)
  *   from categories, and the rule confirmations from record entries.
- * - Renames the "list" field of record and first entries to "gender".
+ * - Renames the "list" field of record and first entries to "gender", with the
+ *   contest gender values (MEN → MEN_ONLY, WOMEN → WOMEN_ONLY, MIXED stays).
  *
  * Usage:
  *   DYNAMODB_LOCAL=true tsx src/lib/migrations/migrate-record-categories.ts --dry-run
@@ -62,14 +63,19 @@ export const migrateCategory = (old: LegacyCategory): RecordCategoryRecord => {
   };
 };
 
-type LegacyEntry = WorldEntryRecord & { list?: RecordGender; ruleConfirmations?: string[] };
+type LegacyGender = ContestGender | 'MEN' | 'WOMEN';
+type LegacyEntry = Omit<WorldEntryRecord, 'gender'> & { gender?: LegacyGender; list?: LegacyGender; ruleConfirmations?: string[] };
 
-/** Entry without the rule confirmations and with "list" renamed to "gender", or null when already migrated. */
+const toContestGender = (gender: LegacyGender | undefined): ContestGender =>
+  gender === 'WOMEN' || gender === 'WOMEN_ONLY' ? 'WOMEN_ONLY' : gender === 'MIXED' ? 'MIXED' : 'MEN_ONLY';
+
+/** Entry without the rule confirmations, with "list" as "gender" in contest values, or null when already migrated. */
 export const migrateEntry = (old: LegacyEntry): WorldEntryRecord | null => {
-  if (!('list' in old) && !('ruleConfirmations' in old)) return null;
+  const gender = toContestGender(old.gender ?? old.list);
+  if (!('list' in old) && !('ruleConfirmations' in old) && old.gender === gender) return null;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { list, ruleConfirmations, ...rest } = old;
-  return { ...rest, gender: old.gender ?? list ?? 'MEN' } as WorldEntryRecord;
+  return { ...rest, gender } as WorldEntryRecord;
 };
 
 async function main() {

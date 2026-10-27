@@ -305,7 +305,7 @@ const RecordGenderTableFilter = <TData,>({ column }: TableFilterProps<TData>) =>
       className={styles.columnFilter}
       id={id}
       onChange={value => column.setFilterValue(
-        value === "All" ? undefined : value as RecordGender
+        value === "All" ? undefined : value as ContestGender
       )}
     />
   );

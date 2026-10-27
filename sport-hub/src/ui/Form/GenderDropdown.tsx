@@ -111,8 +111,8 @@ export function RecordsGenderDropdown(props: GenderDropdownProps) {
       initialValue="All"
       options={[
         { value: 'All', label: 'All' },
-        { value: 'MEN', label: 'Men' },
-        { value: 'WOMEN', label: 'Women' },
+        { value: 'MEN_ONLY', label: 'Men' },
+        { value: 'WOMEN_ONLY', label: 'Women' },
         { value: 'MIXED', label: 'Mixed' }
       ]}
     />

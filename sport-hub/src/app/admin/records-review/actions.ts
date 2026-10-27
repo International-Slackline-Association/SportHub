@@ -93,7 +93,7 @@ export interface ReviewContext {
   audit: EntryAuditRecord[];
   category: RecordCategoryRecord | FirstCategoryRecord | null;
   /** Current record per list in the category, for significance (FR-18). */
-  currentByGender: Partial<Record<RecordGender, { value: string; holders: string[]; date: string }>>;
+  currentByGender: Partial<Record<ContestGender, { value: string; holders: string[]; date: string }>>;
   /** Records: other categories with similar names (FR-19). Firsts: existing firsts in the category (FR-20). */
   similar: { id: string; label: string; detail?: string }[];
   recordCategories: RecordCategoryRecord[];
