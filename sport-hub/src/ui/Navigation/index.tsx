@@ -33,7 +33,7 @@ const navItems: LinkType[] = [
     },
     {
         href: "/world_records",
-        name: "World Records",
+        name: "Records & Firsts",
     },
 ];
 

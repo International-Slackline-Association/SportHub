@@ -9,6 +9,8 @@ export interface GenderDropdownProps {
   className?: string;
   id?: string;
   initialValue?: string;
+  /** Controlled value, e.g. a table filter that can be reset from outside. */
+  value?: string;
   onChange?: (value: string) => void;
 }
 
@@ -18,8 +20,10 @@ const GenderDropdown = ({
   initialValue = 'WOMEN',
   options,
   onChange,
+  value: controlledValue,
 }: GenderDropdownProps & { options: Option[] }) => {
-  const [value, setValue] = useState(initialValue);
+  const [internalValue, setValue] = useState(initialValue);
+  const value = controlledValue ?? internalValue;
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -99,6 +103,21 @@ export function ContestsGenderDropdown(props: GenderDropdownProps) {
         { value: 'Men' as Gender, label: 'Men' },
         { value: 'Women' as Gender, label: 'Women' },
         { value: 'Mixed' as Gender, label: 'Mixed' }
+      ]}
+    />
+  );
+}
+
+export function RecordsGenderDropdown(props: GenderDropdownProps) {
+  return (
+    <GenderDropdown
+      {...props}
+      initialValue="All"
+      options={[
+        { value: 'All', label: 'All' },
+        { value: 'MEN_ONLY', label: 'Men' },
+        { value: 'WOMEN_ONLY', label: 'Women' },
+        { value: 'MIXED', label: 'Mixed' }
       ]}
     />
   );
