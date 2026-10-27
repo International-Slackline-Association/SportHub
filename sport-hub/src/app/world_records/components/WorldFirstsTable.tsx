@@ -27,7 +27,7 @@ const sharedColumns = [
   columnHelper.accessor('categoryName', {
     header: 'Category',
     enableColumnFilter: true,
-    meta: { filterVariant: 'select' },
+    meta: { filterVariant: 'select', filterIncludeAll: true },
     size: 60,
   }),
   columnHelper.accessor('trickName', {
@@ -43,7 +43,7 @@ const sharedColumns = [
     cell: countriesCellFormatter,
     sortingFn: countriesSortingFn,
     filterFn: 'arrIncludes',
-    meta: { filterVariant: 'select' },
+    meta: { filterVariant: 'select', filterIncludeAll: true },
     size: 80,
   }),
   columnHelper.accessor('gender', {

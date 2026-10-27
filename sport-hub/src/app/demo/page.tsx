@@ -66,12 +66,12 @@ export default function Page() {
         <div className="flex flex-row gap-4">
           <div className="stack gap-4">
             <strong>Contest Size</strong>
-            <ContestSize variant="CHALLENGE" />
-            <ContestSize variant="OPEN" />
-            <ContestSize variant="MASTERS" />
-            <ContestSize variant="GRAND_SLAM" />
-            <ContestSize variant="WORLD_CUP" />
-            <ContestSize variant="WORLD_CHAMPIONSHIP" />
+            <ContestSize value="CHALLENGE" />
+            <ContestSize value="OPEN" />
+            <ContestSize value="MASTERS" />
+            <ContestSize value="GRAND_SLAM" />
+            <ContestSize value="WORLD_CUP" />
+            <ContestSize value="WORLD_CHAMPIONSHIP" />
           </div>
           <div className="stack gap-4">
             <strong>Discipline</strong>

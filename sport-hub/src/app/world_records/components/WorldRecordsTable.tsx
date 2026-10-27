@@ -64,7 +64,7 @@ const sharedColumns = [
     cell: countriesCellFormatter,
     sortingFn: countriesSortingFn,
     filterFn: 'arrIncludes',
-    meta: { filterVariant: 'select' },
+    meta: { filterVariant: 'select', filterIncludeAll: true },
     size: 80,
   }),
   columnHelper.accessor('gender', {
@@ -80,7 +80,7 @@ const sharedColumns = [
     header: 'Show',
     enableColumnFilter: true,
     filterFn: (row, _columnId, view: View) => inView(row.original, view),
-    meta: { filterVariant: 'select', filterOptions: VIEW_OPTIONS, filterNoAll: true },
+    meta: { filterVariant: 'select', filterOptions: VIEW_OPTIONS },
     size: 0,
   }),
 ] as const;

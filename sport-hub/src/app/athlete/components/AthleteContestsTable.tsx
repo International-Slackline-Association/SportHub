@@ -3,7 +3,8 @@ import { AthleteContest } from '@lib/data-services';
 import Table from '@ui/Table';
 import Link from 'next/link';
 import { DISCIPLINE_DATA } from '@utils/consts';
-import { contestSizeOptions, eventGenderOptions, ageCategoryOptions } from '@ui/Form/commonOptions';
+import { eventGenderOptions, ageCategoryOptions } from '@ui/Form/commonOptions';
+import { ContestSize } from '@ui/Badge';
 import { formatDate } from '@utils/dates';
 import { Alert } from '@ui/Alert';
 
@@ -83,13 +84,14 @@ const columns = [
     header: "Points",
     size: 40,
   }),
-  columnHelper.accessor((row: AthleteContest) => {
-    return contestSizeOptions.find(o => o.value === row.contestSize)?.label ?? row.contestSize;
-  }, {
+  columnHelper.accessor("contestSize", {
     id: "contestSize",
     enableColumnFilter: true,
     header: "Contest Size",
-    meta: { filterVariant: 'select' },
+    cell: info => (
+      <ContestSize value={info.getValue()} variant="normal" />
+    ),
+    meta: { filterVariant: 'contest-size', filterIncludeAll: true },
     size: 100,
   }),
   columnHelper.accessor((row: AthleteContest) => new Date(row.dates), {

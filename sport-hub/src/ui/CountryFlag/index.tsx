@@ -38,9 +38,13 @@ export function resolveIso2(countryStr: string): string | null {
 export const CountryFlag = ({
   country,
   defaultValue = 'N/A',
+  size = 22,
+  iconOnly = false,
 }: {
   country: string;
   defaultValue?: string;
+  iconOnly?: boolean;
+  size?: number;
 }) => {
   if (!country) return <span className="text-gray-500">{defaultValue}</span>;
 
@@ -51,8 +55,8 @@ export const CountryFlag = ({
 
   return (
     <div className="flex items-center gap-2" title={countryName}>
-      <CircleFlag countryCode={iso2} height={22} width={22} />
-      <span className="text-sm text-gray-600">{countryName}</span>
+      <CircleFlag countryCode={iso2} height={size} width={size} />
+      {!iconOnly && <span className="text-sm text-gray-600">{countryName}</span>}
     </div>
   );
 };

@@ -47,7 +47,7 @@ export const ContestAbout = ({ contest }: { contest: ContestTabData }) => {
         <LabelValuePair label="Discipline" value={<Discipline variant={disciplineKey} />} />
         <LabelValuePair label="Gender" value={<Gender value={(gender || "") as ContestGender} />} />
         <LabelValuePair label="Age Category" value={<AgeCategory variant={(ageCategory || "") as AgeCategory} />} />
-        <LabelValuePair label="Contest Size" value={<ContestSize variant={(contestSize || "") as ContestType} />} />
+        <LabelValuePair label="Contest Size" value={<ContestSize value={contestSize as ContestType} />} />
         <LabelValuePair label="Total Prize Value" value={prize ? `${prize} Euro` : "N/A"} />
         <LabelValuePair label="Judging System" value={judgingSystem || "Not Available"} />
       </div>

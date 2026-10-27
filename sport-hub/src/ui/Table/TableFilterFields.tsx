@@ -2,7 +2,7 @@ import { Column, Row } from "@tanstack/react-table";
 import styles from "./styles.module.css";
 import Autocomplete from "@ui/Form/Autocomplete";
 import { COUNTRIES } from "@utils/countries";
-import { ContestsGenderDropdown, DisciplineDropdown, RecordsGenderDropdown } from "@ui/Form";
+import { ContestsGenderDropdown, ContestSizeDropdown, DisciplineDropdown, RecordsGenderDropdown } from "@ui/Form";
 import { useState } from "react";
 import formStyles from "@ui/Form/styles.module.css";
 import { cn } from "@utils/cn";
@@ -91,7 +91,7 @@ const SelectTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) =>
       return Array.isArray(value) ? value.map(String) : [String(value)];
     }))].sort().map(v => ({ value: v, label: v }));
 
-  const noAll = column.columnDef.meta?.filterNoAll;
+  const includeAll = column.columnDef.meta?.filterIncludeAll;
 
   return (
     <div className={styles.columnFilter} key={`column-filter-${id}`}>
@@ -102,7 +102,7 @@ const SelectTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) =>
         onChange={e => column.setFilterValue(e.target.value || undefined)}
         value={String(column.getFilterValue() ?? '')}
       >
-        {!noAll && <option value={""}>All</option>}
+        {includeAll && <option value={""}>All</option>}
         {options.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
       </select>
     </div>
@@ -264,14 +264,11 @@ const AutocompleteTableFilter = <TData,>({ column, rows }: TableFilterProps<TDat
 };
 
 const DisciplineTableFilter = <TData,>({ column }: TableFilterProps<TData>) => {
-  const id = column.id;
-  const includeAll = !column.columnDef.meta?.filterNoAll;
-
   return (
     <DisciplineDropdown
       className={styles.columnFilter}
-      id={id}
-      includeAll={includeAll}
+      id={column.id}
+      includeAll={column.columnDef.meta?.filterIncludeAll}
       onChange={(discipline: string) => {
         if (discipline === "0") {
           column.setFilterValue(undefined);
@@ -284,12 +281,10 @@ const DisciplineTableFilter = <TData,>({ column }: TableFilterProps<TData>) => {
 };
 
 const ContestGenderTableFilter = <TData,>({ column }: TableFilterProps<TData>) => {
-  const id = column.id;
-
   return (
     <ContestsGenderDropdown
       className={styles.columnFilter}
-      id={id}
+      id={column.id}
       value={(column.getFilterValue() as string | undefined) ?? "All"}
       onChange={value => column.setFilterValue(
         value === "All" ? undefined : value as ContestGender
@@ -299,15 +294,26 @@ const ContestGenderTableFilter = <TData,>({ column }: TableFilterProps<TData>) =
 };
 
 const RecordGenderTableFilter = <TData,>({ column }: TableFilterProps<TData>) => {
-  const id = column.id;
-
   return (
     <RecordsGenderDropdown
       className={styles.columnFilter}
-      id={id}
+      id={column.id}
       value={(column.getFilterValue() as string | undefined) ?? "All"}
       onChange={value => column.setFilterValue(
         value === "All" ? undefined : value as ContestGender
+      )}
+    />
+  );
+};
+
+const ContestSizeTableFilter = <TData,>({ column }: TableFilterProps<TData>) => {
+  return (
+    <ContestSizeDropdown
+      className={styles.columnFilter}
+      id={column.id}
+      includeAll={column.columnDef.meta?.filterIncludeAll}
+      onChange={value => column.setFilterValue(
+        value === "ALL" ? undefined : value as ContestType
       )}
     />
   );
@@ -338,6 +344,10 @@ const TableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
 
   if (filterVariant === "contest-gender") {
     return <ContestGenderTableFilter column={column} rows={rows} />;
+  }
+
+  if (filterVariant === "contest-size") {
+    return <ContestSizeTableFilter column={column} rows={rows} />;
   }
 
   if (filterVariant === "record-gender") {

@@ -48,8 +48,8 @@ interface User {
 }
 
 
-interface Option {
-  value: string;
+interface Option<T = string> {
+  value: T;
   label: string;
 }
 

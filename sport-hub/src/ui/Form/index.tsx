@@ -9,6 +9,7 @@ import { pascalCaseToTitleCase } from '@utils/strings';
 export * from './commonOptions';
 export { default as DisciplineDropdown } from './DisciplineDropdown';
 export { RankingsGenderDropdown, ContestsGenderDropdown, RecordsGenderDropdown } from './GenderDropdown';
+export { default as ContestSizeDropdown } from './ContestSizeDropdown';
 export { LinkFieldArray } from './LinkFieldArray';
 
 export const FormikSubmitButton = ({ children }: PropsWithChildren<Record<string, never>>) => {
