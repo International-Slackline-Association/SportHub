@@ -5,7 +5,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { WorldRecord } from '@lib/data-services';
 import Table from '@ui/Table';
 import tableStyles from '@ui/Table/styles.module.css';
-import { useClientMediaQuery } from '@utils/useClientMediaQuery';
+import { BREAKPOINT_LG, useClientMediaQuery } from '@utils/useClientMediaQuery';
 import Link from 'next/link';
 import {
   athleteCountriesAccessor,
@@ -20,7 +20,6 @@ import {
   linkCellFormatter,
   linkClassName,
   TitleBadge,
-  titleCellFormatter,
 } from './cellFormatters';
 import { AdminEditLink } from './AdminEditLink';
 import { RECORD_CATEGORY_GROUPS } from '@lib/relational-types';
@@ -48,6 +47,13 @@ const sharedColumns = [
   columnHelper.accessor('categoryName', {
     header: 'Category',
     enableColumnFilter: true,
+    // The title sits under the category so the table stays narrow
+    cell: info => (
+      <div className="stack gap-1 items-start">
+        <span>{info.getValue()}</span>
+        <TitleBadge title={info.row.original.title} />
+      </div>
+    ),
     meta: { filterVariant: 'autocomplete' },
     size: 160,
   }),
@@ -69,13 +75,13 @@ const sharedColumns = [
     meta: { filterVariant: 'record-gender' },
     size: 40,
   }),
+  // Filter only (size 0 hides the column): current / unchallenged / history
   columnHelper.accessor('title', {
-    header: 'Title',
+    header: 'Show',
     enableColumnFilter: true,
-    cell: titleCellFormatter,
     filterFn: (row, _columnId, view: View) => inView(row.original, view),
     meta: { filterVariant: 'select', filterOptions: VIEW_OPTIONS, filterNoAll: true },
-    size: 80,
+    size: 0,
   }),
 ] as const;
 
@@ -132,7 +138,7 @@ type WorldRecordsTableProps = {
 };
 
 const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
-  const { isDesktop } = useClientMediaQuery();
+  const { isDesktop } = useClientMediaQuery(BREAKPOINT_LG);
   const [selectedGroup, setSelectedGroup] = useState('');
 
   const groupOptions = useMemo(() => {
@@ -170,11 +176,11 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
           sorting: [{ id: 'date', desc: true }],
           columnFilters: [{ id: 'title', value: 'current' }],
           columnOrder: isDesktop
-            ? ['title', 'categoryName', 'value', 'name', 'country', 'gender', 'date', 'links']
-            : ['worldRecord', 'title', 'categoryName', 'country', 'gender'],
+            ? ['categoryName', 'value', 'name', 'country', 'gender', 'date', 'links']
+            : ['worldRecord', 'categoryName', 'country', 'gender'],
           columnVisibility: {
             worldRecord:  !isDesktop,
-            title:        !!isDesktop,
+            title:        false,
             date:         !!isDesktop,
             value:        !!isDesktop,
             name:         !!isDesktop,

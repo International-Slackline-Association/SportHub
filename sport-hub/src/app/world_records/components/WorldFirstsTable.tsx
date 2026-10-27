@@ -3,8 +3,9 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { WorldFirst } from '@lib/data-services';
 import Table from '@ui/Table';
-import { useClientMediaQuery } from '@utils/useClientMediaQuery';
+import { BREAKPOINT_LG, useClientMediaQuery } from '@utils/useClientMediaQuery';
 import Link from 'next/link';
+import { Gender } from '@ui/Badge';
 import {
   athleteCountriesAccessor,
   athleteNamesAccessor,
@@ -61,10 +62,13 @@ const columns = [
     id: 'worldFirst',
     header: 'World First',
     cell: info => {
-      const { date, categoryName, trickName, lineDetails, athletes, links } = info.row.original;
+      const { date, categoryName, trickName, lineDetails, gender, athletes, links } = info.row.original;
       return (
         <div className="stack">
-          <span className="text-xs text-gray-400">{date}</span>
+          <div className="cluster items-center justify-between">
+            <span className="text-xs text-gray-400">{date}</span>
+            <Gender value={gender} variant="normal" />
+          </div>
           <div className="cluster items-center justify-between">
             <span className="font-medium">{trickName}</span>
             <span className="text-sm text-gray-500">{lineDetails || categoryName}</span>
@@ -104,7 +108,7 @@ type WorldFirstsTableProps = {
 };
 
 const WorldFirstsTable = ({ data }: WorldFirstsTableProps) => {
-  const { isDesktop } = useClientMediaQuery();
+  const { isDesktop } = useClientMediaQuery(BREAKPOINT_LG);
 
   return (
     <Table

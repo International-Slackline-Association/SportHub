@@ -71,9 +71,6 @@ export const TitleBadge = ({ title }: { title: string }) => {
   return <Badge color="YELLOW">{title}</Badge>;
 };
 
-export const titleCellFormatter = <T extends WorldRecord | WorldFirst>(info: CellContext<T, string>) =>
-  <TitleBadge title={info.getValue()} />;
-
 const toSortable = (date: string) => date.replace(/^(\d{2})\/(\d{2})\/(\d{4})$/, '$3$2$1');
 
 /** Dates are displayed as DD/MM/YYYY, so sort on YYYYMMDD. */
