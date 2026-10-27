@@ -24,6 +24,7 @@ import type {
   WorldEntryRecord,
 } from './relational-types';
 import type { ClaimFormValues } from 'src/app/world_records/claim/types';
+import { INVALID_URL_MESSAGE, isValidUrl, normalizeUrl } from '@utils/urls';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -31,12 +32,9 @@ export const kindForPath = (path: ClaimFormValues['path']): EntryKind => (path =
 
 export const newEntryId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-/** Only http(s) links are accepted, so evidence can never be a javascript: or data: URL. */
-export const isUrl = (value: string) => /^https?:\/\/\S+$/i.test(value.trim());
-
 /** Records without a full video have no video links (the form hides them, FR-11). */
 export const evidenceLinks = (values: ClaimFormValues) =>
-  values.path !== 'first' && !values.fullVideo ? [] : values.evidence.map(l => l.trim()).filter(Boolean);
+  values.path !== 'first' && !values.fullVideo ? [] : values.evidence.map(l => l.trim()).filter(Boolean).map(normalizeUrl);
 
 const isFilled = (w: RecordWitness) => !!(w.name.trim() || w.email.trim() || w.phone?.trim());
 
@@ -201,7 +199,7 @@ export function validateForSubmit(
   if (links.length === 0 && (kind === 'first' || values.fullVideo)) {
     errors.push(kind === 'first' ? 'Add at least one video link showing the trick being landed' : 'Add at least one video link');
   }
-  for (const link of links) if (!isUrl(link)) errors.push(`"${link}" is not a valid link`);
+  for (const link of links) if (!isValidUrl(link)) errors.push(`"${link}": ${INVALID_URL_MESSAGE}`);
 
   required(values.date, 'Date');
   if (values.date && values.date > new Date().toISOString().slice(0, 10)) errors.push('The date cannot be in the future');

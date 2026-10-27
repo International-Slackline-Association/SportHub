@@ -52,8 +52,8 @@ function TextArea({ name, label, required, caption }: { name: string; label: str
   );
 }
 
-/** Tells the claimant which list the claim goes on and the mark to beat or equal (FR-5). */
-function ListAndMark({ recordCategories }: { recordCategories: RecordCategoryRecord[] }) {
+/** Tells the claimant the gender the claim counts for and the mark to beat or equal (FR-5). */
+function GenderAndMark({ recordCategories }: { recordCategories: RecordCategoryRecord[] }) {
   const { values } = useFormikContext<ClaimFormValues>();
   const [profileGenders, setProfileGenders] = useState<Record<string, string | null>>({});
   const [mark, setMark] = useState<Awaited<ReturnType<typeof getMarkToBeat>>>(null);
@@ -74,15 +74,15 @@ function ListAndMark({ recordCategories }: { recordCategories: RecordCategoryRec
   });
   const missing = values.athletes.filter((a, i) => (a.userId || a.pendingUser) && genders[i] !== 'MEN' && genders[i] !== 'WOMEN');
   const known = genders.filter((g): g is 'MEN' | 'WOMEN' => g === 'MEN' || g === 'WOMEN');
-  const list: RecordGender | null = known.length > 0 && missing.length === 0 ? deriveGender(known.map(gender => ({ gender }))) : null;
+  const gender: RecordGender | null = known.length > 0 && missing.length === 0 ? deriveGender(known.map(gender => ({ gender }))) : null;
   const gendersKey = known.join(',');
 
   const category = values.path === 'existing' ? recordCategories.find(c => c.categoryId === values.categoryId) : undefined;
   useEffect(() => {
-    if (!category || !list) { setMark(null); return; }
+    if (!category || !gender) { setMark(null); return; }
     getMarkToBeat(category.categoryId, known).then(setMark).catch(() => setMark(null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category?.categoryId, gendersKey, list]);
+  }, [category?.categoryId, gendersKey, gender]);
 
   const loadedAll = userIds.every(id => id in profileGenders);
   return (
@@ -92,11 +92,14 @@ function ListAndMark({ recordCategories }: { recordCategories: RecordCategoryRec
           {a.name || 'An athlete'} has no male or female gender {a.userId ? 'on their profile' : 'set'}. A claim can only be submitted once it is set.
         </Alert>
       ))}
-      {list && (
+      {gender && (
         <Alert variant="info" size="SM" showIcon={false}>
-          This claim goes on the <strong>&nbsp;{GENDER_TITLE_LABELS[list].toLowerCase()}&nbsp;</strong> list.
-          {mark?.value && <> Current record: <strong>&nbsp;{mark.value}&nbsp;</strong> by {mark.holders.join(', ')}. Your value must beat or equal it.</>}
-          {category && mark && !mark.value && <> There is no record on this list yet.</>}
+          {/* One paragraph, so the text flows inline inside the flex alert */}
+          <p>
+            This claim counts as a <strong>{GENDER_TITLE_LABELS[gender].toLowerCase()} {values.path === 'first' ? 'world first' : 'world record'}</strong>.
+            {mark?.value && <> Current record: <strong>{mark.value}</strong> by {mark.holders.join(', ')}. Your value must beat or equal it.</>}
+            {category && mark && !mark.value && <> There is no {GENDER_TITLE_LABELS[gender].toLowerCase()} record in this category yet.</>}
+          </p>
         </Alert>
       )}
     </div>
@@ -130,7 +133,9 @@ export default function ClaimFields({ recordCategories, firstCategories, claiman
         {/* FR-1: attempts are announced by email, not in the app (v1) */}
         {!isFirst && !admin && (
           <Alert variant="info" size="SM" showIcon={false}>
-            Planning a record attempt? As the ISA framework asks, email <a href={`mailto:${RECORDS_TEAM_EMAIL}`} className="underline">&nbsp;{RECORDS_TEAM_EMAIL}&nbsp;</a> before the attempt, so the definitions can be agreed in advance.
+            <p>
+              Planning a record attempt? As the ISA framework asks, email <a href={`mailto:${RECORDS_TEAM_EMAIL}`} className="underline">{RECORDS_TEAM_EMAIL}</a> before the attempt, so the definitions can be agreed in advance.
+            </p>
           </Alert>
         )}
         {values.path === 'existing' && (
@@ -208,7 +213,7 @@ export default function ClaimFields({ recordCategories, firstCategories, claiman
             label="I have the consent of every athlete on this claim to submit it for them."
           />
         )}
-        {!isFirst && <ListAndMark recordCategories={recordCategories} />}
+        {!isFirst && <GenderAndMark recordCategories={recordCategories} />}
       </Section>
 
       {isFirst ? (

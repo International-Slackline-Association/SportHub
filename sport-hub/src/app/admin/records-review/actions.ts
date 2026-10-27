@@ -45,7 +45,6 @@ import {
   commonFieldsFrom,
   createPendingAthletes,
   firstFieldsFrom,
-  isUrl,
   kindForPath,
   parseClaimValue,
   recordDetailsFrom,
@@ -60,6 +59,7 @@ import type {
   WorldEntryRecord,
 } from '@lib/relational-types';
 import type { ClaimActionResult, ClaimFormValues } from 'src/app/world_records/claim/types';
+import { INVALID_URL_MESSAGE, isValidUrl } from '@utils/urls';
 
 type ActionResult = { success: boolean; error?: string; notice?: string };
 
@@ -417,7 +417,7 @@ export async function adminUpdateEntry(kind: EntryKind, entryId: string, values:
     const { athletes, errors } = await snapshotAthletes(values, entry.athletes);
     if (athletes.length === 0 && errors.length === 0) errors.push('Add at least one athlete');
     const common = commonFieldsFrom(values);
-    for (const { url } of common.evidence) if (!isUrl(url)) errors.push(`"${url}" is not a valid link`);
+    for (const { url } of common.evidence) if (!isValidUrl(url)) errors.push(`"${url}": ${INVALID_URL_MESSAGE}`);
 
     const shared = {
       ...common,
