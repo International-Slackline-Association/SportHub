@@ -22,10 +22,10 @@ import type {
   WorldEntryRecord,
 } from './relational-types';
 import {
-  computeFirstTitles,
-  computeRecordTitles,
+  firstTitle,
   formatEntryDate,
   formatRecordValue,
+  recordTitle,
   RECORD_GENDERS,
   splitCurrentAndHistory,
 } from './records-logic';
@@ -473,7 +473,7 @@ export interface DisplayAthlete {
 /** One row on /world_records or an athlete profile. */
 export interface WorldRecord {
   entryId: string;
-  title: string;                 // "World Record", "Women's World Record", ... ("" for history)
+  title: string;                 // "Men's World Record", "Women's World Record", "Mixed World Record" ("" for history)
   isCurrent: boolean;
   categoryId: string;
   categoryName: string;
@@ -490,7 +490,7 @@ export interface WorldRecord {
 
 export interface WorldFirst {
   entryId: string;
-  title: string;                 // "World First", "Women's World First", ...
+  title: string;                 // "Men's World First", "Women's World First", "Mixed World First"
   categoryId: string;
   categoryName: string;
   trickName: string;
@@ -520,17 +520,12 @@ const toWorldRecords = (
     const inCategory = entries.filter(e => e.categoryId === category.categoryId);
     if (inCategory.length === 0) continue;
 
-    const current = inCategory.filter(e => e.status === 'published');
-    const currentByGender: Partial<Record<RecordGender, RecordEntryRecord['value']>> = {};
-    for (const entry of current) currentByGender[entry.gender] ??= entry.value;
-    // Archived categories are history only: their records carry no current title
-    const titles = category.status === 'archived' ? {} : computeRecordTitles(category, currentByGender);
-
     for (const entry of inCategory) {
+      // Archived categories are history only: their records carry no current title
       const isCurrent = entry.status === 'published' && category.status !== 'archived';
       rows.push({
         entryId: entry.entryId,
-        title: isCurrent ? titles[entry.gender] ?? 'World Record' : '',
+        title: isCurrent ? recordTitle(entry.gender) : '',
         isCurrent,
         categoryId: category.categoryId,
         categoryName: category.name,
@@ -551,10 +546,9 @@ const toWorldRecords = (
 
 const toWorldFirsts = (categories: FirstCategoryRecord[], entries: FirstEntryRecord[]): WorldFirst[] => {
   const categoryById = new Map(categories.map(c => [c.categoryId, c]));
-  const titles = computeFirstTitles(entries);
   return entries.map(entry => ({
     entryId: entry.entryId,
-    title: titles[entry.entryId],
+    title: firstTitle(entry.gender),
     categoryId: entry.categoryId,
     categoryName: categoryById.get(entry.categoryId)?.name ?? entry.categoryName,
     trickName: entry.trickName,

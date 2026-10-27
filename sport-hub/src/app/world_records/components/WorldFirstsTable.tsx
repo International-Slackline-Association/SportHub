@@ -17,7 +17,6 @@ import {
   genderFilterFn,
   linkCellFormatter,
   linkClassName,
-  TitleBadge,
 } from './cellFormatters';
 import { AdminEditLink } from './AdminEditLink';
 
@@ -33,13 +32,6 @@ const sharedColumns = [
   columnHelper.accessor('trickName', {
     header: 'Trick',
     enableColumnFilter: true,
-    // Later landings on another gender carry their own title, e.g. "Women's World First"
-    cell: info => (
-      <div className="stack gap-1 items-start">
-        <span>{info.getValue()}</span>
-        {info.row.original.title !== 'World First' && <TitleBadge title={info.row.original.title} />}
-      </div>
-    ),
     meta: { filterVariant: 'autocomplete' },
     size: 100,
   }),
@@ -69,13 +61,10 @@ const columns = [
     id: 'worldFirst',
     header: 'World First',
     cell: info => {
-      const { date, title, categoryName, trickName, lineDetails, athletes, links } = info.row.original;
+      const { date, categoryName, trickName, lineDetails, athletes, links } = info.row.original;
       return (
         <div className="stack">
-          <div className="cluster items-center justify-between text-gray-400">
-            <span className="text-xs">{date}</span>
-            {title !== 'World First' && <TitleBadge title={title} />}
-          </div>
+          <span className="text-xs text-gray-400">{date}</span>
           <div className="cluster items-center justify-between">
             <span className="font-medium">{trickName}</span>
             <span className="text-sm text-gray-500">{lineDetails || categoryName}</span>

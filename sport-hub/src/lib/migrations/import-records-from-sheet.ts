@@ -382,10 +382,6 @@ function transformFirsts(
       continue;
     }
     for (const first of group) first.trickGroupId = `trick-${key.replace(/[^a-z0-9]+/g, '-')}`;
-    const missingDate = group.filter(f => !f.date);
-    for (const first of missingDate) {
-      issues.push(issue('first', rowOf(first), 'first_link_unclear', `"${first.trickName}" has no date, so its title (World First or list title) can't be decided`, first.entryId));
-    }
   }
 
   return firsts;

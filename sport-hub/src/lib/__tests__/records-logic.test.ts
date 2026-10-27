@@ -7,13 +7,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   compareRecordValues,
-  computeFirstTitles,
-  computeRecordTitles,
   deriveGender,
+  firstTitle,
   formatRecordValue,
   parseCoordinates,
   parseRecordValue,
   parseSheetDate,
+  recordTitle,
   slugify,
   splitCurrentAndHistory,
   unitKind,
@@ -58,19 +58,11 @@ test('splitCurrentAndHistory keeps equal bests as co-holders (FR-9c)', () => {
   assert.deepEqual(history.map(e => e.id), ['c']);
 });
 
-test('computeRecordTitles gives the best list "World Record" (FR-23a)', () => {
-  const titles = computeRecordTitles(length, { MEN: { amount: 2000 }, WOMEN: { amount: 1500 }, MIXED: { amount: 2000 } });
-  assert.deepEqual(titles, { MEN: 'World Record', WOMEN: "Women's World Record", MIXED: 'World Record' });
-  assert.deepEqual(computeRecordTitles(length, { WOMEN: { amount: 10 } }), { WOMEN: 'World Record' });
-});
-
-test('computeFirstTitles gives the earliest landing "World First" (FR-23b)', () => {
-  const titles = computeFirstTitles([
-    { entryId: '1', trickGroupId: 'g', date: '2020-01-01', gender: 'MEN' },
-    { entryId: '2', trickGroupId: 'g', date: '2022-05-01', gender: 'WOMEN' },
-    { entryId: '3', date: '2023-01-01', gender: 'WOMEN' },
-  ]);
-  assert.deepEqual(titles, { 1: 'World First', 2: "Women's World First", 3: 'World First' });
+test('titles follow the gender only (FR-23a/b)', () => {
+  assert.equal(recordTitle('MEN'), "Men's World Record");
+  assert.equal(recordTitle('WOMEN'), "Women's World Record");
+  assert.equal(recordTitle('MIXED'), 'Mixed World Record');
+  assert.equal(firstTitle('WOMEN'), "Women's World First");
 });
 
 test('parseRecordValue reads sheet and form values', () => {

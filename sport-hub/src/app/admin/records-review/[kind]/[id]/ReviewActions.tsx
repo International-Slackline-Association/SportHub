@@ -88,7 +88,7 @@ export default function ReviewActions(props: Props) {
                 <option value="">Not the same trick as an existing first</option>
                 {props.trickLinkOptions.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
               </select>
-              <small className="text-gray-500">Linking decides the titles: the earliest landing across lists is the World First.</small>
+              <small className="text-gray-500">For reference only: titles follow the gender (Men&apos;s / Women&apos;s / Mixed World First).</small>
             </div>
           )}
           <textarea

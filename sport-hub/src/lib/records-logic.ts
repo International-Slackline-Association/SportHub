@@ -6,7 +6,6 @@
 
 import type {
   EntryAthlete,
-  FirstEntryRecord,
   RecordCategoryRecord,
   RecordEntryRecord,
   RecordValue,
@@ -94,50 +93,11 @@ export const splitCurrentAndHistory = <T extends Pick<RecordEntryRecord, 'value'
 };
 
 /**
- * Record titles within a category (FR-23a): the best current record across the
- * lists is "World Record", the others carry the list title. Equal bests share it.
+ * Titles (FR-23a/b) follow the gender only: men's, women's and mixed titles stand
+ * side by side, whichever value is better or which landing came first.
  */
-export const computeRecordTitles = (
-  category: CategoryRule,
-  currentByGender: Partial<Record<RecordGender, RecordValue>>,
-): Partial<Record<RecordGender, string>> => {
-  const lists = RECORD_GENDERS.filter(list => currentByGender[list] !== undefined);
-  if (lists.length === 0) return {};
-  const bestGender = lists.reduce((top, list) =>
-    compareRecordValues(category, currentByGender[list]!, currentByGender[top]!) > 0 ? list : top);
-  return Object.fromEntries(lists.map(list => [
-    list,
-    compareRecordValues(category, currentByGender[list]!, currentByGender[bestGender]!) === 0
-      ? 'World Record'
-      : `${GENDER_TITLE_LABELS[list]} World Record`,
-  ]));
-};
-
-/**
- * First titles (FR-23b): within a group of the same trick, the earliest landing
- * across the lists is "World First", later ones carry the list title.
- * Returns a title per entryId.
- */
-export const computeFirstTitles = (
-  firsts: Pick<FirstEntryRecord, 'entryId' | 'trickGroupId' | 'date' | 'gender'>[],
-): Record<string, string> => {
-  const groups = new Map<string, typeof firsts>();
-  for (const first of firsts) {
-    const key = first.trickGroupId || first.entryId;
-    groups.set(key, [...(groups.get(key) ?? []), first]);
-  }
-
-  const titles: Record<string, string> = {};
-  for (const group of groups.values()) {
-    const dated = group.filter(f => f.date);
-    const earliest = dated.length > 0 ? dated.reduce((min, f) => (f.date < min ? f.date : min), dated[0].date) : '';
-    for (const first of group) {
-      const isEarliest = group.length === 1 || !first.date || first.date === earliest;
-      titles[first.entryId] = isEarliest ? 'World First' : `${GENDER_TITLE_LABELS[first.gender]} World First`;
-    }
-  }
-  return titles;
-};
+export const recordTitle = (gender: RecordGender) => `${GENDER_TITLE_LABELS[gender]} World Record`;
+export const firstTitle = (gender: RecordGender) => `${GENDER_TITLE_LABELS[gender]} World First`;
 
 // ============================================================================
 // VALUE FORMATTING

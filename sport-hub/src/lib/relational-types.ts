@@ -386,7 +386,7 @@ export interface FirstEntryRecord extends EntryBase {
   whyFirst?: string;
   similarTricks?: string;
   lineDetails?: string;
-  trickGroupId?: string;         // Links the same trick across lists (titles, FR-23b)
+  trickGroupId?: string;         // Links the same trick on other genders (reference for reviewers)
 }
 
 export type WorldEntryRecord = RecordEntryRecord | FirstEntryRecord;

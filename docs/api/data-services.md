@@ -104,7 +104,7 @@ interface DisplayAthlete {
 
 interface WorldRecord {
   entryId: string;
-  title: string;         // "World Record", "Women's World Record", ... ("" for history)
+  title: string;         // "Men's World Record", "Women's World Record", "Mixed World Record" ("" for history)
   isCurrent: boolean;    // false for historical records and archived categories
   categoryId: string;
   categoryName: string;  // e.g. "Highline length"
@@ -121,7 +121,7 @@ interface WorldRecord {
 
 interface WorldFirst {
   entryId: string;
-  title: string;         // "World First", or e.g. "Women's World First" for a later landing on another gender
+  title: string;         // "Men's World First", "Women's World First", "Mixed World First"
   categoryId: string;
   categoryName: string;  // e.g. "Trickline"
   trickName: string;

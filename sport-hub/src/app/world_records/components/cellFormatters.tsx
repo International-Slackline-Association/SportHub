@@ -65,10 +65,10 @@ export const genderCellFormatter = <T extends WorldRecord | WorldFirst>(info: Ce
 export const genderFilterFn = <T extends WorldRecord | WorldFirst>(row: Row<T>, columnId: string, filterValue: string) =>
   row.getValue<string>(columnId) === filterValue;
 
-/** "World Record" / "World First" in yellow, list titles neutral, no title = history. */
+/** Current titles in yellow, no title = history. */
 export const TitleBadge = ({ title }: { title: string }) => {
   if (!title) return <span className="text-xs text-gray-400">History</span>;
-  return <Badge color={title.startsWith('World') ? 'YELLOW' : 'NEUTRAL'}>{title}</Badge>;
+  return <Badge color="YELLOW">{title}</Badge>;
 };
 
 export const titleCellFormatter = <T extends WorldRecord | WorldFirst>(info: CellContext<T, string>) =>

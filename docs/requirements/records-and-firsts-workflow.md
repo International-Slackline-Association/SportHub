@@ -1,6 +1,6 @@
 # Requirements: World Records & World Firsts Workflow
 
-Status: **v6**, 2026-10-24 (shortened; matches the implementation on branch `workflow_records_firsts`).
+Status: **v7**, 2026-10-27 (gender-only titles; matches the implementation on branch `workflow_records_firsts`).
 Rules source: ISA Sport Commission, *Slackline World Records and World Firsts*, October 2026 v2. Where this
 document and the framework differ, the framework wins; the Sport Commission decides on every record and first.
 Every section states the decisions taken; §9 lists what is still open. Code map for reviewers:
@@ -110,9 +110,10 @@ and first termination are **not** shown as a checklist on the form (open issue 1
   criteria and the existing firsts of the discipline, and can be linked to the same trick on another list.
 - **Modify** edits every field before or after approval (logged, with an optional reason); published/historical is
   recomputed. Admins see an **Edit** link on every public row.
-- **Titles.** Records: the best current value across the three lists is "World Record", the others "Men's / Women's
-  / Mixed World Record" (ties share the title). Firsts: the earliest landing of a linked trick is "World First",
-  later ones on other lists carry the list title. Computed, never stored.
+- **Titles** follow the gender only: "Men's World Record", "Women's World Record" and "Mixed World Record" stand side
+  by side, whichever value is better; the same for "Men's / Women's / Mixed World First", whichever landing came
+  first. There is no overall "World Record" or "World First". Linking a first to the same trick on another gender is
+  for reference only. Computed, never stored.
 - **Export:** `/admin/records-export` downloads records, firsts, athletes and categories as CSV (all entries except
   drafts, including witness contacts, so admins only).
 - Every status change is in the audit log (who, when, comment); approval clears the world-records cache.

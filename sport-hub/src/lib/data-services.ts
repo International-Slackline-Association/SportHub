@@ -17,6 +17,7 @@ const CONTEST_TYPE_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
 );
 import { UserRecord } from './relational-types';
 import { getWorldRecordsSheet, getWorldFirstsSheet } from './google-sheets';
+import { firstTitle, recordTitle } from './records-logic';
 import {
   getPublicWorldFirsts,
   getPublicWorldRecords,
@@ -674,7 +675,7 @@ async function getWorldRecordsFromSheet(): Promise<WorldRecord[]> {
   const [rows, emailToUserId] = await Promise.all([getWorldRecordsSheet(), buildEmailToUserIdMap()]);
   return rows.map((row, idx) => ({
     entryId: `sheet-${idx}`,
-    title: '',
+    title: recordTitle(sheetGender(row.gender)),
     isCurrent: true,
     categoryId: row.recordType,
     categoryName: row.recordType,
@@ -694,7 +695,7 @@ async function getWorldFirstsFromSheet(): Promise<WorldFirst[]> {
   const [rows, emailToUserId] = await Promise.all([getWorldFirstsSheet(), buildEmailToUserIdMap()]);
   return rows.map((row, idx) => ({
     entryId: `sheet-${idx}`,
-    title: 'World First',
+    title: firstTitle(sheetGender(row.gender)),
     categoryId: row.lineType,
     categoryName: row.lineType,
     trickName: row.description,

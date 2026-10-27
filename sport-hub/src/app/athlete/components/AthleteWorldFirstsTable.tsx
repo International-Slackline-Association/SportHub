@@ -7,7 +7,6 @@ import {
   dateSortingFn,
   genderCellFormatter,
   Links,
-  TitleBadge,
 } from 'src/app/world_records/components/cellFormatters';
 import { Alert } from '@ui/Alert';
 
@@ -21,13 +20,6 @@ const buildColumns = (athleteId?: string) => [
   }),
   columnHelper.accessor('trickName', {
     header: 'Trick',
-    // Later landings on another gender carry their own title, e.g. "Women's World First"
-    cell: info => (
-      <div className="stack gap-1 items-start">
-        <span>{info.getValue()}</span>
-        {info.row.original.title !== 'World First' && <TitleBadge title={info.row.original.title} />}
-      </div>
-    ),
     size: 120,
   }),
   columnHelper.accessor('categoryName', {
