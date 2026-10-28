@@ -22,6 +22,7 @@ import {
 } from '@lib/event-contest-service';
 import { EventMetadataRecord, ContestRecord } from '@lib/relational-types';
 import { EventStatus } from '../my-events/page';
+import { withCalculatedPoints } from '@utils/points';
 
 /**
  * Save event to DynamoDB
@@ -49,11 +50,22 @@ function validatePastEventRequirements(values: EventSubmissionFormValues): strin
   return null;
 }
 
+// Organizers can't set points themselves: recalculate them from rank and
+// contest size. Admins may override.
+function withServerPoints(contests: ContestFormValues[], isAdmin: boolean): ContestFormValues[] {
+  if (isAdmin) return contests;
+  return contests.map((c) => (
+    c.results ? { ...c, results: withCalculatedPoints(c.results, c.contestSize) } : c
+  ));
+}
+
 export async function saveEvent(values: EventSubmissionFormValues) {
   await requireEventSubmitter();
 
   try {
-    const { event, contests } = values;
+    const session = await auth();
+    const { event } = values;
+    const contests = withServerPoints(values.contests, session?.user?.role === 'admin');
 
     // Past-event guard: judges and results required if event date is in the past
     const pastEventError = validatePastEventRequirements(values);
@@ -110,13 +122,14 @@ export async function saveEvent(values: EventSubmissionFormValues) {
  */
 export async function updateEventScores(
   eventId: string,
-  contests: ContestFormValues[],
+  submittedContests: ContestFormValues[],
 ): Promise<{ success: boolean; error?: string; message?: string }> {
   await requireEventSubmitter();
 
   try {
     const session = await auth();
     const isAdmin = session?.user?.role === 'admin';
+    const contests = withServerPoints(submittedContests, isAdmin);
     const { success, event } = await getAssembledEvent(eventId);
     
     if (!success || !event) {
@@ -248,7 +261,8 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
       }
     }
 
-    const { event, contests } = values;
+    const { event } = values;
+    const contests = withServerPoints(values.contests, session?.user?.role === 'admin');
 
     // Strip assembled contests field before writing Metadata record
     const { contests: previousContests = [], ...existingMetadata } = existingEvent;
