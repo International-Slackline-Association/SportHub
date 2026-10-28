@@ -15,6 +15,9 @@ const PROTECTED_ROUTES: Array<{
   { pattern: '/events/submit', requireAuth: true, allowedSubTypes: ['organizer'] },
   { pattern: '/events/my-events', requireAuth: true, allowedSubTypes: ['organizer'] },
   { pattern: '/api/admin', requiredRole: 'admin', requireAuth: true },
+  // Record and first claims: any signed-in user
+  { pattern: '/world_records/claim', requireAuth: true },
+  { pattern: '/world_records/my-claims', requireAuth: true },
 ];
 
 export default auth((req) => {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import Button from '@ui/Button';
@@ -73,6 +74,9 @@ function IssueCard({ issue, recordCategories, firstCategories }: { issue: Import
       </div>
       <span className="text-gray-700">{issue.detail}</span>
       <span className="text-gray-500">{summary.filter(Boolean).join(' · ')}</span>
+      {issue.entryId && !NOT_IMPORTED.includes(issue.reason) && (
+        <Link href={`/admin/records-review/${issue.kind}/${issue.entryId}`} className="text-blue-600 hover:underline">Open the entry</Link>
+      )}
       {error && <Alert size="SM">{error}</Alert>}
 
       {!issue.resolved && NOT_IMPORTED.includes(issue.reason) && (

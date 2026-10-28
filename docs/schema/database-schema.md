@@ -405,8 +405,9 @@ Types: `lib/relational-types.ts` (records section). Data access: `lib/records-se
 | `First:{entryId}` | `Metadata` | First entry: category, trick name, line details, gender, athletes, date, evidence links, status |
 | `Record:{entryId}` / `First:{entryId}` | `Audit:{iso timestamp}:{suffix}` | Audit log of an entry (imported, edited, status changes) |
 | `ImportIssue` | `ImportIssue:{kind}:{certId}:{reason}` | Sheet row an admin has to look at (no category, unparsed value, no user match, ...) |
+| `RateLimit` | `Submit:{userId}:{yyyy-mm-dd}` | Claim submissions per user and day (caps the emails one account can trigger) |
 
-The athlete profile also gets a pointer item in the users table: `userId` + `sortKey = "Record:{entryId}"` / `"First:{entryId}"`.
+The athlete profile also gets a pointer item in the users table: `userId` + `sortKey = "Record:{entryId}"` / `"First:{entryId}"`. The claimant gets `sortKey = "Claim:{kind}:{entryId}"`, so My Claims lists claims submitted for others without a scan.
 
 ### Design Decisions
 
@@ -417,7 +418,7 @@ The athlete profile also gets a pointer item in the users table: `userId` + `sor
 - **Values** are stored as a number in the category's unit (`amount`) or as coordinates, plus the original text (`original`, the sheet "Specs").
 - **Current vs history** is a status: per category and gender the best published value is `published`, beaten ones are `historical`. Dates are stored as ISO `yyyy-mm-dd`.
 - **Entry ids come from the sheet Cert IDs**, so re-running the import overwrites entries instead of duplicating them.
-- Entries already carry the fields of the claims workflow (status lifecycle, claimant, witnesses, review comment). They are unused until claims are added.
+- **Claim lifecycle** is the entry status: draft → pending → changes_requested / published / rejected, and historical for beaten records. A decision lock (`decisionLockAt` / `decisionLockToken`) keeps two reviewers from deciding the same claim at once.
 
 ### Access Patterns
 

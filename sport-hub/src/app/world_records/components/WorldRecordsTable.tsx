@@ -21,6 +21,7 @@ import {
   linkClassName,
   TitleBadge,
 } from './cellFormatters';
+import { AdminEditLink } from './AdminEditLink';
 import { RECORD_CATEGORY_GROUPS } from '@lib/relational-types';
 
 const columnHelper = createColumnHelper<WorldRecord>();
@@ -108,6 +109,7 @@ const columns = [
                 Link {idx + 1}
               </Link>
             ))}
+            <AdminEditLink entry={info.row.original} />
           </div>
         </div>
       );
