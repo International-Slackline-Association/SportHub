@@ -2,7 +2,7 @@ import { Column, Row } from "@tanstack/react-table";
 import styles from "./styles.module.css";
 import Autocomplete from "@ui/Form/Autocomplete";
 import { COUNTRIES } from "@utils/countries";
-import { ContestsGenderDropdown, ContestSizeDropdown, DisciplineDropdown } from "@ui/Form";
+import { ContestsGenderDropdown, ContestSizeDropdown, DisciplineDropdown, RecordsGenderDropdown } from "@ui/Form";
 import { useState } from "react";
 import formStyles from "@ui/Form/styles.module.css";
 import { cn } from "@utils/cn";
@@ -84,9 +84,12 @@ const SelectTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) =>
   const explicitOptions = column.columnDef.meta?.filterOptions;
 
   // Use explicit options when provided (e.g. full discipline/size lists from consts).
-  // Otherwise derive unique values from the current data rows.
+  // Otherwise derive unique values from the current data rows (each item of an array value counts on its own).
   const options: { value: string; label: string }[] = explicitOptions
-    ?? [...new Set(rows.map(row => String(row.getValue(column.id))))].sort().map(v => ({ value: v, label: v }));
+    ?? [...new Set(rows.flatMap(row => {
+      const value = row.getValue(column.id);
+      return Array.isArray(value) ? value.map(String) : [String(value)];
+    }))].sort().map(v => ({ value: v, label: v }));
 
   const includeAll = column.columnDef.meta?.filterIncludeAll;
 
@@ -282,6 +285,20 @@ const ContestGenderTableFilter = <TData,>({ column }: TableFilterProps<TData>) =
     <ContestsGenderDropdown
       className={styles.columnFilter}
       id={column.id}
+      value={(column.getFilterValue() as string | undefined) ?? "All"}
+      onChange={value => column.setFilterValue(
+        value === "All" ? undefined : value as ContestGender
+      )}
+    />
+  );
+};
+
+const RecordGenderTableFilter = <TData,>({ column }: TableFilterProps<TData>) => {
+  return (
+    <RecordsGenderDropdown
+      className={styles.columnFilter}
+      id={column.id}
+      value={(column.getFilterValue() as string | undefined) ?? "All"}
       onChange={value => column.setFilterValue(
         value === "All" ? undefined : value as ContestGender
       )}
@@ -331,6 +348,10 @@ const TableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
 
   if (filterVariant === "contest-size") {
     return <ContestSizeTableFilter column={column} rows={rows} />;
+  }
+
+  if (filterVariant === "record-gender") {
+    return <RecordGenderTableFilter column={column} rows={rows} />;
   }
 
   return <SelectTableFilter column={column} rows={rows} />;

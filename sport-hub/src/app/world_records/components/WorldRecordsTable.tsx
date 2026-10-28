@@ -5,43 +5,55 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { WorldRecord } from '@lib/data-services';
 import Table from '@ui/Table';
 import tableStyles from '@ui/Table/styles.module.css';
-import { useClientMediaQuery } from '@utils/useClientMediaQuery';
-import { CountryFlag } from '@ui/CountryFlag';
-import { textToTitleCase } from '@utils/strings';
+import { BREAKPOINT_LG, useClientMediaQuery } from '@utils/useClientMediaQuery';
 import Link from 'next/link';
-import { countryCellFormatter, linkCellFormatter, nameCellFormatter } from './cellFormatters';
-
-const linkClassName = "underline text-blue-600 hover:text-blue-800 visited:text-purple-600";
+import {
+  athleteCountriesAccessor,
+  athleteNamesAccessor,
+  athleteNamesCellFormatter,
+  AthleteNames,
+  countriesCellFormatter,
+  countriesSortingFn,
+  dateSortingFn,
+  genderCellFormatter,
+  genderFilterFn,
+  linkCellFormatter,
+  linkClassName,
+  TitleBadge,
+} from './cellFormatters';
 
 const columnHelper = createColumnHelper<WorldRecord>();
 
 const sharedColumns = [
-  columnHelper.accessor('recordType', {
-    header: 'Record Type',
+  columnHelper.accessor('categoryName', {
+    header: 'Category',
     enableColumnFilter: true,
+    // The title sits under the category so the table stays narrow
+    cell: info => (
+      <div className="stack gap-1 items-start">
+        <span>{info.getValue()}</span>
+        <TitleBadge title={info.row.original.title} />
+      </div>
+    ),
     meta: { filterVariant: 'autocomplete' },
     size: 160,
   }),
-  columnHelper.accessor('country', {
+  columnHelper.accessor(athleteCountriesAccessor, {
     id: 'country',
     header: 'Country',
     enableColumnFilter: true,
-    cell: countryCellFormatter,
-    meta: { filterVariant: 'select' },
+    cell: countriesCellFormatter,
+    sortingFn: countriesSortingFn,
+    filterFn: 'arrIncludes',
+    meta: { filterVariant: 'select', filterIncludeAll: true },
     size: 80,
   }),
   columnHelper.accessor('gender', {
     header: 'Gender',
     enableColumnFilter: true,
-    filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
-    cell: info => textToTitleCase(info.getValue()),
-    meta: {
-      filterVariant: 'select',
-      filterOptions: [
-        { value: 'MEN',   label: 'Men' },
-        { value: 'WOMEN', label: 'Women' },
-      ],
-    },
+    filterFn: genderFilterFn,
+    cell: genderCellFormatter,
+    meta: { filterVariant: 'record-gender' },
     size: 40,
   }),
 ] as const;
@@ -52,46 +64,37 @@ const columns = [
     id: 'worldRecord',
     header: 'World Record',
     cell: info => {
-      const { date, recordType, specs, name, country, gender, links } = info.row.original;
+      const { date, title, categoryName, value, athletes, links } = info.row.original;
       return (
         <div className="stack">
-          <span className="text-xs text-gray-400">{date}</span>
-          <span className="font-medium pb-2">{recordType}</span>
+          <div className="cluster justify-between items-center gap-2">
+            <span className="text-xs text-gray-400">{date}</span>
+            <TitleBadge title={title} />
+          </div>
+          <span className="font-medium pb-2">{categoryName}</span>
           <div className="cluster justify-between items-end gap-2">
-            <div className="stack">
-              <span className="font-medium">
-                {info.row.original.athleteUserId
-                  ? <Link href={`/athlete/${info.row.original.athleteUserId}`} className={linkClassName}>{name || '—'}</Link>
-                  : name || '—'
-                }
-              </span>
-              <div className="cluster gap-2 items-center">
-                <CountryFlag country={country} />
-                <span className="text-xs text-gray-400" style={{ paddingTop: 2 }}>{textToTitleCase(gender)}</span>
-              </div>
-            </div>
-            <span className="text-md">{specs}</span>
+            <AthleteNames athletes={athletes} />
+            <span className="text-md">{value}</span>
           </div>
           <div className="cluster gap-2 text-xs">
-            {links?.map((link, idx) => 
-              link && (
-                <Link className={linkClassName} href={link} key={`link_${idx}`} target="_newtab">
-                  Link {idx + 1}
-                </Link>
-              )
-            )}
+            {links.map((link, idx) => (
+              <Link className={linkClassName} href={link} key={`link_${idx}`} target="_newtab">
+                Link {idx + 1}
+              </Link>
+            ))}
           </div>
         </div>
       );
     },
   }),
   // Desktop-only columns
-  columnHelper.accessor('date', { header: 'Date', size: 40 }),
-  columnHelper.accessor('specs', { header: 'Specs', size: 120 }),
-  columnHelper.accessor('name', {
+  columnHelper.accessor('date', { header: 'Date', sortingFn: dateSortingFn, size: 40 }),
+  columnHelper.accessor('value', { header: 'Record', size: 80 }),
+  columnHelper.accessor(athleteNamesAccessor, {
+    id: 'name',
     header: 'Name',
-    cell: nameCellFormatter,
-    size: 80,
+    cell: athleteNamesCellFormatter,
+    size: 100,
   }),
   columnHelper.accessor('links', {
     header: "Links",
@@ -107,34 +110,32 @@ type WorldRecordsTableProps = {
 };
 
 const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
-  const { isDesktop } = useClientMediaQuery();
-  const [selectedLineType, setSelectedLineType] = useState('');
+  const { isDesktop } = useClientMediaQuery(BREAKPOINT_LG);
+  const [selectedGroup, setSelectedGroup] = useState('');
 
-  const lineTypeOptions = useMemo(() => {
-    const types = [...new Set(data.map(r => r.lineType).filter(Boolean))].sort();
-    return types.map(t => ({ value: t, label: t }));
-  }, [data]);
+  const groupOptions = useMemo(
+    () => [...new Set(data.map(r => r.categoryGroup).filter(Boolean))].sort(),
+    [data],
+  );
 
-  const filteredData = useMemo(() => {
-    return data.filter(row => {
-      if (selectedLineType && row.lineType !== selectedLineType) return false;
-      return true;
-    });
-  }, [data, selectedLineType]);
+  const filteredData = useMemo(
+    () => selectedGroup ? data.filter(row => row.categoryGroup === selectedGroup) : data,
+    [data, selectedGroup],
+  );
 
   return (
     <Table
       extraFilters={
         <div className={tableStyles.columnFilter}>
-          <label htmlFor="wr-line-type">Type of Line</label>
+          <label htmlFor="wr-group">Group</label>
           <select
-            id="wr-line-type"
-            value={selectedLineType}
-            onChange={e => setSelectedLineType(e.target.value)}
+            id="wr-group"
+            value={selectedGroup}
+            onChange={e => setSelectedGroup(e.target.value)}
           >
             <option value="">All</option>
-            {lineTypeOptions.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            {groupOptions.map(g => (
+              <option key={g} value={g}>{g}</option>
             ))}
           </select>
         </div>
@@ -145,17 +146,17 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
         initialState: {
           sorting: [{ id: 'date', desc: true }],
           columnOrder: isDesktop
-            ? ['date', 'recordType', 'specs', 'name', 'country', 'gender', 'links']
-            : ['worldRecord', 'recordType', 'country', 'gender'],
+            ? ['categoryName', 'value', 'name', 'country', 'gender', 'date', 'links']
+            : ['worldRecord', 'categoryName', 'country', 'gender'],
           columnVisibility: {
-            worldRecord: !isDesktop,
-            date:        !!isDesktop,
-            specs:       !!isDesktop,
-            name:        !!isDesktop,
-            recordType:  !!isDesktop,
-            country:     !!isDesktop,
-            gender:      !!isDesktop,
-            links:       !!isDesktop,
+            worldRecord:  !isDesktop,
+            date:         !!isDesktop,
+            value:        !!isDesktop,
+            name:         !!isDesktop,
+            country:      !!isDesktop,
+            categoryName: !!isDesktop,
+            gender:       !!isDesktop,
+            links:        !!isDesktop,
           },
         }
       }}
@@ -164,4 +165,3 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
 };
 
 export default WorldRecordsTable;
-
