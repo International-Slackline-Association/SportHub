@@ -21,8 +21,26 @@ import {
   linkClassName,
   TitleBadge,
 } from './cellFormatters';
+import { RECORD_CATEGORY_GROUPS } from '@lib/relational-types';
 
 const columnHelper = createColumnHelper<WorldRecord>();
+
+type View = 'current' | 'unchallenged' | 'history';
+
+const VIEW_OPTIONS: { value: View; label: string }[] = [
+  { value: 'current', label: 'Current world records' },
+  { value: 'unchallenged', label: 'Unchallenged categories' },
+  { value: 'history', label: 'Record history' },
+];
+
+/** Current: active categories only. Unchallenged: shown apart from the active records (§6.1). History: everything. */
+const inView = (row: WorldRecord, view: View) => {
+  switch (view) {
+    case 'current': return row.isCurrent && row.categoryStatus === 'active';
+    case 'unchallenged': return row.isCurrent && row.categoryStatus === 'unchallenged';
+    case 'history': return true;
+  }
+};
 
 const sharedColumns = [
   columnHelper.accessor('categoryName', {
@@ -55,6 +73,14 @@ const sharedColumns = [
     cell: genderCellFormatter,
     meta: { filterVariant: 'record-gender' },
     size: 40,
+  }),
+  // Filter only (size 0 hides the column): current / unchallenged / history
+  columnHelper.accessor('title', {
+    header: 'Show',
+    enableColumnFilter: true,
+    filterFn: (row, _columnId, view: View) => inView(row.original, view),
+    meta: { filterVariant: 'select', filterOptions: VIEW_OPTIONS },
+    size: 0,
   }),
 ] as const;
 
@@ -113,10 +139,11 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
   const { isDesktop } = useClientMediaQuery(BREAKPOINT_LG);
   const [selectedGroup, setSelectedGroup] = useState('');
 
-  const groupOptions = useMemo(
-    () => [...new Set(data.map(r => r.categoryGroup).filter(Boolean))].sort(),
-    [data],
-  );
+  const groupOptions = useMemo(() => {
+    const groups = new Set(data.map(r => r.categoryGroup).filter(Boolean));
+    const known: string[] = RECORD_CATEGORY_GROUPS.filter(g => groups.has(g));
+    return [...known, ...[...groups].filter(g => !known.includes(g)).sort()];
+  }, [data]);
 
   const filteredData = useMemo(
     () => selectedGroup ? data.filter(row => row.categoryGroup === selectedGroup) : data,
@@ -145,11 +172,13 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
         data: filteredData,
         initialState: {
           sorting: [{ id: 'date', desc: true }],
+          columnFilters: [{ id: 'title', value: 'current' }],
           columnOrder: isDesktop
             ? ['categoryName', 'value', 'name', 'country', 'gender', 'date', 'links']
             : ['worldRecord', 'categoryName', 'country', 'gender'],
           columnVisibility: {
             worldRecord:  !isDesktop,
+            title:        false,
             date:         !!isDesktop,
             value:        !!isDesktop,
             name:         !!isDesktop,

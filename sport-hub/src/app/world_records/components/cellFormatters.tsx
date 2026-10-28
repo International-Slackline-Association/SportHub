@@ -63,8 +63,11 @@ export const genderCellFormatter = <T extends WorldRecord | WorldFirst>(info: Ce
 export const genderFilterFn = <T extends WorldRecord | WorldFirst>(row: Row<T>, columnId: string, filterValue: string) =>
   row.getValue<string>(columnId) === filterValue;
 
-/** "Men's World Record" etc. in yellow. */
-export const TitleBadge = ({ title }: { title: string }) => <Badge color="YELLOW">{title}</Badge>;
+/** Current titles in yellow, no title = history. */
+export const TitleBadge = ({ title }: { title: string }) => {
+  if (!title) return <span className="text-xs text-gray-400">History</span>;
+  return <Badge color="YELLOW">{title}</Badge>;
+};
 
 const toSortable = (date: string) => date.replace(/^(\d{2})\/(\d{2})\/(\d{4})$/, '$3$2$1');
 

@@ -164,3 +164,15 @@ export const getWorldRecordsSheet = async (): Promise<WorldRecordRow[]> => {
     }))
     .sort((a, b) => parseDateForSort(b.date) - parseDateForSort(a.date)); // newest first
 };
+/**
+ * Raw rows of a certificates sheet tab ("World Records" / "World Firsts"),
+ * header row first. Used by the one-time import into the records table.
+ */
+export const getCertificatesSheetValues = async (sheet: 'World Records' | 'World Firsts'): Promise<string[][]> => {
+  const client = sheets({ version: 'v4', auth: getAuthClient() });
+  const response = await client.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: sheet,
+  });
+  return (response.data.values ?? []) as string[][];
+};

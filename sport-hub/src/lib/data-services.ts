@@ -17,6 +17,14 @@ const CONTEST_TYPE_NAME_TO_ENUM: Record<string, number> = Object.fromEntries(
 );
 import { UserRecord } from './relational-types';
 import { getWorldRecordsSheet, getWorldFirstsSheet } from './google-sheets';
+import { firstTitle, recordTitle } from './records-logic';
+import {
+  getPublicWorldFirsts,
+  getPublicWorldRecords,
+  hasRecordsData,
+  type WorldFirst,
+  type WorldRecord,
+} from './records-service';
 
 // PERFORMANCE OPTIMIZATION: Simple in-memory cache with TTL
 interface CacheEntry<T> {
@@ -581,35 +589,7 @@ export interface AthleteContest {
   dates: string;
 }
 
-export interface DisplayAthlete {
-  userId?: string;        // Resolved SportHub userId (when ISA Email matches a profile)
-  name: string;
-  country?: string;       // Country name or ISO code from the sheet
-  gender: 'MEN' | 'WOMEN';
-}
-
-export interface WorldRecord {
-  title: string;          // "Men's World Record", "Women's World Record" or "Mixed World Record"
-  categoryName: string;   // Sheet "Record type", e.g. "Longest highline walked without falling"
-  categoryGroup: string;  // Sheet "Type of Line", e.g. "Highline"
-  value: string;          // Sheet "Specs", e.g. "1,900m length"
-  gender: ContestGender;
-  athletes: DisplayAthlete[];
-  date: string;           // DD/MM/YYYY
-  location: string;
-  links: string[];
-}
-
-export interface WorldFirst {
-  title: string;          // "Men's World First", "Women's World First" or "Mixed World First"
-  categoryName: string;   // Sheet "Type of Line", e.g. "Freestyle Highline"
-  trickName: string;      // Sheet "Description of World First"
-  lineDetails: string;    // Sheet "Specs"
-  gender: ContestGender;
-  athletes: DisplayAthlete[];
-  date: string;           // DD/MM/YYYY
-  links: string[];
-}
+export type { DisplayAthlete, WorldRecord, WorldFirst } from './records-service';
 
 /**
  * Get athlete contests/results by athlete ID
@@ -684,18 +664,57 @@ const buildEmailToUserIdMap = async () =>
     return map;
   }, new Map<string, string>());
 
-const GENDER_TITLE_LABELS: Record<ContestGender, string> = {
-  MEN_ONLY: "Men's",
-  WOMEN_ONLY: "Women's",
-  MIXED: 'Mixed',
-};
+const sheetGender = (gender: Gender): 'MEN' | 'WOMEN' => (gender === 'WOMEN' ? 'WOMEN' : 'MEN');
+const sheetEntryGender = (gender: Gender): ContestGender => (gender === 'WOMEN' ? 'WOMEN_ONLY' : 'MEN_ONLY');
 
-/** The sheet "Category" (Male / Female / Mixed) as the gender of the entry and of its athlete. */
-const sheetEntryGender = (gender: Gender): ContestGender =>
-  gender === 'WOMEN' ? 'WOMEN_ONLY' : gender === 'ALL' ? 'MIXED' : 'MEN_ONLY';
-const sheetAthleteGender = (gender: Gender): DisplayAthlete['gender'] => (gender === 'WOMEN' ? 'WOMEN' : 'MEN');
+/**
+ * Fallback while the records table has not been imported in an environment:
+ * maps the certificates sheet rows to the same display shape.
+ * TODO: remove with the Google Sheets read path once the import is verified (FR-35).
+ */
+async function getWorldRecordsFromSheet(): Promise<WorldRecord[]> {
+  const [rows, emailToUserId] = await Promise.all([getWorldRecordsSheet(), buildEmailToUserIdMap()]);
+  return rows.map((row, idx) => ({
+    entryId: `sheet-${idx}`,
+    title: recordTitle(sheetEntryGender(row.gender)),
+    isCurrent: true,
+    categoryId: row.recordType,
+    categoryName: row.recordType,
+    categoryGroup: row.lineType,
+    categoryStatus: 'active',
+    value: row.specs,
+    specs: '',
+    gender: sheetEntryGender(row.gender),
+    athletes: [{ userId: emailToUserId.get(row.athleteEmail), name: row.name, country: row.country, gender: sheetGender(row.gender) }],
+    date: row.date,
+    location: row.eventName,
+    links: (row.links ?? []).filter(Boolean) as string[],
+  }));
+}
 
-const sheetLinks = (links?: (string | undefined)[]) => (links ?? []).filter(Boolean) as string[];
+async function getWorldFirstsFromSheet(): Promise<WorldFirst[]> {
+  const [rows, emailToUserId] = await Promise.all([getWorldFirstsSheet(), buildEmailToUserIdMap()]);
+  return rows.map((row, idx) => ({
+    entryId: `sheet-${idx}`,
+    title: firstTitle(sheetEntryGender(row.gender)),
+    categoryId: row.lineType,
+    categoryName: row.lineType,
+    trickName: row.description,
+    description: '',
+    lineDetails: row.specs,
+    gender: sheetEntryGender(row.gender),
+    athletes: [{ userId: emailToUserId.get(row.athleteEmail), name: row.name, country: row.country, gender: sheetGender(row.gender) }],
+    date: row.date,
+    links: (row.links ?? []).filter(Boolean) as string[],
+  }));
+}
+
+export const WORLD_RECORDS_CACHE_KEYS = ['world-records', 'world-firsts'] as const;
+
+/** Drops the cached lists so an approval shows up right away (FR-25). */
+export function invalidateWorldRecordsCache(): void {
+  WORLD_RECORDS_CACHE_KEYS.forEach(key => cache.delete(key));
+}
 
 export async function getWorldRecords(): Promise<WorldRecord[]> {
   const cacheKey = `world-records`;
@@ -703,30 +722,9 @@ export async function getWorldRecords(): Promise<WorldRecord[]> {
   if (cached) return cached;
 
   try {
-    const [worldRecords, emailToUserId] = await Promise.all([
-      getWorldRecordsSheet(),
-      buildEmailToUserIdMap(),
-    ]);
-
-    if (!worldRecords || worldRecords.length === 0) return [];
-
-    const records: WorldRecord[] = worldRecords.map(row => ({
-      title: `${GENDER_TITLE_LABELS[sheetEntryGender(row.gender)]} World Record`,
-      categoryName: row.recordType,
-      categoryGroup: row.lineType,
-      value: row.specs,
-      gender: sheetEntryGender(row.gender),
-      athletes: [{
-        userId: emailToUserId.get(row.athleteEmail),
-        name: row.name,
-        country: row.country,
-        gender: sheetAthleteGender(row.gender),
-      }],
-      date: row.date,
-      location: row.eventName,
-      links: sheetLinks(row.links),
-    }));
-
+    const records = (await hasRecordsData())
+      ? await getPublicWorldRecords()
+      : await getWorldRecordsFromSheet();
     cache.set(cacheKey, records, 86400000); // Cache for 1 day
     return records;
   } catch (error) {
@@ -741,29 +739,9 @@ export async function getWorldFirsts(): Promise<WorldFirst[]> {
   if (cached) return cached;
 
   try {
-    const [worldFirsts, emailToUserId] = await Promise.all([
-      getWorldFirstsSheet(),
-      buildEmailToUserIdMap(),
-    ]);
-
-    if (!worldFirsts || worldFirsts.length === 0) return [];
-
-    const firsts: WorldFirst[] = worldFirsts.map(row => ({
-      title: `${GENDER_TITLE_LABELS[sheetEntryGender(row.gender)]} World First`,
-      categoryName: row.lineType,
-      trickName: row.description,
-      lineDetails: row.specs,
-      gender: sheetEntryGender(row.gender),
-      athletes: [{
-        userId: emailToUserId.get(row.athleteEmail),
-        name: row.name,
-        country: row.country,
-        gender: sheetAthleteGender(row.gender),
-      }],
-      date: row.date,
-      links: sheetLinks(row.links),
-    }));
-
+    const firsts = (await hasRecordsData())
+      ? await getPublicWorldFirsts()
+      : await getWorldFirstsFromSheet();
     cache.set(cacheKey, firsts, 86400000); // Cache for 1 day
     return firsts;
   } catch (error) {
@@ -772,12 +750,15 @@ export async function getWorldFirsts(): Promise<WorldFirst[]> {
   }
 }
 
-/** Filter world records to those belonging to a specific athlete (by userId). */
+/**
+ * World records of one athlete (by userId). Filters the cached public list, so
+ * profiles cost no extra queries and show the same titles as /world_records.
+ */
 export async function getAthleteWorldRecords(athleteId: string): Promise<WorldRecord[]> {
   return (await getWorldRecords()).filter(r => r.athletes.some(a => a.userId === athleteId));
 }
 
-/** Filter world firsts to those belonging to a specific athlete (by userId). */
+/** World firsts of one athlete (by userId), from the cached public list. */
 export async function getAthleteWorldFirsts(athleteId: string): Promise<WorldFirst[]> {
   return (await getWorldFirsts()).filter(f => f.athletes.some(a => a.userId === athleteId));
 }

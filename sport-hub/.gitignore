@@ -70,3 +70,4 @@ pnpm-workspace.yaml
 # real athlete/event data, timestamped so it accumulates locally
 migration-dry-run-*.log
 migration-collision-report-*.json
+records-import-report.md
