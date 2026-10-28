@@ -246,6 +246,11 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
       if (session?.user?.role !== 'admin' && existingEvent.createdBy !== session?.user?.id) {
         return { success: false, error: 'You do not have permission to edit this event' };
       }
+      // Same rule as the edit page: organizers edit only draft/pending events.
+      // Published results change through updateEventScores, which stages them for review.
+      if (session?.user?.role !== 'admin' && existingEvent.status !== 'draft' && existingEvent.status !== 'pending') {
+        return { success: false, error: 'Approved events can no longer be edited. Use "Edit scores" to change judges and results.' };
+      }
     }
 
     const { event, contests } = values;
