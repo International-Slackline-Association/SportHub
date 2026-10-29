@@ -5,9 +5,9 @@
  */
 
 import type {
-  EntryAthlete,
-  RecordCategoryRecord,
-  RecordEntryRecord,
+  WorldRecordOrFirstEntryAthlete,
+  RecordCategoryTableItem,
+  WorldRecordTableItem,
   RecordValue,
 } from './relational-types';
 
@@ -27,7 +27,7 @@ export const GENDER_TITLE_LABELS: Record<ContestGender, string> = {
  * The gender of an entry follows its athletes (FR-9b):
  * all men → men's, all women → women's, men and women together → mixed.
  */
-export const deriveGender = (athletes: Pick<EntryAthlete, 'gender'>[]): ContestGender => {
+export const deriveGender = (athletes: Pick<WorldRecordOrFirstEntryAthlete, 'gender'>[]): ContestGender => {
   const genders = new Set(athletes.map(a => a.gender));
   if (genders.size === 1) return genders.has('MEN') ? 'MEN_ONLY' : 'WOMEN_ONLY';
   return 'MIXED';
@@ -56,7 +56,7 @@ export const UNIT_SUGGESTIONS: { value: string; label: string }[] = [
   { value: '°', label: '° (coordinates, compared by absolute latitude)' },
 ];
 
-type CategoryRule = Pick<RecordCategoryRecord, 'direction' | 'unit'>;
+type CategoryRule = Pick<RecordCategoryTableItem, 'direction' | 'unit'>;
 
 /** The single number two values are compared on. Coordinates compare on absolute latitude (FR-C6). */
 export const comparableValue = (category: CategoryRule, value: RecordValue): number | undefined => {
@@ -81,7 +81,7 @@ export const compareRecordValues = (category: CategoryRule, a: RecordValue, b: R
  * Splits the published and historical entries of one category and list into
  * the current record holders (best value; ties are co-holders, FR-9c) and history.
  */
-export const splitCurrentAndHistory = <T extends Pick<RecordEntryRecord, 'value'>>(
+export const splitCurrentAndHistory = <T extends Pick<WorldRecordTableItem, 'value'>>(
   category: CategoryRule,
   entries: T[],
 ): { current: T[]; history: T[] } => {
@@ -123,7 +123,7 @@ const formatCoordinate = (value: number, positive: string, negative: string) =>
   `${Math.abs(value).toFixed(4)}° ${value >= 0 ? positive : negative}`;
 
 export const formatRecordValue = (
-  category: Pick<RecordCategoryRecord, 'unit'>,
+  category: Pick<RecordCategoryTableItem, 'unit'>,
   value: RecordValue,
 ): string => {
   const kind = unitKind(category.unit);
@@ -239,7 +239,7 @@ export const parseCoordinates = (text: string): { latitude: number; longitude?: 
 
 /** Parses free text into a structured value for the category. `amount` stays undefined if it can't. */
 export const parseRecordValue = (
-  category: Pick<RecordCategoryRecord, 'unit'> & { group?: string },
+  category: Pick<RecordCategoryTableItem, 'unit'> & { group?: string },
   text: string,
 ): RecordValue => {
   const original = text.trim();
@@ -272,8 +272,3 @@ export const parseSheetDate = (raw: string): string => {
   return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
 };
 
-/** ISO yyyy-mm-dd → DD/MM/YYYY, the format the rest of the app displays. */
-export const formatEntryDate = (iso: string): string => {
-  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
-};

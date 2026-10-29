@@ -6,6 +6,7 @@ import { actorOf, requireRecordsPermission } from '@lib/records-auth';
 import { parseRecordValue, slugify, unitKind } from '@lib/records-logic';
 import {
   addCategoryAudit,
+  getCategoryAuditLog,
   getEntriesByCategory,
   getFirstCategories,
   getFirstCategory,
@@ -17,10 +18,10 @@ import {
 } from '@lib/records-service';
 import { RECORD_CATEGORY_GROUPS } from '@lib/relational-types';
 import type {
-  FirstCategoryRecord,
+  FirstCategoryTableItem,
   FirstCategoryStatus,
   RecordCategoryGroup,
-  RecordCategoryRecord,
+  RecordCategoryTableItem,
   RecordCategoryStatus,
 } from '@lib/relational-types';
 
@@ -57,7 +58,7 @@ function invalidRecordCategoryInput(input: Partial<Pick<CategoryUpdate, 'group' 
  * Re-parses the values of a category's entries after its unit changed, so they
  * compare correctly, and re-derives which entries are current.
  */
-async function reparseEntries(category: RecordCategoryRecord) {
+async function reparseEntries(category: RecordCategoryTableItem) {
   const entries = await getEntriesByCategory('record', category.categoryId);
   await Promise.all(entries.map(entry => {
     const text = entry.value.original ?? (entry.value.amount !== undefined ? String(entry.value.amount) : '');
@@ -75,7 +76,7 @@ export async function updateRecordCategory(categoryId: string, update: CategoryU
     const category = await getRecordCategory(categoryId);
     if (!category) return { success: false, error: 'Category not found' };
     const changes: string[] = [];
-    const next: RecordCategoryRecord = { ...category };
+    const next: RecordCategoryTableItem = { ...category };
     if (update.name !== undefined && update.name.trim() && update.name.trim() !== category.name) { next.name = update.name.trim(); changes.push(`name "${category.name}" → "${next.name}"`); }
     if (update.description !== undefined && update.description.trim() !== (category.description ?? '')) { next.description = update.description.trim() || undefined; changes.push('description edited'); }
     if (update.group && update.group !== category.group) { next.group = update.group; changes.push(`group ${category.group} → ${update.group}`); }
@@ -121,7 +122,7 @@ export async function createRecordCategory(input: NewRecordCategory) {
     let categoryId = slugify(input.name);
     if (existing.some(c => c.categoryId === categoryId)) categoryId = `${categoryId}-${Date.now().toString(36)}`;
     const now = Date.now();
-    const category: RecordCategoryRecord = {
+    const category: RecordCategoryTableItem = {
       pk: 'RecordCategory',
       sortKey: `RecordCategory:${categoryId}`,
       categoryId,
@@ -152,7 +153,7 @@ export async function updateFirstCategory(categoryId: string, update: { name?: s
     const category = await getFirstCategory(categoryId);
     if (!category) return { success: false, error: 'Category not found' };
     const changes: string[] = [];
-    const next: FirstCategoryRecord = { ...category };
+    const next: FirstCategoryTableItem = { ...category };
     if (update.name !== undefined && update.name.trim() && update.name.trim() !== category.name) { next.name = update.name.trim(); changes.push(`name "${category.name}" → "${next.name}"`); }
     if (update.terminationRule !== undefined && update.terminationRule.trim() !== (category.terminationRule ?? '')) { next.terminationRule = update.terminationRule.trim() || undefined; changes.push('termination rule edited'); }
     if (update.status && update.status !== category.status) { next.status = update.status; changes.push(`status ${category.status} → ${update.status}`); }
@@ -187,7 +188,7 @@ export async function createFirstCategory(input: NewFirstCategory) {
     let categoryId = slugify(input.name);
     if (existing.some(c => c.categoryId === categoryId)) categoryId = `${categoryId}-${Date.now().toString(36)}`;
     const now = Date.now();
-    const category: FirstCategoryRecord = {
+    const category: FirstCategoryTableItem = {
       pk: 'FirstCategory',
       sortKey: `FirstCategory:${categoryId}`,
       categoryId,
@@ -205,4 +206,13 @@ export async function createFirstCategory(input: NewFirstCategory) {
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Failed to create the category' };
   }
+}
+
+/** Change log of one category or discipline, newest first (FR-C5). */
+export async function getCategoryHistory(pk: 'RecordCategory' | 'FirstCategory', categoryId: string) {
+  await requireRecordsPermission('records:manage');
+  const items = await getCategoryAuditLog(pk, categoryId);
+  return items
+    .sort((a, b) => b.at - a.at)
+    .map(({ action, comment, byName, at }) => ({ action, comment, byName, at }));
 }

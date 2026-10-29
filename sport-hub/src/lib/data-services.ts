@@ -1,3 +1,4 @@
+import { revalidateTag, unstable_cache } from 'next/cache';
 import type { ContestRecord, EventMetadataRecord, ContestParticipant, AthleteParticipationRecord, UserProfileRecord, EventRecord } from './relational-types';
 import {
   getAthleteParticipations as getAthleteParticipationsOptimized,
@@ -709,24 +710,36 @@ async function getWorldFirstsFromSheet(): Promise<WorldFirst[]> {
   }));
 }
 
-export const WORLD_RECORDS_CACHE_KEYS = ['world-records', 'world-firsts'] as const;
+/**
+ * The public lists live in the Next.js data cache under this tag for a day. It is
+ * shared by server actions, pages and all server instances, so revalidating the tag
+ * after an admin change shows the change everywhere (an in-memory cache would only
+ * be cleared in the instance that ran the action).
+ */
+export const WORLD_RECORDS_CACHE_TAG = 'world-records';
 
-/** Drops the cached lists so an approval shows up right away (FR-25). */
+/** Drops the cached lists so an admin change shows up right away (FR-25). Server actions only. */
 export function invalidateWorldRecordsCache(): void {
-  WORLD_RECORDS_CACHE_KEYS.forEach(key => cache.delete(key));
+  revalidateTag(WORLD_RECORDS_CACHE_TAG);
 }
 
-export async function getWorldRecords(): Promise<WorldRecord[]> {
-  const cacheKey = `world-records`;
-  const cached = cache.get<WorldRecord[]>(cacheKey);
-  if (cached) return cached;
+const loadWorldRecords = unstable_cache(
+  async (): Promise<WorldRecord[]> =>
+    (await hasRecordsData()) ? getPublicWorldRecords() : getWorldRecordsFromSheet(),
+  ['world-records'],
+  { tags: [WORLD_RECORDS_CACHE_TAG], revalidate: 86400 },
+);
 
+const loadWorldFirsts = unstable_cache(
+  async (): Promise<WorldFirst[]> =>
+    (await hasRecordsData()) ? getPublicWorldFirsts() : getWorldFirstsFromSheet(),
+  ['world-firsts'],
+  { tags: [WORLD_RECORDS_CACHE_TAG], revalidate: 86400 },
+);
+
+export async function getWorldRecords(): Promise<WorldRecord[]> {
   try {
-    const records = (await hasRecordsData())
-      ? await getPublicWorldRecords()
-      : await getWorldRecordsFromSheet();
-    cache.set(cacheKey, records, 86400000); // Cache for 1 day
-    return records;
+    return await loadWorldRecords();
   } catch (error) {
     console.error('Error fetching world records:', error);
     return [];
@@ -734,16 +747,8 @@ export async function getWorldRecords(): Promise<WorldRecord[]> {
 }
 
 export async function getWorldFirsts(): Promise<WorldFirst[]> {
-  const cacheKey = `world-firsts`;
-  const cached = cache.get<WorldFirst[]>(cacheKey);
-  if (cached) return cached;
-
   try {
-    const firsts = (await hasRecordsData())
-      ? await getPublicWorldFirsts()
-      : await getWorldFirstsFromSheet();
-    cache.set(cacheKey, firsts, 86400000); // Cache for 1 day
-    return firsts;
+    return await loadWorldFirsts();
   } catch (error) {
     console.error('Error fetching world firsts:', error);
     return [];

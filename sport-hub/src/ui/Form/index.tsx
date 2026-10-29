@@ -12,7 +12,7 @@ export { RankingsGenderDropdown, ContestsGenderDropdown, RecordsGenderDropdown }
 export { default as ContestSizeDropdown } from './ContestSizeDropdown';
 export { LinkFieldArray } from './LinkFieldArray';
 
-export const FormikSubmitButton = ({ children }: PropsWithChildren<Record<string, never>>) => {
+export const FormikSubmitButton = ({ children }: PropsWithChildren) => {
   const { isSubmitting, isValid, dirty } = useFormikContext();
 
   return (
@@ -93,6 +93,47 @@ export const FormikTextField = ({
           name={name}
           type={type}
           value={field.value}
+        />
+        {meta.touched && typeof meta.error === 'string' && (
+          <div className={styles.errorMessage}>{meta.error}</div>
+        )}
+      </div>
+    </FormikFormField>
+  );
+};
+
+export type TextAreaFieldProps = BaseFormFieldProps<HTMLTextAreaElement> & { rows?: number };
+export const FormikTextAreaField = ({
+  caption,
+  className,
+  id,
+  label,
+  name,
+  required,
+  tooltip,
+  rows = 3,
+  ...textAreaProps
+}: TextAreaFieldProps) => {
+  const [field, meta] = useField<string>(name || id);
+
+  return (
+    <FormikFormField
+      caption={caption}
+      className={className}
+      id={id}
+      label={label}
+      required={required}
+      tooltip={tooltip}
+    >
+      <div>
+        <textarea
+          {...field}
+          {...textAreaProps}
+          className={cn(styles.input, meta.touched && meta.error && styles.error)}
+          id={id}
+          name={name}
+          rows={rows}
+          value={field.value ?? ''}
         />
         {meta.touched && typeof meta.error === 'string' && (
           <div className={styles.errorMessage}>{meta.error}</div>

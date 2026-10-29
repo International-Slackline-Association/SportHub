@@ -266,7 +266,7 @@ export type RecordCategoryGroup = (typeof RECORD_CATEGORY_GROUPS)[number];
  * Flat list managed by admins. All categories share one partition so the whole
  * list loads with a single query.
  */
-export interface RecordCategoryRecord extends RecordsTableItem {
+export interface RecordCategoryTableItem extends RecordsTableItem {
   pk: 'RecordCategory';
   categoryId: string;
   name: string;
@@ -281,7 +281,7 @@ export interface RecordCategoryRecord extends RecordsTableItem {
 }
 
 /** World first category (pk = "FirstCategory", sortKey = "FirstCategory:{categoryId}") */
-export interface FirstCategoryRecord extends RecordsTableItem {
+export interface FirstCategoryTableItem extends RecordsTableItem {
   pk: 'FirstCategory';
   categoryId: string;
   name: string;                  // "Trickline" | "Highline Freestyle" | "Rodeoline" | "Static"
@@ -297,7 +297,7 @@ export interface FirstCategoryRecord extends RecordsTableItem {
  * submission (or from the sheet on import) so a published entry keeps the
  * values that applied at the time.
  */
-export interface EntryAthlete {
+export interface WorldRecordOrFirstEntryAthlete {
   userId?: string;               // SportHub user; missing only for unmatched imported rows
   name: string;
   gender: 'MEN' | 'WOMEN';
@@ -338,7 +338,7 @@ export interface NewCategoryProposal {
 }
 
 /** Fields shared by record and first entries. */
-interface EntryBase extends RecordsTableItem {
+interface RecordsMetadataTableItem extends RecordsTableItem {
   sortKey: 'Metadata';
   entryId: string;
   status: ClaimStatus;
@@ -347,7 +347,7 @@ interface EntryBase extends RecordsTableItem {
   categoryId: string;
   categoryName: string;          // Snapshot for display
   gender: ContestGender;
-  athletes: EntryAthlete[];
+  athletes: WorldRecordOrFirstEntryAthlete[];
   date: string;                  // ISO yyyy-mm-dd ("" when unknown on import)
   locationName?: string;
   locationCountry?: string;
@@ -368,7 +368,7 @@ interface EntryBase extends RecordsTableItem {
 }
 
 /** World record entry (pk = "Record:{entryId}", sortKey = "Metadata") */
-export interface RecordEntryRecord extends EntryBase {
+export interface WorldRecordTableItem extends RecordsMetadataTableItem {
   kind: 'record';
   value: RecordValue;
   setup?: string;
@@ -379,7 +379,7 @@ export interface RecordEntryRecord extends EntryBase {
 }
 
 /** World first entry (pk = "First:{entryId}", sortKey = "Metadata") */
-export interface FirstEntryRecord extends EntryBase {
+export interface WorldFirstTableItem extends RecordsMetadataTableItem {
   kind: 'first';
   trickName: string;
   description?: string;
@@ -389,10 +389,10 @@ export interface FirstEntryRecord extends EntryBase {
   trickGroupId?: string;         // Links the same trick on other genders (reference for reviewers)
 }
 
-export type WorldEntryRecord = RecordEntryRecord | FirstEntryRecord;
+export type WorldRecordOrFirstTableItem = WorldRecordTableItem | WorldFirstTableItem;
 
 /** Audit log entry (pk = entry pk, sortKey = "Audit:{iso timestamp}:{suffix}") */
-export interface EntryAuditRecord extends RecordsTableItem {
+export interface RecordsAuditTableItem extends RecordsTableItem {
   action: string;                // "submitted" | "approved" | "imported" | "status_changed" | ...
   fromStatus?: ClaimStatus;
   toStatus?: ClaimStatus;
@@ -406,7 +406,7 @@ export interface EntryAuditRecord extends RecordsTableItem {
  * Import review item (pk = "ImportIssue", sortKey = "ImportIssue:{kind}:{certId}:{reason}")
  * Sheet rows an admin needs to look at: no category, unparsed value, no matching user, ...
  */
-export interface ImportIssueRecord extends RecordsTableItem {
+export interface RecordsImportIssueTableItem extends RecordsTableItem {
   pk: 'ImportIssue';
   kind: 'record' | 'first';
   certId: string;
@@ -422,7 +422,7 @@ export interface ImportIssueRecord extends RecordsTableItem {
  * Per-athlete pointer in the users table (sortKey = "Record:{entryId}" | "First:{entryId}")
  * Lets a profile list its records and firsts without scanning the records table.
  */
-export interface AthleteEntryLinkRecord extends UserTableRecord {
+export interface AthleteRecordOrFirstLinkTableItem extends UserTableRecord {
   entryId: string;
   kind: 'record' | 'first';
   createdAt: number;
