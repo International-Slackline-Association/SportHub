@@ -16,7 +16,7 @@
  *   DYNAMODB_LOCAL=true tsx src/lib/migrations/migrate-record-categories.ts --execute
  */
 
-import type { ClaimStatus, RecordCategoryGroup, RecordCategoryRecord, WorldEntryRecord } from '../relational-types';
+import type { ClaimStatus, RecordCategoryGroup, RecordCategoryTableItem, WorldRecordOrFirstTableItem } from '../relational-types';
 import { RECORD_CATEGORY_GROUPS } from '../relational-types';
 import { RECORD_CATEGORY_SEEDS } from '../records-categories';
 
@@ -38,14 +38,14 @@ const OLD_GROUPS: Record<string, RecordCategoryGroup> = {
   tricks: 'Other',
 };
 
-type LegacyCategory = RecordCategoryRecord & { valueType?: string };
+type LegacyCategory = RecordCategoryTableItem & { valueType?: string };
 
 const mapGroup = (group: string): RecordCategoryGroup =>
   (RECORD_CATEGORY_GROUPS as readonly string[]).includes(group)
     ? (group as RecordCategoryGroup)
     : OLD_GROUPS[group.toLowerCase().trim()] ?? 'Other';
 
-export const migrateCategory = (old: LegacyCategory): RecordCategoryRecord => {
+export const migrateCategory = (old: LegacyCategory): RecordCategoryTableItem => {
   const seed = RECORD_CATEGORY_SEEDS.find(s => s.categoryId === old.categoryId);
   return {
     pk: 'RecordCategory',
@@ -64,18 +64,18 @@ export const migrateCategory = (old: LegacyCategory): RecordCategoryRecord => {
 };
 
 type LegacyGender = ContestGender | 'MEN' | 'WOMEN';
-type LegacyEntry = Omit<WorldEntryRecord, 'gender'> & { gender?: LegacyGender; list?: LegacyGender; ruleConfirmations?: string[] };
+type LegacyEntry = Omit<WorldRecordOrFirstTableItem, 'gender'> & { gender?: LegacyGender; list?: LegacyGender; ruleConfirmations?: string[] };
 
 const toContestGender = (gender: LegacyGender | undefined): ContestGender =>
   gender === 'WOMEN' || gender === 'WOMEN_ONLY' ? 'WOMEN_ONLY' : gender === 'MIXED' ? 'MIXED' : 'MEN_ONLY';
 
 /** Entry without the rule confirmations, with "list" as "gender" in contest values, or null when already migrated. */
-export const migrateEntry = (old: LegacyEntry): WorldEntryRecord | null => {
+export const migrateEntry = (old: LegacyEntry): WorldRecordOrFirstTableItem | null => {
   const gender = toContestGender(old.gender ?? old.list);
   if (!('list' in old) && !('ruleConfirmations' in old) && old.gender === gender) return null;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { list, ruleConfirmations, ...rest } = old;
-  return { ...rest, gender } as WorldEntryRecord;
+  return { ...rest, gender } as WorldRecordOrFirstTableItem;
 };
 
 async function main() {

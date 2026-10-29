@@ -7,13 +7,13 @@
  */
 
 import type {
-  FirstCategoryRecord,
+  FirstCategoryTableItem,
   RecordCategoryGroup,
-  RecordCategoryRecord,
+  RecordCategoryTableItem,
   RecordCategoryStatus,
 } from './relational-types';
 
-type RecordCategorySeed = Pick<RecordCategoryRecord, 'categoryId' | 'name' | 'group' | 'unit' | 'direction' | 'status'>;
+type RecordCategorySeed = Pick<RecordCategoryTableItem, 'categoryId' | 'name' | 'group' | 'unit' | 'direction' | 'status'>;
 
 const seed = (
   categoryId: string,
@@ -100,7 +100,7 @@ export const RECORD_CATEGORY_SEEDS: RecordCategorySeed[] = [
   seed('rigging-northern-southern', 'Geographically most northern / southern highline rig', 'Other', '°', 'higher'),
 ];
 
-type FirstCategorySeed = Pick<FirstCategoryRecord, 'categoryId' | 'name' | 'terminationRule' | 'status'>;
+type FirstCategorySeed = Pick<FirstCategoryTableItem, 'categoryId' | 'name' | 'terminationRule' | 'status'>;
 
 export const FIRST_CATEGORY_SEEDS: FirstCategorySeed[] = [
   {
@@ -119,7 +119,7 @@ export const FIRST_CATEGORY_SEEDS: FirstCategorySeed[] = [
   { categoryId: 'static', name: 'Static', status: 'active' },
 ];
 
-export const buildRecordCategoryRecords = (now = Date.now()): RecordCategoryRecord[] =>
+export const buildRecordCategoryRecords = (now = Date.now()): RecordCategoryTableItem[] =>
   RECORD_CATEGORY_SEEDS.map((seed, order) => ({
     pk: 'RecordCategory',
     sortKey: `RecordCategory:${seed.categoryId}`,
@@ -129,7 +129,7 @@ export const buildRecordCategoryRecords = (now = Date.now()): RecordCategoryReco
     updatedAt: now,
   }));
 
-export const buildFirstCategoryRecords = (now = Date.now()): FirstCategoryRecord[] =>
+export const buildFirstCategoryRecords = (now = Date.now()): FirstCategoryTableItem[] =>
   FIRST_CATEGORY_SEEDS.map((seed, order) => ({
     pk: 'FirstCategory',
     sortKey: `FirstCategory:${seed.categoryId}`,

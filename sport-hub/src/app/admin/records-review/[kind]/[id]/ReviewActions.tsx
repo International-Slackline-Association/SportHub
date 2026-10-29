@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@ui/Button';
 import { Alert } from '@ui/Alert';
-import type { ClaimStatus, RecordCategoryRecord, FirstCategoryRecord } from '@lib/relational-types';
+import type { ClaimStatus, RecordCategoryTableItem, FirstCategoryTableItem } from '@lib/relational-types';
 import {
   approveClaim,
   rejectClaim,
@@ -21,8 +21,8 @@ type Props = {
   isNewCategory: boolean;
   proposedName?: string;
   similarCategoryIds: string[];
-  recordCategories: Pick<RecordCategoryRecord, 'categoryId' | 'name' | 'group' | 'status'>[];
-  firstCategories: Pick<FirstCategoryRecord, 'categoryId' | 'name'>[];
+  recordCategories: Pick<RecordCategoryTableItem, 'categoryId' | 'name' | 'group' | 'status'>[];
+  firstCategories: Pick<FirstCategoryTableItem, 'categoryId' | 'name'>[];
   /** Firsts in the same category on other lists, to link the same trick (FR-21a). */
   trickLinkOptions: { id: string; label: string }[];
 };

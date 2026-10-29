@@ -52,11 +52,11 @@ import {
 } from '@lib/records-claims';
 import { notifyClaimEvent } from '@lib/records-notifications';
 import type {
-  EntryAuditRecord,
-  FirstCategoryRecord,
-  RecordCategoryRecord,
-  RecordEntryRecord,
-  WorldEntryRecord,
+  RecordsAuditTableItem,
+  FirstCategoryTableItem,
+  RecordCategoryTableItem,
+  WorldRecordTableItem,
+  WorldRecordOrFirstTableItem,
 } from '@lib/relational-types';
 import type { ClaimActionResult, ClaimFormValues } from 'src/app/world_records/claim/types';
 import { INVALID_URL_MESSAGE, isValidUrl } from '@utils/urls';
@@ -65,7 +65,7 @@ type ActionResult = { success: boolean; error?: string; notice?: string };
 
 const errorMessage = (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback);
 
-const isPublicStatus = (status: WorldEntryRecord['status']) => status === 'published' || status === 'historical';
+const isPublicStatus = (status: WorldRecordOrFirstTableItem['status']) => status === 'published' || status === 'historical';
 
 const revalidateRecordPages = () => {
   invalidateWorldRecordsCache();
@@ -89,15 +89,15 @@ export async function getReviewQueue() {
 }
 
 export interface ReviewContext {
-  entry: WorldEntryRecord;
-  audit: EntryAuditRecord[];
-  category: RecordCategoryRecord | FirstCategoryRecord | null;
+  entry: WorldRecordOrFirstTableItem;
+  audit: RecordsAuditTableItem[];
+  category: RecordCategoryTableItem | FirstCategoryTableItem | null;
   /** Current record per list in the category, for significance (FR-18). */
   currentByGender: Partial<Record<ContestGender, { value: string; holders: string[]; date: string }>>;
   /** Records: other categories with similar names (FR-19). Firsts: existing firsts in the category (FR-20). */
   similar: { id: string; label: string; detail?: string }[];
-  recordCategories: RecordCategoryRecord[];
-  firstCategories: FirstCategoryRecord[];
+  recordCategories: RecordCategoryTableItem[];
+  firstCategories: FirstCategoryTableItem[];
   /** FR-C2: an Unchallenged category getting another record prompts the reviewer to set it Active. */
   unchallengedPrompt: boolean;
 }
@@ -105,7 +105,7 @@ export interface ReviewContext {
 const words = (s: string) => new Set(s.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 2));
 
 /** Existing categories that share words with a proposed one, best match first (FR-19). */
-function similarCategories(proposal: { name: string; measurement: string }, categories: RecordCategoryRecord[]) {
+function similarCategories(proposal: { name: string; measurement: string }, categories: RecordCategoryTableItem[]) {
   const proposed = words(`${proposal.name} ${proposal.measurement}`);
   return categories
     .map(c => ({ c, score: [...words(c.name)].filter(w => proposed.has(w)).length }))
@@ -180,14 +180,14 @@ export interface ApproveOptions {
 
 /** Creates the category a new-category claim proposed, as Unchallenged in group Other (FR-C3, FR-19). */
 async function createProposedCategory(
-  entry: RecordEntryRecord,
+  entry: WorldRecordTableItem,
   actor: ReturnType<typeof actorOf>,
-): Promise<RecordCategoryRecord> {
+): Promise<RecordCategoryTableItem> {
   const proposal = entry.newCategoryProposal!;
   const now = Date.now();
   const existing = await getRecordCategories();
   const categoryId = `${slugify(proposal.name)}-${now.toString(36)}`;
-  const category: RecordCategoryRecord = {
+  const category: RecordCategoryTableItem = {
     pk: 'RecordCategory',
     sortKey: `RecordCategory:${categoryId}`,
     categoryId,
@@ -212,17 +212,17 @@ async function createProposedCategory(
  * re-reads the value with that category's unit.
  */
 async function resolveApprovalCategory(
-  entry: RecordEntryRecord,
+  entry: WorldRecordTableItem,
   options: ApproveOptions,
   actor: ReturnType<typeof actorOf>,
-): Promise<{ entry: RecordEntryRecord; category: RecordCategoryRecord } | { error: string }> {
+): Promise<{ entry: WorldRecordTableItem; category: RecordCategoryTableItem } | { error: string }> {
   const isProposal = !!entry.newCategoryProposal && entry.categoryId.startsWith('proposed-');
   if (!isProposal) {
     const category = await getRecordCategory(entry.categoryId);
     return category ? { entry, category } : { error: 'Category not found' };
   }
 
-  let category: RecordCategoryRecord | null;
+  let category: RecordCategoryTableItem | null;
   if (options.mapToCategoryId) {
     category = await getRecordCategory(options.mapToCategoryId);
     if (!category) return { error: 'Category not found' };
@@ -265,8 +265,8 @@ export async function approveClaim(kind: EntryKind, entryId: string, options: Ap
     const lockToken = await lockForDecision(kind, entryId, 'pending');
     if (!lockToken) return { success: false, error: 'Another reviewer is deciding this claim or already did. Reload the page.' };
 
-    let recordCategory: RecordCategoryRecord | null = null;
-    let approved: WorldEntryRecord;
+    let recordCategory: RecordCategoryTableItem | null = null;
+    let approved: WorldRecordOrFirstTableItem;
     let written = false;
     try {
       if (entry.kind === 'record') {
@@ -296,7 +296,7 @@ export async function approveClaim(kind: EntryKind, entryId: string, options: Ap
     await syncAthleteLinks(kind, entryId, entry.athletes, approved.athletes);
     await addAuditEntry(kind, entryId, { action: 'approved', fromStatus: 'pending', toStatus: 'published', comment: options.comment, ...actor });
 
-    let supersedes: RecordEntryRecord[] = [];
+    let supersedes: WorldRecordTableItem[] = [];
     let notice: string | undefined;
     if (recordCategory) {
       // FR-21: the beaten records on the same list become historical
@@ -328,7 +328,7 @@ async function decide(kind: EntryKind, entryId: string, toStatus: 'rejected' | '
     if (!text) return { success: false, error: toStatus === 'rejected' ? 'A reason is required' : 'A comment is required' };
     const entry = await getEntry(kind, entryId);
     if (!entry || entry.status !== 'pending') return { success: false, error: 'Only claims under review can be decided' };
-    const updated: WorldEntryRecord = {
+    const updated: WorldRecordOrFirstTableItem = {
       ...entry,
       status: toStatus,
       reviewComment: text,
@@ -426,7 +426,7 @@ export async function adminUpdateEntry(kind: EntryKind, entryId: string, values:
       updatedAt: Date.now(),
     };
 
-    let updated: WorldEntryRecord;
+    let updated: WorldRecordOrFirstTableItem;
     if (entry.kind === 'first') {
       const category = await getFirstCategory(values.categoryId);
       if (!category) errors.push('Choose a discipline');

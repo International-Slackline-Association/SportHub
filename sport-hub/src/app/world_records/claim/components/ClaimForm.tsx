@@ -11,14 +11,14 @@ import { Form, Formik } from 'formik';
 import Button from '@ui/Button';
 import { Alert } from '@ui/Alert';
 import Spinner from '@ui/Spinner';
-import type { ClaimStatus, FirstCategoryRecord, RecordCategoryRecord } from '@lib/relational-types';
+import type { ClaimStatus, FirstCategoryTableItem, RecordCategoryTableItem } from '@lib/relational-types';
 import { deleteDraft, saveClaim } from '../../actions';
 import type { ClaimFormValues } from '../types';
 import ClaimFields, { PathResetter } from './ClaimFields';
 
 type Props = {
-  recordCategories: RecordCategoryRecord[];
-  firstCategories: FirstCategoryRecord[];
+  recordCategories: RecordCategoryTableItem[];
+  firstCategories: FirstCategoryTableItem[];
   initialValues: ClaimFormValues;
   claimantId: string;
   reviewComment?: string;

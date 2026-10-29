@@ -4,25 +4,26 @@
  * communication team on approval.
  */
 
+import { formatISODay } from '@utils/dates';
 import { getRecordCategory } from './records-service';
-import { formatEntryDate, formatRecordValue, GENDER_TITLE_LABELS } from './records-logic';
+import { formatRecordValue, GENDER_TITLE_LABELS } from './records-logic';
 import { getUser } from './user-service';
 import { sendMail, siteUrl } from './mailer';
 import { RECORDS_TEAM_EMAIL } from './records-rules';
 import { getCountryByCode } from '@utils/countries';
-import type { RecordEntryRecord, WorldEntryRecord } from './relational-types';
+import type { WorldRecordTableItem, WorldRecordOrFirstTableItem } from './relational-types';
 
 export type ClaimEvent = 'submitted' | 'approved' | 'changes_requested' | 'rejected';
 
 export interface ClaimEventContext {
   comment?: string;
-  supersedes?: RecordEntryRecord[];   // Records this approval made historical
+  supersedes?: WorldRecordTableItem[];   // Records this approval made historical
 }
 
 const reviewTeam = () => process.env.RECORDS_REVIEW_EMAIL || RECORDS_TEAM_EMAIL;
 const communicationTeam = () => process.env.RECORDS_COMMUNICATION_EMAIL || 'communication@slacklineinternational.org';
 
-async function athleteEmails(entry: WorldEntryRecord): Promise<string[]> {
+async function athleteEmails(entry: WorldRecordOrFirstTableItem): Promise<string[]> {
   const ids = [...new Set([entry.claimantUserId, ...entry.athletes.map(a => a.userId)].filter((id): id is string => !!id))];
   const profiles = await Promise.all(ids.map(id => getUser(id).catch(() => null)));
   return [
@@ -35,11 +36,11 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const country = (code?: string) => (code && getCountryByCode(code)?.name) || code?.toUpperCase();
 
 /** Witness email addresses (older claims had one contact field that could be a phone number). */
-const witnessEmails = (entry: WorldEntryRecord) =>
+const witnessEmails = (entry: WorldRecordOrFirstTableItem) =>
   entry.kind === 'record' ? entry.witnesses.map(w => (w.email ?? w.contact ?? '').trim()).filter(c => EMAIL.test(c)) : [];
 
 /** Everything on the claim, for the submission emails. */
-function fullDetails(entry: WorldEntryRecord): string[] {
+function fullDetails(entry: WorldRecordOrFirstTableItem): string[] {
   const lines: string[] = [];
   const add = (label: string, value?: string | false) => { if (value) lines.push(`${label}: ${value}`); };
   if (entry.kind === 'record') {
@@ -67,7 +68,7 @@ function fullDetails(entry: WorldEntryRecord): string[] {
   return lines;
 }
 
-async function summary(entry: WorldEntryRecord): Promise<{ title: string; lines: string[] }> {
+async function summary(entry: WorldRecordOrFirstTableItem): Promise<{ title: string; lines: string[] }> {
   const athletes = entry.athletes.map(a => `${a.name}${a.country ? ` (${country(a.country)})` : ''}`).join(', ');
   const where = [entry.locationName, country(entry.locationCountry)].filter(Boolean).join(', ');
   const lines = [`Athletes: ${athletes}${entry.athletes.length > 1 ? ' (one joint performance)' : ''}`, `List: ${GENDER_TITLE_LABELS[entry.gender]}`];
@@ -82,23 +83,23 @@ async function summary(entry: WorldEntryRecord): Promise<{ title: string; lines:
     lines.unshift(`Discipline: ${entry.categoryName}`, `Trick: ${entry.trickName}`);
     if (entry.description) lines.push(`Description: ${entry.description}`);
   }
-  if (entry.date) lines.push(`Date: ${formatEntryDate(entry.date)}`);
+  if (entry.date) lines.push(`Date: ${formatISODay(entry.date)}`);
   if (where) lines.push(`Location: ${where}`);
   if (entry.evidence.length > 0) lines.push('Evidence:', ...entry.evidence.map(e => `  ${e.url}`));
   return { title, lines };
 }
 
-async function superseded(entry: WorldEntryRecord, supersedes: RecordEntryRecord[]): Promise<string[]> {
+async function superseded(entry: WorldRecordOrFirstTableItem, supersedes: WorldRecordTableItem[]): Promise<string[]> {
   if (entry.kind !== 'record' || supersedes.length === 0) return [];
   const category = await getRecordCategory(entry.categoryId);
   return [
     'Previous record:',
-    ...supersedes.map(old => `  ${old.athletes.map(a => a.name).join(', ')}: ${category ? formatRecordValue(category, old.value) : old.value.original ?? ''}${old.date ? ` (${formatEntryDate(old.date)})` : ''}`),
+    ...supersedes.map(old => `  ${old.athletes.map(a => a.name).join(', ')}: ${category ? formatRecordValue(category, old.value) : old.value.original ?? ''}${old.date ? ` (${formatISODay(old.date)})` : ''}`),
   ];
 }
 
 /** Never throws: a failed email must not block or roll back the action (FR-31). */
-export async function notifyClaimEvent(event: ClaimEvent, entry: WorldEntryRecord, context: ClaimEventContext = {}): Promise<void> {
+export async function notifyClaimEvent(event: ClaimEvent, entry: WorldRecordOrFirstTableItem, context: ClaimEventContext = {}): Promise<void> {
   try {
     const [{ title, lines }, recipients] = await Promise.all([summary(entry), athleteEmails(entry)]);
     const details = lines.join('\n');

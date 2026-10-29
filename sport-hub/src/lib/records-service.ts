@@ -8,22 +8,22 @@
  */
 
 import { BatchWriteCommand, PutCommand, QueryCommand, UpdateCommand, type QueryCommandInput } from '@aws-sdk/lib-dynamodb';
+import { formatISODay } from '@utils/dates';
 import { ddbClient, dynamodb, getTableName, RECORDS_TABLE, USERS_TABLE } from './dynamodb';
 import type {
-  AthleteEntryLinkRecord,
+  AthleteRecordOrFirstLinkTableItem,
   ClaimStatus,
-  EntryAthlete,
-  EntryAuditRecord,
-  FirstCategoryRecord,
-  FirstEntryRecord,
-  ImportIssueRecord,
-  RecordCategoryRecord,
-  RecordEntryRecord,
-  WorldEntryRecord,
+  WorldRecordOrFirstEntryAthlete,
+  RecordsAuditTableItem,
+  FirstCategoryTableItem,
+  WorldFirstTableItem,
+  RecordsImportIssueTableItem,
+  RecordCategoryTableItem,
+  WorldRecordTableItem,
+  WorldRecordOrFirstTableItem,
 } from './relational-types';
 import {
   firstTitle,
-  formatEntryDate,
   formatRecordValue,
   recordTitle,
   RECORD_GENDERS,
@@ -65,43 +65,43 @@ const auditSuffix = () => Math.random().toString(36).slice(2, 8);
 
 const byOrder = <T extends { order: number }>(a: T, b: T) => a.order - b.order;
 
-export async function getRecordCategories(): Promise<RecordCategoryRecord[]> {
-  const items = await queryAll<RecordCategoryRecord>({
+export async function getRecordCategories(): Promise<RecordCategoryTableItem[]> {
+  const items = await queryAll<RecordCategoryTableItem>({
     KeyConditionExpression: 'pk = :pk AND begins_with(sortKey, :prefix)',
     ExpressionAttributeValues: { ':pk': 'RecordCategory', ':prefix': 'RecordCategory:' },
   });
   return items.sort(byOrder);
 }
 
-export async function getFirstCategories(): Promise<FirstCategoryRecord[]> {
-  const items = await queryAll<FirstCategoryRecord>({
+export async function getFirstCategories(): Promise<FirstCategoryTableItem[]> {
+  const items = await queryAll<FirstCategoryTableItem>({
     KeyConditionExpression: 'pk = :pk AND begins_with(sortKey, :prefix)',
     ExpressionAttributeValues: { ':pk': 'FirstCategory', ':prefix': 'FirstCategory:' },
   });
   return items.sort(byOrder);
 }
 
-export async function getRecordCategory(categoryId: string): Promise<RecordCategoryRecord | null> {
+export async function getRecordCategory(categoryId: string): Promise<RecordCategoryTableItem | null> {
   const item = await dynamodb.getItem(RECORDS_TABLE, { pk: 'RecordCategory', sortKey: `RecordCategory:${categoryId}` });
-  return (item as RecordCategoryRecord | undefined) ?? null;
+  return (item as RecordCategoryTableItem | undefined) ?? null;
 }
 
-export async function getFirstCategory(categoryId: string): Promise<FirstCategoryRecord | null> {
+export async function getFirstCategory(categoryId: string): Promise<FirstCategoryTableItem | null> {
   const item = await dynamodb.getItem(RECORDS_TABLE, { pk: 'FirstCategory', sortKey: `FirstCategory:${categoryId}` });
-  return (item as FirstCategoryRecord | undefined) ?? null;
+  return (item as FirstCategoryTableItem | undefined) ?? null;
 }
 
-export async function putCategory(category: RecordCategoryRecord | FirstCategoryRecord): Promise<void> {
+export async function putCategory(category: RecordCategoryTableItem | FirstCategoryTableItem): Promise<void> {
   await dynamodb.putItem(RECORDS_TABLE, category as unknown as Record<string, unknown>);
 }
 
 /** Category changes are logged in the category partition (FR-C5): sortKey "Audit:{categoryId}:{iso}". */
 export async function addCategoryAudit(
-  category: Pick<RecordCategoryRecord | FirstCategoryRecord, 'pk' | 'categoryId'>,
-  audit: Omit<EntryAuditRecord, 'pk' | 'sortKey' | 'at'>,
+  category: Pick<RecordCategoryTableItem | FirstCategoryTableItem, 'pk' | 'categoryId'>,
+  audit: Omit<RecordsAuditTableItem, 'pk' | 'sortKey' | 'at'>,
 ): Promise<void> {
   const at = Date.now();
-  const record: EntryAuditRecord = {
+  const record: RecordsAuditTableItem = {
     ...audit,
     pk: category.pk,
     sortKey: `Audit:${category.categoryId}:${new Date(at).toISOString()}:${auditSuffix()}`,
@@ -110,8 +110,8 @@ export async function addCategoryAudit(
   await dynamodb.putItem(RECORDS_TABLE, record as unknown as Record<string, unknown>);
 }
 
-export async function getCategoryAuditLog(pk: 'RecordCategory' | 'FirstCategory', categoryId: string): Promise<EntryAuditRecord[]> {
-  return queryAll<EntryAuditRecord>({
+export async function getCategoryAuditLog(pk: 'RecordCategory' | 'FirstCategory', categoryId: string): Promise<RecordsAuditTableItem[]> {
+  return queryAll<RecordsAuditTableItem>({
     KeyConditionExpression: 'pk = :pk AND begins_with(sortKey, :prefix)',
     ExpressionAttributeValues: { ':pk': pk, ':prefix': `Audit:${categoryId}:` },
   });
@@ -121,12 +121,12 @@ export async function getCategoryAuditLog(pk: 'RecordCategory' | 'FirstCategory'
 // ENTRIES (claims, published and historical records / firsts)
 // ============================================================================
 
-export async function getEntry(kind: 'record', entryId: string): Promise<RecordEntryRecord | null>;
-export async function getEntry(kind: 'first', entryId: string): Promise<FirstEntryRecord | null>;
-export async function getEntry(kind: EntryKind, entryId: string): Promise<WorldEntryRecord | null>;
-export async function getEntry(kind: EntryKind, entryId: string): Promise<WorldEntryRecord | null> {
+export async function getEntry(kind: 'record', entryId: string): Promise<WorldRecordTableItem | null>;
+export async function getEntry(kind: 'first', entryId: string): Promise<WorldFirstTableItem | null>;
+export async function getEntry(kind: EntryKind, entryId: string): Promise<WorldRecordOrFirstTableItem | null>;
+export async function getEntry(kind: EntryKind, entryId: string): Promise<WorldRecordOrFirstTableItem | null> {
   const item = await dynamodb.getItem(RECORDS_TABLE, { pk: entryPk(kind, entryId), sortKey: 'Metadata' });
-  return (item as WorldEntryRecord | undefined) ?? null;
+  return (item as WorldRecordOrFirstTableItem | undefined) ?? null;
 }
 
 /** A decision lock older than this is treated as abandoned (e.g. the server crashed mid-approval). */
@@ -157,10 +157,10 @@ const isConditionFailure = (error: unknown) => (error as { name?: string }).name
  * Writes an entry, keeping its GSI keys in sync with status and date. Any
  * decision lock is dropped, so the lock holder's final write releases it.
  */
-export async function putEntry(entry: WorldEntryRecord, options: PutEntryOptions = {}): Promise<void> {
+export async function putEntry(entry: WorldRecordOrFirstTableItem, options: PutEntryOptions = {}): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { decisionLockAt, decisionLockToken, ...rest } = entry as WorldEntryRecord & { decisionLockAt?: number; decisionLockToken?: string };
-  const item: WorldEntryRecord = {
+  const { decisionLockAt, decisionLockToken, ...rest } = entry as WorldRecordOrFirstTableItem & { decisionLockAt?: number; decisionLockToken?: string };
+  const item: WorldRecordOrFirstTableItem = {
     ...rest,
     pk: entryPk(entry.kind, entry.entryId),
     sortKey: 'Metadata',
@@ -230,11 +230,11 @@ export async function releaseDecisionLock(kind: EntryKind, entryId: string, toke
   }
 }
 
-export async function getEntriesByStatus(kind: 'record', status: ClaimStatus): Promise<RecordEntryRecord[]>;
-export async function getEntriesByStatus(kind: 'first', status: ClaimStatus): Promise<FirstEntryRecord[]>;
-export async function getEntriesByStatus(kind: EntryKind, status: ClaimStatus): Promise<WorldEntryRecord[]>;
-export async function getEntriesByStatus(kind: EntryKind, status: ClaimStatus): Promise<WorldEntryRecord[]> {
-  return queryAll<WorldEntryRecord>({
+export async function getEntriesByStatus(kind: 'record', status: ClaimStatus): Promise<WorldRecordTableItem[]>;
+export async function getEntriesByStatus(kind: 'first', status: ClaimStatus): Promise<WorldFirstTableItem[]>;
+export async function getEntriesByStatus(kind: EntryKind, status: ClaimStatus): Promise<WorldRecordOrFirstTableItem[]>;
+export async function getEntriesByStatus(kind: EntryKind, status: ClaimStatus): Promise<WorldRecordOrFirstTableItem[]> {
+  return queryAll<WorldRecordOrFirstTableItem>({
     IndexName: 'statusKey-index',
     KeyConditionExpression: 'statusKey = :sk',
     ExpressionAttributeValues: { ':sk': statusKeyFor(kind, status) },
@@ -246,10 +246,10 @@ export async function getEntriesByStatus(kind: EntryKind, status: ClaimStatus): 
  * All entries of one category (any status), newest first. Record and first
  * category ids share the category-index, so entries are filtered by kind.
  */
-export async function getEntriesByCategory(kind: 'record', categoryId: string): Promise<RecordEntryRecord[]>;
-export async function getEntriesByCategory(kind: 'first', categoryId: string): Promise<FirstEntryRecord[]>;
-export async function getEntriesByCategory(kind: EntryKind, categoryId: string): Promise<WorldEntryRecord[]> {
-  const items = await queryAll<WorldEntryRecord>({
+export async function getEntriesByCategory(kind: 'record', categoryId: string): Promise<WorldRecordTableItem[]>;
+export async function getEntriesByCategory(kind: 'first', categoryId: string): Promise<WorldFirstTableItem[]>;
+export async function getEntriesByCategory(kind: EntryKind, categoryId: string): Promise<WorldRecordOrFirstTableItem[]> {
+  const items = await queryAll<WorldRecordOrFirstTableItem>({
     IndexName: 'category-index',
     KeyConditionExpression: 'categoryId = :c',
     ExpressionAttributeValues: { ':c': categoryId },
@@ -265,10 +265,10 @@ const isPublicStatus = (status: ClaimStatus) => status === 'published' || status
  * the best value(s) are published (ties are co-holders), the rest historical.
  * Returns the entries whose status changed.
  */
-export async function recomputeRecordStatuses(category: RecordCategoryRecord): Promise<RecordEntryRecord[]> {
+export async function recomputeRecordStatuses(category: RecordCategoryTableItem): Promise<WorldRecordTableItem[]> {
   const entries = (await getEntriesByCategory('record', category.categoryId)).filter(e => isPublicStatus(e.status));
 
-  const changed: RecordEntryRecord[] = [];
+  const changed: WorldRecordTableItem[] = [];
   for (const list of RECORD_GENDERS) {
     const { current, history } = splitCurrentAndHistory(category, entries.filter(e => e.gender === list));
     for (const [group, status] of [[current, 'published'], [history, 'historical']] as const) {
@@ -288,10 +288,10 @@ export async function recomputeRecordStatuses(category: RecordCategoryRecord): P
 export async function addAuditEntry(
   kind: EntryKind,
   entryId: string,
-  audit: Omit<EntryAuditRecord, 'pk' | 'sortKey' | 'at'> & { at?: number },
+  audit: Omit<RecordsAuditTableItem, 'pk' | 'sortKey' | 'at'> & { at?: number },
 ): Promise<void> {
   const at = audit.at ?? Date.now();
-  const record: EntryAuditRecord = {
+  const record: RecordsAuditTableItem = {
     ...audit,
     pk: entryPk(kind, entryId),
     sortKey: `Audit:${new Date(at).toISOString()}:${auditSuffix()}`,
@@ -304,7 +304,7 @@ export async function addAuditEntry(
  * Deletes an entry with its audit log, the claimant's "My claims" pointer and
  * the athletes' pointers (a withdrawn claim has them). Only for drafts.
  */
-export async function deleteEntry(entry: WorldEntryRecord): Promise<void> {
+export async function deleteEntry(entry: WorldRecordOrFirstTableItem): Promise<void> {
   const items = await queryAll<{ pk: string; sortKey: string }>({
     KeyConditionExpression: 'pk = :pk',
     ExpressionAttributeValues: { ':pk': entryPk(entry.kind, entry.entryId) },
@@ -316,8 +316,8 @@ export async function deleteEntry(entry: WorldEntryRecord): Promise<void> {
   await deleteItems(USERS_TABLE, pointers);
 }
 
-export async function getAuditLog(kind: EntryKind, entryId: string): Promise<EntryAuditRecord[]> {
-  return queryAll<EntryAuditRecord>({
+export async function getAuditLog(kind: EntryKind, entryId: string): Promise<RecordsAuditTableItem[]> {
+  return queryAll<RecordsAuditTableItem>({
     KeyConditionExpression: 'pk = :pk AND begins_with(sortKey, :prefix)',
     ExpressionAttributeValues: { ':pk': entryPk(kind, entryId), ':prefix': 'Audit:' },
   });
@@ -355,12 +355,12 @@ export async function countSubmission(userId: string, max: number): Promise<bool
 // IMPORT REVIEW LIST
 // ============================================================================
 
-export async function putImportIssue(issue: ImportIssueRecord): Promise<void> {
+export async function putImportIssue(issue: RecordsImportIssueTableItem): Promise<void> {
   await dynamodb.putItem(RECORDS_TABLE, issue as unknown as Record<string, unknown>);
 }
 
-export async function getImportIssues(): Promise<ImportIssueRecord[]> {
-  return queryAll<ImportIssueRecord>({
+export async function getImportIssues(): Promise<RecordsImportIssueTableItem[]> {
+  return queryAll<RecordsImportIssueTableItem>({
     KeyConditionExpression: 'pk = :pk',
     ExpressionAttributeValues: { ':pk': 'ImportIssue' },
   });
@@ -371,7 +371,7 @@ export async function getImportIssues(): Promise<ImportIssueRecord[]> {
 // ============================================================================
 
 export async function putAthleteLink(userId: string, kind: EntryKind, entryId: string): Promise<void> {
-  const link: AthleteEntryLinkRecord = {
+  const link: AthleteRecordOrFirstLinkTableItem = {
     userId,
     sortKey: entryPk(kind, entryId),
     entryId,
@@ -381,7 +381,7 @@ export async function putAthleteLink(userId: string, kind: EntryKind, entryId: s
   await dynamodb.putItem(USERS_TABLE, link as unknown as Record<string, unknown>);
 }
 
-const athleteUserIds = (athletes: Pick<EntryAthlete, 'userId'>[]) =>
+const athleteUserIds = (athletes: Pick<WorldRecordOrFirstEntryAthlete, 'userId'>[]) =>
   [...new Set(athletes.map(a => a.userId).filter((id): id is string => !!id))];
 
 /**
@@ -391,8 +391,8 @@ const athleteUserIds = (athletes: Pick<EntryAthlete, 'userId'>[]) =>
 export async function syncAthleteLinks(
   kind: EntryKind,
   entryId: string,
-  before: Pick<EntryAthlete, 'userId'>[],
-  after: Pick<EntryAthlete, 'userId'>[],
+  before: Pick<WorldRecordOrFirstEntryAthlete, 'userId'>[],
+  after: Pick<WorldRecordOrFirstEntryAthlete, 'userId'>[],
 ): Promise<void> {
   const previous = athleteUserIds(before);
   const next = athleteUserIds(after);
@@ -407,7 +407,7 @@ export async function getAthleteEntryIds(userId: string, kind: EntryKind): Promi
     'userId = :uid AND begins_with(sortKey, :prefix)',
     { ':uid': userId, ':prefix': `${kind === 'record' ? 'Record' : 'First'}:` },
   );
-  return items.map(item => (item as AthleteEntryLinkRecord).entryId);
+  return items.map(item => (item as AthleteRecordOrFirstLinkTableItem).entryId);
 }
 
 /**
@@ -425,10 +425,10 @@ export async function putClaimantLink(userId: string, kind: EntryKind, entryId: 
 }
 
 /** Entries a user claimed or is an athlete on, any status. */
-export async function getUserClaims(userId: string): Promise<WorldEntryRecord[]> {
+export async function getUserClaims(userId: string): Promise<WorldRecordOrFirstTableItem[]> {
   const items = (await Promise.all(['Claim:', 'Record:', 'First:'].map(prefix =>
     dynamodb.queryItems(USERS_TABLE, 'userId = :uid AND begins_with(sortKey, :prefix)', { ':uid': userId, ':prefix': prefix }),
-  ))).flat() as AthleteEntryLinkRecord[];
+  ))).flat() as AthleteRecordOrFirstLinkTableItem[];
   const ids = { record: new Set<string>(), first: new Set<string>() };
   for (const item of items) ids[item.kind].add(item.entryId);
   const [records, firsts] = await Promise.all([
@@ -439,11 +439,11 @@ export async function getUserClaims(userId: string): Promise<WorldEntryRecord[]>
 }
 
 /** Batch-loads entry metadata (BatchGet takes at most 100 keys per call). */
-export async function getEntriesBatch(kind: EntryKind, entryIds: string[]): Promise<WorldEntryRecord[]> {
-  const results: WorldEntryRecord[] = [];
+export async function getEntriesBatch(kind: EntryKind, entryIds: string[]): Promise<WorldRecordOrFirstTableItem[]> {
+  const results: WorldRecordOrFirstTableItem[] = [];
   for (let i = 0; i < entryIds.length; i += 100) {
     const keys = entryIds.slice(i, i + 100).map(id => ({ pk: entryPk(kind, id), sortKey: 'Metadata' }));
-    results.push(...((await dynamodb.batchGetItems(RECORDS_TABLE, keys)) as WorldEntryRecord[]));
+    results.push(...((await dynamodb.batchGetItems(RECORDS_TABLE, keys)) as WorldRecordOrFirstTableItem[]));
   }
   return results;
 }
@@ -478,7 +478,7 @@ export interface WorldRecord {
   categoryId: string;
   categoryName: string;
   categoryGroup: string;
-  categoryStatus: RecordCategoryRecord['status'];
+  categoryStatus: RecordCategoryTableItem['status'];
   value: string;                 // Formatted, e.g. "1,900 m"
   specs: string;                 // Further details (original sheet text, setup)
   gender: ContestGender;
@@ -502,17 +502,17 @@ export interface WorldFirst {
   links: string[];
 }
 
-const toDisplayAthletes = (entry: WorldEntryRecord): DisplayAthlete[] =>
+const toDisplayAthletes = (entry: WorldRecordOrFirstTableItem): DisplayAthlete[] =>
   entry.athletes.map(({ userId, name, country, gender }) => ({ userId, name, country, gender }));
 
 /** Claims store ISO codes, imported rows country names. */
 const countryName = (country?: string) => (country && getCountryByCode(country)?.name) || country;
 
-const links = (entry: WorldEntryRecord) => entry.evidence.map(e => e.url).filter(Boolean);
+const links = (entry: WorldRecordOrFirstTableItem) => entry.evidence.map(e => e.url).filter(Boolean);
 
 const toWorldRecords = (
-  categories: RecordCategoryRecord[],
-  entries: RecordEntryRecord[],
+  categories: RecordCategoryTableItem[],
+  entries: WorldRecordTableItem[],
 ): WorldRecord[] => {
   const rows: WorldRecord[] = [];
 
@@ -535,7 +535,7 @@ const toWorldRecords = (
         specs: [entry.value.original, entry.furtherSpecs, entry.setup].filter(Boolean).join(' · '),
         gender: entry.gender,
         athletes: toDisplayAthletes(entry),
-        date: formatEntryDate(entry.date),
+        date: formatISODay(entry.date),
         location: [entry.locationName, countryName(entry.locationCountry)].filter(Boolean).join(', '),
         links: links(entry),
       });
@@ -544,7 +544,7 @@ const toWorldRecords = (
   return rows;
 };
 
-const toWorldFirsts = (categories: FirstCategoryRecord[], entries: FirstEntryRecord[]): WorldFirst[] => {
+const toWorldFirsts = (categories: FirstCategoryTableItem[], entries: WorldFirstTableItem[]): WorldFirst[] => {
   const categoryById = new Map(categories.map(c => [c.categoryId, c]));
   return entries.map(entry => ({
     entryId: entry.entryId,
@@ -556,7 +556,7 @@ const toWorldFirsts = (categories: FirstCategoryRecord[], entries: FirstEntryRec
     lineDetails: entry.lineDetails ?? '',
     gender: entry.gender,
     athletes: toDisplayAthletes(entry),
-    date: formatEntryDate(entry.date),
+    date: formatISODay(entry.date),
     links: links(entry),
   }));
 };

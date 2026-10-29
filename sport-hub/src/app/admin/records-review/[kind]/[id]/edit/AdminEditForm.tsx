@@ -6,7 +6,7 @@ import { Form, Formik } from 'formik';
 import Button from '@ui/Button';
 import { Alert } from '@ui/Alert';
 import Spinner from '@ui/Spinner';
-import type { FirstCategoryRecord, RecordCategoryRecord } from '@lib/relational-types';
+import type { FirstCategoryTableItem, RecordCategoryTableItem } from '@lib/relational-types';
 import { adminUpdateEntry } from 'src/app/admin/records-review/actions';
 import ClaimFields, { PathResetter } from 'src/app/world_records/claim/components/ClaimFields';
 import type { ClaimFormValues } from 'src/app/world_records/claim/types';
@@ -15,8 +15,8 @@ type Props = {
   kind: 'record' | 'first';
   entryId: string;
   initialValues: ClaimFormValues;
-  recordCategories: RecordCategoryRecord[];
-  firstCategories: FirstCategoryRecord[];
+  recordCategories: RecordCategoryTableItem[];
+  firstCategories: FirstCategoryTableItem[];
   claimantId: string;
 };
 

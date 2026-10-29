@@ -15,10 +15,10 @@ import {
 import { formatRecordValue } from './records-logic';
 import type {
   ClaimStatus,
-  FirstEntryRecord,
-  RecordCategoryRecord,
-  RecordEntryRecord,
-  WorldEntryRecord,
+  WorldFirstTableItem,
+  RecordCategoryTableItem,
+  WorldRecordTableItem,
+  WorldRecordOrFirstTableItem,
 } from './relational-types';
 
 export const EXPORT_DATASETS = {
@@ -58,15 +58,15 @@ const list = (values: (string | undefined)[]) => values.filter(Boolean).join('; 
 const RECORD_STATUSES: ClaimStatus[] = ['pending', 'changes_requested', 'published', 'historical', 'rejected'];
 const FIRST_STATUSES: ClaimStatus[] = ['pending', 'changes_requested', 'published', 'rejected'];
 
-async function nonDraftEntries(kind: 'record', statuses: ClaimStatus[]): Promise<RecordEntryRecord[]>;
-async function nonDraftEntries(kind: 'first', statuses: ClaimStatus[]): Promise<FirstEntryRecord[]>;
-async function nonDraftEntries(kind: 'record' | 'first', statuses: ClaimStatus[]): Promise<WorldEntryRecord[]> {
+async function nonDraftEntries(kind: 'record', statuses: ClaimStatus[]): Promise<WorldRecordTableItem[]>;
+async function nonDraftEntries(kind: 'first', statuses: ClaimStatus[]): Promise<WorldFirstTableItem[]>;
+async function nonDraftEntries(kind: 'record' | 'first', statuses: ClaimStatus[]): Promise<WorldRecordOrFirstTableItem[]> {
   const lists = await Promise.all(statuses.map(status => getEntriesByStatus(kind, status)));
   return lists.flat().sort((a, b) => a.categoryName.localeCompare(b.categoryName) || (a.date || '').localeCompare(b.date || ''));
 }
 
 /** Columns every entry has, in export order. */
-const entryColumns = (entry: WorldEntryRecord, title: string | undefined): Row => ({
+const entryColumns = (entry: WorldRecordOrFirstTableItem, title: string | undefined): Row => ({
   entry_id: entry.entryId,
   kind: entry.kind,
   status: entry.status,
@@ -84,7 +84,7 @@ const entryColumns = (entry: WorldEntryRecord, title: string | undefined): Row =
   evidence_links: list(entry.evidence.map(e => e.url)),
 });
 
-const trailingColumns = (entry: WorldEntryRecord): Row => ({
+const trailingColumns = (entry: WorldRecordOrFirstTableItem): Row => ({
   claimant: entry.claimantName,
   claimant_user_id: entry.claimantUserId,
   source: entry.source,
@@ -104,7 +104,7 @@ async function recordRows(): Promise<Row[]> {
     getRecordCategories(),
     getPublicWorldRecords(),
   ]);
-  const categoryById = new Map<string, RecordCategoryRecord>(categories.map(c => [c.categoryId, c]));
+  const categoryById = new Map<string, RecordCategoryTableItem>(categories.map(c => [c.categoryId, c]));
   const titleById = new Map(publicRecords.map(r => [r.entryId, r.title]));
   return entries.map(entry => {
     const category = categoryById.get(entry.categoryId);
@@ -153,7 +153,7 @@ async function athleteRows(): Promise<Row[]> {
     getRecordCategories(),
   ]);
   const categoryById = new Map(categories.map(c => [c.categoryId, c]));
-  const entries: WorldEntryRecord[] = [...records, ...firsts];
+  const entries: WorldRecordOrFirstTableItem[] = [...records, ...firsts];
   return entries.flatMap(entry => entry.athletes.map(athlete => {
     const category = entry.kind === 'record' ? categoryById.get(entry.categoryId) : undefined;
     return {

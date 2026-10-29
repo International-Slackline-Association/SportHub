@@ -1,11 +1,12 @@
+import { formatISODay } from '@utils/dates';
 import { getEntriesByStatus, getRecordCategories } from '@lib/records-service';
-import { formatEntryDate, formatRecordValue } from '@lib/records-logic';
+import { formatRecordValue } from '@lib/records-logic';
 import { requireRecordsPermission } from '@lib/records-auth';
-import type { ClaimStatus, WorldEntryRecord } from '@lib/relational-types';
+import type { ClaimStatus, WorldRecordOrFirstTableItem } from '@lib/relational-types';
 import type { EntryRow } from './EntryTable';
 
 /** Table rows for the admin lists; records are formatted with their category's unit. */
-export async function toEntryRows(entries: WorldEntryRecord[]): Promise<EntryRow[]> {
+export async function toEntryRows(entries: WorldRecordOrFirstTableItem[]): Promise<EntryRow[]> {
   const categories = new Map((await getRecordCategories()).map(c => [c.categoryId, c]));
   return entries.map(e => {
     const category = e.kind === 'record' ? categories.get(e.categoryId) : undefined;
@@ -14,7 +15,7 @@ export async function toEntryRows(entries: WorldEntryRecord[]): Promise<EntryRow
       entryId: e.entryId,
       status: e.status,
       submitted: e.submittedAt ? new Date(e.submittedAt).toISOString().slice(0, 10) : '',
-      date: e.date ? formatEntryDate(e.date) : '',
+      date: e.date ? formatISODay(e.date) : '',
       category: e.categoryName,
       claim: e.kind === 'first' ? e.trickName : category ? formatRecordValue(category, e.value) : e.value.original ?? '',
       athletes: e.athletes.map(a => a.name).join(', '),
@@ -26,7 +27,7 @@ export async function toEntryRows(entries: WorldEntryRecord[]): Promise<EntryRow
 }
 
 /** Every entry of one kind except private drafts, newest first. */
-export async function getAllEntries(kind: 'record' | 'first'): Promise<WorldEntryRecord[]> {
+export async function getAllEntries(kind: 'record' | 'first'): Promise<WorldRecordOrFirstTableItem[]> {
   await requireRecordsPermission('records:manage');
   const statuses: ClaimStatus[] = kind === 'record'
     ? ['pending', 'changes_requested', 'published', 'historical', 'rejected']

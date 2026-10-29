@@ -1,11 +1,12 @@
+import { formatISODay } from '@utils/dates';
 import type { Metadata } from 'next';
 import PageLayout from '@ui/PageLayout';
 import Button from '@ui/Button';
 import { Alert } from '@ui/Alert';
 import { auth } from '@lib/auth';
 import { getRecordCategories } from '@lib/records-service';
-import { formatEntryDate, formatRecordValue, GENDER_TITLE_LABELS } from '@lib/records-logic';
-import type { ClaimStatus, WorldEntryRecord } from '@lib/relational-types';
+import { formatRecordValue, GENDER_TITLE_LABELS } from '@lib/records-logic';
+import type { ClaimStatus, WorldRecordOrFirstTableItem } from '@lib/relational-types';
 import { getMyClaims } from '../actions';
 import { ClaimStatusBadge } from '../components/claimStatus';
 import WithdrawButton from './WithdrawButton';
@@ -25,7 +26,7 @@ export default async function MyClaimsPage({ searchParams }: Props) {
   const counts: Partial<Record<ClaimStatus, number>> = {};
   for (const claim of claims) counts[claim.status] = (counts[claim.status] ?? 0) + 1;
 
-  const valueOf = (entry: WorldEntryRecord) => {
+  const valueOf = (entry: WorldRecordOrFirstTableItem) => {
     if (entry.kind === 'first') return entry.trickName;
     const category = categoryById.get(entry.categoryId);
     return category ? formatRecordValue(category, entry.value) : entry.value.original ?? '';
@@ -64,7 +65,7 @@ export default async function MyClaimsPage({ searchParams }: Props) {
                       <span className="text-sm text-gray-600">
                         {entry.kind === 'first' ? 'World first' : 'World record'} · {GENDER_TITLE_LABELS[entry.gender]}
                         {' · '}{entry.athletes.map(a => a.name).join(', ') || 'No athletes yet'}
-                        {entry.date && ` · ${formatEntryDate(entry.date)}`}
+                        {entry.date && ` · ${formatISODay(entry.date)}`}
                         {entry.locationName && ` · ${entry.locationName}`}
                       </span>
                     </div>

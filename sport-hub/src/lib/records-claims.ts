@@ -14,14 +14,14 @@ import { getEntriesByCategory, type EntryKind } from './records-service';
 import { comparableValue, parseRecordValue, splitCurrentAndHistory } from './records-logic';
 import { MAX_ATHLETES, MAX_WITNESSES, MIN_WITNESSES } from './records-rules';
 import type {
-  EntryAthlete,
-  FirstCategoryRecord,
-  FirstEntryRecord,
-  RecordCategoryRecord,
-  RecordEntryRecord,
+  WorldRecordOrFirstEntryAthlete,
+  FirstCategoryTableItem,
+  WorldFirstTableItem,
+  RecordCategoryTableItem,
+  WorldRecordTableItem,
   RecordValue,
   RecordWitness,
-  WorldEntryRecord,
+  WorldRecordOrFirstTableItem,
 } from './relational-types';
 import type { ClaimFormValues } from 'src/app/world_records/claim/types';
 import { INVALID_URL_MESSAGE, isValidUrl, normalizeUrl } from '@utils/urls';
@@ -58,7 +58,7 @@ export const commonFieldsFrom = (values: ClaimFormValues) => ({
 });
 
 /** First-specific fields (§8.2). */
-export const firstFieldsFrom = (values: ClaimFormValues): Pick<FirstEntryRecord, 'trickName' | 'description' | 'whyFirst' | 'similarTricks' | 'lineDetails'> => ({
+export const firstFieldsFrom = (values: ClaimFormValues): Pick<WorldFirstTableItem, 'trickName' | 'description' | 'whyFirst' | 'similarTricks' | 'lineDetails'> => ({
   trickName: values.trickName.trim(),
   description: values.description.trim() || undefined,
   whyFirst: values.whyFirst.trim() || undefined,
@@ -67,7 +67,7 @@ export const firstFieldsFrom = (values: ClaimFormValues): Pick<FirstEntryRecord,
 });
 
 /** Record-specific fields (§8.1) apart from category and value. */
-export const recordDetailsFrom = (values: ClaimFormValues): Pick<RecordEntryRecord, 'setup' | 'furtherSpecs' | 'witnesses' | 'noFullVideoReason'> => ({
+export const recordDetailsFrom = (values: ClaimFormValues): Pick<WorldRecordTableItem, 'setup' | 'furtherSpecs' | 'witnesses' | 'noFullVideoReason'> => ({
   setup: values.setup.trim() || undefined,
   furtherSpecs: values.furtherSpecs.trim() || undefined,
   witnesses: toWitnesses(values),
@@ -81,7 +81,7 @@ export const recordDetailsFrom = (values: ClaimFormValues): Pick<RecordEntryReco
  */
 export function parseClaimValue(
   values: ClaimFormValues,
-  recordCategory: RecordCategoryRecord | null,
+  recordCategory: RecordCategoryTableItem | null,
 ): { value: RecordValue; readable: boolean } {
   const unit = values.path === 'new_category' ? values.newCategory.unit : recordCategory?.unit ?? 'm';
   const value = parseRecordValue({ unit, group: recordCategory?.group }, values.valueText);
@@ -104,10 +104,10 @@ export function parseClaimValue(
  */
 export async function snapshotAthletes(
   values: ClaimFormValues,
-  existing: EntryAthlete[] = [],
-): Promise<{ athletes: EntryAthlete[]; errors: string[] }> {
+  existing: WorldRecordOrFirstEntryAthlete[] = [],
+): Promise<{ athletes: WorldRecordOrFirstEntryAthlete[]; errors: string[] }> {
   const errors: string[] = [];
-  const athletes: EntryAthlete[] = [];
+  const athletes: WorldRecordOrFirstEntryAthlete[] = [];
   const nameOnly = existing.filter(a => !a.userId && !a.pendingUser);
   for (const athlete of values.athletes) {
     if (athlete.userId) {
@@ -138,8 +138,8 @@ export async function snapshotAthletes(
 }
 
 /** Creates SportHub profiles for new athletes on an entry and returns the athletes with their user ids (FR-9). */
-export async function createPendingAthletes(entry: WorldEntryRecord): Promise<EntryAthlete[]> {
-  const athletes: EntryAthlete[] = [];
+export async function createPendingAthletes(entry: WorldRecordOrFirstTableItem): Promise<WorldRecordOrFirstEntryAthlete[]> {
+  const athletes: WorldRecordOrFirstEntryAthlete[] = [];
   for (const athlete of entry.athletes) {
     if (athlete.userId || !athlete.pendingUser) { athletes.push(athlete); continue; }
     const p = athlete.pendingUser;
@@ -167,7 +167,7 @@ export async function createPendingAthletes(entry: WorldEntryRecord): Promise<En
 // ============================================================================
 
 /** Current mark on one list of a category: the best published value, ties are co-holders. */
-export async function currentForGender(category: RecordCategoryRecord, list: ContestGender): Promise<RecordEntryRecord[]> {
+export async function currentForGender(category: RecordCategoryTableItem, list: ContestGender): Promise<WorldRecordTableItem[]> {
   const entries = (await getEntriesByCategory('record', category.categoryId))
     .filter(e => e.status === 'published' && e.gender === list);
   return splitCurrentAndHistory(category, entries).current;
@@ -177,9 +177,9 @@ export async function currentForGender(category: RecordCategoryRecord, list: Con
 export function validateForSubmit(
   values: ClaimFormValues,
   kind: EntryKind,
-  recordCategory: RecordCategoryRecord | null,
-  firstCategory: FirstCategoryRecord | null,
-  athletes: EntryAthlete[],
+  recordCategory: RecordCategoryTableItem | null,
+  firstCategory: FirstCategoryTableItem | null,
+  athletes: WorldRecordOrFirstEntryAthlete[],
   claimantId: string,
 ): string[] {
   const errors: string[] = [];

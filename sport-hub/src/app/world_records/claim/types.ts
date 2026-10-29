@@ -1,5 +1,5 @@
 import type { PendingUserData } from 'src/app/events/submit/types';
-import type { RecordWitness, WorldEntryRecord } from '@lib/relational-types';
+import type { RecordWitness, WorldRecordOrFirstTableItem } from '@lib/relational-types';
 
 /** The three paths of the claim form (FR-4). */
 export type ClaimPath = 'existing' | 'new_category' | 'first';
@@ -92,7 +92,7 @@ const witnessFields = (w: RecordWitness): RecordWitness => {
 };
 
 /** Loads a saved claim back into the form (edit a draft or a claim with changes requested). */
-export function entryToClaimValues(entry: WorldEntryRecord): ClaimFormValues {
+export function entryToClaimValues(entry: WorldRecordOrFirstTableItem): ClaimFormValues {
   const proposal = entry.kind === 'record' ? entry.newCategoryProposal : undefined;
   const base = emptyClaim(entry.kind === 'first' ? 'first' : proposal ? 'new_category' : 'existing');
   const common: ClaimFormValues = {

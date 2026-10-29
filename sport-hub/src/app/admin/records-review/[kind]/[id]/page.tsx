@@ -1,3 +1,4 @@
+import { formatISODay } from '@utils/dates';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Button from '@ui/Button';
@@ -5,9 +6,9 @@ import { notFound } from 'next/navigation';
 import PageLayout from '@ui/PageLayout';
 import { Alert } from '@ui/Alert';
 import { requireAdmin } from '@lib/authorization';
-import { formatEntryDate, formatRecordValue, GENDER_LABELS, GENDER_TITLE_LABELS, RECORD_GENDERS } from '@lib/records-logic';
+import { formatRecordValue, GENDER_LABELS, GENDER_TITLE_LABELS, RECORD_GENDERS } from '@lib/records-logic';
 import { FIRST_CRITERIA, RECORD_CRITERIA } from '@lib/records-rules';
-import type { RecordCategoryRecord } from '@lib/relational-types';
+import type { RecordCategoryTableItem } from '@lib/relational-types';
 import { getReviewContext } from 'src/app/admin/records-review/actions';
 import { ClaimStatusBadge } from 'src/app/world_records/components/claimStatus';
 import { getCountryByCode } from '@utils/countries';
@@ -40,7 +41,7 @@ export default async function ReviewClaimPage({ params }: Props) {
   if (!context) notFound();
   const { entry, audit, category, currentByGender, similar, recordCategories, firstCategories, unchallengedPrompt } = context;
 
-  const recordCategory = entry.kind === 'record' ? (category as RecordCategoryRecord | null) : null;
+  const recordCategory = entry.kind === 'record' ? (category as RecordCategoryTableItem | null) : null;
   const isNewCategory = entry.kind === 'record' && !!entry.newCategoryProposal && entry.categoryId.startsWith('proposed-');
   const valueText = entry.kind === 'record'
     ? (recordCategory ? formatRecordValue(recordCategory, entry.value) : entry.value.original)
@@ -97,7 +98,7 @@ export default async function ReviewClaimPage({ params }: Props) {
               ))}
             </Row>
             {entry.athletes.length > 1 && <Row label="Joint performance">Confirmed by the claimant</Row>}
-            <Row label="Date">{entry.date ? formatEntryDate(entry.date) : undefined}</Row>
+            <Row label="Date">{entry.date ? formatISODay(entry.date) : undefined}</Row>
             <Row label="Location">{[entry.locationName, countryName(entry.locationCountry)].filter(Boolean).join(', ')}</Row>
             {entry.kind === 'record' && (
               <>
@@ -155,7 +156,7 @@ export default async function ReviewClaimPage({ params }: Props) {
               {isNewCategory ? <p className="text-sm text-gray-500">New category, no records yet.</p> : RECORD_GENDERS.map(list => (
                 <div key={list} className="text-sm">
                   <span className="font-medium">{GENDER_TITLE_LABELS[list]}:</span>{' '}
-                  {currentByGender[list] ? `${currentByGender[list]!.value} by ${currentByGender[list]!.holders.join(', ')} (${formatEntryDate(currentByGender[list]!.date)})` : 'none'}
+                  {currentByGender[list] ? `${currentByGender[list]!.value} by ${currentByGender[list]!.holders.join(', ')} (${formatISODay(currentByGender[list]!.date)})` : 'none'}
                 </div>
               ))}
             </div>

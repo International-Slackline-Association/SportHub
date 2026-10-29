@@ -81,8 +81,9 @@ const { success, events } = await getAllEvents();
 
 Public lists for `/world_records` and athlete profiles. They read the `sporthub-records` table through
 `lib/records-service.ts` (table layout in `docs/schema/database-schema.md`); environments where the table has not been seeded
-yet fall back to the Google Sheets rows mapped to the same shape. Both lists are cached for a day under
-`world-records` / `world-firsts`; `invalidateWorldRecordsCache()` drops them after an admin change.
+yet fall back to the Google Sheets rows mapped to the same shape. Both lists are kept in the Next.js data cache
+(`unstable_cache`, tag `world-records`) for a day; `invalidateWorldRecordsCache()` revalidates the tag after an admin change,
+so every server instance shows the change.
 
 ```typescript
 async function getWorldRecords(): Promise<WorldRecord[]>          // published + historical records

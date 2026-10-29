@@ -13,14 +13,14 @@ import { Alert } from '@ui/Alert';
 import { FormikCheckboxField, FormikRadioGroup, FormikSelectField, FormikTextField, countryCodeOptions } from '@ui/Form';
 import { deriveGender, GENDER_TITLE_LABELS, UNIT_SUGGESTIONS, unitKind, valueHint } from '@lib/records-logic';
 import { ETHICS_STATEMENT, MAX_ATHLETES, MAX_WITNESSES, MIN_WITNESSES, RECORDS_TEAM_EMAIL } from '@lib/records-rules';
-import type { FirstCategoryRecord, RecordCategoryRecord } from '@lib/relational-types';
+import type { FirstCategoryTableItem, RecordCategoryTableItem } from '@lib/relational-types';
 import { getAthleteGenders, getMarkToBeat } from '../../actions';
 import type { ClaimFormValues, ClaimPath } from '../types';
 import AthletePicker from './AthletePicker';
 
 type Props = {
-  recordCategories: RecordCategoryRecord[];
-  firstCategories: FirstCategoryRecord[];
+  recordCategories: RecordCategoryTableItem[];
+  firstCategories: FirstCategoryTableItem[];
   claimantId: string;
   /** Admin mode hides the claimant's confirmations and keeps the kind fixed. */
   admin?: boolean;
@@ -53,7 +53,7 @@ function TextArea({ name, label, required, caption }: { name: string; label: str
 }
 
 /** Tells the claimant the gender the claim counts for and the mark to beat or equal (FR-5). */
-function GenderAndMark({ recordCategories }: { recordCategories: RecordCategoryRecord[] }) {
+function GenderAndMark({ recordCategories }: { recordCategories: RecordCategoryTableItem[] }) {
   const { values } = useFormikContext<ClaimFormValues>();
   const [profileGenders, setProfileGenders] = useState<Record<string, string | null>>({});
   const [mark, setMark] = useState<Awaited<ReturnType<typeof getMarkToBeat>>>(null);

@@ -17,11 +17,11 @@ import {
   recomputeRecordStatuses,
 } from '@lib/records-service';
 import { getUser } from '@lib/user-service';
-import type { EntryAthlete, FirstEntryRecord, ImportIssueRecord, RecordEntryRecord, WorldEntryRecord } from '@lib/relational-types';
+import type { WorldRecordOrFirstEntryAthlete, WorldFirstTableItem, RecordsImportIssueTableItem, WorldRecordTableItem, WorldRecordOrFirstTableItem } from '@lib/relational-types';
 
-async function getIssue(sortKey: string): Promise<ImportIssueRecord | null> {
+async function getIssue(sortKey: string): Promise<RecordsImportIssueTableItem | null> {
   const item = await dynamodb.getItem(RECORDS_TABLE, { pk: 'ImportIssue', sortKey });
-  return (item as ImportIssueRecord | undefined) ?? null;
+  return (item as RecordsImportIssueTableItem | undefined) ?? null;
 }
 
 const revalidateImportPages = () => {
@@ -73,7 +73,7 @@ export async function importIssueRow(sortKey: string, input: ImportRowInput) {
 
     const profile = input.userId ? await getUser(input.userId) : null;
     if (input.userId && !profile) return { success: false, error: 'SportHub user not found' };
-    const athlete: EntryAthlete = {
+    const athlete: WorldRecordOrFirstEntryAthlete = {
       userId: profile?.userId,
       name: profile ? [profile.name, profile.surname].filter(Boolean).join(' ') : (row['Name'] ?? '').replace(/,$/, ''),
       gender: input.gender,
@@ -94,7 +94,7 @@ export async function importIssueRow(sortKey: string, input: ImportRowInput) {
       updatedAt: now,
     };
 
-    let entry: WorldEntryRecord;
+    let entry: WorldRecordOrFirstTableItem;
     if (issue.kind === 'record') {
       const category = await getRecordCategory(input.categoryId);
       if (!category) return { success: false, error: 'Category not found' };
@@ -108,7 +108,7 @@ export async function importIssueRow(sortKey: string, input: ImportRowInput) {
         value,
         witnesses: [],
         furtherSpecs: [row['Record type'], row['Extra']].filter(Boolean).join(' · ') || undefined,
-      } satisfies RecordEntryRecord;
+      } satisfies WorldRecordTableItem;
       await putEntry(entry);
       await recomputeRecordStatuses(category);
     } else {
@@ -123,7 +123,7 @@ export async function importIssueRow(sortKey: string, input: ImportRowInput) {
         categoryName: category.name,
         trickName,
         lineDetails: row['Specs'] || undefined,
-      } satisfies FirstEntryRecord;
+      } satisfies WorldFirstTableItem;
       await putEntry(entry);
     }
     if (athlete.userId) await putAthleteLink(athlete.userId, issue.kind, entryId);

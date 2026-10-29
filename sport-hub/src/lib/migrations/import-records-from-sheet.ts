@@ -23,12 +23,12 @@
 
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import type {
-  EntryAthlete,
-  FirstCategoryRecord,
-  FirstEntryRecord,
-  ImportIssueRecord,
-  RecordCategoryRecord,
-  RecordEntryRecord,
+  WorldRecordOrFirstEntryAthlete,
+  FirstCategoryTableItem,
+  WorldFirstTableItem,
+  RecordsImportIssueTableItem,
+  RecordCategoryTableItem,
+  WorldRecordTableItem,
   RecordEvidence,
 } from '../relational-types';
 import { buildFirstCategoryRecords, buildRecordCategoryRecords } from '../records-categories';
@@ -187,18 +187,18 @@ async function loadSheet(): Promise<{ records: SheetRow[]; firsts: SheetRow[] }>
 // ============================================================================
 
 interface ImportResult {
-  records: RecordEntryRecord[];
-  firsts: FirstEntryRecord[];
-  issues: ImportIssueRecord[];
+  records: WorldRecordTableItem[];
+  firsts: WorldFirstTableItem[];
+  issues: RecordsImportIssueTableItem[];
 }
 
 const issue = (
-  kind: ImportIssueRecord['kind'],
+  kind: RecordsImportIssueTableItem['kind'],
   row: SheetRow,
-  reason: ImportIssueRecord['reason'],
+  reason: RecordsImportIssueTableItem['reason'],
   detail: string,
   entryId?: string,
-): ImportIssueRecord => {
+): RecordsImportIssueTableItem => {
   const certId = row['Cert ID'] || `row-${Math.random().toString(36).slice(2, 8)}`;
   return {
     pk: 'ImportIssue',
@@ -210,7 +210,7 @@ const issue = (
 const evidenceFrom = (row: SheetRow): RecordEvidence[] =>
   [row['Link 1'], row['Link 2']].filter(Boolean).map(url => ({ type: 'link' as const, url }));
 
-const athleteFrom = (row: SheetRow, userIdByEmail: Map<string, string>): EntryAthlete | undefined => {
+const athleteFrom = (row: SheetRow, userIdByEmail: Map<string, string>): WorldRecordOrFirstEntryAthlete | undefined => {
   const gender = toGender(row['Category']);
   if (!gender) return undefined;
   return {
@@ -228,13 +228,13 @@ const athleteFrom = (row: SheetRow, userIdByEmail: Map<string, string>): EntryAt
  */
 function transformRecords(
   rows: SheetRow[],
-  recordCategories: RecordCategoryRecord[],
+  recordCategories: RecordCategoryTableItem[],
   userIdByEmail: Map<string, string>,
-  issues: ImportIssueRecord[],
+  issues: RecordsImportIssueTableItem[],
   now: number,
-): RecordEntryRecord[] {
+): WorldRecordTableItem[] {
   const categoryById = new Map(recordCategories.map(c => [c.categoryId, c]));
-  const pending: { category: RecordCategoryRecord; row: SheetRow; athlete: EntryAthlete; entry: RecordEntryRecord }[] = [];
+  const pending: { category: RecordCategoryTableItem; row: SheetRow; athlete: WorldRecordOrFirstEntryAthlete; entry: WorldRecordTableItem }[] = [];
   for (const row of rows) {
     const categoryId = mapRecordCategory(row['Record type'], row['Extra']);
     const category = categoryId ? categoryById.get(categoryId) : undefined;
@@ -282,8 +282,8 @@ function transformRecords(
   }
 
   // Merge rows of one joint performance (FR-33a)
-  const records: RecordEntryRecord[] = [];
-  const jointGroups = new Map<string, RecordEntryRecord>();
+  const records: WorldRecordTableItem[] = [];
+  const jointGroups = new Map<string, WorldRecordTableItem>();
   for (const { category, entry, athlete } of pending) {
     if (!JOINT_CATEGORY_IDS.has(category.categoryId)) { records.push(entry); continue; }
     const key = `${category.categoryId}|${entry.value.amount}|${entry.date}`;
@@ -295,7 +295,7 @@ function transformRecords(
   }
 
   // Same athlete with the same value twice in a category is most likely one record entered twice
-  const seen = new Map<string, RecordEntryRecord>();
+  const seen = new Map<string, WorldRecordTableItem>();
   for (const entry of records) {
     const key = `${entry.categoryId}|${entry.value.amount ?? entry.value.latitude}|${entry.athletes.map(a => a.name.toLowerCase()).sort().join('+')}`;
     const first = seen.get(key);
@@ -321,14 +321,14 @@ function transformRecords(
  */
 function transformFirsts(
   rows: SheetRow[],
-  firstCategories: FirstCategoryRecord[],
+  firstCategories: FirstCategoryTableItem[],
   userIdByEmail: Map<string, string>,
-  issues: ImportIssueRecord[],
+  issues: RecordsImportIssueTableItem[],
   now: number,
-): FirstEntryRecord[] {
-  const rowOf = (first: FirstEntryRecord) => rows.find(r => `imp-${r['Cert ID']}` === first.entryId)!;
+): WorldFirstTableItem[] {
+  const rowOf = (first: WorldFirstTableItem) => rows.find(r => `imp-${r['Cert ID']}` === first.entryId)!;
   const firstCategoryIds = new Set(firstCategories.map(c => c.categoryId));
-  const firsts: FirstEntryRecord[] = [];
+  const firsts: WorldFirstTableItem[] = [];
   for (const row of rows) {
     const categoryId = FIRST_LINE_TYPE_MAP[norm(row['Type of Line'])];
     if (!categoryId || !firstCategoryIds.has(categoryId)) {
@@ -369,7 +369,7 @@ function transformFirsts(
   }
 
   // Link the same trick across lists (FR-33b); same trick twice on one list is unclear
-  const byTrick = new Map<string, FirstEntryRecord[]>();
+  const byTrick = new Map<string, WorldFirstTableItem[]>();
   for (const first of firsts) {
     const key = trickKey(first.categoryId, first.trickName);
     byTrick.set(key, [...(byTrick.get(key) ?? []), first]);
@@ -391,12 +391,12 @@ function transformFirsts(
 
 function transform(
   sheet: { records: SheetRow[]; firsts: SheetRow[] },
-  recordCategories: RecordCategoryRecord[],
-  firstCategories: FirstCategoryRecord[],
+  recordCategories: RecordCategoryTableItem[],
+  firstCategories: FirstCategoryTableItem[],
   userIdByEmail: Map<string, string>,
 ): ImportResult {
   const now = Date.now();
-  const issues: ImportIssueRecord[] = [];
+  const issues: RecordsImportIssueTableItem[] = [];
   const records = transformRecords(sheet.records, recordCategories, userIdByEmail, issues, now);
   const firsts = transformFirsts(sheet.firsts, firstCategories, userIdByEmail, issues, now);
   return { records, firsts, issues };
@@ -418,8 +418,8 @@ function report(result: ImportResult, sheet: { records: SheetRow[]; firsts: Shee
     `- Review list: ${result.issues.length} items`,
     '',
   ];
-  const reasons: ImportIssueRecord['reason'][] = ['no_category', 'value_unparsed', 'invalid_row', 'possible_duplicate', 'first_link_unclear', 'no_user_match'];
-  const titles: Record<ImportIssueRecord['reason'], string> = {
+  const reasons: RecordsImportIssueTableItem['reason'][] = ['no_category', 'value_unparsed', 'invalid_row', 'possible_duplicate', 'first_link_unclear', 'no_user_match'];
+  const titles: Record<RecordsImportIssueTableItem['reason'], string> = {
     no_category: 'No matching category (not imported)',
     value_unparsed: 'Value could not be read (not imported)',
     invalid_row: 'Invalid row (not imported)',

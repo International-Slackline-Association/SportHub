@@ -40,7 +40,7 @@ import {
 } from '@lib/records-claims';
 import { notifyClaimEvent } from '@lib/records-notifications';
 import { MAX_SUBMISSIONS_PER_DAY, RECORDS_TEAM_EMAIL } from '@lib/records-rules';
-import type { ClaimStatus, WorldEntryRecord } from '@lib/relational-types';
+import type { ClaimStatus, WorldRecordOrFirstTableItem } from '@lib/relational-types';
 import type { ClaimActionResult, ClaimFormValues } from './claim/types';
 
 const errorMessage = (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback);
@@ -51,7 +51,7 @@ const revalidateClaimPages = () => {
 };
 
 /** The signed-in user's own claim, or null if it doesn't exist or belongs to someone else. */
-async function getClaimOf(userId: string, kind: EntryKind, entryId: string): Promise<WorldEntryRecord | null> {
+async function getClaimOf(userId: string, kind: EntryKind, entryId: string): Promise<WorldRecordOrFirstTableItem | null> {
   const entry = await getEntry(kind, entryId);
   return entry && entry.claimantUserId === userId ? entry : null;
 }
@@ -144,7 +144,7 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
       updatedAt: now,
     };
 
-    let entry: WorldEntryRecord;
+    let entry: WorldRecordOrFirstTableItem;
     if (kind === 'first') {
       entry = {
         ...base,
@@ -256,7 +256,7 @@ export async function deleteDraft(kind: EntryKind, entryId: string): Promise<Cla
  * Claims the signed-in user made, or is an athlete on. Drafts are only shown to
  * the claimant (a withdrawn claim is a draft again).
  */
-export async function getMyClaims(): Promise<WorldEntryRecord[]> {
+export async function getMyClaims(): Promise<WorldRecordOrFirstTableItem[]> {
   const session = await requireSession();
   const userId = session.user.id;
   return (await getUserClaims(userId)).filter(e =>
@@ -264,7 +264,7 @@ export async function getMyClaims(): Promise<WorldEntryRecord[]> {
 }
 
 /** A claim for the edit form; only the claimant can open it. */
-export async function getOwnClaim(kind: EntryKind, entryId: string): Promise<WorldEntryRecord | null> {
+export async function getOwnClaim(kind: EntryKind, entryId: string): Promise<WorldRecordOrFirstTableItem | null> {
   const session = await requireSession();
   return getClaimOf(session.user.id, kind, entryId);
 }
