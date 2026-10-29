@@ -65,6 +65,7 @@ type RankingType = "TOP_SCORE" | "POINT_SCORE";
 
 type ContestType = "WORLD_CHAMPIONSHIP" | "WORLD_CUP" | "MASTERS" | "GRAND_SLAM" | "OPEN" | "CHALLENGE";
 
+/** Contests, and world records / firsts (MIXED only for joint performances of men and women). */
 type ContestGender = "MIXED" | "MEN_ONLY" | "WOMEN_ONLY";
 
 type JudgingSystem = "ISA_FREESTYLE" | "ISA_SPEED" | "OTHER";

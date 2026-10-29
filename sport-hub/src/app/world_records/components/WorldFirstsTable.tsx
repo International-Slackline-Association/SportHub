@@ -1,53 +1,56 @@
 "use client";
 
-import { useMemo, useState } from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
 import { WorldFirst } from '@lib/data-services';
 import Table from '@ui/Table';
-import tableStyles from '@ui/Table/styles.module.css';
-import { useClientMediaQuery } from '@utils/useClientMediaQuery';
-import { CountryFlag } from '@ui/CountryFlag';
-import { textToTitleCase } from '@utils/strings';
+import { BREAKPOINT_LG, useClientMediaQuery } from '@utils/useClientMediaQuery';
 import Link from 'next/link';
-import { countryCellFormatter, linkCellFormatter, nameCellFormatter } from './cellFormatters';
-
-const linkClassName = "underline text-blue-600 hover:text-blue-800 visited:text-purple-600";
+import { Gender } from '@ui/Badge';
+import {
+  athleteCountriesAccessor,
+  athleteNamesAccessor,
+  athleteNamesCellFormatter,
+  AthleteNames,
+  countriesCellFormatter,
+  countriesSortingFn,
+  dateSortingFn,
+  genderCellFormatter,
+  genderFilterFn,
+  linkCellFormatter,
+  linkClassName,
+} from './cellFormatters';
 
 const columnHelper = createColumnHelper<WorldFirst>();
 
 const sharedColumns = [
-  columnHelper.accessor('typeOfFirst', {
-    header: 'World First Type',
+  columnHelper.accessor('categoryName', {
+    header: 'Category',
     enableColumnFilter: true,
-    meta: { filterVariant: 'select' },
-    size: 40,
+    meta: { filterVariant: 'select', filterIncludeAll: true },
+    size: 60,
   }),
-  columnHelper.accessor('description', {
-    header: 'Description',
+  columnHelper.accessor('trickName', {
+    header: 'Trick',
     enableColumnFilter: true,
     meta: { filterVariant: 'autocomplete' },
-    size: 80,
+    size: 100,
   }),
-  columnHelper.accessor('country', {
+  columnHelper.accessor(athleteCountriesAccessor, {
     id: 'country',
     header: 'Country',
     enableColumnFilter: true,
-    cell: countryCellFormatter,
-    meta: { filterVariant: 'select' },
+    cell: countriesCellFormatter,
+    sortingFn: countriesSortingFn,
+    filterFn: 'arrIncludes',
+    meta: { filterVariant: 'select', filterIncludeAll: true },
     size: 80,
   }),
   columnHelper.accessor('gender', {
     header: 'Gender',
     enableColumnFilter: true,
-    filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
-    cell: info => textToTitleCase(info.getValue()),
-    meta: {
-      filterVariant: 'select',
-      filterOptions: [
-        { value: 'MEN',   label: 'Men' },
-        { value: 'WOMEN', label: 'Women' },
-      ],
-    },
+    filterFn: genderFilterFn,
+    cell: genderCellFormatter,
+    meta: { filterVariant: 'record-gender' },
     size: 40,
   }),
 ];
@@ -58,49 +61,36 @@ const columns = [
     id: 'worldFirst',
     header: 'World First',
     cell: info => {
-      const { date, description, typeOfFirst, specs, name, country, gender, links } = info.row.original;
+      const { date, categoryName, trickName, lineDetails, gender, athletes, links } = info.row.original;
       return (
         <div className="stack">
-          <div className="cluster items-center justify-between text-gray-400">
-            <span className="text-xs">{date}</span>
-            <div className="cluster gap-2 items-center text-sm">
-              <span>{typeOfFirst}</span>
-              <span>{specs}</span>
-            </div>
+          <div className="cluster items-center justify-between">
+            <span className="text-xs text-gray-400">{date}</span>
+            <Gender value={gender} variant="normal" />
           </div>
           <div className="cluster items-center justify-between">
-            <span className="font-medium">
-              {info.row.original.athleteUserId
-                ? <Link href={`/athlete/${info.row.original.athleteUserId}`} className={linkClassName}>{name}</Link>
-                : name
-              }
-            </span>
-            <span>{description}</span>
+            <span className="font-medium">{trickName}</span>
+            <span className="text-sm text-gray-500">{lineDetails || categoryName}</span>
           </div>
-          <div className="cluster gap-2 items-center">
-            <CountryFlag country={country} defaultValue="" />
-            <span className="text-xs text-gray-400" style={{ paddingTop: 2 }}>{textToTitleCase(gender)}</span>
-          </div>
+          <AthleteNames athletes={athletes} />
           <div className="cluster gap-2 text-xs">
-            {links?.map((link, idx) => 
-              link && (
-                <Link className={linkClassName} href={link} key={`link_${idx}`} target="_newtab">
-                  Link {idx + 1}
-                </Link>
-              )
-            )}
+            {links.map((link, idx) => (
+              <Link className={linkClassName} href={link} key={`link_${idx}`} target="_newtab">
+                Link {idx + 1}
+              </Link>
+            ))}
           </div>
         </div>
       );
     },
   }),
   // Desktop-only columns
-  columnHelper.accessor('date', { header: 'Date', size: 40 }),
-  columnHelper.accessor('specs', { header: 'Specs', size: 80 }),
-  columnHelper.accessor('name', {
+  columnHelper.accessor('date', { header: 'Date', sortingFn: dateSortingFn, size: 40 }),
+  columnHelper.accessor(athleteNamesAccessor, {
+    id: 'name',
     header: 'Name',
-    cell: nameCellFormatter,
-    size: 80,
+    cell: athleteNamesCellFormatter,
+    size: 100,
   }),
   columnHelper.accessor('links', {
     header: "Links",
@@ -116,52 +106,27 @@ type WorldFirstsTableProps = {
 };
 
 const WorldFirstsTable = ({ data }: WorldFirstsTableProps) => {
-  const { isDesktop } = useClientMediaQuery();
-  const [selectedLineType, setSelectedLineType] = useState('');
-
-  const lineTypeOptions = useMemo(() => {
-    const types = [...new Set(data.map(r => r.lineType).filter(Boolean))].sort();
-    return types.map(t => ({ value: t, label: t }));
-  }, [data]);
-
-  const filteredData = useMemo(() => {
-    if (!selectedLineType) return data;
-    return data.filter(row => row.lineType === selectedLineType);
-  }, [data, selectedLineType]);
+  const { isDesktop } = useClientMediaQuery(BREAKPOINT_LG);
 
   return (
     <Table
-      extraFilters={
-        <div className={tableStyles.columnFilter}>
-          <label htmlFor="wf-line-type">Type of Line</label>
-          <select
-            id="wf-line-type"
-            value={selectedLineType}
-            onChange={e => setSelectedLineType(e.target.value)}
-          >
-            <option value="">All</option>
-            {lineTypeOptions.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
-      }
       options={{
         columns,
-        data: filteredData,
+        data,
         initialState: {
+          sorting: [{ id: 'date', desc: true }],
           columnOrder: isDesktop
-            ? ['date', 'typeOfFirst', 'specs', 'description', 'name', 'country', 'gender']
-            : ['worldFirst', 'typeOfFirst', 'description', 'country', 'gender'],
+            ? ['trickName', 'categoryName', 'name', 'country', 'gender', 'date', 'links']
+            : ['worldFirst', 'trickName', 'categoryName', 'country', 'gender'],
           columnVisibility: {
-            worldFirst:  !isDesktop,
-            date:        !!isDesktop,
-            specs:       !!isDesktop,
-            name:        !!isDesktop,
-            typeOfFirst: !!isDesktop,
-            description: !!isDesktop,
-            country:     !!isDesktop,
-            gender:      !!isDesktop,
+            worldFirst:   !isDesktop,
+            date:         !!isDesktop,
+            name:         !!isDesktop,
+            country:      !!isDesktop,
+            trickName:    !!isDesktop,
+            categoryName: !!isDesktop,
+            gender:       !!isDesktop,
+            links:        !!isDesktop,
           },
         },
       }}

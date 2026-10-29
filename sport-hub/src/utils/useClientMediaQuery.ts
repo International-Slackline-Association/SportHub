@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react'
 
 const BREAKPOINT_SM = 640; // Standardized breakpoint: 40rem = 640px (large phones/tablets)
-const isDesktopQuery = `(min-width: ${BREAKPOINT_SM}px)`;
+/** For wide tables that only fit from 64rem = 1024px; below they show the stacked mobile column. */
+export const BREAKPOINT_LG = 1024;
 
 // Hook to determine device type based on device width
-export function useClientMediaQuery() {
+export function useClientMediaQuery(minDesktopWidth = BREAKPOINT_SM) {
+  const isDesktopQuery = `(min-width: ${minDesktopWidth}px)`;
   const [isDesktop, setIsDesktop] = useState<boolean>(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -28,7 +30,7 @@ export function useClientMediaQuery() {
         isDesktopMediaQueryList.removeEventListener('change', handleMatchChange);
       };
     }
-  }, []);
+  }, [isDesktopQuery]);
 
   return {
     isDesktop: isHydrated ? isDesktop : false,

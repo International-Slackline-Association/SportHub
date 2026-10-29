@@ -79,9 +79,9 @@ const { success, events } = await getAllEvents();
 
 ### World Records
 
-#### `getWorldRecords()`
+Both lists are read from the ISA certificates Google Sheet (`google-sheets.ts`), joined to SportHub profiles by ISA Email, and cached for one day.
 
-Get world records data.
+#### `getWorldRecords()`
 
 **Signature**:
 ```typescript
@@ -90,27 +90,27 @@ async function getWorldRecords(): Promise<WorldRecord[]>
 
 **Returns**:
 ```typescript
+interface DisplayAthlete {
+  userId?: string;              // SportHub profile, when the ISA Email matches one
+  name: string;
+  country?: string;             // Country name or ISO code from the sheet
+  gender: 'MEN' | 'WOMEN';
+}
+
 interface WorldRecord {
-  id: string;
-  type: string;        // e.g., "Longest Wave"
-  record: string;      // e.g., "3.7 km"
-  athlete: string;
-  date: string;
+  title: string;                // "Men's World Record" | "Women's World Record" | "Mixed World Record"
+  categoryName: string;         // Sheet "Record type"
+  categoryGroup: string;        // Sheet "Type of Line", e.g. "Highline"
+  value: string;                // Sheet "Specs"
+  gender: ContestGender;        // MEN_ONLY | WOMEN_ONLY | MIXED (joint performances)
+  athletes: DisplayAthlete[];
+  date: string;                 // DD/MM/YYYY
   location: string;
-  discipline: string;
+  links: string[];
 }
 ```
 
-**Example**:
-```typescript
-const records = await getWorldRecords();
-```
-
-**Note**: Currently returns hardcoded data. Future: query world-records table.
-
 #### `getWorldFirsts()`
-
-Get world firsts data.
 
 **Signature**:
 ```typescript
@@ -120,21 +120,20 @@ async function getWorldFirsts(): Promise<WorldFirst[]>
 **Returns**:
 ```typescript
 interface WorldFirst {
-  id: string;
-  achievement: string;
-  athlete: string;
-  date: string;
-  location: string;
-  discipline: string;
+  title: string;                // "Men's World First" | "Women's World First" | "Mixed World First"
+  categoryName: string;         // Sheet "Type of Line", e.g. "Freestyle Highline"
+  trickName: string;            // Sheet "Description of World First"
+  lineDetails: string;          // Sheet "Specs"
+  gender: ContestGender;
+  athletes: DisplayAthlete[];
+  date: string;                 // DD/MM/YYYY
+  links: string[];
 }
 ```
 
-**Example**:
-```typescript
-const firsts = await getWorldFirsts();
-```
+#### `getAthleteWorldRecords(userId)` / `getAthleteWorldFirsts(userId)`
 
-**Note**: Currently returns hardcoded data. Future: query world-firsts table.
+Filter the cached lists above to the entries where one of the athletes is the given profile.
 
 ### Rankings Data
 
