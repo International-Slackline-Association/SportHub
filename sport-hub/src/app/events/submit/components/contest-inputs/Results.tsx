@@ -1,6 +1,7 @@
 'use client';
 
 import { FieldArray, getIn, useFormikContext } from 'formik';
+import { useSession } from 'next-auth/react';
 import { cn } from '@utils/cn';
 import Button from '@ui/Button';
 import { TrashIcon } from '@ui/Icons';
@@ -29,6 +30,8 @@ const AthleteListItem = ({
   onDelete
 }: AthleteListItemProps) => {
   const { values, setFieldValue } = useFormikContext<EventSubmissionFormValues>();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === 'admin';
   const formValueUserId = getIn(values, `${athleteFormKey}.id`);
   const currentResults = getIn(values, `${contestKey}.results`) as ContestResult[] | undefined;
   const currentNumContestants = Array.isArray(currentResults) ? currentResults.length : 0;
@@ -56,6 +59,8 @@ const AthleteListItem = ({
         label="Points"
         min={1}
         name={`${athleteFormKey}.isaPoints`}
+        readOnly={!isAdmin}
+        tooltip={isAdmin ? undefined : 'Calculated from rank, contest size and number of athletes'}
       />
       <FormikTextField
         className="shrink"
