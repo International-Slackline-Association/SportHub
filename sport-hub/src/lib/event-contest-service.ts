@@ -73,6 +73,15 @@ export async function getEvent(eventId: string): Promise<EventMetadataRecord | n
 }
 
 /**
+ * Results only count (rankings, athlete profiles, public contest lists) once
+ * their event is published. Legacy migrated events carry no status and are
+ * treated as published.
+ */
+export function isPublishedEventStatus(status: unknown): boolean {
+  return status === undefined || status === null || status === 'published';
+}
+
+/**
  * Update event metadata
  */
 export async function updateEvent(
@@ -405,7 +414,12 @@ export async function syncContestParticipationRecords(
 
   const activeUserIds = new Set<string>();
 
-  for (const result of contest.results) {
+  // Results of unpublished events must not count: skip writing, so the
+  // cleanup below removes any Participation:* records left from before.
+  const event = await getEvent(eventId);
+  const countsForRankings = !event || isPublishedEventStatus(event.status);
+
+  for (const result of countsForRankings ? contest.results ?? [] : []) {
     if (!result || typeof result !== 'object') continue;
 
     const userId = typeof result.id === 'string' ? result.id : null;
