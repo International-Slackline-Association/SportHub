@@ -8,7 +8,7 @@
  */
 
 import { PutCommand, QueryCommand, type QueryCommandInput } from '@aws-sdk/lib-dynamodb';
-import { formatDate } from '@utils/dates';
+import { formatISODay } from '@utils/dates';
 import { ddbClient, dynamodb, getTableName, RECORDS_TABLE, USERS_TABLE } from './dynamodb';
 import type {
   AthleteRecordOrFirstLinkTableItem,
@@ -341,9 +341,6 @@ export interface WorldFirst {
   links: string[];
 }
 
-/** ISO yyyy-mm-dd as DD/MM/YYYY. Parsed as local midnight so the day never shifts with the time zone. */
-const displayDate = (iso: string) => (iso ? formatDate(`${iso}T00:00:00`) : '');
-
 const toDisplayAthletes = (entry: WorldRecordOrFirstTableItem): DisplayAthlete[] =>
   entry.athletes.map(({ userId, name, country, gender }) => ({ userId, name, country, gender }));
 
@@ -377,7 +374,7 @@ const toWorldRecords = (
         specs: [entry.value.original, entry.furtherSpecs, entry.setup].filter(Boolean).join(' · '),
         gender: entry.gender,
         athletes: toDisplayAthletes(entry),
-        date: displayDate(entry.date),
+        date: formatISODay(entry.date),
         location: [entry.locationName, countryName(entry.locationCountry)].filter(Boolean).join(', '),
         links: links(entry),
       });
@@ -398,7 +395,7 @@ const toWorldFirsts = (categories: FirstCategoryTableItem[], entries: WorldFirst
     lineDetails: entry.lineDetails ?? '',
     gender: entry.gender,
     athletes: toDisplayAthletes(entry),
-    date: displayDate(entry.date),
+    date: formatISODay(entry.date),
     links: links(entry),
   }));
 };
