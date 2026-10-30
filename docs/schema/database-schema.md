@@ -399,7 +399,7 @@ Types: `lib/relational-types.ts` (records section). Data access: `lib/records-se
 
 | pk | sortKey | Item |
 |---|---|---|
-| `RecordCategory` | `RecordCategory:{categoryId}` | Record category: name, description, group (Length / Endurance / Speed / Altitude / Other), unit, direction (higher / lower is better), status (active / unchallenged / archived), order |
+| `RecordCategory` | `RecordCategory:{categoryId}` | Record category: name, description, group (Length / Endurance / Speed / Altitude / Trick / Other), unit, direction (higher / lower is better), status (active / unchallenged / archived), order |
 | `FirstCategory` | `FirstCategory:{categoryId}` | First category (Trickline, Highline Freestyle, ...): name, termination rule, status, order |
 | `Record:{entryId}` | `Metadata` | Record entry: category, value, gender, athletes, date, location, evidence links, status |
 | `First:{entryId}` | `Metadata` | First entry: category, trick name, line details, gender, athletes, date, evidence links, status |

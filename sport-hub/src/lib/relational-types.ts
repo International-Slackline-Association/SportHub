@@ -258,7 +258,7 @@ export type FirstCategoryStatus = 'active' | 'archived';
 /** Claim lifecycle. "historical" only applies to records (a first cannot be beaten). */
 export type ClaimStatus = 'draft' | 'pending' | 'changes_requested' | 'published' | 'rejected' | 'historical';
 
-export const RECORD_CATEGORY_GROUPS = ['Length', 'Endurance', 'Speed', 'Altitude', 'Other'] as const;
+export const RECORD_CATEGORY_GROUPS = ['Length', 'Endurance', 'Speed', 'Altitude', 'Trick', 'Other'] as const;
 export type RecordCategoryGroup = (typeof RECORD_CATEGORY_GROUPS)[number];
 
 /**

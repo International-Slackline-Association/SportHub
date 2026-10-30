@@ -50,7 +50,7 @@ draft ──submit──▶ pending ──approve──▶ published ──beate
 
 ## 4. Categories
 
-**Record categories** are one flat list: name, description, group (Length, Endurance, Speed, Altitude, Other),
+**Record categories** are one flat list: name, description, group (Length, Endurance, Speed, Altitude, Trick, Other),
 free-text unit, direction (higher or lower is better) and status. Units "m", "s" (times such as "1:59 min") and
 "count" are parsed, "°" means coordinates, anything else is a plain number. Changing the unit kind re-reads the
 values of the category's entries.
