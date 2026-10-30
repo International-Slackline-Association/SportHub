@@ -9,7 +9,8 @@ import { getRecordCategory } from './records-service';
 import { formatRecordValue, GENDER_TITLE_LABELS } from './records-logic';
 import { getUser } from './user-service';
 import { sendMail, siteUrl } from './mailer';
-import { RECORDS_TEAM_EMAIL } from './records-rules';
+import { formatFileSize, RECORDS_TEAM_EMAIL } from './records-rules';
+import { evidenceFolderUrl } from './records-evidence';
 import { getCountryByCode } from '@utils/countries';
 import type { WorldRecordTableItem, WorldRecordOrFirstTableItem } from './relational-types';
 
@@ -68,6 +69,19 @@ function fullDetails(entry: WorldRecordOrFirstTableItem): string[] {
   return lines;
 }
 
+/** Links with their address; files by name only, since the evidence folder is internal to the ISA. */
+const evidenceLine = (e: WorldRecordOrFirstTableItem['evidence'][number]) => {
+  const what = e.type === 'link' ? e.url : `file ${e.fileName ?? ''}${e.size ? `, ${formatFileSize(e.size)}` : ''}`;
+  const label = e.description ?? e.label;
+  return `  ${label ? `${label}: ` : ''}${what}`;
+};
+
+/** The claim's Drive folder, for the records team. */
+const evidenceFolderLine = (entry: WorldRecordOrFirstTableItem) => {
+  const folder = evidenceFolderUrl(entry.evidenceFolderId);
+  return folder ? `Evidence folder: ${folder.startsWith('/') ? siteUrl(folder) : folder}` : 'No evidence folder';
+};
+
 async function summary(entry: WorldRecordOrFirstTableItem): Promise<{ title: string; lines: string[] }> {
   const athletes = entry.athletes.map(a => `${a.name}${a.country ? ` (${country(a.country)})` : ''}`).join(', ');
   const where = [entry.locationName, country(entry.locationCountry)].filter(Boolean).join(', ');
@@ -85,7 +99,7 @@ async function summary(entry: WorldRecordOrFirstTableItem): Promise<{ title: str
   }
   if (entry.date) lines.push(`Date: ${formatISODay(entry.date)}`);
   if (where) lines.push(`Location: ${where}`);
-  if (entry.evidence.length > 0) lines.push('Evidence:', ...entry.evidence.map(e => `  ${e.url}`));
+  if (entry.evidence.length > 0) lines.push('Evidence:', ...entry.evidence.map(evidenceLine));
   return { title, lines };
 }
 
@@ -122,7 +136,7 @@ export async function notifyClaimEvent(event: ClaimEvent, entry: WorldRecordOrFi
         mails.push({
           to: [reviewTeam()],
           subject: `New claim to review: ${title}`,
-          text: `${entry.claimantName ?? 'Someone'} submitted a claim.\n\n${all}\n\nReview it: ${siteUrl(`/admin/records-review/${entry.kind}/${entry.entryId}`)}`,
+          text: `${entry.claimantName ?? 'Someone'} submitted a claim.\n\n${evidenceFolderLine(entry)}\n\n${all}\n\nReview it: ${siteUrl(`/admin/records-review/${entry.kind}/${entry.entryId}`)}`,
         });
         break;
       }

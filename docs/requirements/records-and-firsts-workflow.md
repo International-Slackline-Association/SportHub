@@ -1,6 +1,6 @@
 # Requirements: World Records & World Firsts Workflow
 
-Status: **v7**, 2026-10-27 (gender-only titles; matches the implementation on branch `workflow_records_firsts`).
+Status: **v8**, 2026-10-30 (evidence uploads to Google Drive, §5.1; matches the implementation on branch `records-firsts-3-claims`).
 Rules source: ISA Sport Commission, *Slackline World Records and World Firsts*, October 2026 v2. Where this
 document and the framework differ, the framework wins; the Sport Commission decides on every record and first.
 Every section states the decisions taken; §9 lists what is still open. Code map for reviewers:
@@ -14,7 +14,7 @@ them, and approved entries are published on `/world_records` and the athletes' p
 
 **Out of scope:** national/continental records; unleashed ("free solo") highline records; crossings (only sends
 count, except falls during a speedline run); combos as firsts; the framework's ranking records; Guinness
-submissions; records per webbing material; evidence file uploads (later); announcing attempts in the app (later);
+submissions; records per webbing material; announcing attempts in the app (later);
 automated verification, public voting or comments.
 
 ## 2. Actors and permissions
@@ -92,12 +92,35 @@ the current mark; a record must **beat or equal** it.
 | Date, location name and country | Date; location and similar tricks (optional) |
 | Setup, further specs (optional); event (optional) | Line details (optional) |
 | At least 2 witnesses: name, email, optional phone | — |
-| "There is a full video" ticked → at least one video link; unticked → reason required, no links | At least one video link of the landing |
+| Evidence (§5.1): "There is a full video" ticked → at least one item (the video); unticked → reason required, other evidence can still be added | Evidence (§5.1): at least one item showing the landing |
 | Ethics and Code of Conduct confirmation | Ethics and Code of Conduct confirmation |
 
-Links must be http(s) (files later); dates cannot be in the future. If two people act on the same claim at once
+Links use the same check as event submission (a link without `https://` gets it added); dates cannot be in the future. If two people act on the same claim at once
 (e.g. two reviewers), only the first succeeds; the second is asked to reload. The framework's rules for sends, measurements
 and first termination are **not** shown as a checklist on the form (open issue 1).
+
+### 5.1 Evidence
+
+- Evidence is a list of up to 20 items. Each item is a **link** (e.g. a video on YouTube) or an **uploaded file**
+  (photos, videos, GPX/KML/FIT/TCX tracks, PDF, CSV, TXT, spreadsheets; up to 2 GB per file), and every item needs a
+  **description**. The claimant enters the description before uploading.
+- Every claim gets a **Google Drive folder named after its ID** inside the ISA evidence folder
+  (`RECORDS_EVIDENCE_FOLDER_ID`, today folder `1_bXF33HOPKdEuq8CnxHzV1YXaY-g4yjX`), created with the first item, so
+  drafts can hold files. A new claim is saved as a draft before its first upload.
+- **Uploads** are named after their description, keeping the extension ("Laser measurement anchor A.jpg"); the same
+  description twice gets " (2)". The original file name is kept in the file's Drive description. Changing a
+  description renames the file. Files go from the browser straight to Drive (resumable upload), not through SportHub.
+- **Links** are written to the folder as `<description>.url` shortcut files. `_Evidence overview.txt` lists every
+  item with its description and is rewritten on every save.
+- Removing an item and saving moves its file to the Drive trash. Deleting a draft moves its folder to the trash.
+  Files ISA staff add to the folder by hand are left alone.
+- Evidence files are **internal to the ISA**: public pages show links only, and the folder link goes only to the
+  records team (email and review page), not to athletes or witnesses.
+- **Setup:** the service account (`GOOGLE_SERVICE_ACCOUNT_EMAIL`, the one the sheet import uses) needs the Drive API
+  enabled and Content manager access to the evidence folder. The folder must be on a **Shared Drive**, because a
+  service account has no storage of its own; alternatively set `GOOGLE_DRIVE_IMPERSONATE_USER` to upload as an ISA
+  Workspace user (domain-wide delegation). Without these settings, local development keeps files in the temp
+  directory, and production accepts links only.
 
 ## 6. Review and publishing
 
@@ -129,7 +152,7 @@ email never blocks the action. Because claims email addresses the claimant types
 
 | Event | To | Content |
 |---|---|---|
-| Submitted / resubmitted | claimant and athletes; each witness; `RECORDS_REVIEW_EMAIL` (records@) | all claim data; witnesses asked to report errors; reviewer gets the review link |
+| Submitted / resubmitted | claimant and athletes; each witness; `RECORDS_REVIEW_EMAIL` (records@) | all claim data with each evidence item and its description; witnesses asked to report errors; reviewer gets the review link and the link to the claim's Drive evidence folder |
 | Approved | claimant and athletes; `RECORDS_COMMUNICATION_EMAIL` (communication@) | summary, public link, the superseded record |
 | Changes requested / rejected | claimant and athletes | comment or reason, edit link |
 
@@ -153,3 +176,5 @@ email never blocks the action. Because claims email addresses the claimant types
 4. **Sport Commission access:** actions check `records:review` / `records:manage`, but admin pages still require
    `role: admin`.
 5. **Athletes with gender "other" or none** can't be on a claim for now.
+6. **Evidence folder on a Shared Drive:** the ISA evidence folder must move to a Shared Drive (or impersonation be
+   set up) before uploads work on staging and production (§5.1).

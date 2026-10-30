@@ -8,7 +8,8 @@
  */
 
 import { revalidatePath } from 'next/cache';
-import { actorOf, requireSession } from '@lib/records-auth';
+import { headers } from 'next/headers';
+import { actorOf, hasRecordsPermission, requireSession } from '@lib/records-auth';
 import { getUser } from '@lib/user-service';
 import { normalizeGender } from '@utils/gender';
 import {
@@ -30,6 +31,8 @@ import { compareRecordValues, deriveGender, formatRecordValue, GENDER_TITLE_LABE
 import {
   commonFieldsFrom,
   currentForGender,
+  evidenceItems,
+  evidenceProblems,
   firstFieldsFrom,
   kindForPath,
   newEntryId,
@@ -39,7 +42,8 @@ import {
   validateForSubmit,
 } from '@lib/records-claims';
 import { notifyClaimEvent } from '@lib/records-notifications';
-import { MAX_SUBMISSIONS_PER_DAY, RECORDS_TEAM_EMAIL } from '@lib/records-rules';
+import { createEvidenceUpload, ensureEvidenceFolder, evidenceFileName, syncEvidence, trashEvidenceFolder, uploadDescription } from '@lib/records-evidence';
+import { evidenceFileProblem, MAX_EVIDENCE_ITEMS, MAX_SUBMISSIONS_PER_DAY, RECORDS_TEAM_EMAIL } from '@lib/records-rules';
 import type { ClaimStatus, WorldRecordOrFirstTableItem } from '@lib/relational-types';
 import type { ClaimActionResult, ClaimFormValues } from './claim/types';
 
@@ -121,6 +125,7 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
 
     // Athlete problems block drafts too, so an athlete is never silently left out of a saved claim
     const { athletes, errors } = await snapshotAthletes(values);
+    errors.push(...evidenceProblems(values));
     if (submit) errors.push(...validateForSubmit(values, kind, recordCategory, firstCategory, athletes, claimantId));
 
     const entryId = existing?.entryId ?? newEntryId();
@@ -133,6 +138,8 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
       gender,
       athletes,
       ...commonFieldsFrom(values),
+      evidence: existing?.evidence ?? [],
+      evidenceFolderId: existing?.evidenceFolderId,
       ethicsConfirmed: values.ethicsConfirmed,
       consentConfirmed: values.consentConfirmed,
       claimantUserId: claimantId,
@@ -177,6 +184,11 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
     }
 
     if (errors.length > 0) return { success: false, errors };
+
+    // Uploads, link shortcuts and the overview in the claim's Drive folder
+    const synced = await syncEvidence(entry, evidenceItems(values));
+    if (synced.errors.length > 0) return { success: false, errors: synced.errors };
+    entry = { ...entry, evidence: synced.evidence, evidenceFolderId: synced.evidenceFolderId };
 
     // Every submission sends emails, so submissions per account per day are capped
     if (submit && !(await countSubmission(claimantId, MAX_SUBMISSIONS_PER_DAY))) {
@@ -240,11 +252,65 @@ export async function deleteDraft(kind: EntryKind, entryId: string): Promise<Cla
     if (!entry) return { success: false, errors: ['Claim not found'] };
     if (entry.status !== 'draft') return { success: false, errors: ['Only drafts can be deleted'] };
     await deleteEntry(entry);
+    // The folder goes to the Drive trash, where the ISA can still restore it
+    await trashEvidenceFolder(entry.evidenceFolderId).catch(error => console.error('Error trashing evidence folder:', error));
     revalidateClaimPages();
     return { success: true, entryId, kind, message: 'Draft deleted.' };
   } catch (error) {
     console.error('Error deleting draft:', error);
     return { success: false, errors: [errorMessage(error, 'Failed to delete the draft')] };
+  }
+}
+
+// ============================================================================
+// EVIDENCE UPLOADS
+// ============================================================================
+
+export type EvidenceUploadResult =
+  | { success: true; uploadUrl: string; fileName: string }
+  | { success: false; errors: string[] };
+
+/**
+ * Starts an evidence upload: checks the file and that the user may add evidence
+ * to this claim (its claimant while they can edit it, or a reviewer), then
+ * returns an address the browser sends the file to. The file goes straight to
+ * the claim's Drive folder, named after its description; it is attached to the
+ * claim when the form is saved.
+ */
+export async function startEvidenceUpload(
+  kind: EntryKind,
+  entryId: string,
+  file: { name: string; size: number; mimeType: string; description: string },
+): Promise<EvidenceUploadResult> {
+  try {
+    const session = await requireSession();
+    const entry = await getEntry(kind, entryId);
+    if (!entry || entry.source !== 'claim') return { success: false, errors: ['Claim not found'] };
+    const ownEditable = entry.claimantUserId === session.user.id && (entry.status === 'draft' || entry.status === 'changes_requested');
+    if (!ownEditable && !hasRecordsPermission(session, 'records:review')) return { success: false, errors: ['You cannot add evidence to this claim'] };
+
+    const description = file.description.trim();
+    if (!description) return { success: false, errors: ['Describe the file before uploading it'] };
+    const problem = evidenceFileProblem(file.name, file.size);
+    if (problem) return { success: false, errors: [problem] };
+    if (entry.evidence.length >= MAX_EVIDENCE_ITEMS) return { success: false, errors: [`A claim can have at most ${MAX_EVIDENCE_ITEMS} pieces of evidence`] };
+
+    const folderId = await ensureEvidenceFolder(entry);
+    if (folderId !== entry.evidenceFolderId) await putEntry({ ...entry, evidenceFolderId: folderId }, { expectedStatus: entry.status });
+
+    const requestHeaders = await headers();
+    const origin = requestHeaders.get('origin') ?? `${requestHeaders.get('x-forwarded-proto') ?? 'https'}://${requestHeaders.get('host')}`;
+    const fileName = evidenceFileName(description, file.name);
+    const uploadUrl = await createEvidenceUpload(folderId, {
+      name: fileName,
+      mimeType: file.mimeType || 'application/octet-stream',
+      size: file.size,
+      description: uploadDescription(description, file.name),
+    }, origin);
+    return { success: true, uploadUrl, fileName };
+  } catch (error) {
+    console.error('Error starting evidence upload:', error);
+    return { success: false, errors: [errorMessage(error, 'The upload could not be started')] };
   }
 }
 

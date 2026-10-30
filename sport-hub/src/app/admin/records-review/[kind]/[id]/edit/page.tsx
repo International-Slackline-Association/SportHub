@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import PageLayout from '@ui/PageLayout';
 import { requireAdmin } from '@lib/authorization';
 import { getRecordCategories, getFirstCategories, getEntry } from '@lib/records-service';
+import { evidenceUploadsEnabled } from '@lib/records-evidence';
 import { entryToClaimValues } from 'src/app/world_records/claim/types';
 import AdminEditForm from './AdminEditForm';
 
@@ -43,6 +44,7 @@ export default async function ModifyEntryPage({ params }: Props) {
         recordCategories={categories}
         firstCategories={firstCategories}
         claimantId={entry.claimantUserId ?? ''}
+        uploadsEnabled={entry.source === 'claim' && evidenceUploadsEnabled()}
       />
     </PageLayout>
   );

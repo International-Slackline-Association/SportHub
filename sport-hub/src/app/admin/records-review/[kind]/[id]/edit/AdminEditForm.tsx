@@ -18,9 +18,10 @@ type Props = {
   recordCategories: RecordCategoryTableItem[];
   firstCategories: FirstCategoryTableItem[];
   claimantId: string;
+  uploadsEnabled: boolean;
 };
 
-export default function AdminEditForm({ kind, entryId, initialValues, recordCategories, firstCategories, claimantId }: Props) {
+export default function AdminEditForm({ kind, entryId, initialValues, recordCategories, firstCategories, claimantId, uploadsEnabled }: Props) {
   const router = useRouter();
   const [errors, setErrors] = useState<string[]>([]);
   const [comment, setComment] = useState('');
@@ -51,7 +52,14 @@ export default function AdminEditForm({ kind, entryId, initialValues, recordCate
             </section>
           )}
           <PathResetter onChange={() => setFieldValue('categoryId', '')} path={values.path} />
-          <ClaimFields recordCategories={recordCategories} firstCategories={firstCategories} claimantId={claimantId} admin />
+          <ClaimFields
+            recordCategories={recordCategories}
+            firstCategories={firstCategories}
+            claimantId={claimantId}
+            admin
+            uploadsEnabled={uploadsEnabled}
+            ensureSaved={async () => ({ kind, entryId })}
+          />
           <section className="p-4 sm:p-0 stack gap-2">
             <label htmlFor="modify-comment" className="text-sm font-medium text-gray-600">Reason for the change (shown in the history)</label>
             <input id="modify-comment" className="border border-gray-300 rounded px-3 py-2 text-sm" value={comment} onChange={e => setComment(e.target.value)} />

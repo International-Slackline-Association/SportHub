@@ -16,6 +16,7 @@ How the World Records & World Firsts workflow is built, for reviewers. Requireme
 | Reviewer actions | `app/admin/records-review/actions.ts` | Queue, review detail, approve / request changes / reject, void / restore, Modify. `records:review`, and `records:manage` for public entries. |
 | Category actions | `app/admin/records-categories/actions.ts` | Create and edit record and first categories (`records:manage`). |
 | Import actions | `app/admin/records-import/actions.ts` | Resolve the import review list (`records:manage`). |
+| Evidence | `lib/records-evidence.ts`, `claim/components/EvidenceFields.tsx`, `api/records-evidence/local` | Claim folder on Google Drive per entry: resumable uploads straight from the browser (`startEvidenceUpload`), link shortcuts and overview written by `syncEvidence` on save. Local stand-in in the temp directory when Drive isn't configured. |
 | Emails | `lib/records-notifications.ts`, `lib/mailer.ts` | One function per claim event; SMTP or log only. Never throws. |
 | CSV export | `lib/records-export.ts`, `app/api/admin/records-export/[dataset]/route.ts` | Records, firsts, athletes and categories as CSV for admins (`/admin/records-export`). |
 | Certificates | `lib/records-certificates.ts`, `app/api/certificates/[kind]/[id]/route.ts` | Placeholder PDF, generated on demand for public entries. |

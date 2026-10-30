@@ -12,7 +12,8 @@ import { normalizeGender } from '@utils/gender';
 import { createUser } from '@ui/UserForm/actions';
 import { getEntriesByCategory, type EntryKind } from './records-service';
 import { comparableValue, parseRecordValue, splitCurrentAndHistory } from './records-logic';
-import { MAX_ATHLETES, MAX_WITNESSES, MIN_WITNESSES } from './records-rules';
+import { MAX_ATHLETES, MAX_EVIDENCE_ITEMS, MAX_WITNESSES, MIN_WITNESSES } from './records-rules';
+import type { EvidenceItemInput } from './records-evidence';
 import type {
   WorldRecordOrFirstEntryAthlete,
   FirstCategoryTableItem,
@@ -32,9 +33,27 @@ export const kindForPath = (path: ClaimFormValues['path']): EntryKind => (path =
 
 export const newEntryId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-/** Records without a full video have no video links (the form hides them, FR-11). */
-export const evidenceLinks = (values: ClaimFormValues) =>
-  values.path !== 'first' && !values.fullVideo ? [] : values.evidence.map(l => l.trim()).filter(Boolean).map(normalizeUrl);
+/** Evidence the claimant filled in: links with an address and uploaded files. Empty link rows are dropped. */
+export const evidenceItems = (values: ClaimFormValues): EvidenceItemInput[] =>
+  values.evidence
+    .filter(e => (e.type === 'link' ? !!e.url.trim() : !!e.driveFileId))
+    .map(e => ({
+      type: e.type,
+      url: e.type === 'link' ? normalizeUrl(e.url) : '',
+      description: e.description,
+      driveFileId: e.driveFileId,
+      fileName: e.fileName,
+      originalFileName: e.originalFileName,
+    }));
+
+/** Checks every evidence item; drafts too, since links are written to the evidence folder on save. */
+export function evidenceProblems(values: ClaimFormValues): string[] {
+  const errors: string[] = [];
+  const items = evidenceItems(values);
+  if (items.length > MAX_EVIDENCE_ITEMS) errors.push(`A claim can have at most ${MAX_EVIDENCE_ITEMS} pieces of evidence`);
+  for (const item of items) if (item.type === 'link' && !isValidUrl(item.url)) errors.push(`"${item.url}": ${INVALID_URL_MESSAGE}`);
+  return errors;
+}
 
 const isFilled = (w: RecordWitness) => !!(w.name.trim() || w.email.trim() || w.phone?.trim());
 
@@ -54,7 +73,6 @@ export const commonFieldsFrom = (values: ClaimFormValues) => ({
   locationName: values.locationName.trim() || undefined,
   locationCountry: values.locationCountry || undefined,
   eventId: values.eventId || undefined,
-  evidence: evidenceLinks(values).map(url => ({ type: 'link' as const, url })),
 });
 
 /** First-specific fields (§8.2). */
@@ -195,11 +213,11 @@ export function validateForSubmit(
     errors.push('Confirm that you have the consent of every athlete on this claim');
   }
 
-  const links = evidenceLinks(values);
-  if (links.length === 0 && (kind === 'first' || values.fullVideo)) {
-    errors.push(kind === 'first' ? 'Add at least one video link showing the trick being landed' : 'Add at least one video link');
+  const items = evidenceItems(values);
+  if (items.length === 0 && (kind === 'first' || values.fullVideo)) {
+    errors.push(kind === 'first' ? 'Add at least one video showing the trick being landed, as a link or a file' : 'Add the video of the attempt, as a link or a file');
   }
-  for (const link of links) if (!isValidUrl(link)) errors.push(`"${link}": ${INVALID_URL_MESSAGE}`);
+  if (items.some(i => !i.description.trim())) errors.push('Add a description to every piece of evidence');
 
   required(values.date, 'Date');
   if (values.date && values.date > new Date().toISOString().slice(0, 10)) errors.push('The date cannot be in the future');

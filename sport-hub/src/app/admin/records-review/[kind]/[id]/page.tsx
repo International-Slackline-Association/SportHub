@@ -7,7 +7,8 @@ import PageLayout from '@ui/PageLayout';
 import { Alert } from '@ui/Alert';
 import { requireAdmin } from '@lib/authorization';
 import { formatRecordValue, GENDER_LABELS, GENDER_TITLE_LABELS, RECORD_GENDERS } from '@lib/records-logic';
-import { FIRST_CRITERIA, RECORD_CRITERIA } from '@lib/records-rules';
+import { FIRST_CRITERIA, formatFileSize, RECORD_CRITERIA } from '@lib/records-rules';
+import { evidenceFolderUrl } from '@lib/records-evidence';
 import type { RecordCategoryTableItem } from '@lib/relational-types';
 import { getReviewContext } from 'src/app/admin/records-review/actions';
 import { ClaimStatusBadge } from 'src/app/world_records/components/claimStatus';
@@ -40,6 +41,7 @@ export default async function ReviewClaimPage({ params }: Props) {
   const context = await getReviewContext(kind, id);
   if (!context) notFound();
   const { entry, audit, category, currentByGender, similar, recordCategories, firstCategories, unchallengedPrompt } = context;
+  const folderUrl = evidenceFolderUrl(entry.evidenceFolderId);
 
   const recordCategory = entry.kind === 'record' ? (category as RecordCategoryTableItem | null) : null;
   const isNewCategory = entry.kind === 'record' && !!entry.newCategoryProposal && entry.categoryId.startsWith('proposed-');
@@ -110,9 +112,18 @@ export default async function ReviewClaimPage({ params }: Props) {
                 <Row label="No full video because">{entry.noFullVideoReason}</Row>
               </>
             )}
+            <Row label="Evidence folder">
+              {folderUrl ? <a href={folderUrl} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">Open in Google Drive</a> : undefined}
+            </Row>
             <Row label="Evidence">
               {entry.evidence.length > 0 ? entry.evidence.map(e => (
-                <a key={e.url} href={e.url} target="_blank" rel="noreferrer" className="block text-blue-600 hover:underline break-all">{e.url}</a>
+                <span key={e.driveFileId ?? e.url} className="block">
+                  {(e.description ?? e.label) && <span>{e.description ?? e.label}: </span>}
+                  <a href={e.url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline break-all">
+                    {e.type === 'file' ? e.fileName : e.url}
+                  </a>
+                  {e.type === 'file' && <span className="text-gray-500"> (file, {formatFileSize(e.size)})</span>}
+                </span>
               )) : undefined}
             </Row>
             <Row label="Claimant">{entry.claimantName}</Row>

@@ -508,7 +508,8 @@ const toDisplayAthletes = (entry: WorldRecordOrFirstTableItem): DisplayAthlete[]
 /** Claims store ISO codes, imported rows country names. */
 const countryName = (country?: string) => (country && getCountryByCode(country)?.name) || country;
 
-const links = (entry: WorldRecordOrFirstTableItem) => entry.evidence.map(e => e.url).filter(Boolean);
+/** Public lists show links only; uploaded files stay in the ISA's evidence folder. */
+const links = (entry: WorldRecordOrFirstTableItem) => entry.evidence.filter(e => e.type === 'link').map(e => e.url).filter(Boolean);
 
 const toWorldRecords = (
   categories: RecordCategoryTableItem[],

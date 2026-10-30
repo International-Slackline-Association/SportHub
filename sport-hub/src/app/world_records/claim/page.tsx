@@ -9,6 +9,7 @@ import type { ClaimStatus } from '@lib/relational-types';
 import { getClaimFormOptions, getOwnClaim } from '../actions';
 import { emptyClaim, entryToClaimValues, type ClaimFormValues } from './types';
 import ClaimForm from './components/ClaimForm';
+import { evidenceUploadsEnabled } from '@lib/records-evidence';
 
 export const metadata: Metadata = {
   title: 'SportHub - Claim a World Record or First',
@@ -65,6 +66,7 @@ export default async function ClaimPage({ searchParams }: Props) {
         claimantId={session.user.id}
         reviewComment={reviewComment}
         status={status}
+        uploadsEnabled={evidenceUploadsEnabled()}
       />
     </PageLayout>
   );

@@ -37,3 +37,35 @@ export const RECORDS_TEAM_EMAIL = 'records@slacklineinternational.org';
 export const MAX_SUBMISSIONS_PER_DAY = 5;
 export const MAX_WITNESSES = 10;
 export const MAX_ATHLETES = 10;
+
+/** Evidence: links and uploaded files, each with a description. Files go to Google Drive. */
+export const MAX_EVIDENCE_ITEMS = 20;
+export const MAX_EVIDENCE_FILE_BYTES = 2 * 1024 ** 3;
+export const MAX_EVIDENCE_FILE_LABEL = '2 GB';
+/** Photos, videos, tracks (GPX, KML, FIT, TCX), PDFs and spreadsheets/text with measurements. */
+export const EVIDENCE_FILE_EXTENSIONS = [
+  'jpg', 'jpeg', 'png', 'heic', 'heif', 'webp', 'gif', 'tif', 'tiff',
+  'mp4', 'mov', 'm4v', 'avi', 'mkv', 'webm', 'mts', '3gp',
+  'gpx', 'kml', 'kmz', 'fit', 'tcx',
+  'pdf', 'csv', 'txt', 'xlsx', 'ods',
+];
+export const EVIDENCE_FILE_ACCEPT = EVIDENCE_FILE_EXTENSIONS.map(e => `.${e}`).join(',');
+
+export const evidenceFileProblem = (name: string, size: number): string | null => {
+  const extension = name.split('.').pop()?.toLowerCase() ?? '';
+  if (!name.includes('.') || !EVIDENCE_FILE_EXTENSIONS.includes(extension)) {
+    return `"${name}": this file type can't be uploaded. Allowed: photos, videos, GPX/KML/FIT/TCX tracks, PDF, CSV, TXT and spreadsheets.`;
+  }
+  if (size <= 0) return `"${name}" is empty`;
+  if (size > MAX_EVIDENCE_FILE_BYTES) return `"${name}" is larger than ${MAX_EVIDENCE_FILE_LABEL}`;
+  return null;
+};
+
+export const formatFileSize = (bytes?: number) => {
+  if (!bytes) return '';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) { value /= 1024; unit++; }
+  return `${value < 10 && unit > 0 ? value.toFixed(1) : Math.round(value)} ${units[unit]}`;
+};

@@ -43,6 +43,8 @@ import {
 } from '@lib/records-logic';
 import {
   commonFieldsFrom,
+  evidenceItems,
+  evidenceProblems,
   createPendingAthletes,
   firstFieldsFrom,
   kindForPath,
@@ -59,7 +61,7 @@ import type {
   WorldRecordOrFirstTableItem,
 } from '@lib/relational-types';
 import type { ClaimActionResult, ClaimFormValues } from 'src/app/world_records/claim/types';
-import { INVALID_URL_MESSAGE, isValidUrl } from '@utils/urls';
+import { syncEvidence } from '@lib/records-evidence';
 
 type ActionResult = { success: boolean; error?: string; notice?: string };
 
@@ -417,7 +419,7 @@ export async function adminUpdateEntry(kind: EntryKind, entryId: string, values:
     const { athletes, errors } = await snapshotAthletes(values, entry.athletes);
     if (athletes.length === 0 && errors.length === 0) errors.push('Add at least one athlete');
     const common = commonFieldsFrom(values);
-    for (const { url } of common.evidence) if (!isValidUrl(url)) errors.push(`"${url}": ${INVALID_URL_MESSAGE}`);
+    errors.push(...evidenceProblems(values));
 
     const shared = {
       ...common,
@@ -456,6 +458,11 @@ export async function adminUpdateEntry(kind: EntryKind, entryId: string, values:
       };
     }
     if (errors.length > 0) return { success: false, errors };
+
+    // Claims keep their evidence in the claim's Drive folder; imported entries keep plain links
+    const synced = await syncEvidence(entry, evidenceItems(values));
+    if (synced.errors.length > 0) return { success: false, errors: synced.errors };
+    updated = { ...updated, evidence: synced.evidence, evidenceFolderId: synced.evidenceFolderId };
 
     // New athletes on a published entry get their profile right away (FR-9)
     if (isPublic) updated = { ...updated, athletes: await createPendingAthletes(updated) };

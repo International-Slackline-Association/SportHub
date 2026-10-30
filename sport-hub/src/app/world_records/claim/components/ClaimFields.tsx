@@ -17,6 +17,7 @@ import type { FirstCategoryTableItem, RecordCategoryTableItem } from '@lib/relat
 import { getAthleteGenders, getMarkToBeat } from '../../actions';
 import type { ClaimFormValues, ClaimPath } from '../types';
 import AthletePicker from './AthletePicker';
+import EvidenceFields, { type EnsureClaimSaved } from './EvidenceFields';
 
 type Props = {
   recordCategories: RecordCategoryTableItem[];
@@ -24,6 +25,8 @@ type Props = {
   claimantId: string;
   /** Admin mode hides the claimant's confirmations and keeps the kind fixed. */
   admin?: boolean;
+  ensureSaved: EnsureClaimSaved;
+  uploadsEnabled: boolean;
 };
 
 const PATH_OPTIONS: { value: ClaimPath; label: string }[] = [
@@ -106,7 +109,7 @@ function GenderAndMark({ recordCategories }: { recordCategories: RecordCategoryT
   );
 }
 
-export default function ClaimFields({ recordCategories, firstCategories, claimantId, admin = false }: Props) {
+export default function ClaimFields({ recordCategories, firstCategories, claimantId, admin = false, ensureSaved, uploadsEnabled }: Props) {
   const { values } = useFormikContext<ClaimFormValues>();
   const isFirst = values.path === 'first';
   const editing = !!values.entryId;
@@ -275,7 +278,12 @@ export default function ClaimFields({ recordCategories, firstCategories, claiman
 
       <Section
         title="Video and evidence"
-        description={isFirst ? 'At least one video link showing the trick being landed.' : 'A full, uncut video of the attempt is expected.'}
+        description={
+          <>
+            {isFirst ? 'At least one video showing the trick being landed.' : 'A full, uncut video of the attempt is expected.'}{' '}
+            Add links (e.g. YouTube) or upload files (photos, videos, GPS tracks, measurements), each with a description.
+          </>
+        }
       >
         {!isFirst && (
           <>
@@ -283,21 +291,7 @@ export default function ClaimFields({ recordCategories, firstCategories, claiman
             {!values.fullVideo && <TextArea name="noFullVideoReason" label="Why is there no full video?" required />}
           </>
         )}
-        {(isFirst || values.fullVideo) && (
-          <FieldArray name="evidence">
-            {({ push, remove }) => (
-              <div className="stack gap-2">
-                {values.evidence.map((_, i) => (
-                  <div key={i} className="flex gap-2 items-end">
-                    <FormikTextField className="flex-1" id={`evidence.${i}`} name={`evidence.${i}`} label={i === 0 ? 'Video link' : `Link ${i + 1}`} placeholder="https://" required={i === 0} />
-                    {i > 0 && <button type="button" className="text-xs text-red-600 underline pb-2" onClick={() => remove(i)}>Remove</button>}
-                  </div>
-                ))}
-                <div><Button type="button" variant="secondary" size="small" onClick={() => push('')}>Add a link</Button></div>
-              </div>
-            )}
-          </FieldArray>
-        )}
+        <EvidenceFields ensureSaved={ensureSaved} uploadsEnabled={uploadsEnabled} />
       </Section>
 
       {!admin && (

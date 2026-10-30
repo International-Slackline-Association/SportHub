@@ -24,9 +24,10 @@ type Props = {
   reviewComment?: string;
   /** Status of a saved claim; undefined for a new one. */
   status?: ClaimStatus;
+  uploadsEnabled: boolean;
 };
 
-export default function ClaimForm({ recordCategories, firstCategories, initialValues, claimantId, reviewComment, status }: Props) {
+export default function ClaimForm({ recordCategories, firstCategories, initialValues, claimantId, reviewComment, status, uploadsEnabled }: Props) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
@@ -84,7 +85,25 @@ export default function ClaimForm({ recordCategories, firstCategories, initialVa
           {message && <section className="p-4 sm:p-0"><Alert variant="success">{message}</Alert></section>}
 
           <PathResetter onChange={() => setFieldValue('categoryId', '')} path={values.path} />
-          <ClaimFields recordCategories={recordCategories} firstCategories={firstCategories} claimantId={claimantId} />
+          <ClaimFields
+            recordCategories={recordCategories}
+            firstCategories={firstCategories}
+            claimantId={claimantId}
+            uploadsEnabled={uploadsEnabled}
+            ensureSaved={async current => {
+              const kind = current.path === 'first' ? 'first' : 'record';
+              if (current.entryId) return { kind, entryId: current.entryId };
+              // Files go into a folder named after the claim's ID, so a new claim is saved as a draft first
+              setErrors([]);
+              const result = await saveClaim(current, 'draft');
+              if (!result.success) { setErrors(result.errors); window.scrollTo({ top: 0, behavior: 'smooth' }); return null; }
+              setFieldValue('entryId', result.entryId);
+              setMessage('Draft saved, so files can be added to it.');
+              // Only the address changes: a router navigation here would drop the upload's server action
+              window.history.replaceState(null, '', `/world_records/claim?kind=${result.kind}&id=${result.entryId}`);
+              return { kind: result.kind, entryId: result.entryId };
+            }}
+          />
 
           <section className="p-4 sm:p-0 flex gap-3 flex-wrap">
             <Button type="submit" variant="secondary" disabled={isSubmitting} onClick={() => setIntent('draft')}>

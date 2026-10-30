@@ -322,11 +322,21 @@ export interface RecordWitness {
   role?: string;                 // Older claims: role during the attempt
 }
 
-/** Evidence is links only in v1; "file" is reserved for S3 uploads later. */
+/**
+ * One piece of evidence: a link (e.g. a video on YouTube) or an uploaded file.
+ * Claims keep both in the claim's Google Drive folder: uploads as they are,
+ * links as .url shortcut files (see lib/records-evidence.ts).
+ */
 export interface RecordEvidence {
   type: 'link' | 'file';
-  url: string;
-  label?: string;
+  url: string;                   // Link: the web address. File: where reviewers open it (Drive)
+  label?: string;                // Imported entries: label from the sheet
+  description?: string;          // Required on claims
+  driveFileId?: string;          // File: the upload. Link: its shortcut file
+  fileName?: string;             // Name in the folder: the description plus the file's extension
+  originalFileName?: string;     // Files: name on the claimant's device
+  mimeType?: string;
+  size?: number;                 // Bytes
 }
 
 export interface NewCategoryProposal {
@@ -353,6 +363,7 @@ interface RecordsMetadataTableItem extends RecordsTableItem {
   locationCountry?: string;
   eventId?: string;
   evidence: RecordEvidence[];
+  evidenceFolderId?: string;     // The claim's evidence folder (Google Drive), named after entryId
   ethicsConfirmed?: boolean;
   consentConfirmed?: boolean;    // Required when claiming for others or several athletes
   claimantUserId?: string;

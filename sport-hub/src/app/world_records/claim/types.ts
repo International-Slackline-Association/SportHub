@@ -10,6 +10,20 @@ export interface ClaimAthleteValue {
   pendingUser?: PendingUserData;   // New athlete, created on approval (FR-9)
 }
 
+/** One piece of evidence on the form: a link, or a file already uploaded to the claim's folder. */
+export interface ClaimEvidenceValue {
+  type: 'link' | 'file';
+  url: string;                     // Links only
+  description: string;
+  driveFileId?: string;
+  fileName?: string;
+  originalFileName?: string;
+  mimeType?: string;
+  size?: number;
+}
+
+export const emptyEvidenceLink = (): ClaimEvidenceValue => ({ type: 'link', url: '', description: '' });
+
 export interface ClaimFormValues {
   entryId?: string;
   path: ClaimPath;
@@ -45,7 +59,7 @@ export interface ClaimFormValues {
 
   // Both
   eventId: string;
-  evidence: string[];
+  evidence: ClaimEvidenceValue[];
   ethicsConfirmed: boolean;
 }
 
@@ -71,7 +85,7 @@ export const emptyClaim = (path: ClaimPath = 'existing'): ClaimFormValues => ({
   similarTricks: '',
   lineDetails: '',
   eventId: '',
-  evidence: [''],
+  evidence: [emptyEvidenceLink()],
   ethicsConfirmed: false,
 });
 
@@ -108,7 +122,18 @@ export function entryToClaimValues(entry: WorldRecordOrFirstTableItem): ClaimFor
     locationName: entry.locationName ?? '',
     locationCountry: entry.locationCountry ?? '',
     eventId: entry.eventId ?? '',
-    evidence: entry.evidence.length > 0 ? entry.evidence.map(e => e.url) : [''],
+    evidence: entry.evidence.length > 0
+      ? entry.evidence.map(e => ({
+        type: e.type,
+        url: e.type === 'link' ? e.url : '',
+        description: e.description ?? e.label ?? '',
+        driveFileId: e.driveFileId,
+        fileName: e.fileName,
+        originalFileName: e.originalFileName,
+        mimeType: e.mimeType,
+        size: e.size,
+      }))
+      : [emptyEvidenceLink()],
     ethicsConfirmed: entry.ethicsConfirmed ?? false,
   };
   if (entry.kind === 'first') {
