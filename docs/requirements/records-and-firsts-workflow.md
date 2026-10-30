@@ -164,7 +164,7 @@ email never blocks the action. Because claims email addresses the claimant types
 | Event | To | Content |
 |---|---|---|
 | Submitted / resubmitted | claimant and athletes; each witness; `RECORDS_REVIEW_EMAIL` (records@) | all claim data with each evidence item and its description; witnesses asked to report errors; reviewer gets the review link and the link to the claim's Drive evidence folder |
-| Approved | claimant and athletes; `RECORDS_COMMUNICATION_EMAIL` (communication@) | summary, public link, the superseded record |
+| Approved | claimant and athletes; `RECORDS_COMMUNICATION_EMAIL` (communication@); the holders of a record it beat | summary, public link, the superseded record; former holders learn their record is now a Former World Record |
 | Changes requested / rejected | claimant and athletes | comment or reason, edit link |
 
 ## 8. Data and migration

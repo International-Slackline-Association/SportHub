@@ -161,6 +161,17 @@ export async function notifyClaimEvent(event: ClaimEvent, entry: WorldRecordOrFi
           subject: `Published, ready to announce: ${title}`,
           text: [...(standing ? [standing, ''] : []), details, ...(previous.length ? ['', ...previous] : []), '', `Public list: ${publicLink}`].join('\n'),
         });
+        // The holders of the records it beat learn that theirs is now a Former World Record
+        const beaten = context.supersedes ?? [];
+        if (beaten.length > 0) {
+          const notified = new Set(recipients);
+          const formerHolders = [...new Set((await Promise.all(beaten.map(athleteEmails))).flat())].filter(e => !notified.has(e));
+          mails.push({
+            to: formerHolders,
+            subject: `Your record was beaten: ${title}`,
+            text: `The ISA approved a new record that beats yours. Your record stays in the record history and on your profile as a Former World Record, and its certificate remains available.\n\n${details}\n\n${previous.join('\n')}\n\nRecord history: ${publicLink}`,
+          });
+        }
         break;
       }
       case 'changes_requested':
