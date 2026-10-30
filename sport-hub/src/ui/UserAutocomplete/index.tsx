@@ -40,12 +40,13 @@ export default function UserAutocomplete<TFormValues>({
   }, [currentFormValueUserName]);
 
   const isReadOnly = Boolean(readOnlyIfSet && formikValueUserId);
+  const isSearching = !isReadOnly && debouncedUserName.length >= 3;
 
   const { data: allUsers, isLoading, isError } = useQuery({
     queryKey: ['users', formKey],
     queryFn: async () => (await fetch('/api/users')).json(),
     // Enable only when user has typed at least 3 chars and not in read-only mode
-    enabled: !isReadOnly && debouncedUserName.length >= 3,
+    enabled: isSearching,
     // Cache for 1 hour, consider data fresh for 10 minutes
     gcTime: 60 * 60 * 1000,
     staleTime: 10 * 60 * 1000,
@@ -103,7 +104,8 @@ export default function UserAutocomplete<TFormValues>({
       caption={caption}
       id={formKeyName}
       name={formKeyName}
-      isLoading={isLoading}
+      // Instances with the same formKey share one query; only the one being typed in shows the spinner
+      isLoading={isLoading && isSearching}
       hideErrorMessage
       getDisplayValue={(value: unknown) => {
         if (typeof value === 'string' && value.trim().length > 0) {

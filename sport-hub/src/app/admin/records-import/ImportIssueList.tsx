@@ -7,6 +7,7 @@ import { Form, Formik } from 'formik';
 import Button from '@ui/Button';
 import { Alert } from '@ui/Alert';
 import { FormikSelectField, FormikTextField } from '@ui/Form';
+import FormikAutocomplete from '@ui/Form/FormikAutocomplete';
 import UserAutocomplete from '@ui/UserAutocomplete';
 import type { RecordsImportIssueTableItem } from '@lib/relational-types';
 import { dismissImportIssue, importIssueRow, linkImportAthlete } from './actions';
@@ -95,7 +96,7 @@ function IssueCard({ issue, recordCategories, firstCategories }: { issue: Record
             <Form className="stack gap-2">
               {notImported && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <FormikSelectField id={`${issue.sortKey}-category`} name="categoryId" label="Category" placeholder="Choose a category" options={categoryOptions} required />
+                  <FormikAutocomplete id={`${issue.sortKey}-category`} name="categoryId" label="Category" placeholder="Type to search categories" options={categoryOptions} required />
                   {issue.kind === 'record'
                     ? <FormikTextField id={`${issue.sortKey}-value`} name="valueText" label="Value" />
                     : <FormikTextField id={`${issue.sortKey}-trick`} name="trickName" label="Trick name" />}
@@ -109,7 +110,7 @@ function IssueCard({ issue, recordCategories, firstCategories }: { issue: Record
               )}
               <div className="flex gap-2 flex-wrap">
                 {notImported && (
-                  <Button type="submit" size="small" variant="primary" disabled={isSubmitting || !values.categoryId || !values.gender}>
+                  <Button type="submit" size="small" variant="primary" disabled={isSubmitting || !categoryOptions.some(o => o.value === values.categoryId) || !values.gender}>
                     Import with this category
                   </Button>
                 )}
