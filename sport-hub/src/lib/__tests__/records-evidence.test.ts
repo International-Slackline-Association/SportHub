@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { evidenceFileName, uploadDescription } from '../records-evidence';
-import { evidenceFileProblem, formatFileSize, MAX_EVIDENCE_FILE_BYTES } from '../records-rules';
+import { evidenceFileProblem, formatFileSize, MAX_EVIDENCE_FILE_BYTES, witnessProblems } from '../records-rules';
 
 test('uploads are named after their description and keep the extension', () => {
   assert.equal(evidenceFileName('Laser measurement anchor A', 'IMG_2041.JPG'), 'Laser measurement anchor A.jpg');
@@ -27,4 +27,13 @@ test('file sizes are readable', () => {
   assert.equal(formatFileSize(512), '512 B');
   assert.equal(formatFileSize(1536), '1.5 KB');
   assert.equal(formatFileSize(250 * 1024 ** 2), '250 MB');
+});
+
+test('claims need two to ten witnesses with name and email', () => {
+  const w = (n: number) => ({ name: `W${n}`, email: `w${n}@example.com` });
+  assert.deepEqual(witnessProblems([w(1), w(2)]), []);
+  assert.deepEqual(witnessProblems([w(1)]), ['Name at least 2 witnesses']);
+  assert.deepEqual(witnessProblems(Array.from({ length: 11 }, (_, i) => w(i))), ['Name at most 10 witnesses']);
+  assert.deepEqual(witnessProblems([w(1), { name: 'W2', email: '' }]), ['Each witness needs a name and an email']);
+  assert.deepEqual(witnessProblems([w(1), { name: 'W2', email: 'nope' }]), ['Enter a valid email for each witness']);
 });

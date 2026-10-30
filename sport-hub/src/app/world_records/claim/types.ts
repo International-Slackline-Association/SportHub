@@ -107,6 +107,8 @@ const witnessFields = (w: RecordWitness): RecordWitness => {
 
 /** Loads a saved claim back into the form (edit a draft or a claim with changes requested). */
 export function entryToClaimValues(entry: WorldRecordOrFirstTableItem): ClaimFormValues {
+  const witnesses = (entry.witnesses ?? []).map(witnessFields);
+  while (witnesses.length < 2) witnesses.push({ name: '', email: '', phone: '' });
   const proposal = entry.kind === 'record' ? entry.newCategoryProposal : undefined;
   const base = emptyClaim(entry.kind === 'first' ? 'first' : proposal ? 'new_category' : 'existing');
   const common: ClaimFormValues = {
@@ -134,6 +136,7 @@ export function entryToClaimValues(entry: WorldRecordOrFirstTableItem): ClaimFor
         size: e.size,
       }))
       : [emptyEvidenceLink()],
+    witnesses,
     ethicsConfirmed: entry.ethicsConfirmed ?? false,
   };
   if (entry.kind === 'first') {
@@ -146,15 +149,12 @@ export function entryToClaimValues(entry: WorldRecordOrFirstTableItem): ClaimFor
       lineDetails: entry.lineDetails ?? '',
     };
   }
-  const witnesses = entry.witnesses.map(witnessFields);
-  while (witnesses.length < 2) witnesses.push({ name: '', email: '', phone: '' });
   return {
     ...common,
     newCategory: entry.newCategoryProposal ? { ...entry.newCategoryProposal } : base.newCategory,
     valueText: entry.value.original ?? '',
     setup: entry.setup ?? '',
     furtherSpecs: entry.furtherSpecs ?? '',
-    witnesses,
     fullVideo: !entry.noFullVideoReason,
     noFullVideoReason: entry.noFullVideoReason ?? '',
   };

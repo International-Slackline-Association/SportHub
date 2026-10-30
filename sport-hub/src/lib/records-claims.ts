@@ -12,7 +12,7 @@ import { normalizeGender } from '@utils/gender';
 import { createUser } from '@ui/UserForm/actions';
 import { getEntriesByCategory, type EntryKind } from './records-service';
 import { comparableValue, parseRecordValue, splitCurrentAndHistory } from './records-logic';
-import { MAX_ATHLETES, MAX_EVIDENCE_ITEMS, MAX_WITNESSES, MIN_WITNESSES } from './records-rules';
+import { MAX_ATHLETES, MAX_EVIDENCE_ITEMS, witnessProblems } from './records-rules';
 import type { EvidenceItemInput } from './records-evidence';
 import type {
   WorldRecordOrFirstEntryAthlete,
@@ -73,6 +73,7 @@ export const commonFieldsFrom = (values: ClaimFormValues) => ({
   locationName: values.locationName.trim() || undefined,
   locationCountry: values.locationCountry || undefined,
   eventId: values.eventId || undefined,
+  witnesses: toWitnesses(values),
 });
 
 /** First-specific fields (§8.2). */
@@ -85,10 +86,9 @@ export const firstFieldsFrom = (values: ClaimFormValues): Pick<WorldFirstTableIt
 });
 
 /** Record-specific fields (§8.1) apart from category and value. */
-export const recordDetailsFrom = (values: ClaimFormValues): Pick<WorldRecordTableItem, 'setup' | 'furtherSpecs' | 'witnesses' | 'noFullVideoReason'> => ({
+export const recordDetailsFrom = (values: ClaimFormValues): Pick<WorldRecordTableItem, 'setup' | 'furtherSpecs' | 'noFullVideoReason'> => ({
   setup: values.setup.trim() || undefined,
   furtherSpecs: values.furtherSpecs.trim() || undefined,
-  witnesses: toWitnesses(values),
   noFullVideoReason: values.fullVideo ? undefined : values.noFullVideoReason.trim() || undefined,
 });
 
@@ -223,6 +223,8 @@ export function validateForSubmit(
   if (values.date && values.date > new Date().toISOString().slice(0, 10)) errors.push('The date cannot be in the future');
   if (!values.ethicsConfirmed) errors.push('Confirm the ISA ethics guidelines and Code of Conduct');
 
+  errors.push(...witnessProblems(toWitnesses(values)));
+
   if (kind === 'first') {
     if (!firstCategory || firstCategory.status === 'archived') errors.push('Choose a first category');
     required(values.trickName, 'Trick name');
@@ -242,12 +244,6 @@ export function validateForSubmit(
   required(values.valueText, 'Record value');
   required(values.locationName, 'Location');
   required(values.locationCountry, 'Country of the location');
-
-  const witnesses = toWitnesses(values);
-  if (witnesses.length < MIN_WITNESSES) errors.push(`Name at least ${MIN_WITNESSES} witnesses`);
-  if (witnesses.length > MAX_WITNESSES) errors.push(`Name at most ${MAX_WITNESSES} witnesses`);
-  if (witnesses.some(w => !w.name || !w.email)) errors.push('Each witness needs a name and an email');
-  if (witnesses.some(w => w.email && !EMAIL.test(w.email))) errors.push('Enter a valid email for each witness');
   if (!values.fullVideo && !values.noFullVideoReason.trim()) errors.push('Explain why there is no full video');
 
   return errors;

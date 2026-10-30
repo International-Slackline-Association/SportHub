@@ -98,6 +98,9 @@ const trailingColumns = (entry: WorldRecordOrFirstTableItem): Row => ({
   updated_at: iso(entry.updatedAt),
 });
 
+const witnessList = (entry: WorldRecordOrFirstTableItem) =>
+  list((entry.witnesses ?? []).map(w => [w.name, w.email, w.phone ?? w.contact].filter(Boolean).join(' / ')));
+
 async function recordRows(): Promise<Row[]> {
   const [entries, categories, publicRecords] = await Promise.all([
     nonDraftEntries('record', RECORD_STATUSES),
@@ -119,7 +122,7 @@ async function recordRows(): Promise<Row[]> {
       value_as_entered: entry.value.original,
       setup: entry.setup,
       further_specs: entry.furtherSpecs,
-      witnesses: list(entry.witnesses.map(w => [w.name, w.email, w.phone ?? w.contact].filter(Boolean).join(' / '))),
+      witnesses: witnessList(entry),
       full_video: !entry.noFullVideoReason,
       no_full_video_reason: entry.noFullVideoReason,
       proposed_category: proposal ? `${proposal.name} (${proposal.unit}, ${proposal.direction} is better): ${proposal.measurement}` : '',
@@ -141,6 +144,7 @@ async function firstRows(): Promise<Row[]> {
     why_first: entry.whyFirst,
     similar_tricks: entry.similarTricks,
     line_details: entry.lineDetails,
+    witnesses: witnessList(entry),
     trick_group_id: entry.trickGroupId,
     ...trailingColumns(entry),
   }));

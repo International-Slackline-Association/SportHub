@@ -250,31 +250,29 @@ export default function ClaimFields({ recordCategories, firstCategories, claiman
         </Section>
       )}
 
-      {!isFirst && (
-        <Section title="Witnesses" description={`At least ${MIN_WITNESSES} witnesses who saw the attempt.`}>
-          <FieldArray name="witnesses">
-            {({ push, remove }) => (
-              <div className="stack gap-3">
-                {values.witnesses.map((_, i) => (
-                  <div key={i} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end">
-                    <FormikTextField id={`witnesses.${i}.name`} name={`witnesses.${i}.name`} label="Name" required={i < MIN_WITNESSES} />
-                    <FormikTextField id={`witnesses.${i}.email`} name={`witnesses.${i}.email`} type="email" label="Email" required={i < MIN_WITNESSES} />
-                    <FormikTextField id={`witnesses.${i}.phone`} name={`witnesses.${i}.phone`} type="tel" label="Phone" />
-                    {i >= MIN_WITNESSES ? (
-                      <button type="button" className="text-xs text-red-600 underline pb-2" onClick={() => remove(i)}>Remove</button>
-                    ) : <span />}
-                  </div>
-                ))}
-                {values.witnesses.length < MAX_WITNESSES && (
-                  <div>
-                    <Button type="button" variant="secondary" size="small" onClick={() => push({ name: '', email: '', phone: '' })}>Add a witness</Button>
-                  </div>
-                )}
-              </div>
-            )}
-          </FieldArray>
-        </Section>
-      )}
+      <Section title="Witnesses" description={`At least ${MIN_WITNESSES} witnesses who saw the ${isFirst ? 'landing' : 'attempt'}.`}>
+        <FieldArray name="witnesses">
+          {({ push, remove }) => (
+            <div className="stack gap-3">
+              {values.witnesses.map((_, i) => (
+                <div key={i} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end">
+                  <FormikTextField id={`witnesses.${i}.name`} name={`witnesses.${i}.name`} label="Name" required={i < MIN_WITNESSES} />
+                  <FormikTextField id={`witnesses.${i}.email`} name={`witnesses.${i}.email`} type="email" label="Email" required={i < MIN_WITNESSES} />
+                  <FormikTextField id={`witnesses.${i}.phone`} name={`witnesses.${i}.phone`} type="tel" label="Phone" />
+                  {i >= MIN_WITNESSES ? (
+                    <button type="button" className="text-xs text-red-600 underline pb-2" onClick={() => remove(i)}>Remove</button>
+                  ) : <span />}
+                </div>
+              ))}
+              {values.witnesses.length < MAX_WITNESSES && (
+                <div>
+                  <Button type="button" variant="secondary" size="small" onClick={() => push({ name: '', email: '', phone: '' })}>Add a witness</Button>
+                </div>
+              )}
+            </div>
+          )}
+        </FieldArray>
+      </Section>
 
       <Section
         title="Video and evidence"

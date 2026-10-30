@@ -38,6 +38,16 @@ export const MAX_SUBMISSIONS_PER_DAY = 5;
 export const MAX_WITNESSES = 10;
 export const MAX_ATHLETES = 10;
 
+/** Witness rules for records and firsts alike: 2 to 10, each with a name and an email. */
+export function witnessProblems(witnesses: { name: string; email: string }[]): string[] {
+  const errors: string[] = [];
+  if (witnesses.length < MIN_WITNESSES) errors.push(`Name at least ${MIN_WITNESSES} witnesses`);
+  if (witnesses.length > MAX_WITNESSES) errors.push(`Name at most ${MAX_WITNESSES} witnesses`);
+  if (witnesses.some(w => !w.name || !w.email)) errors.push('Each witness needs a name and an email');
+  if (witnesses.some(w => w.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(w.email))) errors.push('Enter a valid email for each witness');
+  return errors;
+}
+
 /** Evidence: links and uploaded files, each with a description. Files go to Google Drive. */
 export const MAX_EVIDENCE_ITEMS = 20;
 export const MAX_EVIDENCE_FILE_BYTES = 2 * 1024 ** 3;

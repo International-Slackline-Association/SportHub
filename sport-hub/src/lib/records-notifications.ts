@@ -40,7 +40,7 @@ const country = (code?: string) => (code && getCountryByCode(code)?.name) || cod
 
 /** Witness email addresses (older claims had one contact field that could be a phone number). */
 const witnessEmails = (entry: WorldRecordOrFirstTableItem) =>
-  entry.kind === 'record' ? entry.witnesses.map(w => (w.email ?? w.contact ?? '').trim()).filter(c => EMAIL.test(c)) : [];
+  (entry.witnesses ?? []).map(w => (w.email ?? w.contact ?? '').trim()).filter(c => EMAIL.test(c));
 
 /** Everything on the claim, for the submission emails. */
 function fullDetails(entry: WorldRecordOrFirstTableItem): string[] {
@@ -57,13 +57,13 @@ function fullDetails(entry: WorldRecordOrFirstTableItem): string[] {
     }
     add('Setup', entry.setup);
     add('Further specs', entry.furtherSpecs);
-    if (entry.witnesses.length > 0) lines.push('', 'Witnesses:', ...entry.witnesses.map(w => `  ${[w.name, w.email, w.phone, w.contact].filter(Boolean).join(', ')}`));
     add('No full video because', entry.noFullVideoReason);
   } else {
     add('Why it is a first', entry.whyFirst);
     add('Similar tricks', entry.similarTricks);
     add('Line', entry.lineDetails);
   }
+  if (entry.witnesses?.length) lines.push('', 'Witnesses:', ...entry.witnesses.map(w => `  ${[w.name, w.email, w.phone, w.contact].filter(Boolean).join(', ')}`));
   lines.push('');
   add('Submitted by', entry.claimantName);
   add('Consent of all athletes', entry.consentConfirmed && 'confirmed');

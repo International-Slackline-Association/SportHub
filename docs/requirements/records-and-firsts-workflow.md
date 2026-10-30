@@ -1,6 +1,6 @@
 # Requirements: World Records & World Firsts Workflow
 
-Status: **v9**, 2026-10-30 (category status definitions, §4; evidence uploads to Google Drive, §5.1; matches the implementation on branch `records-firsts-3-claims`).
+Status: **v10**, 2026-10-30 (witnesses required for firsts too, §5; category status definitions, §4; evidence uploads to Google Drive, §5.1; matches the implementation on branch `records-firsts-3-claims`).
 Rules source: ISA Sport Commission, *Slackline World Records and World Firsts*, October 2026 v2. Where this
 document and the framework differ, the framework wins; the Sport Commission decides on every record and first.
 Every section states the decisions taken; §9 lists what is still open. Code map for reviewers:
@@ -101,13 +101,14 @@ the current mark; a record must **beat or equal** it.
 | Category or proposal; value (a coordinate for "°") | Discipline; trick name; description; why it is a first |
 | Date, location name and country | Date; location and similar tricks (optional) |
 | Setup, further specs (optional); event (optional) | Line details (optional) |
-| At least 2 witnesses: name, email, optional phone | — |
+| At least 2 witnesses: name, email, optional phone | At least 2 witnesses who saw the landing: name, email, optional phone |
 | Evidence (§5.1): "There is a full video" ticked → at least one item (the video); unticked → reason required, other evidence can still be added | Evidence (§5.1): at least one item showing the landing |
 | Ethics and Code of Conduct confirmation | Ethics and Code of Conduct confirmation |
 
 Links use the same check as event submission (a link without `https://` gets it added); dates cannot be in the future. If two people act on the same claim at once
 (e.g. two reviewers), only the first succeeds; the second is asked to reload. The framework's rules for sends, measurements
-and first termination are **not** shown as a checklist on the form (open issue 1).
+and first termination are **not** shown as a checklist on the form (open issue 1). Imported entries keep
+whatever the sheet had; imported firsts have no witnesses and stay valid.
 
 ### 5.1 Evidence
 

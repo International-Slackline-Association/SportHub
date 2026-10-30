@@ -362,6 +362,7 @@ interface RecordsMetadataTableItem extends RecordsTableItem {
   locationName?: string;
   locationCountry?: string;
   eventId?: string;
+  witnesses?: RecordWitness[];   // Required on claims; imported firsts have none
   evidence: RecordEvidence[];
   evidenceFolderId?: string;     // The claim's evidence folder (Google Drive), named after entryId
   ethicsConfirmed?: boolean;
@@ -384,7 +385,6 @@ export interface WorldRecordTableItem extends RecordsMetadataTableItem {
   value: RecordValue;
   setup?: string;
   furtherSpecs?: string;
-  witnesses: RecordWitness[];
   noFullVideoReason?: string;
   newCategoryProposal?: NewCategoryProposal;
 }
