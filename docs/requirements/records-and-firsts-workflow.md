@@ -65,7 +65,10 @@ values of the category's entries.
 
 - **Unchallenged → Active:** once the initial achievement is **beaten or equalled** and the claim approved, the
   category becomes Active automatically. A better performance is the World Record and the initial one a Former World
-  Record; an equal performance makes both co-holders of the World Record.
+  Record; an equal performance makes both co-holders of the World Record. The status is per category, not per
+  gender list: when the achievement on one list (e.g. men's) is beaten or equalled, the whole category becomes Active
+  and the best entry on every list (e.g. a lone women's entry) becomes a World Record too, since the category has
+  shown interest from several athletes.
 - Admins set Active ↔ Archived (and can set Unchallenged by hand); every change is logged.
 - Titles keep the gender list: "Men's / Women's / Mixed World Record", "… Former World Record", "… Historical World
   Record".
@@ -186,8 +189,8 @@ email never blocks the action. Because claims email addresses the claimant types
 5. **Athletes with gender "other" or none** can't be on a claim for now.
 6. **Category status, details to confirm** (§4):
    a) ~~Equal performance~~ decided 2026-10-30: an equal performance also earns the World Record (co-holders).
-   b) The status is per category, but records are per gender list. If the men's achievement is beaten, does the
-      women's single achievement in the same category also become a World Record?
+   b) ~~Per gender list~~ decided 2026-10-30: per category; challenging one list makes every list's best a World
+      Record.
    c) Name of an unchallenged achievement on the public list and on its certificate (proposal: "Men's Unchallenged
       Record").
 7. **Evidence folder on a Shared Drive:** the ISA evidence folder must move to a Shared Drive (or impersonation be
