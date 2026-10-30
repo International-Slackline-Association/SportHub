@@ -63,8 +63,9 @@ values of the category's entries.
 | **Unchallenged** | A new category, typically started by one person's achievement. It does not meet criterion 5 ("Challenged") yet, so it is **not a world record yet**. The ISA publishes it to encourage others to challenge it and to show that all other criteria are met. | yes | Unchallenged achievement (no World Record title) | — |
 | **Archived** | Tracked in the past for historical reasons but no longer relevant (e.g. longlines per webbing), or no longer breakable because the external conditions are gone | no | **Historical World Record** | **Former World Record** |
 
-- **Unchallenged → Active:** once the initial achievement is **beaten** and the claim approved, the category
-  becomes Active automatically: the beating performance is the World Record, the initial one a Former World Record.
+- **Unchallenged → Active:** once the initial achievement is **beaten or equalled** and the claim approved, the
+  category becomes Active automatically. A better performance is the World Record and the initial one a Former World
+  Record; an equal performance makes both co-holders of the World Record.
 - Admins set Active ↔ Archived (and can set Unchallenged by hand); every change is logged.
 - Titles keep the gender list: "Men's / Women's / Mixed World Record", "… Former World Record", "… Historical World
   Record".
@@ -184,7 +185,7 @@ email never blocks the action. Because claims email addresses the claimant types
    `role: admin`.
 5. **Athletes with gender "other" or none** can't be on a claim for now.
 6. **Category status, details to confirm** (§4):
-   a) Does an **equal** performance by someone else count as a challenge (co-holders), or only a better one?
+   a) ~~Equal performance~~ decided 2026-10-30: an equal performance also earns the World Record (co-holders).
    b) The status is per category, but records are per gender list. If the men's achievement is beaten, does the
       women's single achievement in the same category also become a World Record?
    c) Name of an unchallenged achievement on the public list and on its certificate (proposal: "Men's Unchallenged
