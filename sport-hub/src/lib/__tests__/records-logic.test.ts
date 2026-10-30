@@ -6,6 +6,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  challengesCategory,
+  entryHasCertificate,
+  hasCertificate,
+  recordStanding,
+  standingTitle,
   compareRecordValues,
   deriveGender,
   firstTitle,
@@ -93,4 +98,29 @@ test('parseSheetDate and slugify', () => {
   assert.equal(parseSheetDate('3.7.2021'), '2021-07-03');
   assert.equal(parseSheetDate('nonsense'), '');
   assert.equal(slugify('Highline length – Urban'), 'highline-length-urban');
+});
+
+test('record titles follow the category status (§4)', () => {
+  assert.equal(standingTitle(recordStanding('published', 'active'), 'MEN_ONLY'), "Men's World Record");
+  assert.equal(standingTitle(recordStanding('published', 'archived'), 'WOMEN_ONLY'), "Women's Historical World Record");
+  assert.equal(standingTitle(recordStanding('historical', 'active'), 'MIXED'), 'Mixed Former World Record');
+  assert.equal(standingTitle(recordStanding('historical', 'archived'), 'MEN_ONLY'), "Men's Former World Record");
+  assert.equal(recordStanding('published', 'unchallenged'), 'unchallenged');
+  assert.equal(standingTitle('unchallenged', 'MEN_ONLY'), '');
+  assert.equal(hasCertificate('unchallenged'), false);
+  assert.equal(entryHasCertificate({ kind: 'record', status: 'published' }, 'unchallenged'), false);
+  assert.equal(entryHasCertificate({ kind: 'record', status: 'historical' }, 'unchallenged'), true);
+  assert.equal(entryHasCertificate({ kind: 'first', status: 'published' }), true);
+});
+
+test('equalling or beating on any list challenges an Unchallenged category', () => {
+  const category = { unit: 'm', direction: 'higher' as const, status: 'unchallenged' as const };
+  const v = (n: number) => ({ amount: n, original: `${n} m` });
+  const first: { entryId: string; gender: 'MEN_ONLY' | 'WOMEN_ONLY' | 'MIXED'; value: { amount: number; original: string } } = { entryId: 'a', gender: 'MEN_ONLY', value: v(100) };
+  assert.equal(challengesCategory(category, { entryId: 'b', gender: 'MEN_ONLY', value: v(100) }, [first]), true);
+  assert.equal(challengesCategory(category, { entryId: 'b', gender: 'MEN_ONLY', value: v(120) }, [first]), true);
+  assert.equal(challengesCategory(category, { entryId: 'b', gender: 'MEN_ONLY', value: v(90) }, [first]), false);
+  // A first entry on another list is not a challenge
+  assert.equal(challengesCategory(category, { entryId: 'b', gender: 'WOMEN_ONLY', value: v(50) }, [first]), false);
+  assert.equal(challengesCategory({ ...category, status: 'active' }, { entryId: 'b', gender: 'MEN_ONLY', value: v(120) }, [first]), false);
 });

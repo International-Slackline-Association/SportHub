@@ -66,6 +66,7 @@ export default async function AthleteProfilePage({ params }: AthleteProfilePageP
           contests={contests}
           worldRecords={worldRecords}
           worldFirsts={worldFirsts}
+          athleteId={userId}
         />
       </section>
       {isOrganizer && organizedEvents.length > 0 && (

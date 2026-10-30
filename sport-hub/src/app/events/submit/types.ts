@@ -1,4 +1,5 @@
 import { ContestJudge, ContestResult } from '@lib/relational-types';
+import { INVALID_URL_MESSAGE, isValidUrl } from '@utils/urls';
 import * as Yup from 'yup';
 
 // Combined form values (parent level)
@@ -32,7 +33,6 @@ const dateTransform = (value: unknown, originalValue: unknown) => {
   return new Date(originalValue + 'T00:00:00')
 }
 
-const URL_REGEX = /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
 
 export const eventValidationSchema = Yup.object({
   // Assets
@@ -64,7 +64,7 @@ export const eventValidationSchema = Yup.object({
   links: Yup.array()
     .of(
       Yup.string()
-        .matches(URL_REGEX, 'Please enter a valid URL')
+        .test('url', INVALID_URL_MESSAGE, value => !value || isValidUrl(value))
     ),
 });
 

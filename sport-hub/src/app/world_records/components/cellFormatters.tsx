@@ -1,10 +1,13 @@
 
-import type { DisplayAthlete, WorldFirst, WorldRecord } from "@lib/data-services";
+import type { WorldFirst, WorldRecord } from "@lib/data-services";
+import type { DisplayAthlete } from "@lib/records-service";
+import type { RecordStanding } from "@lib/records-logic";
 import { CellContext, Row } from "@tanstack/react-table";
 import { Badge, Gender } from "@ui/Badge";
 import { CountryFlag, resolveIso2 } from "@ui/CountryFlag";
 import { COUNTRIES } from "@utils/countries";
 import Link from "next/link";
+import { AdminEditLink } from "./AdminEditLink";
 
 export const linkClassName = "underline text-blue-600 hover:text-blue-800 visited:text-purple-600";
 
@@ -41,7 +44,7 @@ export const athleteNamesCellFormatter = <T extends WorldRecord | WorldFirst>(in
   </div>
 );
 
-/** The sheet holds country names or ISO codes: both become the country name. */
+/** Claims store ISO codes, imported rows country names: both become the country name. */
 const countryName = (country: string) => COUNTRIES.find(c => c.code === resolveIso2(country))?.name ?? country;
 
 /** Countries of the athletes, without repeats, so the select filter lists each country once. */
@@ -63,8 +66,10 @@ export const genderCellFormatter = <T extends WorldRecord | WorldFirst>(info: Ce
 export const genderFilterFn = <T extends WorldRecord | WorldFirst>(row: Row<T>, columnId: string, filterValue: string) =>
   row.getValue<string>(columnId) === filterValue;
 
-/** Current titles in yellow, no title = history. */
-export const TitleBadge = ({ title }: { title: string }) => {
+/** World Records in yellow, Former and Historical World Records in grey text; Unchallenged achievements have no title. */
+export const TitleBadge = ({ title, standing }: { title: string; standing?: RecordStanding }) => {
+  if (standing === 'unchallenged') return <Badge color="NEUTRAL">Unchallenged</Badge>;
+  if (standing === 'former' || standing === 'historical') return <span className="text-xs text-gray-500">{title}</span>;
   if (!title) return <span className="text-xs text-gray-400">History</span>;
   return <Badge color="YELLOW">{title}</Badge>;
 };
@@ -75,15 +80,26 @@ const toSortable = (date: string) => date.replace(/^(\d{2})\/(\d{2})\/(\d{4})$/,
 export const dateSortingFn = <T extends WorldRecord | WorldFirst>(a: Row<T>, b: Row<T>, columnId: string) =>
   toSortable(a.getValue<string>(columnId)).localeCompare(toSortable(b.getValue<string>(columnId)));
 
-export const Links = ({ entry }: { entry: WorldRecord | WorldFirst }) => (
+export const Links = ({ entry, certificate }: { entry: WorldRecord | WorldFirst; certificate?: string | null }) => (
   <div className="cluster gap-2">
-    {entry.links.map((link, idx) => (
-      <Link className={linkClassName} href={link} key={`link_${idx}`} target="_newtab">
-        Link {idx + 1}
-      </Link>
-    ))}
+    {entry.links.map((link, idx) =>
+      link && (
+        <Link className={linkClassName} href={link} key={`link_${idx}`} target="_newtab">
+          Link {idx + 1}
+        </Link>
+      )
+    )}
+    {certificate && <a className={linkClassName} href={certificate} target="_blank" rel="noreferrer">Certificate</a>}
+    <AdminEditLink entry={entry} />
   </div>
 );
 
 export const linkCellFormatter = <T extends WorldRecord | WorldFirst>(info: CellContext<T, string[]>) =>
   <Links entry={info.row.original} />;
+
+/** Certificate PDF of one athlete on an entry (FR-26). */
+export const certificateUrl = (kind: 'record' | 'first', entry: WorldRecord | WorldFirst, athleteId: string) => {
+  if ('standing' in entry && entry.standing === 'unchallenged') return null;
+  const index = entry.athletes.findIndex(a => a.userId === athleteId);
+  return index < 0 ? null : `/api/certificates/${kind}/${encodeURIComponent(entry.entryId)}?athlete=${index}`;
+};
