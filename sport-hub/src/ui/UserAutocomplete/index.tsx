@@ -10,7 +10,10 @@ import { Alert } from '@ui/Alert';
 const createUserLabel = (user: UserProfileRecord) => `${user.name} ${user.surname} | ${user.userId}`.toLocaleLowerCase();
 
 type Props = {
+  /** Formik path of an object holding the selected user's `id` (`userId` for judges) and `name`. */
   formKey: string;
+  label?: string;
+  required?: boolean;
   onSelectOption?: (option: Option) => void;
   readOnlyIfSet?: boolean
   isJudge?: boolean;
@@ -20,12 +23,14 @@ export default function UserAutocomplete<TFormValues>({
   formKey,
   readOnlyIfSet,
   isJudge = false,
+  label = 'Name',
+  required = true,
   ...autocompleteProps
 }: Props) {
   const { setFieldTouched, setFieldValue, values } = useFormikContext<TFormValues>();
   const formKeyName = `${formKey}.name`;
   const formikValueUserId = getIn(values, `${formKey}.${isJudge ? 'userId' : 'id'}`);
-  const currentFormValueUserName = getIn(values, formKeyName); // safe access
+  const currentFormValueUserName: string = getIn(values, formKeyName) ?? ''; // safe access
   const [debouncedUserName, setDebouncedUserName] = useState(currentFormValueUserName);
 
   // simple debounce
@@ -35,12 +40,13 @@ export default function UserAutocomplete<TFormValues>({
   }, [currentFormValueUserName]);
 
   const isReadOnly = Boolean(readOnlyIfSet && formikValueUserId);
+  const isSearching = !isReadOnly && debouncedUserName.length >= 3;
 
   const { data: allUsers, isLoading, isError } = useQuery({
     queryKey: ['users', formKey],
     queryFn: async () => (await fetch('/api/users')).json(),
     // Enable only when user has typed at least 3 chars and not in read-only mode
-    enabled: !isReadOnly && debouncedUserName.length >= 3,
+    enabled: isSearching,
     // Cache for 1 hour, consider data fresh for 10 minutes
     gcTime: 60 * 60 * 1000,
     staleTime: 10 * 60 * 1000,
@@ -98,7 +104,8 @@ export default function UserAutocomplete<TFormValues>({
       caption={caption}
       id={formKeyName}
       name={formKeyName}
-      isLoading={isLoading}
+      // Instances with the same formKey share one query; only the one being typed in shows the spinner
+      isLoading={isLoading && isSearching}
       hideErrorMessage
       getDisplayValue={(value: unknown) => {
         if (typeof value === 'string' && value.trim().length > 0) {
@@ -109,7 +116,7 @@ export default function UserAutocomplete<TFormValues>({
         }
         return typeof value === 'string' ? value : '';
       }}
-      label="Name"
+      label={label}
       mapOptionToValue={(o) => o.label}
       options={userOptions}
       onSelectOption={(option: Option) => {
@@ -125,7 +132,7 @@ export default function UserAutocomplete<TFormValues>({
         setFieldTouched(formKey, true, false);
       }}
       placeholder="Search by name or user ID (min 3 chars)"
-      required
+      required={required}
       {...autocompleteProps}
     />
   );

@@ -4,7 +4,7 @@ import { FieldArray, useFormikContext } from 'formik';
 import { cn } from '@utils/cn';
 import Button from '@ui/Button';
 import { TrashIcon } from '@ui/Icons';
-import UserAutocomplete from './UserAutocomplete';
+import UserAutocomplete from '@ui/UserAutocomplete';
 import PendingUserForm from './PendingUserForm';
 import { EventSubmissionFormValues } from '../../types';
 

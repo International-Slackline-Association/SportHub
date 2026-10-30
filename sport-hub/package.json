@@ -8,6 +8,7 @@
     "build": "next build --turbopack",
     "start": "NODE_OPTIONS=--dns-result-order=ipv4first next start",
     "lint": "next lint",
+    "test:records": "tsx --test src/lib/__tests__/*.test.ts",
     "db:local": "docker-compose up -d dynamodb-local",
     "db:setup": "DYNAMODB_LOCAL=true tsx src/lib/db-setup.ts",
     "db:seed": "DYNAMODB_LOCAL=true tsx src/lib/migrations/seed-local-db.ts seed",
@@ -26,6 +27,10 @@
     "test:local": "NODE_ENV=development DYNAMODB_LOCAL=true NODE_OPTIONS='--dns-result-order=ipv4first --localstorage-file=/tmp/sport-hub-localstorage.json' next dev",
     "migrate:dry-run": "NODE_OPTIONS=--dns-result-order=ipv4first DYNAMODB_LOCAL=true tsx src/lib/migrations/migrate-isa-rankings-to-sporthub.ts --dry-run",
     "migrate:execute": "NODE_OPTIONS=--dns-result-order=ipv4first DYNAMODB_LOCAL=true tsx src/lib/migrations/migrate-isa-rankings-to-sporthub.ts --execute",
+    "records:import:dry-run": "NODE_OPTIONS=--dns-result-order=ipv4first DYNAMODB_LOCAL=true tsx src/lib/migrations/import-records-from-sheet.ts --dry-run --report records-import-report.md",
+    "records:import:execute": "NODE_OPTIONS=--dns-result-order=ipv4first DYNAMODB_LOCAL=true tsx src/lib/migrations/import-records-from-sheet.ts --execute --report records-import-report.md",
+    "records:categories:migrate:dry-run": "DYNAMODB_LOCAL=true tsx src/lib/migrations/migrate-record-categories.ts --dry-run",
+    "records:categories:migrate:execute": "DYNAMODB_LOCAL=true tsx src/lib/migrations/migrate-record-categories.ts --execute",
     "copy:isa-from-aws": "NODE_OPTIONS=--dns-result-order=ipv4first tsx src/lib/migrations/copy-aws-to-local.ts",
     "copy:sporthub-from-aws": "NODE_OPTIONS=--dns-result-order=ipv4first tsx src/lib/migrations/copy-sporthub-to-local.ts",
     "db:setup:aws": "env $(grep -v '^#' .env.production | xargs) tsx src/lib/db-setup.ts",
@@ -42,7 +47,11 @@
     "migrate:recalculate-points:aws:stage:dry-run": "env $(grep -v '^#' .env.stage | xargs) tsx src/lib/migrations/recalculate-points-to-new-formula.ts --dry-run",
     "migrate:recalculate-points:aws:stage:execute": "env $(grep -v '^#' .env.stage | xargs) tsx src/lib/migrations/recalculate-points-to-new-formula.ts --execute",
     "migrate:recalculate-points:aws:prod:dry-run": "env $(grep -v '^#' .env.production | xargs) tsx src/lib/migrations/recalculate-points-to-new-formula.ts --dry-run",
-    "migrate:recalculate-points:aws:prod:execute": "env $(grep -v '^#' .env.production | xargs) tsx src/lib/migrations/recalculate-points-to-new-formula.ts --execute"
+    "migrate:recalculate-points:aws:prod:execute": "env $(grep -v '^#' .env.production | xargs) tsx src/lib/migrations/recalculate-points-to-new-formula.ts --execute",
+    "records:import:aws:stage:dry-run": "env $(grep -v '^#' .env.stage | xargs) tsx src/lib/migrations/import-records-from-sheet.ts --dry-run --report records-import-report.md",
+    "records:import:aws:stage:execute": "env $(grep -v '^#' .env.stage | xargs) tsx src/lib/migrations/import-records-from-sheet.ts --execute --report records-import-report.md",
+    "records:import:aws:prod:dry-run": "env $(grep -v '^#' .env.production | xargs) tsx src/lib/migrations/import-records-from-sheet.ts --dry-run --report records-import-report.md",
+    "records:import:aws:prod:execute": "env $(grep -v '^#' .env.production | xargs) tsx src/lib/migrations/import-records-from-sheet.ts --execute --report records-import-report.md"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.821.0",
