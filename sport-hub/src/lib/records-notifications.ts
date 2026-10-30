@@ -19,6 +19,8 @@ export type ClaimEvent = 'submitted' | 'approved' | 'changes_requested' | 'rejec
 export interface ClaimEventContext {
   comment?: string;
   supersedes?: WorldRecordTableItem[];   // Records this approval made historical
+  categoryStatus?: 'active' | 'unchallenged' | 'archived';
+  activated?: boolean;                    // The approval challenged an Unchallenged category, now Active
 }
 
 const reviewTeam = () => process.env.RECORDS_REVIEW_EMAIL || RECORDS_TEAM_EMAIL;
@@ -143,15 +145,21 @@ export async function notifyClaimEvent(event: ClaimEvent, entry: WorldRecordOrFi
       case 'approved': {
         const previous = await superseded(entry, context.supersedes ?? []);
         const publicLink = siteUrl('/world_records');
+        // §4: an achievement in an Unchallenged category is not a World Record yet
+        const standing = context.categoryStatus === 'unchallenged'
+          ? 'It is published in an Unchallenged category: it is not a World Record yet. It becomes one when another athlete equals or beats it, and the certificate becomes available then.'
+          : context.activated
+            ? 'This claim challenged an Unchallenged category, so the category is now Active and its best performances are World Records.'
+            : '';
         mails.push({
           to: recipients,
           subject: `Approved: ${title}`,
-          text: `Congratulations! The ISA approved and published this claim.\n\n${details}${context.comment ? `\n\nComment from the ISA: ${context.comment}` : ''}\n\nSee it on ${publicLink}`,
+          text: `Congratulations! The ISA approved and published this claim.${standing ? ` ${standing}` : ''}\n\n${details}${context.comment ? `\n\nComment from the ISA: ${context.comment}` : ''}\n\nSee it on ${publicLink}`,
         });
         mails.push({
           to: [communicationTeam()],
           subject: `Published, ready to announce: ${title}`,
-          text: [details, ...(previous.length ? ['', ...previous] : []), '', `Public list: ${publicLink}`].join('\n'),
+          text: [...(standing ? [standing, ''] : []), details, ...(previous.length ? ['', ...previous] : []), '', `Public list: ${publicLink}`].join('\n'),
         });
         break;
       }

@@ -60,7 +60,7 @@ values of the category's entries.
 | Status | Meaning | New claims | Best performance | Beaten performances |
 |---|---|---|---|---|
 | **Active** | An established world record category | yes | **World Record** | **Former World Record** |
-| **Unchallenged** | A new category, typically started by one person's achievement. It does not meet criterion 5 ("Challenged") yet, so it is **not a world record yet**. The ISA publishes it to encourage others to challenge it and to show that all other criteria are met. | yes | Unchallenged achievement (no World Record title) | — |
+| **Unchallenged** | A new category, typically started by one person's achievement. It does not meet criterion 5 ("Challenged") yet, so it is **not a world record yet**. The ISA publishes it to encourage others to challenge it and to show that all other criteria are met. | yes | No title, an "Unchallenged" badge; no certificate | — |
 | **Archived** | Tracked in the past for historical reasons but no longer relevant (e.g. longlines per webbing), or no longer breakable because the external conditions are gone | no | **Historical World Record** | **Former World Record** |
 
 - **Unchallenged → Active:** once the initial achievement is **beaten or equalled** and the claim approved, the
@@ -191,7 +191,7 @@ email never blocks the action. Because claims email addresses the claimant types
    a) ~~Equal performance~~ decided 2026-10-30: an equal performance also earns the World Record (co-holders).
    b) ~~Per gender list~~ decided 2026-10-30: per category; challenging one list makes every list's best a World
       Record.
-   c) Name of an unchallenged achievement on the public list and on its certificate (proposal: "Men's Unchallenged
-      Record").
+   c) ~~Name~~ decided 2026-10-30: no title, an "Unchallenged" badge instead; no certificate until the category is
+      challenged.
 7. **Evidence folder on a Shared Drive:** the ISA evidence folder must move to a Shared Drive (or impersonation be
    set up) before uploads work on staging and production (§5.1).

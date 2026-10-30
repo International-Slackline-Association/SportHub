@@ -5,7 +5,7 @@ import Button from '@ui/Button';
 import { Alert } from '@ui/Alert';
 import { auth } from '@lib/auth';
 import { getRecordCategories } from '@lib/records-service';
-import { formatRecordValue, GENDER_TITLE_LABELS } from '@lib/records-logic';
+import { entryHasCertificate, formatRecordValue, GENDER_TITLE_LABELS } from '@lib/records-logic';
 import type { ClaimStatus, WorldRecordOrFirstTableItem } from '@lib/relational-types';
 import { getMyClaims } from '../actions';
 import { ClaimStatusBadge } from '../components/claimStatus';
@@ -76,7 +76,7 @@ export default async function MyClaimsPage({ searchParams }: Props) {
                         </Button>
                       )}
                       {entry.status === 'pending' && isClaimant && <WithdrawButton kind={entry.kind} entryId={entry.entryId} />}
-                      {(entry.status === 'published' || entry.status === 'historical') && entry.athletes.map((a, i) => (
+                      {entryHasCertificate(entry, entry.kind === 'record' ? categoryById.get(entry.categoryId)?.status : undefined) && entry.athletes.map((a, i) => (
                         <Button key={i} as="link" href={`/api/certificates/${entry.kind}/${entry.entryId}?athlete=${i}`} variant="secondary" size="small">
                           Certificate{entry.athletes.length > 1 ? ` (${a.name})` : ''}
                         </Button>

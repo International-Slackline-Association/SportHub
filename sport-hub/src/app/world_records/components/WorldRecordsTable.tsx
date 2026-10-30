@@ -31,10 +31,10 @@ type View = 'current' | 'unchallenged' | 'history';
 const VIEW_OPTIONS: { value: View; label: string }[] = [
   { value: 'current', label: 'Current world records' },
   { value: 'unchallenged', label: 'Unchallenged categories' },
-  { value: 'history', label: 'Record history' },
+  { value: 'history', label: 'All, with former and historical world records' },
 ];
 
-/** Current: active categories only. Unchallenged: shown apart from the active records (§6.1). History: everything. */
+/** Current: World Records (active categories). Unchallenged: not World Records yet (§4). History: everything. */
 const inView = (row: WorldRecord, view: View) => {
   switch (view) {
     case 'current': return row.isCurrent && row.categoryStatus === 'active';
@@ -51,7 +51,7 @@ const sharedColumns = [
     cell: info => (
       <div className="stack gap-1 items-start">
         <span>{info.getValue()}</span>
-        <TitleBadge title={info.row.original.title} />
+        <TitleBadge title={info.row.original.title} standing={info.row.original.standing} />
       </div>
     ),
     meta: { filterVariant: 'autocomplete' },
@@ -91,12 +91,12 @@ const columns = [
     id: 'worldRecord',
     header: 'World Record',
     cell: info => {
-      const { date, title, categoryName, value, athletes, links } = info.row.original;
+      const { date, title, standing, categoryName, value, athletes, links } = info.row.original;
       return (
         <div className="stack">
           <div className="cluster justify-between items-center gap-2">
             <span className="text-xs text-gray-400">{date}</span>
-            <TitleBadge title={title} />
+            <TitleBadge title={title} standing={standing} />
           </div>
           <span className="font-medium pb-2">{categoryName}</span>
           <div className="cluster justify-between items-end gap-2">

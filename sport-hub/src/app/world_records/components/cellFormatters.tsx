@@ -1,6 +1,7 @@
 
 import type { WorldFirst, WorldRecord } from "@lib/data-services";
 import type { DisplayAthlete } from "@lib/records-service";
+import type { RecordStanding } from "@lib/records-logic";
 import { CellContext, Row } from "@tanstack/react-table";
 import { Badge, Gender } from "@ui/Badge";
 import { CountryFlag, resolveIso2 } from "@ui/CountryFlag";
@@ -65,8 +66,10 @@ export const genderCellFormatter = <T extends WorldRecord | WorldFirst>(info: Ce
 export const genderFilterFn = <T extends WorldRecord | WorldFirst>(row: Row<T>, columnId: string, filterValue: string) =>
   row.getValue<string>(columnId) === filterValue;
 
-/** Current titles in yellow, no title = history. */
-export const TitleBadge = ({ title }: { title: string }) => {
+/** World Records in yellow, Former and Historical World Records in grey text; Unchallenged achievements have no title. */
+export const TitleBadge = ({ title, standing }: { title: string; standing?: RecordStanding }) => {
+  if (standing === 'unchallenged') return <Badge color="NEUTRAL">Unchallenged</Badge>;
+  if (standing === 'former' || standing === 'historical') return <span className="text-xs text-gray-500">{title}</span>;
   if (!title) return <span className="text-xs text-gray-400">History</span>;
   return <Badge color="YELLOW">{title}</Badge>;
 };
@@ -96,6 +99,7 @@ export const linkCellFormatter = <T extends WorldRecord | WorldFirst>(info: Cell
 
 /** Certificate PDF of one athlete on an entry (FR-26). */
 export const certificateUrl = (kind: 'record' | 'first', entry: WorldRecord | WorldFirst, athleteId: string) => {
+  if ('standing' in entry && entry.standing === 'unchallenged') return null;
   const index = entry.athletes.findIndex(a => a.userId === athleteId);
   return index < 0 ? null : `/api/certificates/${kind}/${encodeURIComponent(entry.entryId)}?athlete=${index}`;
 };

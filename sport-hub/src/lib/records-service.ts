@@ -25,9 +25,11 @@ import type {
 import {
   firstTitle,
   formatRecordValue,
-  recordTitle,
   RECORD_GENDERS,
+  recordStanding,
   splitCurrentAndHistory,
+  standingTitle,
+  type RecordStanding,
 } from './records-logic';
 import { getCountryByCode } from '@utils/countries';
 
@@ -473,8 +475,9 @@ export interface DisplayAthlete {
 /** One row on /world_records or an athlete profile. */
 export interface WorldRecord {
   entryId: string;
-  title: string;                 // "Men's World Record", "Women's World Record", "Mixed World Record" ("" for history)
-  isCurrent: boolean;
+  title: string;                 // "Men's World Record", "… Former World Record", "… Historical World Record"; "" while Unchallenged
+  standing: RecordStanding;
+  isCurrent: boolean;            // Best on its list in an Active or Unchallenged category
   categoryId: string;
   categoryName: string;
   categoryGroup: string;
@@ -522,12 +525,12 @@ const toWorldRecords = (
     if (inCategory.length === 0) continue;
 
     for (const entry of inCategory) {
-      // Archived categories are history only: their records carry no current title
-      const isCurrent = entry.status === 'published' && category.status !== 'archived';
+      const standing = recordStanding(entry.status === 'historical' ? 'historical' : 'published', category.status);
       rows.push({
         entryId: entry.entryId,
-        title: isCurrent ? recordTitle(entry.gender) : '',
-        isCurrent,
+        title: standingTitle(standing, entry.gender),
+        standing,
+        isCurrent: standing === 'world_record' || standing === 'unchallenged',
         categoryId: category.categoryId,
         categoryName: category.name,
         categoryGroup: category.group,
@@ -594,8 +597,7 @@ export async function getPublicWorldFirsts(): Promise<WorldFirst[]> {
 
 /**
  * One published or historical entry as it appears publicly, with its title,
- * for certificates (FR-26). Historical records have no current title; the
- * certificate falls back to the list title.
+ * for certificates (FR-26).
  */
 export async function getPublicEntry(kind: 'record', entryId: string): Promise<WorldRecord | null>;
 export async function getPublicEntry(kind: 'first', entryId: string): Promise<WorldFirst | null>;

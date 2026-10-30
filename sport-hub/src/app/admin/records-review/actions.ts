@@ -32,6 +32,7 @@ import {
   type EntryKind,
 } from '@lib/records-service';
 import {
+  challengesCategory,
   comparableValue,
   deriveGender,
   formatRecordValue,
@@ -300,19 +301,28 @@ export async function approveClaim(kind: EntryKind, entryId: string, options: Ap
 
     let supersedes: WorldRecordTableItem[] = [];
     let notice: string | undefined;
+    let activated = false;
     if (recordCategory) {
-      // FR-21: the beaten records on the same list become historical
+      // §4: equalling or beating the achievement in an Unchallenged category makes the whole category Active
+      const others = (await getEntriesByCategory('record', recordCategory.categoryId))
+        .filter(e => e.entryId !== entryId && (e.status === 'published' || e.status === 'historical'));
+      if (approved.kind === 'record' && challengesCategory(recordCategory, approved, others)) {
+        recordCategory = { ...recordCategory, status: 'active', updatedAt: Date.now() };
+        await putCategory(recordCategory);
+        await addCategoryAudit(recordCategory, { action: 'status_changed', comment: `status unchallenged → active: challenged by ${entryId}`, ...actor });
+        activated = true;
+        notice = `The category "${recordCategory.name}" was Unchallenged and is now Active: its best performances are World Records.`;
+      }
+
+      // FR-21: the beaten records on the same list become historical (Former World Records)
       const changed = await recomputeRecordStatuses(recordCategory);
       supersedes = changed.filter(e => e.status === 'historical' && e.entryId !== entryId);
       for (const old of supersedes) {
         await addAuditEntry('record', old.entryId, { action: 'superseded', fromStatus: 'published', toStatus: 'historical', comment: `Beaten by ${entryId}`, ...actor });
       }
-      if (recordCategory.status === 'unchallenged') {
-        notice = 'This category is Unchallenged. If it is now challenged, set it to Active on the categories page.';
-      }
     }
 
-    await notifyClaimEvent('approved', approved, { comment: options.comment, supersedes });
+    await notifyClaimEvent('approved', approved, { comment: options.comment, supersedes, categoryStatus: recordCategory?.status, activated });
     revalidateRecordPages();
     return { success: true, notice };
   } catch (error) {

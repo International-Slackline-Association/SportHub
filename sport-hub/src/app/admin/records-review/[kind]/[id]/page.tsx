@@ -6,7 +6,7 @@ import { notFound } from 'next/navigation';
 import PageLayout from '@ui/PageLayout';
 import { Alert } from '@ui/Alert';
 import { requireAdmin } from '@lib/authorization';
-import { formatRecordValue, GENDER_LABELS, GENDER_TITLE_LABELS, RECORD_GENDERS } from '@lib/records-logic';
+import { entryHasCertificate, formatRecordValue, GENDER_LABELS, GENDER_TITLE_LABELS, RECORD_GENDERS } from '@lib/records-logic';
 import { FIRST_CRITERIA, formatFileSize, RECORD_CRITERIA } from '@lib/records-rules';
 import { evidenceFolderUrl } from '@lib/records-evidence';
 import type { RecordCategoryTableItem } from '@lib/relational-types';
@@ -61,7 +61,7 @@ export default async function ReviewClaimPage({ params }: Props) {
 
       {unchallengedPrompt && (
         <section className="p-4 sm:p-0">
-          <Alert variant="warning">This category is Unchallenged and already has a record. If it is now challenged, set it to Active on the <Link href="/admin/records-categories" className="underline">categories page</Link>.</Alert>
+          <Alert variant="warning">This category is Unchallenged and already has an achievement. If this claim equals or beats it, approving makes the whole category Active and its best performances World Records.</Alert>
         </section>
       )}
 
@@ -93,7 +93,7 @@ export default async function ReviewClaimPage({ params }: Props) {
                   {a.userId ? <Link href={`/athlete/${a.userId}`} className="text-blue-600 hover:underline">{a.name}</Link> : a.name}
                   {` · ${a.gender === 'MEN' ? 'male' : 'female'}`}{a.country ? ` · ${countryName(a.country)}` : ''}
                   {a.pendingUser && ` · new athlete (${a.pendingUser.email}), profile created on approval`}
-                  {(entry.status === 'published' || entry.status === 'historical') && (
+                  {entryHasCertificate(entry, entry.kind === 'record' ? (category as RecordCategoryTableItem | null)?.status : undefined) && (
                     <> · <a href={`/api/certificates/${entry.kind}/${entry.entryId}?athlete=${i}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">certificate</a></>
                   )}
                 </span>

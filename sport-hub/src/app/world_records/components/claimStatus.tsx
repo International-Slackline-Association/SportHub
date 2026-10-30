@@ -7,7 +7,7 @@ export const CLAIM_STATUS_LABELS: Record<ClaimStatus, string> = {
   changes_requested: 'Changes requested',
   published: 'Published',
   rejected: 'Rejected',
-  historical: 'Historical',
+  historical: 'Former World Record',
 };
 
 const STATUS_CLASSES: Record<ClaimStatus, string> = {

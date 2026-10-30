@@ -30,7 +30,7 @@ const STEPS: { status: ClaimStatus; text: string }[] = [
   { status: 'changes_requested', text: 'The ISA sent the claim back with a comment. Edit it and submit it again.' },
   { status: 'published', text: 'Approved and shown publicly on Records & Firsts. You can download the certificate.' },
   { status: 'rejected', text: 'Not accepted, with the reason from the ISA. It is not shown publicly.' },
-  { status: 'historical', text: 'Records only: a newer record beat it. It stays in the record history.' },
+  { status: 'historical', text: 'Records only: a newer record beat it. It is a Former World Record and stays in the record history.' },
 ];
 
 function Arrow({ d, label, lx, ly, anchor = 'middle' }: { d: string; label: string; lx: number; ly: number; anchor?: 'start' | 'middle' | 'end' }) {
@@ -54,7 +54,7 @@ export default function ClaimWorkflow({ counts }: { counts: Partial<Record<Claim
         <p className="text-sm text-gray-600">The highlighted steps show where your claims are now, with how many are in each step.</p>
       </div>
       <div className="overflow-x-auto">
-        <svg viewBox="0 0 930 190" className="w-full max-w-3xl min-w-[560px]" role="img" aria-label="Claim workflow: draft, under review, published, historical; under review can lead to changes requested, rejected, or back to draft">
+        <svg viewBox="0 0 930 190" className="w-full max-w-3xl min-w-[560px]" role="img" aria-label="Claim workflow: draft, under review, published, former world record; under review can lead to changes requested, rejected, or back to draft">
           <defs>
             <marker id="claim-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
               <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280" />
@@ -89,7 +89,7 @@ export default function ClaimWorkflow({ counts }: { counts: Partial<Record<Claim
                   opacity={active ? 1 : 0.75}
                 />
                 <text x={x + W / 2} y={y + H / 2 + 5} textAnchor="middle" fontSize={15} fontWeight={active ? 700 : 500} fill={color.text}>
-                  {CLAIM_STATUS_LABELS[status]}
+                  {status === 'historical' ? 'Former' : CLAIM_STATUS_LABELS[status]}
                 </text>
                 {active && (
                   <g>

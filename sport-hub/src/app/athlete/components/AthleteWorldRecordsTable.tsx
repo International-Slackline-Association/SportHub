@@ -24,7 +24,7 @@ const buildColumns = (athleteId?: string) => [
     cell: info => (
       <div className="stack gap-1 items-start">
         <span>{info.getValue()}</span>
-        <TitleBadge title={info.row.original.title} />
+        <TitleBadge title={info.row.original.title} standing={info.row.original.standing} />
       </div>
     ),
   }),

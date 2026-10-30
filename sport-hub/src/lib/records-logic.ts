@@ -97,6 +97,60 @@ export const splitCurrentAndHistory = <T extends Pick<WorldRecordTableItem, 'val
  * side by side, whichever value is better or which landing came first.
  */
 export const recordTitle = (gender: ContestGender) => `${GENDER_TITLE_LABELS[gender]} World Record`;
+
+/**
+ * What a public record is (requirements §4), from its entry status and its
+ * category's status: the best of an Active category is the World Record, of an
+ * Archived one a Historical World Record, of an Unchallenged one not a World
+ * Record yet; beaten records (entry status "historical") are Former World Records.
+ */
+export type RecordStanding = 'world_record' | 'unchallenged' | 'historical' | 'former';
+
+export const recordStanding = (
+  entryStatus: 'published' | 'historical',
+  categoryStatus: 'active' | 'unchallenged' | 'archived',
+): RecordStanding => {
+  if (entryStatus === 'historical') return 'former';
+  if (categoryStatus === 'archived') return 'historical';
+  return categoryStatus === 'unchallenged' ? 'unchallenged' : 'world_record';
+};
+
+/** Title of a public record. An Unchallenged achievement has none: it is not a World Record yet. */
+export const standingTitle = (standing: RecordStanding, gender: ContestGender) => {
+  switch (standing) {
+    case 'world_record': return recordTitle(gender);
+    case 'historical': return `${GENDER_TITLE_LABELS[gender]} Historical World Record`;
+    case 'former': return `${GENDER_TITLE_LABELS[gender]} Former World Record`;
+    case 'unchallenged': return '';
+  }
+};
+
+/**
+ * An approved record challenges an Unchallenged category when it equals or
+ * beats another public entry on its gender list (§4). The whole category then
+ * becomes Active, every list included.
+ */
+export const challengesCategory = <T extends Pick<WorldRecordTableItem, 'entryId' | 'gender' | 'value'>>(
+  category: CategoryRule & Pick<RecordCategoryTableItem, 'status'>,
+  approved: T,
+  publicEntries: T[],
+) =>
+  category.status === 'unchallenged' &&
+  publicEntries.some(other =>
+    other.entryId !== approved.entryId && other.gender === approved.gender && compareRecordValues(category, approved.value, other.value) >= 0);
+
+/** Certificates exist for World Records, Former and Historical World Records, not for Unchallenged achievements. */
+export const hasCertificate = (standing: RecordStanding) => standing !== 'unchallenged';
+
+/** Whether an entry's athletes can download certificates; a record needs its category's status. */
+export const entryHasCertificate = (
+  entry: { kind: 'record' | 'first'; status: string },
+  categoryStatus?: 'active' | 'unchallenged' | 'archived',
+) => {
+  if (entry.kind === 'first') return entry.status === 'published';
+  if (entry.status !== 'published' && entry.status !== 'historical') return false;
+  return hasCertificate(recordStanding(entry.status, categoryStatus ?? 'active'));
+};
 export const firstTitle = (gender: ContestGender) => `${GENDER_TITLE_LABELS[gender]} World First`;
 
 // ============================================================================
