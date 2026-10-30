@@ -1,6 +1,6 @@
 # Requirements: World Records & World Firsts Workflow
 
-Status: **v8**, 2026-10-30 (evidence uploads to Google Drive, §5.1; matches the implementation on branch `records-firsts-3-claims`).
+Status: **v9**, 2026-10-30 (category status definitions, §4; evidence uploads to Google Drive, §5.1; matches the implementation on branch `records-firsts-3-claims`).
 Rules source: ISA Sport Commission, *Slackline World Records and World Firsts*, October 2026 v2. Where this
 document and the framework differ, the framework wins; the Sport Commission decides on every record and first.
 Every section states the decisions taken; §9 lists what is still open. Code map for reviewers:
@@ -41,8 +41,9 @@ draft ──submit──▶ pending ──approve──▶ published ──beate
 - **draft**: only the claimant sees it. Withdrawing a pending claim makes it a draft again. A draft can be deleted.
 - **pending** ("Under review"): visible to claimant, athletes and reviewers. **changes_requested**: sent back with a
   comment; the claimant edits and resubmits.
-- **published** / **historical**: public. A record becomes historical when a strictly better one on the same list
-  is published; equal values are co-holders and all stay published. Firsts are never historical.
+- **published** / **historical**: public. A record becomes historical (shown as **Former World Record**) when a
+  strictly better one on the same list is published; equal values are co-holders and all stay published. Firsts are
+  never historical. What a published record is called depends on its category's status (§4).
 - **rejected**: closed with a reason, visible to claimant and athletes. Only entries an admin **voided** after
   publication can be restored; a claim rejected in review cannot.
 - "My claims" shows this workflow as a diagram with a count of the user's claims per step.
@@ -54,14 +55,19 @@ free-text unit, direction (higher or lower is better) and status. Units "m", "s"
 "count" are parsed, "°" means coordinates, anything else is a plain number. Changing the unit kind re-reads the
 values of the category's entries.
 
-| Status | Meaning | New claims | Public |
-|---|---|---|---|
-| Active | Established, others compete | yes | yes |
-| Unchallenged | One record so far, nobody else tried | yes | yes, shown apart and labelled |
-| Archived | Discontinued (e.g. per-material records) | no | yes, as history |
+**Status of a record category** (ISA definition, 2026-10-30):
 
-- Only admins change a status. Approving a claim into an Unchallenged category that already has a record prompts
-  the reviewer to consider setting it Active; nothing changes automatically.
+| Status | Meaning | New claims | Best performance | Beaten performances |
+|---|---|---|---|---|
+| **Active** | An established world record category | yes | **World Record** | **Former World Record** |
+| **Unchallenged** | A new category, typically started by one person's achievement. It does not meet criterion 5 ("Challenged") yet, so it is **not a world record yet**. The ISA publishes it to encourage others to challenge it and to show that all other criteria are met. | yes | Unchallenged achievement (no World Record title) | — |
+| **Archived** | Tracked in the past for historical reasons but no longer relevant (e.g. longlines per webbing), or no longer breakable because the external conditions are gone | no | **Historical World Record** | **Former World Record** |
+
+- **Unchallenged → Active:** once the initial achievement is **beaten** and the claim approved, the category
+  becomes Active automatically: the beating performance is the World Record, the initial one a Former World Record.
+- Admins set Active ↔ Archived (and can set Unchallenged by hand); every change is logged.
+- Titles keep the gender list: "Men's / Women's / Mixed World Record", "… Former World Record", "… Historical World
+  Record".
 - The geographic record ("most northern / southern highline") is one category: the larger absolute latitude wins.
 - Seeded from the April 2025 v1 list (v2 has no list); material-specific and discontinued categories are archived.
 - **First categories** (Trickline, Highline Freestyle, Rodeoline, Static) have a name, a termination rule shown to
@@ -135,8 +141,9 @@ and first termination are **not** shown as a checklist on the form (open issue 1
   recomputed. Admins see an **Edit** link on every public row.
 - **Titles** follow the gender only: "Men's World Record", "Women's World Record" and "Mixed World Record" stand side
   by side, whichever value is better; the same for "Men's / Women's / Mixed World First", whichever landing came
-  first. There is no overall "World Record" or "World First". Linking a first to the same trick on another gender is
-  for reference only. Computed, never stored.
+  first. There is no overall "World Record" or "World First". The category status decides the word: World Record,
+  Former World Record, Historical World Record, or no World Record title while Unchallenged (§4). Linking a first to
+  the same trick on another gender is for reference only. Computed, never stored.
 - **Export:** `/admin/records-export` downloads records, firsts, athletes and categories as CSV (all entries except
   drafts, including witness contacts, so admins only).
 - Every status change is in the audit log (who, when, comment); approval clears the world-records cache.
@@ -176,5 +183,11 @@ email never blocks the action. Because claims email addresses the claimant types
 4. **Sport Commission access:** actions check `records:review` / `records:manage`, but admin pages still require
    `role: admin`.
 5. **Athletes with gender "other" or none** can't be on a claim for now.
-6. **Evidence folder on a Shared Drive:** the ISA evidence folder must move to a Shared Drive (or impersonation be
+6. **Category status, details to confirm** (§4):
+   a) Does an **equal** performance by someone else count as a challenge (co-holders), or only a better one?
+   b) The status is per category, but records are per gender list. If the men's achievement is beaten, does the
+      women's single achievement in the same category also become a World Record?
+   c) Name of an unchallenged achievement on the public list and on its certificate (proposal: "Men's Unchallenged
+      Record").
+7. **Evidence folder on a Shared Drive:** the ISA evidence folder must move to a Shared Drive (or impersonation be
    set up) before uploads work on staging and production (§5.1).
