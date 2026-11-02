@@ -8,7 +8,7 @@ import { getUser } from '@lib/user-service';
 import type { ClaimStatus } from '@lib/relational-types';
 import { getClaimFormOptions, getOwnClaim } from '../actions';
 import { emptyClaim, entryToClaimValues, type ClaimFormValues } from './types';
-import ClaimForm from './components/ClaimForm';
+import SubmitClaimClient from './components/SubmitClaimClient';
 import { evidenceUploadsEnabled } from '@lib/records-evidence';
 
 export const metadata: Metadata = {
@@ -25,9 +25,11 @@ export default async function ClaimPage({ searchParams }: Props) {
   let initialValues: ClaimFormValues;
   let reviewComment: string | undefined;
   let status: ClaimStatus | undefined;
-  if (id && (kind === 'record' || kind === 'first')) {
+  const isExistingClaim = !!id && (kind === 'record' || kind === 'first');
+  if (isExistingClaim) {
     const entry = await getOwnClaim(kind, id);
-    if (!entry || !['draft', 'changes_requested'].includes(entry.status)) {
+    const isClaimEditable = !!entry && ['draft', 'changes_requested'].includes(entry.status);
+    if (!isClaimEditable) {
       return (
         <PageLayout title="Claim a World Record or First">
           <section className="p-4 sm:p-0 stack gap-2">
@@ -59,7 +61,7 @@ export default async function ClaimPage({ searchParams }: Props) {
         </>
       }
     >
-      <ClaimForm
+      <SubmitClaimClient
         recordCategories={recordCategories}
         firstCategories={firstCategories}
         initialValues={initialValues}
