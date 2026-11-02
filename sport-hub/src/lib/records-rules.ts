@@ -79,3 +79,69 @@ export const formatFileSize = (bytes?: number) => {
   while (value >= 1024 && unit < units.length - 1) { value /= 1024; unit++; }
   return `${value < 10 && unit > 0 ? value.toFixed(1) : Math.round(value)} ${units[unit]}`;
 };
+
+/**
+ * Reasons a reviewer picks when rejecting a claim, one list per kind of claim
+ * (approved by Jonas 2026-11-02). "other" needs a free-text comment; with a
+ * predefined reason the comment is optional.
+ */
+export type RejectionCase = 'category' | 'record' | 'first';
+
+export const REJECTION_REASONS: Record<RejectionCase, { code: string; label: string }[]> = {
+  category: [
+    { code: 'not_separable', label: 'Not clearly separable from an existing category (a minor variation)' },
+    { code: 'not_measurable', label: 'Cannot be measured objectively (no single quantitative metric)' },
+    { code: 'not_standardisable', label: 'Cannot be standardised (no clear definition every attempt can follow)' },
+    { code: 'not_breakable', label: 'Not breakable by others (it depends on unique conditions)' },
+    { code: 'out_of_scope', label: 'Out of scope (for example free solo, a crossing instead of a send, or a material-specific category)' },
+  ],
+  record: [
+    { code: 'insufficient_evidence', label: 'Insufficient documentation or proof (video, measurement)' },
+    { code: 'below_record', label: 'Below the current record (an equal value is shared, not rejected)' },
+    { code: 'invalid_attempt', label: 'Not a valid attempt under the category rules (for example a fall, or a wrong measurement method)' },
+    { code: 'witnesses', label: 'Witness requirements not met, or the witnesses could not confirm the attempt' },
+    { code: 'ethics', label: 'Breach of the ethics guidelines or the Code of Conduct' },
+  ],
+  first: [
+    { code: 'insufficient_novelty', label: 'Insufficient novelty (a minor variation of an existing trick)' },
+    { code: 'already_landed', label: 'Already landed earlier by someone else' },
+    { code: 'insufficient_control', label: 'Insufficient control at the start or end of the trick' },
+    { code: 'skill_level', label: 'Not an advanced enough skill level' },
+    { code: 'insufficient_evidence', label: 'Insufficient documentation (the landing isn\'t clearly shown or confirmed)' },
+  ],
+};
+
+export const OTHER_REJECTION_REASON = 'other';
+
+/** What the reviewer picked when rejecting: a reason code, the text for "other", and an optional comment. */
+export interface RejectionInput {
+  reason: string;
+  otherReason?: string;
+  comment?: string;
+}
+
+/**
+ * The text the claimant sees for a rejection: the reason (its label, or the
+ * reviewer's own words for "other"), followed by the optional comment. Returns
+ * an error when the reason is unknown, or "other" comes without a description.
+ */
+export function rejectionText(rejectionCase: RejectionCase, input: RejectionInput): { text: string } | { error: string } {
+  const note = input.comment?.trim() ?? '';
+  let reason: string | undefined;
+  if (input.reason === OTHER_REJECTION_REASON) {
+    reason = input.otherReason?.trim().replace(/[.\s]+$/, '');
+    if (!reason) return { error: 'Describe the reason' };
+  } else {
+    reason = REJECTION_REASONS[rejectionCase].find(r => r.code === input.reason)?.label;
+    if (!reason) return { error: 'Choose a reason' };
+  }
+  return { text: note ? `${reason}. ${note}` : reason };
+}
+
+/** A record claim whose proposed category hasn't been created or mapped yet. */
+export const isNewCategoryClaim = (entry: { kind: string; categoryId: string; newCategoryProposal?: unknown }) =>
+  entry.kind === 'record' && !!entry.newCategoryProposal && entry.categoryId.startsWith('proposed-');
+
+/** Which reason list applies to a claim. */
+export const rejectionCaseOf = (entry: { kind: string; categoryId: string; newCategoryProposal?: unknown }): RejectionCase =>
+  entry.kind === 'first' ? 'first' : isNewCategoryClaim(entry) ? 'category' : 'record';

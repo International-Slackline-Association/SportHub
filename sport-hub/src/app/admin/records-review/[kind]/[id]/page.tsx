@@ -7,7 +7,7 @@ import PageLayout from '@ui/PageLayout';
 import { Alert } from '@ui/Alert';
 import { requireAdmin } from '@lib/authorization';
 import { entryHasCertificate, formatRecordValue, GENDER_LABELS, GENDER_TITLE_LABELS, RECORD_GENDERS } from '@lib/records-logic';
-import { FIRST_CRITERIA, formatFileSize, RECORD_CRITERIA } from '@lib/records-rules';
+import { FIRST_CRITERIA, formatFileSize, isNewCategoryClaim, RECORD_CRITERIA, rejectionCaseOf } from '@lib/records-rules';
 import { evidenceFolderUrl } from '@lib/records-evidence';
 import type { RecordCategoryTableItem } from '@lib/relational-types';
 import { getReviewContext } from 'src/app/admin/records-review/actions';
@@ -44,7 +44,7 @@ export default async function ReviewClaimPage({ params }: Props) {
   const folderUrl = evidenceFolderUrl(entry.evidenceFolderId);
 
   const recordCategory = entry.kind === 'record' ? (category as RecordCategoryTableItem | null) : null;
-  const isNewCategory = entry.kind === 'record' && !!entry.newCategoryProposal && entry.categoryId.startsWith('proposed-');
+  const isNewCategory = isNewCategoryClaim(entry);
   const valueText = entry.kind === 'record'
     ? (recordCategory ? formatRecordValue(recordCategory, entry.value) : entry.value.original)
     : undefined;
@@ -154,6 +154,7 @@ export default async function ReviewClaimPage({ params }: Props) {
             status={entry.status}
             voided={entry.voidedAt !== undefined}
             isNewCategory={isNewCategory}
+            rejectionCase={rejectionCaseOf(entry)}
             proposedName={entry.kind === 'record' ? entry.newCategoryProposal?.name : undefined}
             similarCategoryIds={entry.kind === 'record' ? similar.map(s => s.id) : []}
             recordCategories={recordCategories.map(({ categoryId, name, group, status }) => ({ categoryId, name, group, status }))}

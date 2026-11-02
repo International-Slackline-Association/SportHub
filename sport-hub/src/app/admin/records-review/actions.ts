@@ -63,6 +63,7 @@ import type {
 } from '@lib/relational-types';
 import type { ClaimActionResult, ClaimFormValues } from 'src/app/world_records/claim/types';
 import { syncEvidence } from '@lib/records-evidence';
+import { isNewCategoryClaim, rejectionCaseOf, rejectionText, type RejectionInput } from '@lib/records-rules';
 
 type ActionResult = { success: boolean; error?: string; notice?: string };
 
@@ -219,7 +220,7 @@ async function resolveApprovalCategory(
   options: ApproveOptions,
   actor: ReturnType<typeof actorOf>,
 ): Promise<{ entry: WorldRecordTableItem; category: RecordCategoryTableItem } | { error: string }> {
-  const isProposal = !!entry.newCategoryProposal && entry.categoryId.startsWith('proposed-');
+  const isProposal = isNewCategoryClaim(entry);
   if (!isProposal) {
     const category = await getRecordCategory(entry.categoryId);
     return category ? { entry, category } : { error: 'Category not found' };
@@ -332,18 +333,32 @@ export async function approveClaim(kind: EntryKind, entryId: string, options: Ap
 }
 
 /** Reject (reason required) or send back for changes (comment required), FR-16. */
-async function decide(kind: EntryKind, entryId: string, toStatus: 'rejected' | 'changes_requested', comment: string): Promise<ActionResult> {
+async function decide(
+  kind: EntryKind,
+  entryId: string,
+  toStatus: 'rejected' | 'changes_requested',
+  comment: string,
+  rejection?: RejectionInput,
+): Promise<ActionResult> {
   try {
     const session = await requireRecordsPermission('records:review');
     const actor = actorOf(session);
-    const text = comment.trim();
-    if (!text) return { success: false, error: toStatus === 'rejected' ? 'A reason is required' : 'A comment is required' };
     const entry = await getEntry(kind, entryId);
     if (!entry || entry.status !== 'pending') return { success: false, error: 'Only claims under review can be decided' };
+    let text = comment.trim();
+    if (toStatus === 'rejected') {
+      // The reason list depends on the claim: new category, record, or first
+      const composed = rejectionText(rejectionCaseOf(entry), rejection ?? { reason: '' });
+      if ('error' in composed) return { success: false, error: composed.error };
+      text = composed.text;
+    } else if (!text) {
+      return { success: false, error: 'A comment is required' };
+    }
     const updated: WorldRecordOrFirstTableItem = {
       ...entry,
       status: toStatus,
       reviewComment: text,
+      rejectionReason: toStatus === 'rejected' ? rejection?.reason : undefined,
       decidedAt: toStatus === 'rejected' ? Date.now() : entry.decidedAt,
       decidedBy: actor.byName ?? actor.byUserId,
       updatedAt: Date.now(),
@@ -359,8 +374,9 @@ async function decide(kind: EntryKind, entryId: string, toStatus: 'rejected' | '
   }
 }
 
-export async function rejectClaim(kind: EntryKind, entryId: string, reason: string) {
-  return decide(kind, entryId, 'rejected', reason);
+/** Reject with one of the predefined reasons for the claim, or "other" described in words; the comment is optional. */
+export async function rejectClaim(kind: EntryKind, entryId: string, rejection: RejectionInput) {
+  return decide(kind, entryId, 'rejected', rejection.comment ?? '', rejection);
 }
 
 export async function requestClaimChanges(kind: EntryKind, entryId: string, comment: string) {
