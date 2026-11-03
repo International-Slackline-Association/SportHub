@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   challengesCategory,
+  isPlaceholderSheetRow,
   entryHasCertificate,
   hasCertificate,
   recordStanding,
@@ -123,4 +124,13 @@ test('equalling or beating on any list challenges an Unchallenged category', () 
   // A first entry on another list is not a challenge
   assert.equal(challengesCategory(category, { entryId: 'b', gender: 'WOMEN_ONLY', value: v(50) }, [first]), false);
   assert.equal(challengesCategory({ ...category, status: 'active' }, { entryId: 'b', gender: 'MEN_ONLY', value: v(120) }, [first]), false);
+});
+
+test('isPlaceholderSheetRow: merged, duplicate and empty rows are skipped', () => {
+  assert.equal(isPlaceholderSheetRow({ 'Cert ID': 'world_record_34', 'ISA ID': 'merged into 255', Specs: '220m', 'Record type': '', Name: '' }), true);
+  assert.equal(isPlaceholderSheetRow({ 'Cert ID': 'world_record_341', 'ISA ID': 'duplicate to 115' }), true);
+  assert.equal(isPlaceholderSheetRow({ 'Cert ID': 'world_record_233' }), true);
+  assert.equal(isPlaceholderSheetRow({ 'Cert ID': 'world_record_99', 'Record type': 'Most northern/southern highline rigged', Name: 'Gaelle Joubert' }), false);
+  // A row with a name but no category is a real row and still raises a "no category" issue
+  assert.equal(isPlaceholderSheetRow({ 'Cert ID': 'world_record_1', Name: 'Someone' }), false);
 });

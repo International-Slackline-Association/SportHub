@@ -32,7 +32,7 @@ import type {
   RecordEvidence,
 } from '../relational-types';
 import { buildFirstCategoryRecords, buildRecordCategoryRecords } from '../records-categories';
-import { deriveGender, parseRecordValue, parseSheetDate, splitCurrentAndHistory, unitKind, RECORD_GENDERS } from '../records-logic';
+import { deriveGender, isPlaceholderSheetRow, parseRecordValue, parseSheetDate, splitCurrentAndHistory, unitKind, RECORD_GENDERS } from '../records-logic';
 
 // Local runs read the Google credentials from .env.local; AWS runs get everything from .env.stage / .env.production
 if (process.env.DYNAMODB_LOCAL === 'true' && existsSync('.env.local')) process.loadEnvFile('.env.local');
@@ -236,6 +236,7 @@ function transformRecords(
   const categoryById = new Map(recordCategories.map(c => [c.categoryId, c]));
   const pending: { category: RecordCategoryTableItem; row: SheetRow; athlete: WorldRecordOrFirstEntryAthlete; entry: WorldRecordTableItem }[] = [];
   for (const row of rows) {
+    if (isPlaceholderSheetRow(row)) continue;
     const categoryId = mapRecordCategory(row['Record type'], row['Extra']);
     const category = categoryId ? categoryById.get(categoryId) : undefined;
     if (!category) {

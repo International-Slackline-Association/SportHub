@@ -326,3 +326,11 @@ export const parseSheetDate = (raw: string): string => {
   return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
 };
 
+
+/**
+ * A sheet row that only keeps its certificate ID: a row merged into another one or marked as a
+ * duplicate ("merged into 255", "duplicate to 115" in the ISA ID column), or an empty row.
+ * The import skips these without raising an issue.
+ */
+export const isPlaceholderSheetRow = (row: Record<string, string | undefined>): boolean =>
+  !row['Record type']?.trim() && !row['Name']?.trim();
