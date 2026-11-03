@@ -196,3 +196,8 @@ email never blocks the action. Because claims email addresses the claimant types
       challenged.
 7. **Evidence folder on a Shared Drive:** the ISA evidence folder must move to a Shared Drive (or impersonation be
    set up) before uploads work on staging and production (§5.1).
+8. **Athlete linking in the World Records sheet:** the import links athletes to profiles by email, but some rows in the
+   new sheet carry another athlete's email or a broken one, so they would land on the wrong profile or none. Known
+   cases: Anthony/Antony Newton (wr 43–48, Pablo Signoret's email), "Raphael Bridi" (wr 240, Raphael Bacot's email;
+   spelling vs Rafael Bridi), Ando Franscini (wr 35, Thomas Buckingham's email), Tancrède Melet (wr 280, Julien Millot's
+   email), Quirin Herterich (wr 229–232, email ends in ".con"). Resolve before the import runs on staging or production.
