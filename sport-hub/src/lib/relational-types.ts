@@ -371,6 +371,7 @@ interface RecordsMetadataTableItem extends RecordsTableItem {
   claimantName?: string;
   source: 'claim' | 'import';
   reviewComment?: string;
+  rejectionReason?: string;      // Code from REJECTION_REASONS (lib/records-rules), or "other"; reviewComment holds the text shown
   submittedAt?: number;
   decidedAt?: number;
   decidedBy?: string;

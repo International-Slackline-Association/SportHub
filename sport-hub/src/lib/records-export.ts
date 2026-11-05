@@ -90,6 +90,7 @@ const trailingColumns = (entry: WorldRecordOrFirstTableItem): Row => ({
   source: entry.source,
   cert_ids: list(entry.athletes.map(a => a.certId)),
   review_comment: entry.reviewComment,
+  rejection_reason: entry.rejectionReason,
   submitted_at: iso(entry.submittedAt),
   decided_at: iso(entry.decidedAt),
   decided_by: entry.decidedBy,

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Button from '@ui/Button';
 import { Alert } from '@ui/Alert';
 import type { ClaimStatus, RecordCategoryTableItem, FirstCategoryTableItem } from '@lib/relational-types';
+import { OTHER_REJECTION_REASON, REJECTION_REASONS, type RejectionCase } from '@lib/records-rules';
 import {
   approveClaim,
   rejectClaim,
@@ -19,6 +20,8 @@ type Props = {
   /** Only an entry an admin voided after publication can be restored. */
   voided: boolean;
   isNewCategory: boolean;
+  /** Which list of rejection reasons applies: new category, record, or first. */
+  rejectionCase: RejectionCase;
   proposedName?: string;
   similarCategoryIds: string[];
   recordCategories: Pick<RecordCategoryTableItem, 'categoryId' | 'name' | 'group' | 'status'>[];
@@ -39,6 +42,8 @@ export default function ReviewActions(props: Props) {
   const [categoryChoice, setCategoryChoice] = useState<'create' | 'map'>('create');
   const [mapTo, setMapTo] = useState(props.similarCategoryIds[0] ?? '');
   const [trickLink, setTrickLink] = useState('');
+  const [rejectReason, setRejectReason] = useState('');
+  const [otherReason, setOtherReason] = useState('');
 
   const run = async (action: () => Promise<{ success: boolean; error?: string; notice?: string }>) => {
     setBusy(true);
@@ -49,10 +54,13 @@ export default function ReviewActions(props: Props) {
     if (!result.success) { setError(result.error ?? 'Something went wrong'); return; }
     if (result.notice) setNotice(result.notice);
     setComment('');
+    setRejectReason('');
+    setOtherReason('');
     router.refresh();
   };
 
   const recordOptions = props.recordCategories.filter(c => c.status !== 'archived');
+  const canReject = rejectReason === OTHER_REJECTION_REASON ? !!otherReason.trim() : !!rejectReason;
 
   return (
     <div className="stack gap-4">
@@ -91,10 +99,27 @@ export default function ReviewActions(props: Props) {
               <small className="text-gray-500">For reference only: titles follow the gender (Men&apos;s / Women&apos;s / Mixed World First).</small>
             </div>
           )}
+          <div className="stack gap-1 text-sm">
+            <label className="font-medium" htmlFor="reject-reason">Reason for rejection</label>
+            <select id="reject-reason" className={inputClass} value={rejectReason} onChange={e => setRejectReason(e.target.value)}>
+              <option value="">Choose a reason (only to reject)</option>
+              {REJECTION_REASONS[props.rejectionCase].map(r => <option key={r.code} value={r.code}>{r.label}</option>)}
+              <option value={OTHER_REJECTION_REASON}>Other</option>
+            </select>
+            {rejectReason === OTHER_REJECTION_REASON && (
+              <input
+                className={inputClass}
+                placeholder="Describe the reason (required)"
+                aria-label="Other reason"
+                value={otherReason}
+                onChange={e => setOtherReason(e.target.value)}
+              />
+            )}
+          </div>
           <textarea
             className={inputClass}
             rows={3}
-            placeholder="Comment to the claimant (required to reject or request changes)"
+            placeholder="Comment to the claimant (required to request changes, optional when rejecting)"
             value={comment}
             onChange={e => setComment(e.target.value)}
           />
@@ -114,7 +139,11 @@ export default function ReviewActions(props: Props) {
             <Button variant="secondary" disabled={busy || !comment.trim()} onClick={() => run(() => requestClaimChanges(kind, entryId, comment))}>
               Request changes
             </Button>
-            <Button variant="destructive" disabled={busy || !comment.trim()} onClick={() => run(() => rejectClaim(kind, entryId, comment))}>
+            <Button
+              variant="destructive"
+              disabled={busy || !canReject}
+              onClick={() => run(() => rejectClaim(kind, entryId, { reason: rejectReason, otherReason, comment }))}
+            >
               Reject
             </Button>
           </div>

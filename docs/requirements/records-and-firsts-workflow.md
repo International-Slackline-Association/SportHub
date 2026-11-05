@@ -1,6 +1,6 @@
 # Requirements: World Records & World Firsts Workflow
 
-Status: **v10**, 2026-10-30 (witnesses required for firsts too, §5; category status definitions, §4; evidence uploads to Google Drive, §5.1; matches the implementation on branch `records-firsts-3-claims`).
+Status: **v11**, 2026-11-02 (rejection reasons, §6.1; witnesses required for firsts too, §5; category status definitions, §4; evidence uploads to Google Drive, §5.1; matches the implementation on branch `records-firsts-3-claims`).
 Rules source: ISA Sport Commission, *Slackline World Records and World Firsts*, October 2026 v2. Where this
 document and the framework differ, the framework wins; the Sport Commission decides on every record and first.
 Every section states the decisions taken; §9 lists what is still open. Code map for reviewers:
@@ -139,7 +139,7 @@ whatever the sheet had; imported firsts have no witnesses and stay valid.
   Records" / "Modify Firsts" list every non-draft entry with search and status filter.
 - The detail page shows all fields, the history, the current record per list (for significance, a reviewer
   judgment), and actions **Approve**, **Request changes** (comment required), **Reject** (reason required) and
-  **Modify**. New-category claims show similar categories and the framework's record criteria; the reviewer
+  **Modify**. Rejecting needs a reason from a list (§6.1). New-category claims show similar categories and the framework's record criteria; the reviewer
   creates the category (Unchallenged, group Other) or maps the claim to an existing one. Firsts show the first
   criteria and the existing firsts of the discipline, and can be linked to the same trick on another list.
 - **Modify** edits every field before or after approval (logged, with an optional reason); published/historical is
@@ -155,6 +155,24 @@ whatever the sheet had; imported firsts have no witnesses and stay valid.
 - **Certificates** (PDF, placeholder layout until the ISA design exists) are generated on demand per athlete for
   published and historical entries at `/api/certificates/{record|first}/{id}?athlete={n}`, linked from the
   athlete's profile, "My claims" and the admin detail, so corrections show immediately.
+
+### 6.1 Rejection reasons
+
+To reject, the reviewer picks a reason from the list for the kind of claim, or **Other**, which opens a field for
+their own reason. A comment to the claimant is optional in both cases. The claimant sees "reason. comment" on "My
+claims" and in the rejection email; the entry stores the reason's code (`rejectionReason`, in the CSV export) and the
+text (`reviewComment`).
+
+| New record category | Record in an existing category | World first |
+|---|---|---|
+| Not clearly separable from an existing category (a minor variation) | Insufficient documentation or proof (video, measurement) | Insufficient novelty (a minor variation of an existing trick) |
+| Cannot be measured objectively (no single quantitative metric) | Below the current record (an equal value is shared, not rejected) | Already landed earlier by someone else |
+| Cannot be standardised (no clear definition every attempt can follow) | Not a valid attempt under the category rules (for example a fall, or a wrong measurement method) | Insufficient control at the start or end of the trick |
+| Not breakable by others (it depends on unique conditions) | Witness requirements not met, or the witnesses could not confirm the attempt | Not an advanced enough skill level |
+| Out of scope (for example free solo, a crossing instead of a send, or a material-specific category) | Breach of the ethics guidelines or the Code of Conduct | Insufficient documentation (the landing isn't clearly shown or confirmed) |
+
+"Challenged" is no reason, since new categories start as Unchallenged; a claim in the wrong category is moved with
+Modify instead of rejected. The lists live in `REJECTION_REASONS` in `lib/records-rules.ts`.
 
 ## 7. Notifications
 
