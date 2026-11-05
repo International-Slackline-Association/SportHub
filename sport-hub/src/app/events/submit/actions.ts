@@ -411,8 +411,18 @@ export async function updateEventStatus(eventId: string, status: 'draft' | 'publ
 
     await putEventItem(updatedEvent);
 
+    // Results count only while the event is published: add or remove the
+    // athletes' Participation:* records. Legacy contests without a results
+    // array keep their migrated records untouched.
+    await Promise.all(
+      result.event.contests
+        .filter((c) => Array.isArray(c.results))
+        .map((c) => syncContestParticipationRecords(eventId, { ...c, eventId }))
+    );
+
     invalidateContestsCache();
     revalidatePath('/events');
+    revalidatePath('/rankings');
 
     return {
       success: true,
