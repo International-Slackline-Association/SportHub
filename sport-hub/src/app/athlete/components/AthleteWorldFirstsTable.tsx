@@ -1,15 +1,17 @@
+import { useMemo } from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
 import { WorldFirst } from '@lib/data-services';
 import Table from '@ui/Table';
 import {
+  certificateUrl,
   dateSortingFn,
   genderCellFormatter,
-  linkCellFormatter,
+  Links,
 } from 'src/app/world_records/components/cellFormatters';
 import { Alert } from '@ui/Alert';
 
 const columnHelper = createColumnHelper<WorldFirst>();
-const columns = [
+const buildColumns = (athleteId?: string) => [
   columnHelper.accessor('date', {
     header: 'Date',
     enableSorting: true,
@@ -31,16 +33,20 @@ const columns = [
   }),
   columnHelper.accessor('links', {
     header: "Links",
-    cell: linkCellFormatter,
+    cell: ({ row }) => (
+      <Links entry={row.original} certificate={athleteId ? certificateUrl('first', row.original, athleteId) : null} />
+    ),
     size: 40,
   }),
 ];
 
 type AthleteWorldFirstsTableProps = {
+  athleteId?: string;
   worldFirsts: WorldFirst[];
 };
 
-const AthleteWorldFirstsTable = ({ worldFirsts }: AthleteWorldFirstsTableProps) => {
+const AthleteWorldFirstsTable = ({ worldFirsts, athleteId }: AthleteWorldFirstsTableProps) => {
+  const columns = useMemo(() => buildColumns(athleteId), [athleteId]);
   if (worldFirsts.length === 0) {
     return <Alert variant="info">No world firsts found for this athlete.</Alert>;
   }

@@ -678,6 +678,7 @@ async function getWorldRecordsFromSheet(): Promise<WorldRecord[]> {
   return rows.map((row, idx) => ({
     entryId: `sheet-${idx}`,
     title: recordTitle(sheetEntryGender(row.gender)),
+    standing: 'world_record' as const,
     isCurrent: true,
     categoryId: row.recordType,
     categoryName: row.recordType,

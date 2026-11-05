@@ -15,6 +15,10 @@ export async function requireRecordsPermission(permission: Permission) {
   return session;
 }
 
+/** Like requireRecordsPermission, without throwing. */
+export const hasRecordsPermission = (session: Awaited<ReturnType<typeof requireSession>>, permission: Permission) =>
+  session.user.role === 'admin' || !!session.user.permissions?.includes(permission);
+
 export const actorOf = (session: Awaited<ReturnType<typeof requireSession>>) => ({
   byUserId: session.user.id,
   byName: session.user.name ?? session.user.email ?? undefined,

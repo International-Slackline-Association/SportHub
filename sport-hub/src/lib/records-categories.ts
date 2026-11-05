@@ -30,7 +30,7 @@ export const RECORD_CATEGORY_SEEDS: RecordCategorySeed[] = [
   seed('longline-length-polyester', 'Longline length over ground – Polyester', 'Length', 'm', 'higher', 'archived'),
   seed('longline-length-polyamide', 'Longline length over ground – Polyamide', 'Length', 'm', 'higher', 'archived'),
   seed('longline-length-humanline', 'Longline length – Humanline', 'Length', 'm', 'higher'),
-  seed('longline-length-jumping', 'Longline length – Jumping (lemur leap / one foot)', 'Length', 'm', 'higher'),
+  seed('longline-length-jumping', 'Longline length – Jumping (lemur leap / one foot)', 'Trick', 'm', 'higher'),
 
   // Waterline length
   seed('waterline-length', 'Waterline length', 'Length', 'm', 'higher'),
@@ -79,18 +79,18 @@ export const RECORD_CATEGORY_SEEDS: RecordCategorySeed[] = [
   seed('endurance-surfing', 'Longest duration surfing on a rodeo- / slackline', 'Endurance', 's', 'higher'),
   seed('endurance-living-highline', 'Longest duration living on a highline', 'Endurance', 's', 'higher'),
 
-  // Trick records
-  seed('trick-high-jump', 'High jump over pole (feet to feet) on a trickline', 'Other', 'm', 'higher'),
-  seed('trick-front-flips', 'Most front flips feet to feet in a row on a trickline', 'Other', 'count', 'higher'),
-  seed('trick-handstand-slackline', 'Longest duration handstand on a slackline over ground', 'Other', 's', 'higher'),
-  seed('trick-handstand-highline', 'Longest duration handstand on a highline', 'Other', 's', 'higher'),
-  seed('trick-juggling-3-clubs', 'Longest distance walk juggling three clubs', 'Other', 'm', 'higher'),
-  seed('trick-juggling-5-clubs', 'Longest distance walk juggling five clubs', 'Other', 'm', 'higher'),
-  seed('trick-juggling-duration', 'Longest duration juggling on a slackline', 'Other', 's', 'higher'),
-  seed('trick-football', 'Longest duration controlling a football on an elevated slackline', 'Other', 's', 'higher'),
-  seed('trick-skips', 'Most consecutive skips on a slackline', 'Other', 'count', 'higher'),
-  seed('trick-elbow-lever', 'Longest duration one arm elbow lever on a slackline', 'Other', 's', 'higher'),
-  seed('trick-davinci-spins', 'Most spins on four slacklines (Da Vinci slackline) in one minute', 'Other', 'count', 'higher'),
+  // Trick records (the sheet files the three-club juggling distance under Length)
+  seed('trick-high-jump', 'High jump over pole (feet to feet) on a trickline', 'Trick', 'm', 'higher'),
+  seed('trick-front-flips', 'Most front flips feet to feet in a row on a trickline', 'Trick', 'count', 'higher'),
+  seed('trick-handstand-slackline', 'Longest duration handstand on a slackline over ground', 'Trick', 's', 'higher'),
+  seed('trick-handstand-highline', 'Longest duration handstand on a highline', 'Trick', 's', 'higher'),
+  seed('trick-juggling-3-clubs', 'Longest distance walk juggling three clubs', 'Length', 'm', 'higher'),
+  seed('trick-juggling-5-clubs', 'Longest distance walk juggling five clubs', 'Trick', 'm', 'higher'),
+  seed('trick-juggling-duration', 'Longest duration juggling on a slackline', 'Trick', 's', 'higher'),
+  seed('trick-football', 'Longest duration controlling a football on an elevated slackline', 'Trick', 's', 'higher'),
+  seed('trick-skips', 'Most consecutive skips on a slackline', 'Trick', 'count', 'higher'),
+  seed('trick-elbow-lever', 'Longest duration one arm elbow lever on a slackline', 'Trick', 's', 'higher'),
+  seed('trick-davinci-spins', 'Most spins on four slacklines (Da Vinci slackline) in one minute', 'Trick', 'count', 'higher'),
 
   // Rigging
   seed('rigging-solo-rig-derig', 'Longest line solo-rig and derig', 'Other', 'm', 'higher'),

@@ -18,7 +18,7 @@ export default async function RecordCategoriesPage() {
   return (
     <PageLayout
       title="Record categories"
-      description="Active: challenged and listed. Unchallenged: listed, but no one has seriously challenged it yet. Archived: no longer offered on the claim form, existing records stay visible."
+      description="Active: the best performance is the World Record. Unchallenged: one achievement nobody has equalled or beaten yet, not a World Record; an approved claim that equals or beats it makes the category Active automatically. Archived: no new claims; the best performance is a Historical World Record."
     >
       <AdminNav current="/admin/records-categories" />
       <section className="p-4 sm:p-0">

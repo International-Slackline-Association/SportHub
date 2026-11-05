@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Moves record categories to the simplified shape: name, description, group
- * (Length, Endurance, Speed, Altitude, Other), unit, direction and status.
+ * (Length, Endurance, Speed, Altitude, Trick, Other), unit, direction and status.
  *
  * - Seeded categories take their group and unit from the seed list.
  * - Other categories map their old free-text group (e.g. "Highline height" → Altitude).
@@ -34,8 +34,8 @@ const OLD_GROUPS: Record<string, RecordCategoryGroup> = {
   'speedlines over ground': 'Speed',
   endurance: 'Endurance',
   rigging: 'Other',
-  trick: 'Other',
-  tricks: 'Other',
+  trick: 'Trick',
+  tricks: 'Trick',
 };
 
 type LegacyCategory = RecordCategoryTableItem & { valueType?: string };

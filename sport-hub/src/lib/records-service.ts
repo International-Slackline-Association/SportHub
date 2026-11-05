@@ -7,12 +7,13 @@
  * "Record:{id}" / "First:{id}" pointer item under their profile.
  */
 
-import { PutCommand, QueryCommand, type QueryCommandInput } from '@aws-sdk/lib-dynamodb';
+import { BatchWriteCommand, PutCommand, QueryCommand, UpdateCommand, type QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 import { formatISODay } from '@utils/dates';
 import { ddbClient, dynamodb, getTableName, RECORDS_TABLE, USERS_TABLE } from './dynamodb';
 import type {
   AthleteRecordOrFirstLinkTableItem,
   ClaimStatus,
+  WorldRecordOrFirstEntryAthlete,
   RecordsAuditTableItem,
   FirstCategoryTableItem,
   WorldFirstTableItem,
@@ -24,9 +25,11 @@ import type {
 import {
   firstTitle,
   formatRecordValue,
-  recordTitle,
   RECORD_GENDERS,
+  recordStanding,
   splitCurrentAndHistory,
+  standingTitle,
+  type RecordStanding,
 } from './records-logic';
 import { getCountryByCode } from '@utils/countries';
 
@@ -190,6 +193,45 @@ export async function putEntry(entry: WorldRecordOrFirstTableItem, options: PutE
   }
 }
 
+/**
+ * Takes the decision lock on an entry that has `expectedStatus`, before an
+ * approval with side effects (creating profiles or a category, emails).
+ * Returns a token for the final putEntry, or null if the entry has another
+ * status or someone else is deciding it right now.
+ */
+export async function lockForDecision(kind: EntryKind, entryId: string, expectedStatus: ClaimStatus): Promise<string | null> {
+  const token = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  try {
+    await ddbClient.send(new UpdateCommand({
+      TableName: getTableName(RECORDS_TABLE),
+      Key: { pk: entryPk(kind, entryId), sortKey: 'Metadata' },
+      UpdateExpression: 'SET decisionLockAt = :now, decisionLockToken = :token',
+      ConditionExpression: '#status = :expected AND (attribute_not_exists(decisionLockAt) OR decisionLockAt < :stale)',
+      ExpressionAttributeNames: { '#status': 'status' },
+      ExpressionAttributeValues: { ':now': Date.now(), ':token': token, ':expected': expectedStatus, ':stale': Date.now() - DECISION_LOCK_MS },
+    }));
+    return token;
+  } catch (error) {
+    if (isConditionFailure(error)) return null;
+    throw error;
+  }
+}
+
+/** Releases a decision lock the caller still holds (after a failed or abandoned decision). */
+export async function releaseDecisionLock(kind: EntryKind, entryId: string, token: string): Promise<void> {
+  try {
+    await ddbClient.send(new UpdateCommand({
+      TableName: getTableName(RECORDS_TABLE),
+      Key: { pk: entryPk(kind, entryId), sortKey: 'Metadata' },
+      UpdateExpression: 'REMOVE decisionLockAt, decisionLockToken',
+      ConditionExpression: 'decisionLockToken = :token',
+      ExpressionAttributeValues: { ':token': token },
+    }));
+  } catch (error) {
+    if (!isConditionFailure(error)) throw error;
+  }
+}
+
 export async function getEntriesByStatus(kind: 'record', status: ClaimStatus): Promise<WorldRecordTableItem[]>;
 export async function getEntriesByStatus(kind: 'first', status: ClaimStatus): Promise<WorldFirstTableItem[]>;
 export async function getEntriesByStatus(kind: EntryKind, status: ClaimStatus): Promise<WorldRecordOrFirstTableItem[]>;
@@ -260,11 +302,55 @@ export async function addAuditEntry(
   await dynamodb.putItem(RECORDS_TABLE, record as unknown as Record<string, unknown>);
 }
 
+/**
+ * Deletes an entry with its audit log, the claimant's "My claims" pointer and
+ * the athletes' pointers (a withdrawn claim has them). Only for drafts.
+ */
+export async function deleteEntry(entry: WorldRecordOrFirstTableItem): Promise<void> {
+  const items = await queryAll<{ pk: string; sortKey: string }>({
+    KeyConditionExpression: 'pk = :pk',
+    ExpressionAttributeValues: { ':pk': entryPk(entry.kind, entry.entryId) },
+    ProjectionExpression: 'pk, sortKey',
+  });
+  await deleteItems(RECORDS_TABLE, items.map(({ pk, sortKey }) => ({ pk, sortKey })));
+  const pointers = athleteUserIds(entry.athletes).map(userId => ({ userId, sortKey: entryPk(entry.kind, entry.entryId) }));
+  if (entry.claimantUserId) pointers.push({ userId: entry.claimantUserId, sortKey: `Claim:${entry.kind}:${entry.entryId}` });
+  await deleteItems(USERS_TABLE, pointers);
+}
+
 export async function getAuditLog(kind: EntryKind, entryId: string): Promise<RecordsAuditTableItem[]> {
   return queryAll<RecordsAuditTableItem>({
     KeyConditionExpression: 'pk = :pk AND begins_with(sortKey, :prefix)',
     ExpressionAttributeValues: { ':pk': entryPk(kind, entryId), ':prefix': 'Audit:' },
   });
+}
+
+// ============================================================================
+// RATE LIMIT
+// ============================================================================
+
+/**
+ * Counts one claim submission for a user today (UTC) and returns false once
+ * `max` is reached. Each submission emails the athletes and witnesses, so this
+ * caps how many emails one account can make SportHub send.
+ * Item: pk = "RateLimit", sortKey = "Submit:{userId}:{yyyy-mm-dd}".
+ */
+export async function countSubmission(userId: string, max: number): Promise<boolean> {
+  const day = new Date().toISOString().slice(0, 10);
+  try {
+    await ddbClient.send(new UpdateCommand({
+      TableName: getTableName(RECORDS_TABLE),
+      Key: { pk: 'RateLimit', sortKey: `Submit:${userId}:${day}` },
+      UpdateExpression: 'ADD #count :one',
+      ConditionExpression: 'attribute_not_exists(#count) OR #count < :max',
+      ExpressionAttributeNames: { '#count': 'count' },
+      ExpressionAttributeValues: { ':one': 1, ':max': max },
+    }));
+    return true;
+  } catch (error) {
+    if (isConditionFailure(error)) return false;
+    throw error;
+  }
 }
 
 // ============================================================================
@@ -286,7 +372,6 @@ export async function getImportIssues(): Promise<RecordsImportIssueTableItem[]> 
 // ATHLETE POINTERS (users table)
 // ============================================================================
 
-/** Pointer item on the athlete's profile (sortKey = "Record:{entryId}" | "First:{entryId}"). */
 export async function putAthleteLink(userId: string, kind: EntryKind, entryId: string): Promise<void> {
   const link: AthleteRecordOrFirstLinkTableItem = {
     userId,
@@ -296,6 +381,84 @@ export async function putAthleteLink(userId: string, kind: EntryKind, entryId: s
     createdAt: Date.now(),
   };
   await dynamodb.putItem(USERS_TABLE, link as unknown as Record<string, unknown>);
+}
+
+const athleteUserIds = (athletes: Pick<WorldRecordOrFirstEntryAthlete, 'userId'>[]) =>
+  [...new Set(athletes.map(a => a.userId).filter((id): id is string => !!id))];
+
+/**
+ * Keeps the athletes' profile pointers in step with the athletes on an entry:
+ * removes pointers of athletes no longer on it and adds the new ones.
+ */
+export async function syncAthleteLinks(
+  kind: EntryKind,
+  entryId: string,
+  before: Pick<WorldRecordOrFirstEntryAthlete, 'userId'>[],
+  after: Pick<WorldRecordOrFirstEntryAthlete, 'userId'>[],
+): Promise<void> {
+  const previous = athleteUserIds(before);
+  const next = athleteUserIds(after);
+  const removed = previous.filter(id => !next.includes(id));
+  await deleteItems(USERS_TABLE, removed.map(userId => ({ userId, sortKey: entryPk(kind, entryId) })));
+  await Promise.all(next.map(userId => putAthleteLink(userId, kind, entryId)));
+}
+
+export async function getAthleteEntryIds(userId: string, kind: EntryKind): Promise<string[]> {
+  const items = await dynamodb.queryItems(
+    USERS_TABLE,
+    'userId = :uid AND begins_with(sortKey, :prefix)',
+    { ':uid': userId, ':prefix': `${kind === 'record' ? 'Record' : 'First'}:` },
+  );
+  return items.map(item => (item as AthleteRecordOrFirstLinkTableItem).entryId);
+}
+
+/**
+ * Claim pointer for the claimant (sortKey = "Claim:{kind}:{entryId}"), so "My claims"
+ * lists claims a person submitted for others without a scan.
+ */
+export async function putClaimantLink(userId: string, kind: EntryKind, entryId: string): Promise<void> {
+  await dynamodb.putItem(USERS_TABLE, {
+    userId,
+    sortKey: `Claim:${kind}:${entryId}`,
+    entryId,
+    kind,
+    createdAt: Date.now(),
+  });
+}
+
+/** Entries a user claimed or is an athlete on, any status. */
+export async function getUserClaims(userId: string): Promise<WorldRecordOrFirstTableItem[]> {
+  const items = (await Promise.all(['Claim:', 'Record:', 'First:'].map(prefix =>
+    dynamodb.queryItems(USERS_TABLE, 'userId = :uid AND begins_with(sortKey, :prefix)', { ':uid': userId, ':prefix': prefix }),
+  ))).flat() as AthleteRecordOrFirstLinkTableItem[];
+  const ids = { record: new Set<string>(), first: new Set<string>() };
+  for (const item of items) ids[item.kind].add(item.entryId);
+  const [records, firsts] = await Promise.all([
+    getEntriesBatch('record', [...ids.record]),
+    getEntriesBatch('first', [...ids.first]),
+  ]);
+  return [...records, ...firsts].sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
+/** Batch-loads entry metadata (BatchGet takes at most 100 keys per call). */
+export async function getEntriesBatch(kind: EntryKind, entryIds: string[]): Promise<WorldRecordOrFirstTableItem[]> {
+  const results: WorldRecordOrFirstTableItem[] = [];
+  for (let i = 0; i < entryIds.length; i += 100) {
+    const keys = entryIds.slice(i, i + 100).map(id => ({ pk: entryPk(kind, id), sortKey: 'Metadata' }));
+    results.push(...((await dynamodb.batchGetItems(RECORDS_TABLE, keys)) as WorldRecordOrFirstTableItem[]));
+  }
+  return results;
+}
+
+/** Deletes items in chunks of 25 (BatchWrite limit). Used by the local import reset. */
+export async function deleteItems(tableName: string, keys: Record<string, unknown>[]): Promise<void> {
+  for (let i = 0; i < keys.length; i += 25) {
+    await ddbClient.send(new BatchWriteCommand({
+      RequestItems: {
+        [getTableName(tableName)]: keys.slice(i, i + 25).map(Key => ({ DeleteRequest: { Key } })),
+      },
+    }));
+  }
 }
 
 // ============================================================================
@@ -312,8 +475,9 @@ export interface DisplayAthlete {
 /** One row on /world_records or an athlete profile. */
 export interface WorldRecord {
   entryId: string;
-  title: string;                 // "Men's World Record", "Women's World Record", "Mixed World Record" ("" for history)
-  isCurrent: boolean;
+  title: string;                 // "Men's World Record", "… Former World Record", "… Historical World Record"; "" while Unchallenged
+  standing: RecordStanding;
+  isCurrent: boolean;            // Best on its list in an Active or Unchallenged category
   categoryId: string;
   categoryName: string;
   categoryGroup: string;
@@ -347,7 +511,8 @@ const toDisplayAthletes = (entry: WorldRecordOrFirstTableItem): DisplayAthlete[]
 /** Claims store ISO codes, imported rows country names. */
 const countryName = (country?: string) => (country && getCountryByCode(country)?.name) || country;
 
-const links = (entry: WorldRecordOrFirstTableItem) => entry.evidence.map(e => e.url).filter(Boolean);
+/** Public lists show links only; uploaded files stay in the ISA's evidence folder. */
+const links = (entry: WorldRecordOrFirstTableItem) => entry.evidence.filter(e => e.type === 'link').map(e => e.url).filter(Boolean);
 
 const toWorldRecords = (
   categories: RecordCategoryTableItem[],
@@ -360,12 +525,12 @@ const toWorldRecords = (
     if (inCategory.length === 0) continue;
 
     for (const entry of inCategory) {
-      // Archived categories are history only: their records carry no current title
-      const isCurrent = entry.status === 'published' && category.status !== 'archived';
+      const standing = recordStanding(entry.status === 'historical' ? 'historical' : 'published', category.status);
       rows.push({
         entryId: entry.entryId,
-        title: isCurrent ? recordTitle(entry.gender) : '',
-        isCurrent,
+        title: standingTitle(standing, entry.gender),
+        standing,
+        isCurrent: standing === 'world_record' || standing === 'unchallenged',
         categoryId: category.categoryId,
         categoryName: category.name,
         categoryGroup: category.group,
@@ -428,4 +593,22 @@ export async function getPublicWorldFirsts(): Promise<WorldFirst[]> {
     getEntriesByStatus('first', 'published'),
   ]);
   return toWorldFirsts(categories, published);
+}
+
+/**
+ * One published or historical entry as it appears publicly, with its title,
+ * for certificates (FR-26).
+ */
+export async function getPublicEntry(kind: 'record', entryId: string): Promise<WorldRecord | null>;
+export async function getPublicEntry(kind: 'first', entryId: string): Promise<WorldFirst | null>;
+export async function getPublicEntry(kind: EntryKind, entryId: string): Promise<WorldRecord | WorldFirst | null> {
+  if (kind === 'first') {
+    return (await getPublicWorldFirsts()).find(f => f.entryId === entryId) ?? null;
+  }
+  const entry = await getEntry('record', entryId);
+  if (!entry || !isPublicStatus(entry.status)) return null;
+  const [category, inCategory] = await Promise.all([getRecordCategory(entry.categoryId), getEntriesByCategory('record', entry.categoryId)]);
+  if (!category) return null;
+  const visible = inCategory.filter(e => isPublicStatus(e.status));
+  return toWorldRecords([category], visible).find(row => row.entryId === entryId) ?? null;
 }

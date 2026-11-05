@@ -90,6 +90,7 @@ const trailingColumns = (entry: WorldRecordOrFirstTableItem): Row => ({
   source: entry.source,
   cert_ids: list(entry.athletes.map(a => a.certId)),
   review_comment: entry.reviewComment,
+  rejection_reason: entry.rejectionReason,
   submitted_at: iso(entry.submittedAt),
   decided_at: iso(entry.decidedAt),
   decided_by: entry.decidedBy,
@@ -97,6 +98,9 @@ const trailingColumns = (entry: WorldRecordOrFirstTableItem): Row => ({
   created_at: iso(entry.createdAt),
   updated_at: iso(entry.updatedAt),
 });
+
+const witnessList = (entry: WorldRecordOrFirstTableItem) =>
+  list((entry.witnesses ?? []).map(w => [w.name, w.email, w.phone ?? w.contact].filter(Boolean).join(' / ')));
 
 async function recordRows(): Promise<Row[]> {
   const [entries, categories, publicRecords] = await Promise.all([
@@ -119,7 +123,7 @@ async function recordRows(): Promise<Row[]> {
       value_as_entered: entry.value.original,
       setup: entry.setup,
       further_specs: entry.furtherSpecs,
-      witnesses: list(entry.witnesses.map(w => [w.name, w.email, w.phone ?? w.contact].filter(Boolean).join(' / '))),
+      witnesses: witnessList(entry),
       full_video: !entry.noFullVideoReason,
       no_full_video_reason: entry.noFullVideoReason,
       proposed_category: proposal ? `${proposal.name} (${proposal.unit}, ${proposal.direction} is better): ${proposal.measurement}` : '',
@@ -141,6 +145,7 @@ async function firstRows(): Promise<Row[]> {
     why_first: entry.whyFirst,
     similar_tricks: entry.similarTricks,
     line_details: entry.lineDetails,
+    witnesses: witnessList(entry),
     trick_group_id: entry.trickGroupId,
     ...trailingColumns(entry),
   }));
