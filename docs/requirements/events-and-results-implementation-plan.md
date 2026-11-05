@@ -6,14 +6,17 @@ site working. Sizes are rough estimates: S < 150 lines, M 150–400, L > 400 (L 
 
 ## Core idea for the data
 
-- **No competition object.** A competition = the contests of one discipline in an event (`disciplines` on the
-  event metadata already lists them).
+- **No separate competition record.** A competition = the contests of an event that share a `competitionId`
+  (new field on `ContestRecord`). Usually one competition per discipline, but an event can hold two of the same
+  discipline at different levels. Existing contests without the field are grouped by discipline.
 - **Per contest:** new `resultsStatus` on `ContestRecord`: `none | pending | changes_requested | approved |
   rejected`, plus `reviewComment`. Existing contests without the field count as `approved` when their event is
   published, so no data migration is needed.
-- **Per competition:** new `competitions` map on `EventMetadataRecord`, keyed by discipline: `proposedLevel`,
+- **Per competition, stored on its contests:** new fields on each `Contest:*` record: `proposedLevel`,
   `membershipStatus`, `licenceStatus` (`pending | confirmed | refused`, World Cup/Championship only),
-  `confirmedLevel`, `finalLevel`, `feeReceived`, deadline confirmations.
+  `confirmedLevel`, `finalLevel`, `feeReceived`, deadline confirmations. They are the same on every contest of a
+  competition; one helper (`updateCompetition(eventId, competitionId, fields)`) writes them to all its contests.
+  Nothing is added to the event metadata.
 - **Participation records** (what rankings and profiles read) are only written for `approved` contests of
   published events. That one rule fixes the ranking bug, and every later PR just changes when a contest becomes
   `approved`.
@@ -41,7 +44,7 @@ site working. Sizes are rough estimates: S < 150 lines, M 150–400, L > 400 (L 
 
 | # | PR | Size | Content |
 |---|---|---|---|
-| 10 | Level per competition | M | Rename Grand Slam → National (display only, keep stored value). Form forces one level per discipline; membership status field with "?" tooltip; fee shown from the v6.0 table (new `utils/levels.ts` with points, minimums, deadlines, fees; unit tests). Writes `competitions` map. |
+| 10 | Level per competition | M | Rename Grand Slam → National (display only, keep stored value). Contests are grouped into competitions (default one per discipline, "add another competition" for a second one at another level); the form forces one level per competition; membership status field with "?" tooltip; fee shown from the v6.0 table (new `utils/levels.ts` with points, minimums, deadlines, fees; unit tests). Writes `competitionId` and the competition fields on each contest. |
 | 11 | Event Approval: levels and licences | M | Admin confirms level and membership per competition; World Cup/Championship "licence pending" → confirm or counter-propose a level; reject with reason. Level icon on public pages only shown when confirmed (licence) or final (others). |
 | 12 | Final level and fee at results approval | M | On the first approved contest of a competition: admin sets final level (recalculates points of all its contests); field size vs minimum shown; "licensing fee received" checkbox when fee > €0. |
 
@@ -54,7 +57,7 @@ mailer into its own small PR first.
 |---|---|---|---|
 | 13 | Event emails | M | Templates and sending for: event submitted/approved/rejected/admin edit or removal, licence decision, results approved/changes requested/rejected/admin edit, results published (all athletes), new profile created. `SPORT_ADMIN_EMAIL` = sport@. |
 | 14 | Deadline calculation and display | M | Pure function: deadlines per competition from earliest contest start / latest contest end (unit tests). Shown on "My events" and Event Approval. Immediate sport@ email on late registration or a date change past a deadline. |
-| 15 | Deadline confirmation links | S | Signed one-click "confirm done" links per deadline; confirmation stored in the `competitions` map. |
+| 15 | Deadline confirmation links | S | Signed one-click "confirm done" links per deadline; confirmation stored on the competition's contests. |
 | 16 | Daily scheduler | M | Protected `/api/cron/daily` route (secret header) that sends due reminders (1 week before, deadline day, 48 h → sport@), results-due, World Cup/Championship fee (30 days before) and overdue event approvals. AWS EventBridge schedule documented in the PR (setup needs someone with AWS access). |
 | 17 | Event cancellation | S | Organizer "Cancel event": off the calendar, record kept, sport@ notified, no further deadline emails. |
 

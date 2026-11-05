@@ -1,6 +1,6 @@
 # Requirements: Events and Results Workflow
 
-Status: **v1**, 2026-10-28. Agreed with Jonas in the project thread and a voice session; no implementation yet.
+Status: **v1.1**, 2026-11-05 (v1.1: several competitions per discipline allowed). Agreed with Jonas in the project thread and a voice session.
 Rules source: ISA *Contest Size Overview* v6.0 (2026), page 1. Where this document and the sheet differ, this
 document wins for SportHub; signed World Cup agreements may set stricter deadlines (not enforced by SportHub).
 
@@ -15,14 +15,15 @@ beginning (levels, licences, deadlines) and at the end (results review per conte
 few changes to existing behaviour.
 
 **Out of scope (v1):** co-organizers and ownership transfer; fee payment handling (only a checkbox); enforcing
-documentation rules; a separate competition object in the data; migration of existing events (left to developers).
+documentation rules; a separate competition record in the data (contests carry a competition id); migration of existing events (left to developers).
 
 ## 2. Terminology and levels
 
 - **Event**: the umbrella term. **Festival**: an event with no competitions.
-- **Competition**: all contests of one discipline in an event (each of the 14 disciplines in the code is its own
-  competition, so freestyle highline and speed highline are separate). At most one competition per discipline per
-  event. One event can hold competitions at different levels.
+- **Competition**: a group of contests of one discipline in an event, at one level (each of the 14 disciplines in
+  the code is its own discipline, so freestyle highline and speed highline are separate competitions). Usually one
+  competition per discipline, but an event can hold two of the same discipline at different levels (e.g. a World
+  Cup and an Open). One event can hold competitions at different levels.
 - **Contest**: a division of a competition (men, women, mixed, youth, senior…).
 - **Level**: set per competition; all its contests share it. The code's "Grand Slam" is shown as **National**.
 
@@ -75,7 +76,7 @@ flowchart TD
 - The organizer uses today's submission form: name, city, country, dates, website, links, logo, and contests. A
   future event needs no judges or results.
 - **Per competition** the organizer proposes a level and declares member, partner or third party (a "?" tooltip
-  explains each). The form forces all contests of a discipline to the same level and shows the fee from §2.
+  explains each). The form groups contests into competitions (one per discipline by default, a second one can be added), forces all contests of a competition to the same level, and shows the fee from §2.
 - Submitting sends the event to **Event Approval** as today. Nothing is public before approval. The admin should
   answer within 1 week (Challenge, Open) or 2 weeks (other levels); after that sport@ gets a reminder.
 - The admin **approves** (event goes on the calendar) or **rejects** with a reason (back to draft, organizer
