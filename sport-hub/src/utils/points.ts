@@ -38,3 +38,20 @@ export const calculatePointsForRank = (rank: number, contestSize: ContestType,nu
   // Atleast 1 point awarded for participation
   return Math.max(1, Math.round(pointsForLowerRank));
 };
+/**
+ * Recalculate every ranked result's points from rank, contest size and field size.
+ * Tied ranks get equal points. Results without a rank, or contests without a
+ * size, are returned unchanged.
+ */
+export const withCalculatedPoints = <T extends { rank?: number; isaPoints?: number }>(
+  results: T[],
+  contestSize: ContestType | undefined,
+): T[] => {
+  if (!contestSize || !FIXED_POINTS_BY_CONTEST_SIZE[contestSize]) return results;
+  return results.map((result) => {
+    const rank = Number(result.rank);
+    return rank > 0
+      ? { ...result, isaPoints: calculatePointsForRank(rank, contestSize, results.length) }
+      : result;
+  });
+};
