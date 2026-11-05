@@ -5,7 +5,7 @@ import {
   getAthleteProfilesBatch,
 } from './user-query-service';
 import { dynamodb, USERS_TABLE } from './dynamodb';
-import { getEvent, getContest, scanAllEventItems } from './event-contest-service';
+import { getEvent, getContest, scanAllEventItems, isPublishedEventStatus } from './event-contest-service';
 import { MAP_CONTEST_TYPE_ENUM_TO_NAME, MAP_CONTEST_GENDER_ENUM_TO_NAME } from '@utils/consts';
 
 // Reverse lookups: name → numeric enum (for mapping new-format string values back to ContestData numbers)
@@ -425,8 +425,12 @@ export async function getContestsData(): Promise<ContestData[]> {
     // the embedded snapshot in Metadata written by updateEventStatus).
     const eventIdsWithContestRecords = new Set(contestRecords.map(c => c.eventId));
 
-    // Map all Contest:* records — handles both old-format (athletes) and new-format (results)
-    const contests: ContestData[] = contestRecords.map(contest => {
+    // Map all Contest:* records of published events — handles both old-format
+    // (athletes) and new-format (results). Draft, pending or cancelled events stay hidden.
+    const publishedContestRecords = contestRecords.filter(contest =>
+      isPublishedEventStatus(eventRecords.get(contest.eventId)?.status)
+    );
+    const contests: ContestData[] = publishedContestRecords.map(contest => {
       const event = eventRecords.get(contest.eventId);
       const raw = contest as unknown as Record<string, unknown>;
 

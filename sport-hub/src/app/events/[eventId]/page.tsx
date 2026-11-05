@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { EventDetailsCard } from '@ui/EventDetailsCard';
 import { getEvent } from '../submit/actions';
+import { isPublishedEventStatus } from '@lib/event-contest-service';
 import ContestDetails, { ContestTabData } from './components/ContestDetails';
 import { auth } from '@lib/auth';
 import { getFullUserProfile } from '../../dashboard/actions';
@@ -23,6 +24,11 @@ export default async function EventPage({ params, searchParams }: EventPageProps
 
   const { success, event } = await getEvent(decodedEventId);
   if (success && event) {
+    // Unpublished events are visible only to their organizer and admins
+    const isOrganizer = !!session?.user?.id && event.createdBy === session.user.id;
+    if (!isPublishedEventStatus(event.status) && !isAdmin && !isOrganizer) {
+      notFound();
+    }
 
     const organizerId = event.createdBy ? String(event.createdBy) : null;
     const organizerProfile = organizerId ? await getFullUserProfile(organizerId) : null;
