@@ -19,6 +19,9 @@
  *   pnpm records:import:aws:stage:dry-run / :execute   (then :prod:, after checking stage)
  *   ... --file sheet.json   (read {"records": [[...]], "firsts": [[...]]} instead of the Google Sheet)
  *   ... --report report.md  (write the review report to a file)
+ *   ... --new-sheet         (read categories and records from the new World Records sheet, tabs
+ *                            "Categories" and "Data"; firsts still come from the certificates sheet.
+ *                            Spreadsheet id: WORLD_RECORDS_SPREADSHEET_ID, default in records-new-sheet.ts)
  */
 
 import { existsSync, readFileSync, writeFileSync } from 'fs';
@@ -32,6 +35,7 @@ import type {
   RecordEvidence,
 } from '../relational-types';
 import { buildFirstCategoryRecords, buildRecordCategoryRecords } from '../records-categories';
+import { categoryFromSheetRow, categoryNameKey, NEW_WORLD_RECORDS_SPREADSHEET_ID, parseSheetNumber, splitSheetList } from '../records-new-sheet';
 import { deriveGender, isPlaceholderSheetRow, parseRecordValue, parseSheetDate, splitCurrentAndHistory, unitKind, RECORD_GENDERS } from '../records-logic';
 
 // Local runs read the Google credentials from .env.local; AWS runs get everything from .env.stage / .env.production
@@ -45,6 +49,7 @@ const argValue = (flag: string) => {
 const execute = args.includes('--execute');
 const filePath = argValue('--file');
 const reportPath = argValue('--report');
+const newSheet = args.includes('--new-sheet');
 
 if (!execute && !args.includes('--dry-run')) {
   console.error('Pass --dry-run or --execute');
@@ -169,12 +174,23 @@ const toObjects = (values: string[][]): SheetRow[] => {
     .map(row => Object.fromEntries(header.map((h, i) => [h.trim(), (row[i] ?? '').trim()])));
 };
 
-async function loadSheet(): Promise<{ records: SheetRow[]; firsts: SheetRow[] }> {
+interface SheetInput { records: SheetRow[]; firsts: SheetRow[]; categories?: SheetRow[] }
+
+async function loadSheet(): Promise<SheetInput> {
   if (filePath) {
-    const data = JSON.parse(readFileSync(filePath, 'utf8')) as { records: string[][]; firsts: string[][] };
-    return { records: toObjects(data.records), firsts: toObjects(data.firsts) };
+    const data = JSON.parse(readFileSync(filePath, 'utf8')) as { records: string[][]; firsts: string[][]; categories?: string[][] };
+    return { records: toObjects(data.records), firsts: toObjects(data.firsts), categories: data.categories && toObjects(data.categories) };
   }
-  const { getCertificatesSheetValues } = await import('../google-sheets');
+  const { getCertificatesSheetValues, getSpreadsheetValues } = await import('../google-sheets');
+  if (newSheet) {
+    const id = process.env.WORLD_RECORDS_SPREADSHEET_ID || NEW_WORLD_RECORDS_SPREADSHEET_ID;
+    const [records, categories, firsts] = await Promise.all([
+      getSpreadsheetValues(id, 'Data'),
+      getSpreadsheetValues(id, 'Categories'),
+      getCertificatesSheetValues('World Firsts'),
+    ]);
+    return { records: toObjects(records), firsts: toObjects(firsts), categories: toObjects(categories) };
+  }
   const [records, firsts] = await Promise.all([
     getCertificatesSheetValues('World Records'),
     getCertificatesSheetValues('World Firsts'),
@@ -207,8 +223,14 @@ const issue = (
   };
 };
 
+const isUrl = (s: string) => /^https?:\/\//i.test(s);
+
 const evidenceFrom = (row: SheetRow): RecordEvidence[] =>
-  [row['Link 1'], row['Link 2']].filter(Boolean).map(url => ({ type: 'link' as const, url }));
+  [row['Link 1'], row['Link 2']].filter(s => s && isUrl(s)).map(url => ({ type: 'link' as const, url }));
+
+/** Text in a link column that is not a link (e.g. "verification pending") */
+const linkNotes = (row: SheetRow): string | undefined =>
+  [row['Link 1'], row['Link 2']].filter(s => s && !isUrl(s)).join('; ') || undefined;
 
 const athleteFrom = (row: SheetRow, userIdByEmail: Map<string, string>): WorldRecordOrFirstEntryAthlete | undefined => {
   const gender = toGender(row['Category']);
@@ -295,13 +317,23 @@ function transformRecords(
     existing.gender = deriveGender(existing.athletes);
   }
 
+  return finalizeRecords(records, new Map(pending.map(p => [p.entry, p.row])), recordCategories, issues);
+}
+
+/** Flags likely duplicates and marks all but the best value per category and list as historical. */
+function finalizeRecords(
+  records: WorldRecordTableItem[],
+  rowOf: Map<WorldRecordTableItem, SheetRow>,
+  recordCategories: RecordCategoryTableItem[],
+  issues: RecordsImportIssueTableItem[],
+): WorldRecordTableItem[] {
   // Same athlete with the same value twice in a category is most likely one record entered twice
   const seen = new Map<string, WorldRecordTableItem>();
   for (const entry of records) {
     const key = `${entry.categoryId}|${entry.value.amount ?? entry.value.latitude}|${entry.athletes.map(a => a.name.toLowerCase()).sort().join('+')}`;
     const first = seen.get(key);
     if (!first) { seen.set(key, entry); continue; }
-    const row = pending.find(p => p.entry === entry)!.row;
+    const row = rowOf.get(entry)!;
     issues.push(issue('record', row, 'possible_duplicate', `Same athlete and value as ${first.athletes[0].certId} (${first.date || 'no date'} vs ${entry.date || 'no date'})`, entry.entryId));
   }
 
@@ -314,6 +346,96 @@ function transformRecords(
     }
   }
   return records;
+}
+
+/**
+ * New World Records sheet, tab "Data": "Record type" is the category name, "Value" the
+ * value as a plain number, joint performances are one row with comma-separated names and
+ * emails, and "Sex" is Male, Female or Mixed. Rows merged into another have no record
+ * type and name and are skipped.
+ */
+function transformNewSheetRecords(
+  rows: SheetRow[],
+  recordCategories: RecordCategoryTableItem[],
+  userIdByEmail: Map<string, string>,
+  issues: RecordsImportIssueTableItem[],
+  now: number,
+): WorldRecordTableItem[] {
+  const categoryByName = new Map(recordCategories.map(c => [categoryNameKey(c.name), c]));
+  // Gender of each athlete in a mixed joint row, from that athlete's own rows
+  const genderByName = new Map<string, 'MEN' | 'WOMEN'>();
+  for (const row of rows) {
+    const gender = toGender(row['Sex']);
+    if (gender && splitSheetList(row['Name']).length === 1) genderByName.set(norm(row['Name']), gender);
+  }
+
+  const records: WorldRecordTableItem[] = [];
+  const rowOf = new Map<WorldRecordTableItem, SheetRow>();
+  for (const row of rows) {
+    if (isPlaceholderSheetRow(row)) continue;
+    const category = categoryByName.get(categoryNameKey(row['Record type']));
+    if (!category) {
+      issues.push(issue('record', row, 'no_category', `No category named "${row['Record type'] || '(empty)'}" on the Categories tab`));
+      continue;
+    }
+    const names = splitSheetList(row['Name']);
+    const emails = splitSheetList(row['ISA Email']);
+    const rowGender = toGender(row['Sex']);
+    const isMixed = norm(row['Sex']) === 'mixed';
+    if (names.length === 0 || (!rowGender && !isMixed)) {
+      issues.push(issue('record', row, 'invalid_row', names.length === 0 ? 'Name is empty' : `Unknown sex "${row['Sex']}"`));
+      continue;
+    }
+    const athletes: WorldRecordOrFirstEntryAthlete[] = [];
+    for (const [i, name] of names.entries()) {
+      const gender = rowGender ?? genderByName.get(norm(name));
+      if (!gender) break;
+      const email = names.length === emails.length ? emails[i] : names.length === 1 ? emails[0] : undefined;
+      athletes.push({ userId: email ? userIdByEmail.get(norm(email)) : undefined, name, gender, certId: row['Cert ID'] || undefined });
+    }
+    if (athletes.length !== names.length) {
+      issues.push(issue('record', row, 'invalid_row', `Mixed entry: could not tell the gender of every athlete in "${row['Name']}"`));
+      continue;
+    }
+
+    const isCoordinates = unitKind(category.unit) === 'coordinates';
+    const parsed = parseRecordValue(category, row['Specs']);
+    const amount = parseSheetNumber(row['Value']);
+    const value = isCoordinates ? parsed : { amount: amount ?? parsed.amount, original: row['Specs'] || row['Value'] };
+    if (isCoordinates ? value.latitude === undefined : value.amount === undefined) {
+      issues.push(issue('record', row, 'value_unparsed', `Could not read a ${isCoordinates ? 'location' : category.unit} value from "${row['Value'] || row['Specs']}"`));
+      continue;
+    }
+
+    const entryId = `imp-${row['Cert ID']}`;
+    for (const athlete of athletes) {
+      if (!athlete.userId) {
+        const email = names.length === emails.length ? emails[names.indexOf(athlete.name)] : emails[0];
+        issues.push(issue('record', row, 'no_user_match', `No SportHub user for "${athlete.name}"${email ? ` (${email})` : ' (no email in sheet)'}`, entryId));
+      }
+    }
+    const entry: WorldRecordTableItem = {
+      pk: '', sortKey: 'Metadata', statusKey: '', dateSortKey: '',
+      kind: 'record',
+      entryId,
+      status: 'published',
+      categoryId: category.categoryId,
+      categoryName: category.name,
+      gender: deriveGender(athletes),
+      athletes,
+      date: parseSheetDate(row['Date']),
+      value,
+      evidence: evidenceFrom(row),
+      witnesses: [],
+      furtherSpecs: linkNotes(row),
+      source: 'import',
+      createdAt: now,
+      updatedAt: now,
+    };
+    records.push(entry);
+    rowOf.set(entry, row);
+  }
+  return finalizeRecords(records, rowOf, recordCategories, issues);
 }
 
 /**
@@ -391,14 +513,16 @@ function transformFirsts(
 }
 
 function transform(
-  sheet: { records: SheetRow[]; firsts: SheetRow[] },
+  sheet: SheetInput,
   recordCategories: RecordCategoryTableItem[],
   firstCategories: FirstCategoryTableItem[],
   userIdByEmail: Map<string, string>,
 ): ImportResult {
   const now = Date.now();
   const issues: RecordsImportIssueTableItem[] = [];
-  const records = transformRecords(sheet.records, recordCategories, userIdByEmail, issues, now);
+  const records = newSheet
+    ? transformNewSheetRecords(sheet.records, recordCategories, userIdByEmail, issues, now)
+    : transformRecords(sheet.records, recordCategories, userIdByEmail, issues, now);
   const firsts = transformFirsts(sheet.firsts, firstCategories, userIdByEmail, issues, now);
   return { records, firsts, issues };
 }
@@ -407,7 +531,7 @@ function transform(
 // REPORT
 // ============================================================================
 
-function report(result: ImportResult, sheet: { records: SheetRow[]; firsts: SheetRow[] }): string {
+function report(result: ImportResult, sheet: SheetInput, categoryErrors: string[] = []): string {
   const count = <T>(items: T[], pred: (i: T) => boolean) => items.filter(pred).length;
   const lines = [
     '# Records & firsts import report',
@@ -419,6 +543,9 @@ function report(result: ImportResult, sheet: { records: SheetRow[]; firsts: Shee
     `- Review list: ${result.issues.length} items`,
     '',
   ];
+  if (categoryErrors.length > 0) {
+    lines.push(`## Categories tab rows not imported: ${categoryErrors.length}`, '', ...categoryErrors.map(e => `- ${e}`), '');
+  }
   const reasons: RecordsImportIssueTableItem['reason'][] = ['no_category', 'value_unparsed', 'invalid_row', 'possible_duplicate', 'first_link_unclear', 'no_user_match'];
   const titles: Record<RecordsImportIssueTableItem['reason'], string> = {
     no_category: 'No matching category (not imported)',
@@ -448,26 +575,44 @@ async function main() {
   const { getAllUserProfiles } = await import('../user-query-service');
   const service = await import('../records-service');
 
-  // Categories: seed the ones that don't exist yet, keep admin edits to existing ones
+  const sheet = await loadSheet();
+
+  // Categories: seed the ones that don't exist yet, keep admin edits to existing ones.
+  // With --new-sheet the record categories come from the sheet's Categories tab.
+  const categoryErrors: string[] = [];
+  const now = Date.now();
+  let seedRecordCats = buildRecordCategoryRecords(now);
+  if (newSheet) {
+    if (!sheet.categories) throw new Error('--new-sheet needs the Categories tab');
+    seedRecordCats = [];
+    for (const row of sheet.categories) {
+      const category = categoryFromSheetRow(row);
+      if ('error' in category) { categoryErrors.push(category.error); continue; }
+      if (seedRecordCats.some(c => c.categoryId === category.categoryId)) { categoryErrors.push(`"${category.name}": duplicate id ${category.categoryId}`); continue; }
+      seedRecordCats.push({
+        pk: 'RecordCategory', sortKey: `RecordCategory:${category.categoryId}`,
+        ...category, order: seedRecordCats.length, createdAt: now, updatedAt: now,
+      });
+    }
+  }
   const [existingRecordCats, existingFirstCats] = await Promise.all([service.getRecordCategories(), service.getFirstCategories()]);
   const recordCategories = [...existingRecordCats];
   const firstCategories = [...existingFirstCats];
-  const newRecordCats = buildRecordCategoryRecords().filter(c => !existingRecordCats.some(e => e.categoryId === c.categoryId));
-  const newFirstCats = buildFirstCategoryRecords().filter(c => !existingFirstCats.some(e => e.categoryId === c.categoryId));
+  const newRecordCats = seedRecordCats.filter(c => !existingRecordCats.some(e => e.categoryId === c.categoryId));
+  const newFirstCats = buildFirstCategoryRecords(now).filter(c => !existingFirstCats.some(e => e.categoryId === c.categoryId));
   recordCategories.push(...newRecordCats);
   firstCategories.push(...newFirstCats);
 
-  const sheet = await loadSheet();
   const profiles = await getAllUserProfiles();
   const userIdByEmail = new Map(profiles.filter(p => p.email).map(p => [norm(p.email), p.userId]));
 
   const result = transform(sheet, recordCategories, firstCategories, userIdByEmail);
-  const text = report(result, sheet);
+  const text = report(result, sheet, categoryErrors);
   console.log(text);
   if (reportPath) writeFileSync(reportPath, text);
 
   if (!execute) {
-    console.log(`\nDry run: nothing written. ${newRecordCats.length + newFirstCats.length} categories would be seeded.`);
+    console.log(`\nDry run: nothing written. ${newRecordCats.length} record and ${newFirstCats.length} first categories would be added (${existingRecordCats.length + existingFirstCats.length} already exist).`);
     return;
   }
 

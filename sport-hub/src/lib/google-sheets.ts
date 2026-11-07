@@ -168,11 +168,12 @@ export const getWorldRecordsSheet = async (): Promise<WorldRecordRow[]> => {
  * Raw rows of a certificates sheet tab ("World Records" / "World Firsts"),
  * header row first. Used by the one-time import into the records table.
  */
-export const getCertificatesSheetValues = async (sheet: 'World Records' | 'World Firsts'): Promise<string[][]> => {
+export const getCertificatesSheetValues = (sheet: 'World Records' | 'World Firsts'): Promise<string[][]> =>
+  getSpreadsheetValues(SPREADSHEET_ID || "1WO8RDDn6WKTmZQX4YK9xNwWfh0-eciIX0fdSvsgNRsA", sheet);
+
+/** Raw rows of any spreadsheet tab, header row first. */
+export const getSpreadsheetValues = async (spreadsheetId: string, range: string): Promise<string[][]> => {
   const client = sheets({ version: 'v4', auth: getAuthClient() });
-  const response = await client.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
-    range: sheet,
-  });
+  const response = await client.spreadsheets.values.get({ spreadsheetId, range });
   return (response.data.values ?? []) as string[][];
 };
