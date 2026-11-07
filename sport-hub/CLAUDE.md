@@ -31,3 +31,6 @@ Search MemPalace for relevant context before starting work:
 - Table names come from `getTableName()` in `src/lib/dynamodb.ts`: `-dev` suffix if `DEV=true`, else `-prod`. Region is `DB_REGION || AWS_REGION || us-east-2`.
 - In production no AWS keys are written to `.env.production` (see `amplify.yml`), so DynamoDB access uses the Amplify app's IAM role. A new table needs adding to that role's policy (table ARN and `/index/*`).
 - If the AWS console shows no tables or apps, check the region selector first.
+- New tables are not created on deploy; create them by hand (`pnpm db:setup:aws` or the console) in the right region.
+- Prod scripts need `DB_REGION=eu-central-1`. The `*:aws:*` pnpm scripts load env via `env $(grep … | xargs)`, which breaks values with spaces (the Google private key); use `npx tsx --env-file=.env.production <script>` instead.
+- A Next.js "Application error … Digest: N" in prod: search N in the Amplify compute logs (Amplify → SportHub → Hosting → Monitoring → Hosting compute logs, CloudWatch in Ohio).
