@@ -25,13 +25,13 @@ Search MemPalace for relevant context before starting work:
 - After prod data changes: `pnpm revalidate:all`
 
 ## AWS Infrastructure (where things run)
-- **Amplify hosting**: app `SportHub` in **US East (Ohio, us-east-2)**, prod branch `main` serves slacklinesport.org. Env vars, deployments, IAM roles and compute logs are there.
-- **The live site uses the `-dev` tables in Ohio**: Amplify env vars are `DEV=TRUE` and `DB_REGION=us-east-2` (as of 2026-11-07).
-- **DynamoDB Ohio (us-east-2), used by slacklinesport.org**: `sporthub-users-dev`, `sporthub-events-dev`, `sporthub-records-dev`.
-- **DynamoDB Frankfurt (eu-central-1)**: `sporthub-users-prod`, `sporthub-events-prod`, `sporthub-records-prod`. Not used by the live site while `DEV=TRUE`.
+- **Amplify hosting**: app `SportHub` in **US East (Ohio, us-east-2)**; branch `main` serves slacklinesport.org. Env vars, deployments, IAM roles and compute logs are there.
+- **DynamoDB prod (used by `main` / slacklinesport.org)**: **Europe (Frankfurt, eu-central-1)**: `sporthub-users-prod`, `sporthub-events-prod`, `sporthub-records-prod`.
+- **DynamoDB dev**: **US East (Ohio, us-east-2)**: `sporthub-users-dev`, `sporthub-events-dev`, `sporthub-records-dev`.
+- The Amplify env vars `DEV=TRUE` / `DB_REGION=us-east-2` shown for "All branches" are overridden for `main`; check the logs, not that list, to see which table a branch uses.
 - Table names come from `getTableName()` in `src/lib/dynamodb.ts`: `-dev` suffix if `DEV` is `true` (case-insensitive), else `-prod`. Region is `DB_REGION || AWS_REGION || us-east-2`.
-- New tables are not created on deploy; create them by hand (`db-setup.ts` schema, or the console) in the region the site reads.
-- In production no AWS keys are written to `.env.production` (see `amplify.yml`), so DynamoDB access goes through the Amplify app's IAM role.
-- Scripts against live data must use the same `DEV`/`DB_REGION` as Amplify. The `*:aws:*` pnpm scripts load env via `env $(grep … | xargs)`, which breaks values with spaces (the Google private key); use `npx tsx --env-file=<file> <script>` instead.
+- In production no AWS keys are written to `.env.production` (see `amplify.yml`). The app uses the compute role `rankings-dynamodb-role` with policy `rankings-dynamodb-policy` (dev tables by wildcard, prod tables listed one by one). **A new prod table must be added to that policy** (table ARN and `/index/*`), or the app gets `AccessDeniedException`.
+- New tables are not created on deploy; create them by hand (`db-setup.ts` schema, or the console) in the right region.
+- Prod scripts need `DB_REGION=eu-central-1`. The `*:aws:*` pnpm scripts load env via `env $(grep … | xargs)`, which breaks values with spaces (the Google private key); use `npx tsx --env-file=.env.production <script>` instead.
 - A Next.js "Application error … Digest: N" in prod: search N in the Amplify compute logs (Amplify → SportHub → Hosting → Monitoring → Hosting compute logs).
 - If the AWS console shows no tables or apps, check the region selector first.
