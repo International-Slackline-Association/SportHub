@@ -26,6 +26,16 @@ applications:
             - env | grep -e GOOGLE_SERVICE_ACCOUNT_EMAIL >> .env.production
             - env | grep -e GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY >> .env.production
             - env | grep -e ISA_CERTIFICATES_SPREADSHEET_ID >> .env.production
+            - env | grep -e RECORDS_EVIDENCE_FOLDER_ID >> .env.production || true
+            - env | grep -e GOOGLE_DRIVE_IMPERSONATE_USER >> .env.production || true
+            - env | grep -e ^SMTP_HOST= >> .env.production || true
+            - env | grep -e ^SMTP_PORT= >> .env.production || true
+            - env | grep -e ^SMTP_USER= >> .env.production || true
+            - env | grep -e ^SMTP_PASS= >> .env.production || true
+            - env | grep -e ^SMTP_FROM= >> .env.production || true
+            - env | grep -e ^SITE_URL= >> .env.production || true
+            - env | grep -e ^RECORDS_REVIEW_EMAIL= >> .env.production || true
+            - env | grep -e ^RECORDS_COMMUNICATION_EMAIL= >> .env.production || true
             - chmod +x scripts/build_sporthub.sh
             - ./scripts/build_sporthub.sh
       artifacts:

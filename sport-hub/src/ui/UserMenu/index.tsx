@@ -94,6 +94,14 @@ export default function UserMenu() {
             Dashboard
           </a>
 
+          <Link
+            href="/world_records/my-claims"
+            className={styles.userMenuDropdownLink}
+            onClick={() => setIsOpen(false)}
+          >
+            My Claims
+          </Link>
+
           {session.user.role === 'admin' && (
             <a
               href="/admin"

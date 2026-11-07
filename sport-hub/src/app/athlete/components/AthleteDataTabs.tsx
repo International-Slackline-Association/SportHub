@@ -21,9 +21,10 @@ interface AthleteDataTabsProps {
   contests?: AthleteContest[];
   worldRecords?: WorldRecord[];
   worldFirsts?: WorldFirst[];
+  athleteId?: string;
 }
 
-export default function AthleteDataTabs({ contests, worldRecords, worldFirsts }: AthleteDataTabsProps) {
+export default function AthleteDataTabs({ contests, worldRecords, worldFirsts, athleteId }: AthleteDataTabsProps) {
   const [activeTab, setActiveTab] = useState('contests');
 
   return (
@@ -40,10 +41,10 @@ export default function AthleteDataTabs({ contests, worldRecords, worldFirsts }:
         <AthleteContestsTable contests={contests || []} />
       )}
       {activeTab === 'records' && (
-        <AthleteWorldRecordsTable worldRecords={worldRecords || []} />
+        <AthleteWorldRecordsTable worldRecords={worldRecords || []} athleteId={athleteId} />
       )}
       {activeTab === 'firsts' && (
-        <AthleteWorldFirstsTable worldFirsts={worldFirsts || []} />
+        <AthleteWorldFirstsTable worldFirsts={worldFirsts || []} athleteId={athleteId} />
       )}
     </>
   );

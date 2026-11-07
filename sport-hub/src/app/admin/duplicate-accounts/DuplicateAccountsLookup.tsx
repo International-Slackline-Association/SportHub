@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Form, Formik } from 'formik';
-import UserAutocomplete from '../../events/submit/components/contest-inputs/UserAutocomplete';
+import UserAutocomplete from '@ui/UserAutocomplete';
 import { AthleteProfileCard } from '../../athlete/components/AthleteProfileCard';
 import { fetchUserProfileAndRecords, mergeDuplicateAccounts, UserProfileAndRecords } from './actions';
 import Button from '@ui/Button';

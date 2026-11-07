@@ -49,6 +49,16 @@ export default async function AdminPage() {
           </Link>
 
           <Link
+            href="/admin/records-review"
+            className="block p-6 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+          >
+            <h3 className="text-lg font-semibold text-amber-900 mb-2">Records and Firsts</h3>
+            <p className="text-sm text-amber-700">
+              Review claims, manage record categories and resolve the sheet import
+            </p>
+          </Link>
+
+          <Link
             href="/admin/duplicate-accounts"
             className="block p-6 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
           >

@@ -381,6 +381,52 @@ The `gsiSortKey` enables ranking queries sorted by points:
 }
 ```
 
+## Records Table
+
+World records, world firsts, their categories, an audit log per entry and the import review list.
+Types: `lib/relational-types.ts` (records section). Data access: `lib/records-service.ts`.
+
+### Table Configuration
+
+- **Table name**: `sporthub-records` (`local-` prefix locally, `-dev` / `-prod` suffix on AWS)
+- **Partition key**: `pk` (String)
+- **Sort key**: `sortKey` (String)
+- **GSIs**:
+  - `statusKey-index`: `statusKey` = `"{kind}#{status}"` (e.g. `record#published`), sorted by `dateSortKey` = `"{date}#{entryId}"`
+  - `category-index`: `categoryId`, sorted by `dateSortKey`
+
+### Item Types
+
+| pk | sortKey | Item |
+|---|---|---|
+| `RecordCategory` | `RecordCategory:{categoryId}` | Record category: name, description, group (Length / Endurance / Speed / Altitude / Trick / Other), unit, direction (higher / lower is better), status (active / unchallenged / archived), order |
+| `FirstCategory` | `FirstCategory:{categoryId}` | First category (Trickline, Highline Freestyle, ...): name, termination rule, status, order |
+| `Record:{entryId}` | `Metadata` | Record entry: category, value, gender, athletes, date, location, evidence links, status |
+| `First:{entryId}` | `Metadata` | First entry: category, trick name, line details, gender, athletes, date, evidence links, status |
+| `Record:{entryId}` / `First:{entryId}` | `Audit:{iso timestamp}:{suffix}` | Audit log of an entry (imported, edited, status changes) |
+| `ImportIssue` | `ImportIssue:{kind}:{certId}:{reason}` | Sheet row an admin has to look at (no category, unparsed value, no user match, ...) |
+| `RateLimit` | `Submit:{userId}:{yyyy-mm-dd}` | Claim submissions per user and day (caps the emails one account can trigger) |
+
+The athlete profile also gets a pointer item in the users table: `userId` + `sortKey = "Record:{entryId}"` / `"First:{entryId}"`. The claimant gets `sortKey = "Claim:{kind}:{entryId}"`, so My Claims lists claims submitted for others without a scan.
+
+### Design Decisions
+
+- **Categories share one partition** each (`RecordCategory`, `FirstCategory`), so the whole list loads with one query. The lists are small (about 100 record categories).
+- **One entry per performance.** A joint performance (tandem, group rigging) is one entry with several athletes. Co-holders, i.e. athletes reaching the same value separately, are separate entries.
+- **Gender** of an entry is a `ContestGender` (`MEN_ONLY`, `WOMEN_ONLY`, `MIXED`), derived from its athletes; `MIXED` only for joint performances of men and women. Athletes keep `MEN` / `WOMEN`. Titles follow the gender only ("Men's World Record", ...).
+- **Athletes are a snapshot** (name, gender, country, `userId`) taken on import, so a published entry keeps the values that applied at the time.
+- **Values** are stored as a number in the category's unit (`amount`) or as coordinates, plus the original text (`original`, the sheet "Specs").
+- **Current vs history** is a status: per category and gender the best published value is `published`, beaten ones are `historical`. Dates are stored as ISO `yyyy-mm-dd`.
+- **Entry ids come from the sheet Cert IDs**, so re-running the import overwrites entries instead of duplicating them.
+- **Claim lifecycle** is the entry status: draft → pending → changes_requested / published / rejected, and historical for beaten records. A decision lock (`decisionLockAt` / `decisionLockToken`) keeps two reviewers from deciding the same claim at once.
+
+### Access Patterns
+
+- All categories: `Query(pk = "RecordCategory")`
+- Published / historical entries: `Query(statusKey-index, statusKey = "record#published")`
+- Entries of a category: `Query(category-index, categoryId = ...)`
+- Entry with its audit log: `Query(pk = "Record:{entryId}")`
+
 ## Reference Database (isa-users)
 
 ### Table Configuration

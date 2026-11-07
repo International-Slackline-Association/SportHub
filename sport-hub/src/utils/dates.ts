@@ -66,3 +66,9 @@ export const formatDate = (dateStr: string | Date) =>{
     return String(dateStr);
   }
 }
+
+/**
+ * Formats a calendar day stored as ISO yyyy-mm-dd to DD/MM/YYYY. Parsed as local
+ * midnight, so the day doesn't shift with the time zone like `new Date('yyyy-mm-dd')` (UTC) would.
+ */
+export const formatISODay = (isoDay: string) => (isoDay ? formatDate(`${isoDay}T00:00:00`) : '');

@@ -37,6 +37,12 @@ export type Permission =
   // Ranking management
   | 'rankings:edit'
 
+  // World records & firsts. Submitting a claim only needs a signed-in user.
+  // records:review is separate from records:manage so the Sport Commission's
+  // records group can review later without code changes.
+  | 'records:review'
+  | 'records:manage'
+
   // Admin dashboard access
   | 'admin:access';
 
@@ -55,6 +61,8 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'events:delete',
     'users:manage',
     'rankings:edit',
+    'records:review',
+    'records:manage',
     'admin:access',
   ],
 } as const;

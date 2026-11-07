@@ -47,6 +47,7 @@ export default function FormikAutocomplete({
   isError = false,
   isLoading = false,
   label,
+  name,
   options,
   onSelectOption,
   setFieldOnSelect = true,
@@ -56,6 +57,8 @@ export default function FormikAutocomplete({
   ...inputProps
 }: FormikAutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false);
+  // The Formik field; defaults to the id. Pass a name when several forms on a page use the same field
+  const fieldName = name ?? id;
   const containerRef = useRef<HTMLDivElement>(null);
 
   // close dropdown when clicking outside
@@ -83,7 +86,7 @@ export default function FormikAutocomplete({
         }
         required={required}
       >
-        <Field name={id}>
+        <Field name={fieldName}>
           {({ field, meta, form }: FormikFieldProps<unknown>) => {
             const toFormValue = mapOptionToValue || ((opt: Option) => opt.value);
             const toDisplay =
@@ -105,7 +108,7 @@ export default function FormikAutocomplete({
               <div>
                 <input
                   // Keep Formik wiring for name/id, but control value via computed display
-                  name={id}
+                  name={fieldName}
                   {...inputProps}
                   className={`
                     ${styles.input}
@@ -116,8 +119,8 @@ export default function FormikAutocomplete({
                   value={inputText}
                   onChange={(e) => {
                     // Let users type to filter; store the raw text in the field for simple string flows
-                    form.setFieldValue(id, e.target.value);
-                    form.setFieldTouched(id, true, false);
+                    form.setFieldValue(fieldName, e.target.value);
+                    form.setFieldTouched(fieldName, true, false);
                   }}
                   onFocus={() => setIsOpen(true)}
                 />
@@ -136,8 +139,8 @@ export default function FormikAutocomplete({
                                   const option = { label, value };
                                   if (setFieldOnSelect) {
                                     const newValue = toFormValue(option);
-                                    form.setFieldValue(id, newValue, true);
-                                    form.setFieldTouched(id, true, false);
+                                    form.setFieldValue(fieldName, newValue, true);
+                                    form.setFieldTouched(fieldName, true, false);
                                   }
                                   onSelectOption?.(option);
                                   setIsOpen(false);

@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { cn } from '@utils/cn';
 import Button from '@ui/Button';
 import { TrashIcon } from '@ui/Icons';
-import UserAutocomplete from './UserAutocomplete';
+import UserAutocomplete from '@ui/UserAutocomplete';
 import { EventSubmissionFormValues } from '../../types';
 import { FormikNumberField, FormikTextField } from '@ui/Form';
 import PendingUserForm from './PendingUserForm';

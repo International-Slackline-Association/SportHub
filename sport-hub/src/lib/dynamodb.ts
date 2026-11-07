@@ -46,6 +46,7 @@ const ddb = DynamoDBDocumentClient.from(client, {
 // Base table names — single source of truth
 export const USERS_TABLE = 'sporthub-users';
 export const EVENTS_TABLE = 'sporthub-events';
+export const RECORDS_TABLE = 'sporthub-records';
 
 // Table name helpers for different environments
 export const getTableName = (baseName: string) => {

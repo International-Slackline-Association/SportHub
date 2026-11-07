@@ -99,6 +99,39 @@ export const TABLE_SCHEMAS: TableSchema[] = [
         Projection: { ProjectionType: 'ALL' },
       },
     ],
+  },
+  // Records table: world records, world firsts, their categories, audit log and import review items
+  {
+    tableName: 'sporthub-records',
+    keySchema: [
+      { AttributeName: 'pk', KeyType: 'HASH' },       // "Record:{id}" | "First:{id}" | "RecordCategory" | "FirstCategory" | "ImportIssue"
+      { AttributeName: 'sortKey', KeyType: 'RANGE' }, // "Metadata" | "Audit:*" | "RecordCategory:{id}" | ...
+    ],
+    attributeDefinitions: [
+      { AttributeName: 'pk', AttributeType: 'S' },
+      { AttributeName: 'sortKey', AttributeType: 'S' },
+      { AttributeName: 'statusKey', AttributeType: 'S' },    // For statusKey-index: "{kind}#{status}"
+      { AttributeName: 'categoryId', AttributeType: 'S' },   // For category-index
+      { AttributeName: 'dateSortKey', AttributeType: 'S' },  // For sorting: date#entryId
+    ],
+    globalSecondaryIndexes: [
+      {
+        IndexName: 'statusKey-index',
+        KeySchema: [
+          { AttributeName: 'statusKey', KeyType: 'HASH' },
+          { AttributeName: 'dateSortKey', KeyType: 'RANGE' },
+        ],
+        Projection: { ProjectionType: 'ALL' },
+      },
+      {
+        IndexName: 'category-index',
+        KeySchema: [
+          { AttributeName: 'categoryId', KeyType: 'HASH' },
+          { AttributeName: 'dateSortKey', KeyType: 'RANGE' },
+        ],
+        Projection: { ProjectionType: 'ALL' },
+      },
+    ],
   }
 ];
 
