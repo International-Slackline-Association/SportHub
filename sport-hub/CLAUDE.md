@@ -23,3 +23,11 @@ Search MemPalace for relevant context before starting work:
 - All content sections MUST use `className="p-4 sm:p-0"`
 - No table scans in hot paths — use composite keys or GSI lookups
 - After prod data changes: `pnpm revalidate:all`
+
+## AWS Infrastructure (where things run)
+- **Amplify hosting**: app `SportHub` in **US East (Ohio, us-east-2)**, prod branch `main`. Look there for env vars, deployments, IAM roles and compute logs.
+- **DynamoDB prod**: **Europe (Frankfurt, eu-central-1)**: `sporthub-users-prod`, `sporthub-events-prod`, `sporthub-records-prod` (created 2026-11-07).
+- **DynamoDB dev**: **US East (Ohio, us-east-2)**: `sporthub-users-dev`, `sporthub-events-dev` (`sporthub-records-dev` not yet created).
+- Table names come from `getTableName()` in `src/lib/dynamodb.ts`: `-dev` suffix if `DEV=true`, else `-prod`. Region is `DB_REGION || AWS_REGION || us-east-2`.
+- In production no AWS keys are written to `.env.production` (see `amplify.yml`), so DynamoDB access uses the Amplify app's IAM role. A new table needs adding to that role's policy (table ARN and `/index/*`).
+- If the AWS console shows no tables or apps, check the region selector first.
