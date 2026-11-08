@@ -184,7 +184,7 @@ export async function notifyClaimEvent(event: ClaimEvent, entry: WorldRecordOrFi
       case 'rejected':
         mails.push({
           to: recipients,
-          subject: `Not approved: ${title}`,
+          subject: `Rejected: ${title}`,
           text: `The ISA did not approve this claim.\n\nReason: ${context.comment ?? ''}\n\n${details}\n\nYour claims: ${myClaims}`,
         });
         break;
