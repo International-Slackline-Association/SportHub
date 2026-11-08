@@ -11,7 +11,7 @@ import { useFormikContext } from 'formik';
 import { Alert } from '@ui/Alert';
 import { FormikCheckboxField, FormikSelectField, FormikTextAreaField, FormikTextField, countryCodeOptions } from '@ui/Form';
 import { deriveGender, GENDER_TITLE_LABELS, UNIT_SUGGESTIONS, unitKind, valueHint } from '@lib/records-logic';
-import type { RecordCategoryTableItem } from '@lib/relational-types';
+import { RECORD_CATEGORY_GROUPS, type RecordCategoryTableItem } from '@lib/relational-types';
 import { getAthleteGenders, getMarkToBeat } from '../../actions';
 import type { ClaimFormValues } from '../types';
 import type { EnsureClaimSaved } from './EvidenceFields';
@@ -104,6 +104,14 @@ function CategoryFields({ recordCategories }: { recordCategories: RecordCategory
         The ISA checks a new category against the record criteria: measurable, standardisable, breakable, significant and separable from existing categories. It may map your claim to an existing category instead.
       </Alert>
       <FormikTextField id="newCategory.name" name="newCategory.name" label="Category name" required />
+      <FormikSelectField
+        id="newCategory.group"
+        name="newCategory.group"
+        label="Group"
+        options={RECORD_CATEGORY_GROUPS.map(g => ({ value: g, label: g }))}
+        placeholder="Choose a group"
+        required
+      />
       <FormikTextAreaField id="newCategory.measurement" name="newCategory.measurement" label="What is measured and how" required />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="stack gap-1">

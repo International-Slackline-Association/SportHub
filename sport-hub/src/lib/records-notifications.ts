@@ -51,6 +51,7 @@ function fullDetails(entry: WorldRecordOrFirstTableItem): string[] {
       const p = entry.newCategoryProposal;
       lines.push('', 'Proposed new category:');
       add('  Name', p.name);
+      add('  Group', p.group);
       add('  What is measured', p.measurement);
       add('  Unit', `${p.unit}, ${p.direction} is better`);
       add('  Why distinct', p.justification);
