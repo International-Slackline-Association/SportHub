@@ -23,25 +23,18 @@ import {
 } from './cellFormatters';
 import { AdminEditLink } from './AdminEditLink';
 import { RECORD_CATEGORY_GROUPS } from '@lib/relational-types';
+import type { RecordStanding } from '@lib/records-logic';
+import { multiSelectFilterFn } from '@ui/Table/TableFilterFields';
 
 const columnHelper = createColumnHelper<WorldRecord>();
 
-type View = 'current' | 'unchallenged' | 'history';
-
-const VIEW_OPTIONS: { value: View; label: string }[] = [
-  { value: 'current', label: 'Current world records' },
-  { value: 'unchallenged', label: 'Unchallenged categories' },
-  { value: 'history', label: 'All, with former and historical world records' },
+/** Each standing on its own (requirements §4), so any combination can be shown. */
+const STANDING_OPTIONS: { value: RecordStanding; label: string }[] = [
+  { value: 'world_record', label: 'World Record' },
+  { value: 'unchallenged', label: 'Unchallenged' },
+  { value: 'former', label: 'Former World Record' },
+  { value: 'historical', label: 'Historical World Record' },
 ];
-
-/** Current: World Records (active categories). Unchallenged: not World Records yet (§4). History: everything. */
-const inView = (row: WorldRecord, view: View) => {
-  switch (view) {
-    case 'current': return row.isCurrent && row.categoryStatus === 'active';
-    case 'unchallenged': return row.isCurrent && row.categoryStatus === 'unchallenged';
-    case 'history': return true;
-  }
-};
 
 const sharedColumns = [
   columnHelper.accessor('categoryName', {
@@ -75,12 +68,12 @@ const sharedColumns = [
     meta: { filterVariant: 'record-gender' },
     size: 40,
   }),
-  // Filter only (size 0 hides the column): current / unchallenged / history
-  columnHelper.accessor('title', {
+  // Filter only (size 0 hides the column): any combination of standings
+  columnHelper.accessor('standing', {
     header: 'Show',
     enableColumnFilter: true,
-    filterFn: (row, _columnId, view: View) => inView(row.original, view),
-    meta: { filterVariant: 'select', filterOptions: VIEW_OPTIONS },
+    filterFn: multiSelectFilterFn,
+    meta: { filterVariant: 'multi-select', filterOptions: STANDING_OPTIONS },
     size: 0,
   }),
 ] as const;
@@ -174,13 +167,13 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
         data: filteredData,
         initialState: {
           sorting: [{ id: 'date', desc: true }],
-          columnFilters: [{ id: 'title', value: 'current' }],
+          columnFilters: [{ id: 'standing', value: ['world_record'] }],
           columnOrder: isDesktop
             ? ['categoryName', 'value', 'name', 'country', 'gender', 'date', 'links']
             : ['worldRecord', 'categoryName', 'country', 'gender'],
           columnVisibility: {
             worldRecord:  !isDesktop,
-            title:        false,
+            standing:     false,
             date:         !!isDesktop,
             value:        !!isDesktop,
             name:         !!isDesktop,
