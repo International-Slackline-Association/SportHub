@@ -110,7 +110,7 @@ export default async function ReviewClaimPage({ params }: Props) {
               </>
             )}
             <Row label="Witnesses">
-              {entry.witnesses?.length ? entry.witnesses.map((w, i) => <span key={i} className="block">{[w.name, w.email, w.phone, w.contact, w.role].filter(Boolean).join(' · ')}</span>) : undefined}
+              {entry.witnesses?.length ? entry.witnesses.map((w, i) => <span key={i} className="block">{[w.name, w.email, w.phone, w.contact, w.role].filter(Boolean).join(' · ')}</span>) : <span className="text-gray-500">None named</span>}
             </Row>
             <Row label="Evidence folder">
               {folderUrl ? <a href={folderUrl} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">Open in Google Drive</a> : undefined}

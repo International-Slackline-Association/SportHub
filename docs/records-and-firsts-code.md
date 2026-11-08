@@ -9,7 +9,7 @@ How the World Records & World Firsts workflow is built, for reviewers. Requireme
 | Layer | File | What it does |
 |---|---|---|
 | Rules (pure) | `lib/records-logic.ts` | Lists (men/women/mixed), value parsing and formatting, comparison, co-holders, titles. No I/O; unit tested. |
-| Texts | `lib/records-rules.ts` | Framework criteria, rejection reasons, ethics statement, witness minimum, records team address. |
+| Texts | `lib/records-rules.ts` | Framework criteria, rejection reasons, ethics statement, witness rules, records team address. |
 | Data access | `lib/records-service.ts` | DynamoDB reads/writes for categories, entries, audit log, import items, profile pointers; public display rows with titles. |
 | Claim helpers | `lib/records-claims.ts` | Form → entry fields, submit validation, athlete snapshot, creating new athletes. Shared by both action files. |
 | Claimant actions | `app/world_records/actions.ts` | Save draft, submit, withdraw, delete draft, "My claims". Signed-in user; only the claimant can change a claim. |
