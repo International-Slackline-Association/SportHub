@@ -18,27 +18,44 @@ export interface EntryRow {
   gender: ContestGender;
   claimant: string;
   newCategory: boolean;       // Record claim proposing a new category
+  voided: boolean;            // Rejected after being published (can be restored)
 }
+
+const KIND_LABELS = { record: 'Record', first: 'First' } as const;
+
+/** Status shown in the table: voided entries are stored as rejected but listed on their own. */
+type DisplayStatus = ClaimStatus | 'voided';
+const displayStatus = (r: EntryRow): DisplayStatus => (r.voided ? 'voided' : r.status);
+const DISPLAY_STATUS_LABELS: Record<DisplayStatus, string> = { ...CLAIM_STATUS_LABELS, voided: 'Voided' };
+const STATUS_ORDER: DisplayStatus[] = ['draft', 'pending', 'changes_requested', 'published', 'historical', 'rejected', 'voided'];
 
 type Props = {
   rows: EntryRow[];
   showStatus?: boolean;
+  /** Record/First column and filter, for lists that mix both kinds. */
+  showKind?: boolean;
   /** Search box and status filter, for the full lists. */
   filterable?: boolean;
   emptyText: string;
 };
 
-export default function EntryTable({ rows, showStatus = false, filterable = false, emptyText }: Props) {
+export default function EntryTable({ rows, showStatus = false, showKind = false, filterable = false, emptyText }: Props) {
   const router = useRouter();
   const [query, setQuery] = useState('');
-  const [status, setStatus] = useState<ClaimStatus | 'all'>('all');
-  const statuses = useMemo(() => [...new Set(rows.map(r => r.status))], [rows]);
+  const [status, setStatus] = useState<DisplayStatus | 'all'>('all');
+  const [kind, setKind] = useState<EntryRow['kind'] | 'all'>('all');
+  const statuses = useMemo(() => {
+    const present = new Set(rows.map(displayStatus));
+    return STATUS_ORDER.filter(s => present.has(s));
+  }, [rows]);
 
-  const shown = rows.filter(r =>
-    (status === 'all' || r.status === status) &&
+  const ofKind = rows.filter(r => kind === 'all' || r.kind === kind);
+  const shown = ofKind.filter(r =>
+    (status === 'all' || displayStatus(r) === status) &&
     (!query || `${r.category} ${r.claim} ${r.athletes} ${r.claimant}`.toLowerCase().includes(query.toLowerCase())));
 
-  const isFirst = rows[0]?.kind === 'first';
+  const isFirst = !showKind && rows[0]?.kind === 'first';
+  const claimHeading = showKind ? 'Record / Trick' : isFirst ? 'Trick' : 'Record';
   return (
     <div className="stack gap-3">
       {filterable && (
@@ -49,9 +66,16 @@ export default function EntryTable({ rows, showStatus = false, filterable = fals
             value={query}
             onChange={e => setQuery(e.target.value)}
           />
-          <select className="border border-gray-300 rounded px-2 py-1.5 text-sm" value={status} onChange={e => setStatus(e.target.value as ClaimStatus | 'all')}>
-            <option value="all">All statuses ({rows.length})</option>
-            {statuses.map(s => <option key={s} value={s}>{CLAIM_STATUS_LABELS[s]} ({rows.filter(r => r.status === s).length})</option>)}
+          {showKind && (
+            <select className="border border-gray-300 rounded px-2 py-1.5 text-sm" value={kind} onChange={e => setKind(e.target.value as EntryRow['kind'] | 'all')}>
+              <option value="all">Records and firsts ({rows.length})</option>
+              <option value="record">Records ({rows.filter(r => r.kind === 'record').length})</option>
+              <option value="first">Firsts ({rows.filter(r => r.kind === 'first').length})</option>
+            </select>
+          )}
+          <select className="border border-gray-300 rounded px-2 py-1.5 text-sm" value={status} onChange={e => setStatus(e.target.value as DisplayStatus | 'all')}>
+            <option value="all">All statuses ({ofKind.length})</option>
+            {statuses.map(s => <option key={s} value={s}>{DISPLAY_STATUS_LABELS[s]} ({ofKind.filter(r => displayStatus(r) === s).length})</option>)}
           </select>
         </div>
       )}
@@ -60,9 +84,10 @@ export default function EntryTable({ rows, showStatus = false, filterable = fals
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left border-b border-gray-200">
+                {showKind && <th className="py-2 pr-3">Kind</th>}
                 <th className="py-2 pr-3">Submitted</th>
                 <th className="py-2 pr-3">Category</th>
-                <th className="py-2 pr-3">{isFirst ? 'Trick' : 'Record'}</th>
+                <th className="py-2 pr-3">{claimHeading}</th>
                 <th className="py-2 pr-3">Date</th>
                 <th className="py-2 pr-3">Athletes</th>
                 <th className="py-2 pr-3">Gender</th>
@@ -75,12 +100,13 @@ export default function EntryTable({ rows, showStatus = false, filterable = fals
                 const href = `/admin/records-review/${r.kind}/${encodeURIComponent(r.entryId)}`;
                 return (
                   <tr
-                    key={r.entryId}
+                    key={`${r.kind}:${r.entryId}`}
                     className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
                     onClick={() => router.push(href)}
                     onKeyDown={e => { if (e.key === 'Enter') router.push(href); }}
                     tabIndex={0}
                   >
+                    {showKind && <td className="py-2 pr-3">{KIND_LABELS[r.kind]}</td>}
                     <td className="py-2 pr-3 whitespace-nowrap">{r.submitted || '—'}</td>
                     <td className="py-2 pr-3">{r.category}</td>
                     <td className="py-2 pr-3 font-medium text-blue-700">{r.claim || '—'}</td>
@@ -88,7 +114,7 @@ export default function EntryTable({ rows, showStatus = false, filterable = fals
                     <td className="py-2 pr-3">{r.athletes}</td>
                     <td className="py-2 pr-3">{GENDER_LABELS[r.gender]}</td>
                     <td className="py-2 pr-3">{r.claimant || '—'}</td>
-                    {showStatus && <td className="py-2 pr-3"><ClaimStatusBadge status={r.status} /></td>}
+                    {showStatus && <td className="py-2 pr-3"><ClaimStatusBadge status={r.status} />{r.voided && <span className="ml-1 text-xs text-red-700">(voided)</span>}</td>}
                   </tr>
                 );
               })}
