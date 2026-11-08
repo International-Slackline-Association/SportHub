@@ -8,12 +8,10 @@ import tableStyles from '@ui/Table/styles.module.css';
 import { BREAKPOINT_LG, useClientMediaQuery } from '@utils/useClientMediaQuery';
 import Link from 'next/link';
 import {
-  athleteCountriesAccessor,
+  athleteNameListAccessor,
   athleteNamesAccessor,
   athleteNamesCellFormatter,
   AthleteNames,
-  countriesCellFormatter,
-  countriesSortingFn,
   dateSortingFn,
   genderCellFormatter,
   genderFilterFn,
@@ -57,15 +55,14 @@ const sharedColumns = [
     meta: { filterVariant: 'autocomplete' },
     size: 160,
   }),
-  columnHelper.accessor(athleteCountriesAccessor, {
-    id: 'country',
-    header: 'Country',
+  // Filter only (size 0 hides the column): pick one athlete, rows with them pass
+  columnHelper.accessor(athleteNameListAccessor, {
+    id: 'athlete',
+    header: 'Athlete',
     enableColumnFilter: true,
-    cell: countriesCellFormatter,
-    sortingFn: countriesSortingFn,
     filterFn: 'arrIncludes',
-    meta: { filterVariant: 'select', filterIncludeAll: true },
-    size: 80,
+    meta: { filterVariant: 'autocomplete' },
+    size: 0,
   }),
   columnHelper.accessor('gender', {
     header: 'Gender',
@@ -176,15 +173,15 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
           sorting: [{ id: 'date', desc: true }],
           columnFilters: [{ id: 'title', value: 'current' }],
           columnOrder: isDesktop
-            ? ['categoryName', 'value', 'name', 'country', 'gender', 'date', 'links']
-            : ['worldRecord', 'categoryName', 'country', 'gender'],
+            ? ['categoryName', 'value', 'name', 'gender', 'date', 'links']
+            : ['worldRecord', 'categoryName', 'gender'],
           columnVisibility: {
             worldRecord:  !isDesktop,
             title:        false,
             date:         !!isDesktop,
             value:        !!isDesktop,
             name:         !!isDesktop,
-            country:      !!isDesktop,
+            athlete:      false,
             categoryName: !!isDesktop,
             gender:       !!isDesktop,
             links:        !!isDesktop,

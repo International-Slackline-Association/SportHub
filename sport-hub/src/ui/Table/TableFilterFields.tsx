@@ -246,8 +246,13 @@ const AutocompleteTableFilter = <TData,>({ column, rows }: TableFilterProps<TDat
   const columnName = column.columnDef.header?.toString();
   const explicitOptions = column.columnDef.meta?.filterOptions;
 
+  // A column whose value is a list (e.g. several athletes) offers each item on its own
+  const values = rows.flatMap(row => {
+    const value = row.getValue(column.id);
+    return Array.isArray(value) ? value.map(String) : [String(value)];
+  });
   const options: { value: string; label: string }[] = explicitOptions
-    ?? [...new Set(rows.map(row => String(row.getValue(column.id))))].sort().map(v => ({ value: v, label: v }));
+    ?? [...new Set(values.filter(Boolean))].sort().map(v => ({ value: v, label: v }));
 
   return (
     <div className={styles.columnFilter} key={`column-filter-${id}`}>
