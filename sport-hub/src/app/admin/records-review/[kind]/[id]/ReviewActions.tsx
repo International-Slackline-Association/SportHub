@@ -8,6 +8,7 @@ import type { ClaimStatus, RecordCategoryTableItem, FirstCategoryTableItem } fro
 import { OTHER_REJECTION_REASON, REJECTION_REASONS, type RejectionCase } from '@lib/records-rules';
 import {
   approveClaim,
+  deleteEntryPermanently,
   rejectClaim,
   requestClaimChanges,
   setPublicEntryStatus,
@@ -44,6 +45,8 @@ export default function ReviewActions(props: Props) {
   const [trickLink, setTrickLink] = useState('');
   const [rejectReason, setRejectReason] = useState('');
   const [otherReason, setOtherReason] = useState('');
+  const [deleteReason, setDeleteReason] = useState('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
   const run = async (action: () => Promise<{ success: boolean; error?: string; notice?: string }>) => {
     setBusy(true);
@@ -59,6 +62,20 @@ export default function ReviewActions(props: Props) {
     router.refresh();
   };
 
+  const deleteEntry = async () => {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    const result = await deleteEntryPermanently(kind, entryId, deleteReason, deleteConfirmation);
+    if (!result.success) {
+      setBusy(false);
+      setError(result.error ?? 'Something went wrong');
+      return;
+    }
+    router.push('/admin/records-review');
+  };
+
+  const canDelete = !!deleteReason.trim() && deleteConfirmation.trim() === 'DELETE';
   const recordOptions = props.recordCategories.filter(c => c.status !== 'archived');
   const canReject = rejectReason === OTHER_REJECTION_REASON ? !!otherReason.trim() : !!rejectReason;
 
@@ -179,6 +196,34 @@ export default function ReviewActions(props: Props) {
         <p className="text-sm text-gray-600">Edit every detail: category, value or trick, athletes, date, location, witnesses and links.</p>
         <div>
           <Button as="link" href={`/admin/records-review/${kind}/${encodeURIComponent(entryId)}/edit`} variant="secondary">Modify</Button>
+        </div>
+      </div>
+
+      <div className="stack gap-2 border border-red-200 rounded-lg p-4">
+        <h3 className="font-semibold">Delete permanently</h3>
+        <p className="text-sm text-gray-600">
+          Only for entries that should never have been in the database, such as a test entry, a duplicate or an import
+          mistake. This can&apos;t be undone: the entry, its history and the links on athlete profiles are removed. To take
+          a real record or first off the public lists, use Void instead.
+        </p>
+        <textarea
+          className={inputClass}
+          rows={2}
+          placeholder="Reason (required, kept in the category history)"
+          value={deleteReason}
+          onChange={e => setDeleteReason(e.target.value)}
+        />
+        <input
+          className={inputClass}
+          placeholder="Type DELETE to confirm"
+          aria-label="Type DELETE to confirm"
+          value={deleteConfirmation}
+          onChange={e => setDeleteConfirmation(e.target.value)}
+        />
+        <div>
+          <Button variant="destructive" disabled={busy || !canDelete} onClick={deleteEntry}>
+            Delete permanently
+          </Button>
         </div>
       </div>
     </div>

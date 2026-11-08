@@ -3,7 +3,8 @@
 /**
  * Reviewer and admin server actions for record and first claims (requirements
  * §7.5): the review queue and detail, approve / request changes / reject, void
- * and restore published entries, and "Modify" (edit every field of an entry).
+ * and restore published entries, "Modify" (edit every field of an entry) and
+ * permanent delete for entries that should never have been in the database.
  *
  * Reviewing needs records:review; changing a published entry needs records:manage.
  * Admins hold both.
@@ -15,12 +16,15 @@ import { actorOf, requireRecordsPermission } from '@lib/records-auth';
 import {
   addAuditEntry,
   addCategoryAudit,
+  deleteEntry,
+  deleteItems,
   getAuditLog,
   getEntriesByCategory,
   getEntriesByStatus,
   getEntry,
   getFirstCategories,
   getFirstCategory,
+  getImportIssues,
   getRecordCategories,
   getRecordCategory,
   lockForDecision,
@@ -31,6 +35,7 @@ import {
   syncAthleteLinks,
   type EntryKind,
 } from '@lib/records-service';
+import { RECORDS_TABLE } from '@lib/dynamodb';
 import {
   challengesCategory,
   comparableValue,
@@ -422,6 +427,52 @@ export async function setPublicEntryStatus(kind: EntryKind, entryId: string, toS
   } catch (error) {
     console.error('Error changing entry status:', error);
     return { success: false, error: errorMessage(error, 'Failed to change the status') };
+  }
+}
+
+/** What the admin types to confirm a permanent delete. */
+const DELETE_CONFIRMATION = 'DELETE';
+
+/**
+ * Admin: permanently delete a record or first that should never have been in
+ * the database (a test entry, a duplicate, an import mistake). Unlike void it
+ * can't be undone: the entry, its audit log, the athletes' and claimant's
+ * pointers and its import review items are removed. The deletion is logged in
+ * the category's history so there is still a trace of who removed what and why.
+ * Evidence files on Google Drive are left as they are.
+ */
+export async function deleteEntryPermanently(kind: EntryKind, entryId: string, reason: string, confirmation: string): Promise<ActionResult> {
+  try {
+    const session = await requireRecordsPermission('records:manage');
+    const text = reason.trim();
+    if (!text) return { success: false, error: 'A reason is required' };
+    if (confirmation.trim() !== DELETE_CONFIRMATION) return { success: false, error: `Type ${DELETE_CONFIRMATION} to confirm` };
+    const entry = await getEntry(kind, entryId);
+    if (!entry) return { success: false, error: 'Entry not found' };
+
+    await deleteEntry(entry);
+    const certIds = entry.athletes.map(a => a.certId).filter(Boolean);
+    const isIssueOfEntry = (issue: { kind: EntryKind; entryId?: string; certId: string }) =>
+      issue.kind === kind && (issue.entryId === entryId || certIds.includes(issue.certId));
+    const importIssues = (await getImportIssues()).filter(isIssueOfEntry);
+    await deleteItems(RECORDS_TABLE, importIssues.map(({ pk, sortKey }) => ({ pk, sortKey })));
+
+    const category = kind === 'record' ? await getRecordCategory(entry.categoryId) : await getFirstCategory(entry.categoryId);
+    if (category) {
+      const athletes = entry.athletes.map(a => a.name).join(', ');
+      await addCategoryAudit(category, {
+        action: 'entry_deleted',
+        fromStatus: entry.status,
+        comment: `${kind} ${entryId} (${athletes}, ${entry.date}) deleted permanently: ${text}`,
+        ...actorOf(session),
+      });
+      if (category.pk === 'RecordCategory') await recomputeRecordStatuses(category);
+    }
+    revalidateRecordPages();
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting entry:', error);
+    return { success: false, error: errorMessage(error, 'Failed to delete the entry') };
   }
 }
 
