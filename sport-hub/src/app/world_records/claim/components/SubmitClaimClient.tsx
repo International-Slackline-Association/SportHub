@@ -157,7 +157,10 @@ export default function SubmitClaimClient({ recordCategories, firstCategories, i
       )}
       {message && <section className="p-4 sm:p-0"><Alert variant="success">{message}</Alert></section>}
 
-      <PathChoice path={path} onChange={changePath} locked={!!initialValues.entryId} />
+      {/* A claim sent back for changes keeps what it claims, so the choice is not shown */}
+      {status !== 'changes_requested' && (
+        <PathChoice path={path} onChange={changePath} locked={!!initialValues.entryId} />
+      )}
 
       {kind === 'first' ? (
         <WorldFirstClaimForm
