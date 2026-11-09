@@ -49,11 +49,11 @@ export default async function Page() {
       description="View the latest events and competitions across all disciplines."
       heroImage={randomS3Image('EVENTS')}
     >
-      <FeaturedEventSection events={featuredEvents} />
-
       <section className="p-4 sm:p-0">
         <ContestsTable initialData={contestsData} />
       </section>
+
+      <FeaturedEventSection events={featuredEvents} />
     </PageLayout>
   );
 }
