@@ -1,14 +1,12 @@
 /**
- * Reading the cleaned-up "World Records" Google Sheet (tabs "Categories" and "Data"),
+ * Reading the "World Records" Google Sheet (tabs "Categories" and "Data", id WORLD_RECORDS_SPREADSHEET_ID),
  * which replaces the "World Records" tab of the ISA certificates sheet as import source.
- * Pure helpers, used by src/lib/migrations/import-records-from-sheet.ts --new-sheet.
+ * Pure helpers, used by src/lib/migrations/import-records-from-sheet.ts --use-records-sheet.
  */
 
 import type { RecordCategoryGroup, RecordCategoryStatus, RecordCategoryTableItem } from './relational-types';
 import { RECORD_CATEGORY_GROUPS } from './relational-types';
 import { slugify } from './records-logic';
-
-export const NEW_WORLD_RECORDS_SPREADSHEET_ID = '17kh4lhnP4bCMJOCp8A6zRCq-rxIkCD2hxiYdry38C5s';
 
 type SheetRow = Record<string, string>;
 

@@ -5,7 +5,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { categoryFromSheetRow, parseSheetNumber, splitSheetList } from '../records-new-sheet';
+import { categoryFromSheetRow, parseSheetNumber, splitSheetList } from '../records-sheet';
 
 const row = (over: Record<string, string> = {}) => ({
   'Record Name': 'Longest Polyamide highline sent',

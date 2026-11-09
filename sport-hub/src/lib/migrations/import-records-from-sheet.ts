@@ -19,9 +19,10 @@
  *   pnpm records:import:aws:stage:dry-run / :execute   (then :prod:, after checking stage)
  *   ... --file sheet.json   (read {"records": [[...]], "firsts": [[...]]} instead of the Google Sheet)
  *   ... --report report.md  (write the review report to a file)
- *   ... --new-sheet         (read categories and records from the new World Records sheet, tabs
+ *   ... --use-records-sheet (read categories and records from the World Records sheet, tabs
  *                            "Categories" and "Data"; firsts still come from the certificates sheet.
- *                            Spreadsheet id: WORLD_RECORDS_SPREADSHEET_ID, default in records-new-sheet.ts)
+ *                            Spreadsheet ids: WORLD_RECORDS_SPREADSHEET_ID / CERTIFICATES_AND_FIRSTS_SPREADSHEET_ID
+ *                            in src/utils/spreadsheets.ts)
  */
 
 import { existsSync, readFileSync, writeFileSync } from 'fs';
@@ -35,7 +36,7 @@ import type {
   RecordEvidence,
 } from '../relational-types';
 import { buildFirstCategoryRecords, buildRecordCategoryRecords } from '../records-categories';
-import { categoryFromSheetRow, categoryNameKey, NEW_WORLD_RECORDS_SPREADSHEET_ID, parseSheetNumber, splitSheetList } from '../records-new-sheet';
+import { categoryFromSheetRow, categoryNameKey, parseSheetNumber, splitSheetList } from '../records-sheet';
 import { deriveGender, isPlaceholderSheetRow, parseRecordValue, parseSheetDate, splitCurrentAndHistory, unitKind, RECORD_GENDERS } from '../records-logic';
 
 // Local runs read the Google credentials from .env.local; AWS runs get everything from .env.stage / .env.production
@@ -49,7 +50,7 @@ const argValue = (flag: string) => {
 const execute = args.includes('--execute');
 const filePath = argValue('--file');
 const reportPath = argValue('--report');
-const newSheet = args.includes('--new-sheet');
+const useRecordsSheet = args.includes('--use-records-sheet');
 
 if (!execute && !args.includes('--dry-run')) {
   console.error('Pass --dry-run or --execute');
@@ -181,12 +182,11 @@ async function loadSheet(): Promise<SheetInput> {
     const data = JSON.parse(readFileSync(filePath, 'utf8')) as { records: string[][]; firsts: string[][]; categories?: string[][] };
     return { records: toObjects(data.records), firsts: toObjects(data.firsts), categories: data.categories && toObjects(data.categories) };
   }
-  const { getCertificatesSheetValues, getSpreadsheetValues } = await import('../google-sheets');
-  if (newSheet) {
-    const id = process.env.WORLD_RECORDS_SPREADSHEET_ID || NEW_WORLD_RECORDS_SPREADSHEET_ID;
+  const { getCertificatesSheetValues, getRecordsSheetValues } = await import('../google-sheets');
+  if (useRecordsSheet) {
     const [records, categories, firsts] = await Promise.all([
-      getSpreadsheetValues(id, 'Data'),
-      getSpreadsheetValues(id, 'Categories'),
+      getRecordsSheetValues('Data'),
+      getRecordsSheetValues('Categories'),
       getCertificatesSheetValues('World Firsts'),
     ]);
     return { records: toObjects(records), firsts: toObjects(firsts), categories: toObjects(categories) };
@@ -520,7 +520,7 @@ function transform(
 ): ImportResult {
   const now = Date.now();
   const issues: RecordsImportIssueTableItem[] = [];
-  const records = newSheet
+  const records = useRecordsSheet
     ? transformNewSheetRecords(sheet.records, recordCategories, userIdByEmail, issues, now)
     : transformRecords(sheet.records, recordCategories, userIdByEmail, issues, now);
   const firsts = transformFirsts(sheet.firsts, firstCategories, userIdByEmail, issues, now);
@@ -578,12 +578,12 @@ async function main() {
   const sheet = await loadSheet();
 
   // Categories: seed the ones that don't exist yet, keep admin edits to existing ones.
-  // With --new-sheet the record categories come from the sheet's Categories tab.
+  // With --use-records-sheet the record categories come from the sheet's Categories tab.
   const categoryErrors: string[] = [];
   const now = Date.now();
   let seedRecordCats = buildRecordCategoryRecords(now);
-  if (newSheet) {
-    if (!sheet.categories) throw new Error('--new-sheet needs the Categories tab');
+  if (useRecordsSheet) {
+    if (!sheet.categories) throw new Error('--use-records-sheet needs the Categories tab');
     seedRecordCats = [];
     for (const row of sheet.categories) {
       const category = categoryFromSheetRow(row);
