@@ -7,6 +7,7 @@ import styles from "./styles.module.css"
 import Button from "@ui/Button"
 import Image from "next/image"
 import { ChevronIcon } from "@ui/Icons/ChevronIcon"
+import { roleHasPermission } from "src/types/rbac"
 
 export default function UserMenu() {
   const { data: session, status } = useSession()
@@ -102,7 +103,7 @@ export default function UserMenu() {
             My Claims
           </Link>
 
-          {session.user.role === 'admin' && (
+          {roleHasPermission(session.user.role, 'admin:access') && (
             <a
               href="/admin"
               className={styles.userMenuDropdownLink}
@@ -112,7 +113,7 @@ export default function UserMenu() {
             </a>
           )}
 
-          {(session.user.role === 'admin' || session.user.userSubTypes?.includes('organizer')) && (
+          {(roleHasPermission(session.user.role, 'events:create') || session.user.userSubTypes?.includes('organizer')) && (
             <Link
               href="/events/my-events"
               className={styles.userMenuDropdownLink}

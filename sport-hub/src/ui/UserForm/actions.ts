@@ -4,7 +4,7 @@ import { auth } from '@lib/auth';
 import { revalidatePath } from 'next/cache';
 import { invalidateUsersCache } from '@lib/data-services';
 import { UserFormValues } from './types';
-import type { Role, UserSubType } from 'src/types/rbac';
+import { isRole, type Role, type UserSubType } from 'src/types/rbac';
 import { getUser, deleteUser as deleteUserRecord, updateUserRoleAndSubTypes as updateRoleService, saveUserProfile, generateUniqueAthleteSlug } from '@lib/user-service';
 import type { UserProfileRecord } from '@lib/relational-types';
 
@@ -84,6 +84,10 @@ export async function updateUserRoleAndSubTypes(
 
   if (process.env.NODE_ENV === 'production' && session.user.role !== 'admin') {
     return { success: false, error: 'Admin access required' };
+  }
+
+  if (!isRole(role)) {
+    return { success: false, error: 'Invalid role' };
   }
 
   try {

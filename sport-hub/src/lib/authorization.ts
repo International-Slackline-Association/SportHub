@@ -7,6 +7,7 @@
 
 import { auth } from './auth';
 import type { Role, Permission, UserSubType, AuthorizationResult } from '../types/rbac';
+import { roleHasPermission } from '../types/rbac';
 import { redirect } from 'next/navigation';
 
 /**
@@ -70,9 +71,7 @@ export async function hasAnyRole(roles: Role[]): Promise<boolean> {
  */
 export async function hasPermission(permission: Permission): Promise<boolean> {
   const session = await auth();
-  if (!session?.user?.permissions) return false;
-
-  return session.user.permissions.includes(permission);
+  return roleHasPermission(session?.user?.role, permission);
 }
 
 /**
@@ -83,9 +82,7 @@ export async function hasPermission(permission: Permission): Promise<boolean> {
  */
 export async function hasAllPermissions(permissions: Permission[]): Promise<boolean> {
   const session = await auth();
-  if (!session?.user?.permissions) return false;
-
-  return permissions.every(p => session.user.permissions!.includes(p));
+  return permissions.every(p => roleHasPermission(session?.user?.role, p));
 }
 
 /**
@@ -115,18 +112,48 @@ export async function requireRole(
 }
 
 /**
- * Require admin role - redirect if not admin
+ * Require a permission - redirect if the user's role does not grant it.
+ * General admins always pass.
+ */
+export async function requirePermission(
+  permission: Permission,
+  redirectUrl: string = '/unauthorized'
+): Promise<void> {
+  const session = await auth();
+
+  if (!session) {
+    redirect('/auth/signin?error=SessionRequired');
+  }
+
+  if (!roleHasPermission(session.user.role, permission)) {
+    redirect(`${redirectUrl}?required=${permission}`);
+  }
+}
+
+/** Event Manager or General admin (events, competitions, results). */
+export async function requireEventManager(): Promise<void> {
+  await requirePermission('events:edit');
+}
+
+/** Record Manager or General admin (records, firsts, categories). */
+export async function requireRecordManager(): Promise<void> {
+  await requirePermission('records:manage');
+}
+
+/**
+ * Require General admin role - redirect if not admin
  *
- * Shorthand for requireRole('admin')
+ * Shorthand for requireRole('admin'). Use requireEventManager /
+ * requireRecordManager for pages the narrower roles may open.
  */
 export async function requireAdmin(): Promise<void> {
   await requireRole('admin');
 }
 
 /**
- * Require admin role OR organizer sub-type - redirect if neither
+ * Require an event role (Event Manager / General admin) OR organizer sub-type - redirect if neither
  *
- * Used for event submission, which is accessible to both admins and organizers.
+ * Used for event submission, which is accessible to event admins and organizers.
  */
 export async function requireEventSubmitter(): Promise<void> {
   const session = await auth();
@@ -136,7 +163,7 @@ export async function requireEventSubmitter(): Promise<void> {
   }
 
   if (
-    session.user.role === 'admin' ||
+    roleHasPermission(session.user.role, 'events:create') ||
     (session.user.userSubTypes as UserSubType[] | undefined)?.includes('organizer')
   ) {
     return;

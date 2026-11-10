@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { requireAdmin, requireEventSubmitter } from '@lib/authorization';
+import { requireEventManager, requireEventSubmitter } from '@lib/authorization';
 import { auth } from '@lib/auth';
 import { EventSubmissionFormValues, ContestFormValues, PendingUserData } from './types';
 import { createUser } from '@ui/UserForm/actions';
@@ -22,10 +22,11 @@ import {
 } from '@lib/event-contest-service';
 import { EventMetadataRecord, ContestRecord } from '@lib/relational-types';
 import { EventStatus } from '../my-events/page';
+import { roleHasPermission } from 'src/types/rbac';
 
 /**
  * Save event to DynamoDB
- * PROTECTED: Requires admin role or organizer sub-type
+ * PROTECTED: Requires Event Manager or General admin role or organizer sub-type
  */
 
 // Returns true if the given date string (YYYY-MM-DD) is strictly in the past
@@ -106,7 +107,7 @@ export async function saveEvent(values: EventSubmissionFormValues) {
  * requires admin approval before it takes effect, unless the actor is an
  * admin (who bypasses staging entirely, same as elsewhere in this app).
  *
- * PROTECTED: Requires admin role or organizer sub-type; must be event creator (unless admin)
+ * PROTECTED: Requires Event Manager or General admin role or organizer sub-type; must be event creator (unless admin)
  */
 export async function updateEventScores(
   eventId: string,
@@ -116,7 +117,7 @@ export async function updateEventScores(
 
   try {
     const session = await auth();
-    const isAdmin = session?.user?.role === 'admin';
+    const isAdmin = roleHasPermission(session?.user?.role, 'events:edit');
     const { success, event } = await getAssembledEvent(eventId);
     
     if (!success || !event) {
@@ -215,7 +216,7 @@ export async function updateEventScores(
 
 /**
  * Update an existing event (preserves eventId, sortKey, createdBy, createdAt, status)
- * PROTECTED: Requires admin role or organizer sub-type; must be event creator (unless admin)
+ * PROTECTED: Requires Event Manager or General admin role or organizer sub-type; must be event creator (unless admin)
  */
 export async function updateEvent(eventId: string, values: EventSubmissionFormValues) {
   await requireEventSubmitter();
@@ -228,7 +229,7 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
 
     if (!existing.success || !existing.event) {
       // No Metadata record (old-format event) — only admins may migrate it to new format
-      if (session?.user?.role !== 'admin') {
+      if (!roleHasPermission(session?.user?.role, 'events:edit')) {
         return { success: false, error: 'Event not found' };
       }
       existingEvent = {
@@ -243,7 +244,7 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
       isMigration = true;
     } else {
       existingEvent = existing.event;
-      if (session?.user?.role !== 'admin' && existingEvent.createdBy !== session?.user?.id) {
+      if (!roleHasPermission(session?.user?.role, 'events:edit') && existingEvent.createdBy !== session?.user?.id) {
         return { success: false, error: 'You do not have permission to edit this event' };
       }
     }
@@ -345,12 +346,12 @@ export async function getAllEvents() {
 
 /**
  * Delete event by ID
- * PROTECTED: Requires admin role
+ * PROTECTED: Requires Event Manager or General admin role
  */
 export async function deleteEvent(eventId: string) {
   try {
     // Require admin authentication
-    await requireAdmin();
+    await requireEventManager();
 
     await deleteEventFromService(eventId);
 
@@ -380,12 +381,12 @@ export async function deleteEvent(eventId: string) {
 
 /**
  * Update event status (draft, published, cancelled)
- * PROTECTED: Requires admin role
+ * PROTECTED: Requires Event Manager or General admin role
  */
 export async function updateEventStatus(eventId: string, status: 'draft' | 'published' | 'cancelled') {
   try {
     // Require admin authentication
-    await requireAdmin();
+    await requireEventManager();
 
     // Get current user for audit trail
     const session = await auth();
@@ -437,7 +438,7 @@ export async function updateEventStatus(eventId: string, status: 'draft' | 'publ
 
 /**
  * Get events submitted by the current user
- * PROTECTED: Requires admin role or organizer sub-type
+ * PROTECTED: Requires Event Manager or General admin role or organizer sub-type
  */
 export async function getMyEvents() {
   await requireEventSubmitter();
@@ -507,10 +508,10 @@ export async function getPublishedEventsByOrganizer(organizerId: string): Promis
 
 /**
  * Get all events with pending status (awaiting admin approval)
- * PROTECTED: Requires admin role
+ * PROTECTED: Requires Event Manager or General admin role
  */
 export async function getPendingEvents() {
-  await requireAdmin();
+  await requireEventManager();
 
   try {
     const result = await getAllEvents();
@@ -536,7 +537,7 @@ export async function getPendingEvents() {
 
 /**
  * Submit an event for admin approval (draft/pending → pending)
- * PROTECTED: Requires admin role or organizer sub-type; must be event creator (unless admin)
+ * PROTECTED: Requires Event Manager or General admin role or organizer sub-type; must be event creator (unless admin)
  */
 export async function submitEventForApproval(eventId: string) {
   await requireEventSubmitter();
@@ -550,7 +551,7 @@ export async function submitEventForApproval(eventId: string) {
     }
 
     // Non-admins can only submit their own events
-    if (session?.user?.role !== 'admin' && event.createdBy !== session?.user?.id) {
+    if (!roleHasPermission(session?.user?.role, 'events:edit') && event.createdBy !== session?.user?.id) {
       return { success: false, error: 'You do not have permission to submit this event' };
     }
 
@@ -582,7 +583,7 @@ export async function submitEventForApproval(eventId: string) {
 
 /**
  * Withdraw a pending event back to draft
- * PROTECTED: Requires admin role or organizer sub-type; must be event creator (unless admin)
+ * PROTECTED: Requires Event Manager or General admin role or organizer sub-type; must be event creator (unless admin)
  */
 export async function withdrawEventFromApproval(eventId: string) {
   await requireEventSubmitter();
@@ -595,7 +596,7 @@ export async function withdrawEventFromApproval(eventId: string) {
       return { success: false, error: 'Event not found' };
     }
 
-    if (session?.user?.role !== 'admin' && event.createdBy !== session?.user?.id) {
+    if (!roleHasPermission(session?.user?.role, 'events:edit') && event.createdBy !== session?.user?.id) {
       return { success: false, error: 'You do not have permission to withdraw this event' };
     }
 
@@ -619,7 +620,7 @@ export async function withdrawEventFromApproval(eventId: string) {
 
 /**
  * Create a pending user from event data and link them to their contest entry.
- * PROTECTED: Requires admin role.
+ * PROTECTED: Requires Event Manager or General admin role.
  * Called from the admin event-approval page for each unregistered judge/athlete.
  */
 export async function createPendingUserFromEvent(
@@ -628,7 +629,7 @@ export async function createPendingUserFromEvent(
   entryType: 'judge' | 'athlete',
   entryIdx: number,
 ): Promise<void> {
-  await requireAdmin();
+  await requireEventManager();
 
   try {
     const { success, event } = await getAssembledEvent(eventId);

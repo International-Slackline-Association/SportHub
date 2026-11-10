@@ -15,6 +15,7 @@ import {
 } from '@utils/consts';
 import EditEventClient from './EditEventClient';
 import { EventMetadataRecord } from '@lib/relational-types';
+import { roleHasPermission } from 'src/types/rbac';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,7 +54,7 @@ export default async function EditEventPage({ params }: Props) {
   const { eventId: rawEventId } = await params;
   const eventId = decodeURIComponent(rawEventId);
   const session = await auth();
-  const isAdmin = session?.user?.role === 'admin';
+  const isAdmin = roleHasPermission(session?.user?.role, 'events:edit');
 
   const result = await getEvent(eventId);
 

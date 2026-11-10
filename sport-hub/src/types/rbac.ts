@@ -8,9 +8,31 @@
 /**
  * Primary roles for access control
  * - user: Default role for all users, can view content and edit own profile
- * - admin: Full access to all features including event creation and user management
+ * - event_manager: Event Manager. Creates, approves and edits events, competitions and results
+ * - record_manager: Record Manager. Reviews claims and manages records, firsts and categories
+ * - admin: General admin. Full access, incl. user management and role assignment.
+ *   Stored as 'admin' so existing admins keep full access without a data migration.
  */
-export type Role = 'user' | 'admin';
+export type Role = 'user' | 'event_manager' | 'record_manager' | 'admin';
+
+/** Every role, in the order shown when assigning roles. */
+export const ROLES: Role[] = ['user', 'event_manager', 'record_manager', 'admin'];
+
+export const ROLE_LABELS: Record<Role, string> = {
+  user: 'User',
+  event_manager: 'Event Manager',
+  record_manager: 'Record Manager',
+  admin: 'General Admin',
+};
+
+export const ROLE_DESCRIPTIONS: Record<Role, string> = {
+  user: 'Standard access',
+  event_manager: 'Events, competitions and results',
+  record_manager: 'Records, firsts and categories',
+  admin: 'Full access incl. users and roles',
+};
+
+export const isRole = (value: unknown): value is Role => ROLES.includes(value as Role);
 
 /**
  * User sub-types for additional classification (future use)
@@ -55,6 +77,18 @@ export type Permission =
  */
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   user: [],  // No special permissions - public access + own profile only
+  event_manager: [
+    'events:create',
+    'events:edit',
+    'events:delete',
+    'rankings:edit',
+    'admin:access',
+  ],
+  record_manager: [
+    'records:review',
+    'records:manage',
+    'admin:access',
+  ],
   admin: [
     'events:create',
     'events:edit',
@@ -66,6 +100,16 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'admin:access',
   ],
 } as const;
+
+/**
+ * Whether a role grants a permission. Derived from the role (not from the
+ * permissions copied into the session token) so it works the same on server,
+ * client and in middleware. General admins always pass.
+ */
+export function roleHasPermission(role: Role | string | undefined | null, permission: Permission): boolean {
+  if (role === 'admin') return true;
+  return isRole(role) && ROLE_PERMISSIONS[role].includes(permission);
+}
 
 /**
  * Authorization result with detailed information

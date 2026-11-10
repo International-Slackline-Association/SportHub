@@ -10,7 +10,7 @@ import { UserFormValues, UserData } from '@ui/UserForm/types';
 import { CreateUserForm } from '.';
 import { updateUserRoleAndSubTypes } from './actions';
 import { useQueryClient } from '@tanstack/react-query';
-import type { Role, UserSubType } from 'src/types/rbac';
+import { ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS, type Role, type UserSubType } from 'src/types/rbac';
 
 const ALL_SUB_TYPES: UserSubType[] = ['athlete', 'judge', 'organizer'];
 
@@ -138,31 +138,24 @@ const UserManagementModal = ({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Role (Authorization)
                 </label>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRole('user')}
-                    className={`flex-1 px-4 py-2 rounded-lg border-2 transition-colors ${
-                      selectedRole === 'user'
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="font-medium">User</div>
-                    <div className="text-xs text-gray-500">Standard access</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRole('admin')}
-                    className={`flex-1 px-4 py-2 rounded-lg border-2 transition-colors ${
-                      selectedRole === 'admin'
-                        ? 'border-purple-500 bg-purple-50 text-purple-700'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="font-medium">Admin</div>
-                    <div className="text-xs text-gray-500">Full access</div>
-                  </button>
+                <div className="grid grid-cols-2 gap-3">
+                  {ROLES.map(role => (
+                    <button
+                      key={role}
+                      type="button"
+                      onClick={() => setSelectedRole(role)}
+                      className={`px-4 py-2 rounded-lg border-2 text-left transition-colors ${
+                        selectedRole === role
+                          ? role === 'user'
+                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'border-purple-500 bg-purple-50 text-purple-700'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="font-medium">{ROLE_LABELS[role]}</div>
+                      <div className="text-xs text-gray-500">{ROLE_DESCRIPTIONS[role]}</div>
+                    </button>
+                  ))}
                 </div>
               </div>
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@lib/auth';
 import { updateUserRoleAndSubTypes } from '@lib/user-service';
-import type { Role, UserSubType } from 'src/types/rbac';
+import { isRole, type Role, type UserSubType } from 'src/types/rbac';
 
 export async function PUT(
   request: Request,
@@ -34,7 +34,7 @@ export async function PUT(
     };
 
     // Validate role
-    if (!['user', 'admin'].includes(role)) {
+    if (!isRole(role)) {
       return NextResponse.json(
         { error: 'Invalid role' },
         { status: 400 }

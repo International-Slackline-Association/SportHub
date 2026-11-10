@@ -4,6 +4,7 @@ import { useState } from 'react';
 import ProfileEditForm from './ProfileEditForm';
 import { getCountryByName } from '@utils/countries';
 import { CircleFlag } from 'react-circle-flags';
+import { ROLE_LABELS, type Role } from 'src/types/rbac';
 
 interface ProfileSectionProps {
   userId: string;
@@ -119,12 +120,12 @@ export default function ProfileSection({
             <dd className="mt-1">
               <span
                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  role === 'admin'
+                  role !== 'user'
                     ? 'bg-purple-100 text-purple-800'
                     : 'bg-gray-100 text-gray-800'
                 }`}
               >
-                {role}
+                {ROLE_LABELS[role as Role] ?? role}
               </span>
             </dd>
           </div>

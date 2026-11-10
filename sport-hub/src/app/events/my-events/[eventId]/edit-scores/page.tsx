@@ -5,6 +5,7 @@ import { requireEventSubmitter } from '@lib/authorization';
 import { auth } from '@lib/auth';
 import { EventSubmissionFormValues } from '../../../submit/types';
 import EditScoresClient from './EditScoresClient';
+import { roleHasPermission } from 'src/types/rbac';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +22,7 @@ export default async function EditScoresPage({ params }: Props) {
   }
 
   const session = await auth();
-  if (session?.user?.role !== 'admin' && event.createdBy !== session?.user?.id) {
+  if (!roleHasPermission(session?.user?.role, 'events:edit') && event.createdBy !== session?.user?.id) {
     redirect('/events/my-events');
   }
 

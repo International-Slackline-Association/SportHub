@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import AdminNav from '../records-review/components/AdminNav';
 import PageLayout from '@ui/PageLayout';
-import { requireAdmin } from '@lib/authorization';
+import { requireRecordManager } from '@lib/authorization';
 import { getFirstCategories, getRecordCategories } from '@lib/records-service';
 import CategoriesEditor from './CategoriesEditor';
 
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RecordCategoriesPage() {
-  await requireAdmin();
+  await requireRecordManager();
   const [recordCategories, firstCategories] = await Promise.all([getRecordCategories(), getFirstCategories()]);
   recordCategories.sort((a, b) => a.order - b.order);
   firstCategories.sort((a, b) => a.order - b.order);

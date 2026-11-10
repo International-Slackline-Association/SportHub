@@ -5,7 +5,7 @@ import Button from '@ui/Button';
 import { notFound } from 'next/navigation';
 import PageLayout from '@ui/PageLayout';
 import { Alert } from '@ui/Alert';
-import { requireAdmin } from '@lib/authorization';
+import { requireRecordManager } from '@lib/authorization';
 import { entryHasCertificate, formatRecordValue, GENDER_LABELS, GENDER_TITLE_LABELS, RECORD_GENDERS } from '@lib/records-logic';
 import { FIRST_CRITERIA, formatFileSize, isNewCategoryClaim, RECORD_CRITERIA, rejectionCaseOf } from '@lib/records-rules';
 import { evidenceFolderUrl } from '@lib/records-evidence';
@@ -35,7 +35,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 export default async function ReviewClaimPage({ params }: Props) {
-  await requireAdmin();
+  await requireRecordManager();
   const { kind, id } = await params;
   if (kind !== 'record' && kind !== 'first') notFound();
   const context = await getReviewContext(kind, id);
