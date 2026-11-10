@@ -203,13 +203,14 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
     if (submit) {
       // Athletes see a claim from submission on; athletes removed on resubmission lose it
       await syncAthleteLinks(kind, entryId, existing?.athletes ?? [], athletes);
+      const isRevision = existing?.status === 'changes_requested';
       await addAuditEntry(kind, entryId, {
-        action: existing?.status === 'changes_requested' ? 'resubmitted' : 'submitted',
+        action: isRevision ? 'resubmitted' : 'submitted',
         fromStatus: existing?.status ?? 'draft',
         toStatus: 'pending',
         ...actor,
       });
-      await notifyClaimEvent('submitted', entry);
+      await notifyClaimEvent('submitted', entry, { revision: isRevision });
     } else if (!existing) {
       await addAuditEntry(kind, entryId, { action: 'created', toStatus: 'draft', ...actor });
     }

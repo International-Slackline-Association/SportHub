@@ -22,6 +22,7 @@ export interface ClaimEventContext {
   supersedes?: WorldRecordTableItem[];   // Records this approval made historical
   categoryStatus?: 'active' | 'unchallenged' | 'archived';
   activated?: boolean;                    // The approval challenged an Unchallenged category, now Active
+  revision?: boolean;                     // Resubmitted after the ISA requested changes
 }
 
 const reviewTeam = () => process.env.RECORDS_REVIEW_EMAIL || RECORDS_TEAM_EMAIL;
@@ -146,8 +147,8 @@ export async function notifyClaimEvent(event: ClaimEvent, entry: WorldRecordOrFi
         });
         mails.push({
           to: await reviewerEmails(),
-          subject: `New claim to review: ${title}`,
-          text: `${entry.claimantName ?? 'Someone'} submitted a claim.\n\n${evidenceFolderLine(entry)}\n\n${all}\n\nReview it: ${siteUrl(`/admin/records-review/${entry.kind}/${entry.entryId}`)}`,
+          subject: `${context.revision ? 'Revised' : 'New'} claim to review: ${title}`,
+          text: `${entry.claimantName ?? 'Someone'} ${context.revision ? 'revised and resubmitted a claim after changes were requested' : 'submitted a claim'}.\n\n${evidenceFolderLine(entry)}\n\n${all}\n\nReview it: ${siteUrl(`/admin/records-review/${entry.kind}/${entry.entryId}`)}`,
         });
         break;
       }
