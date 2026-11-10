@@ -1,6 +1,6 @@
 /**
  * Emails for record and first claims (requirements §7.7): the athletes and the
- * claimant on every status change, the records team on submission and the
+ * claimant on every status change, every Record Manager on submission and the
  * communication team on approval.
  */
 
@@ -8,6 +8,7 @@ import { formatISODay } from '@utils/dates';
 import { getRecordCategory } from './records-service';
 import { formatRecordValue, GENDER_TITLE_LABELS } from './records-logic';
 import { getUser } from './user-service';
+import { getEmailsByRole } from './user-query-service';
 import { sendMail, siteUrl } from './mailer';
 import { formatFileSize, RECORDS_TEAM_EMAIL } from './records-rules';
 import { evidenceFolderUrl } from './records-evidence';
@@ -24,6 +25,14 @@ export interface ClaimEventContext {
 }
 
 const reviewTeam = () => process.env.RECORDS_REVIEW_EMAIL || RECORDS_TEAM_EMAIL;
+/** Every Record Manager reviews new claims; the records team address is the fallback when nobody has the role. */
+async function reviewerEmails(): Promise<string[]> {
+  const managers = await getEmailsByRole(['record_manager']).catch(error => {
+    console.error('[records] Could not look up Record Managers:', error);
+    return [];
+  });
+  return managers.length > 0 ? managers : [reviewTeam()];
+}
 const communicationTeam = () => process.env.RECORDS_COMMUNICATION_EMAIL || 'communication@slacklineinternational.org';
 
 async function athleteEmails(entry: WorldRecordOrFirstTableItem): Promise<string[]> {
@@ -136,7 +145,7 @@ export async function notifyClaimEvent(event: ClaimEvent, entry: WorldRecordOrFi
           text: `${entry.claimantName ?? 'An athlete'} submitted this claim to the ISA and named you as a witness. The ISA may contact you to confirm what you saw. If something below is not correct, please write to ${reviewTeam()}.\n\n${all}`,
         });
         mails.push({
-          to: [reviewTeam()],
+          to: await reviewerEmails(),
           subject: `New claim to review: ${title}`,
           text: `${entry.claimantName ?? 'Someone'} submitted a claim.\n\n${evidenceFolderLine(entry)}\n\n${all}\n\nReview it: ${siteUrl(`/admin/records-review/${entry.kind}/${entry.entryId}`)}`,
         });

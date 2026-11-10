@@ -72,3 +72,4 @@ instead of scanning.
 
 Email settings: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `RECORDS_REVIEW_EMAIL`,
 `RECORDS_COMMUNICATION_EMAIL`, `SITE_URL`. Without `SMTP_HOST`, or with `DYNAMODB_LOCAL=true`, emails are logged only.
+New-claim emails go to every user with the Record Manager role; `RECORDS_REVIEW_EMAIL` (default records@) is only used when nobody has that role.
