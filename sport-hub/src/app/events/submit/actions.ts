@@ -23,6 +23,7 @@ import {
 import { EventMetadataRecord, ContestRecord } from '@lib/relational-types';
 import { EventStatus } from '../my-events/page';
 import { roleHasPermission } from 'src/types/rbac';
+import { notifyEventManagers } from '@lib/events-notifications';
 
 /**
  * Save event to DynamoDB
@@ -64,10 +65,15 @@ export async function saveEvent(values: EventSubmissionFormValues) {
 
     // Save event metadata used by event profile. 
     // Does not embed contest results; those are saved separately below
-    const { eventId } = await createEventFromForm(event, contests);
+    const { eventId, status, createdByName } = await createEventFromForm(event, contests);
     
     // Save contest results including the per-athlete Participation:* records
     await Promise.all(contests.map((c, idx) => createContestFromForm(eventId, c, idx)));
+
+    // Organizer submissions start as pending: tell the Event Managers
+    if (status === 'pending') {
+      await notifyEventManagers('new', { eventId, eventName: event.eventName, startDate: event.startDate, byName: createdByName });
+    }
     
     console.log(`Event ${eventId} saved successfully`);
 
@@ -201,6 +207,10 @@ export async function updateEventScores(
     revalidatePath('/events/my-events');
     revalidatePath('/rankings');
 
+    if (stagedCount > 0) {
+      await notifyEventManagers('results', { eventId, eventName: event.eventName, startDate: event.startDate, byName: session?.user?.name ?? undefined, contestCount: stagedCount });
+    }
+
     const message = stagedCount === 0
       ? 'Judges and scores saved.'
       : appliedCount === 0
@@ -281,6 +291,12 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
     invalidateContestsCache();
     revalidatePath('/events');
     revalidatePath('/events/my-events');
+
+    // An organizer changed an event that is waiting for approval
+    const isPendingRevisionByOrganizer = existingEvent.status === 'pending' && !roleHasPermission(session?.user?.role, 'events:edit');
+    if (isPendingRevisionByOrganizer) {
+      await notifyEventManagers('revised', { eventId, eventName: updatedEvent.eventName, startDate: updatedEvent.startDate, byName: session?.user?.name ?? undefined });
+    }
 
     return { success: true, message: 'Event updated successfully' };
   } catch (error) {
@@ -573,6 +589,12 @@ export async function submitEventForApproval(eventId: string) {
 
     revalidatePath('/events/my-events');
     revalidatePath('/admin/event-approval');
+
+    // Submitted before (then withdrawn or sent back to draft) means this is a revision
+    const wasSubmittedBefore = !!(event as { submittedForApprovalAt?: number }).submittedForApprovalAt;
+    if (event.status !== 'pending') {
+      await notifyEventManagers(wasSubmittedBefore ? 'revised' : 'new', { eventId, eventName: event.eventName, startDate: event.startDate, byName: session?.user?.name ?? undefined });
+    }
 
     return { success: true, message: 'Event submitted for approval' };
   } catch (error) {
