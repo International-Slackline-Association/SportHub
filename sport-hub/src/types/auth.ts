@@ -1,5 +1,5 @@
 import { DefaultSession } from "next-auth"
-import { Role, Permission, UserSubType } from './rbac'
+import { Role, AdminRole, Permission, UserSubType } from './rbac'
 
 declare module "next-auth" {
   /**
@@ -9,7 +9,8 @@ declare module "next-auth" {
     user: {
       id: string                     // SportHub user ID (SportHubID:xxx) — sporthub-users partition key. isaUsersId is the optional ISA identity link.
       cognitoSub?: string            // Cognito UUID (for debugging/reference)
-      role: Role                     // User's role: 'user' | 'admin'
+      role: Role                     // Legacy single role (primaryRole of roles); use roles for checks
+      roles: AdminRole[]             // All admin roles; permissions combine. Empty = normal user
       permissions?: Permission[]     // Granular permissions based on role
       userSubTypes?: UserSubType[]   // User sub-types: 'athlete' | 'organizer' | 'judge'
     } & DefaultSession["user"]
@@ -23,6 +24,7 @@ declare module "next-auth" {
   interface User {
     id: string
     role: Role
+    roles?: AdminRole[]
     permissions?: Permission[]
     userSubTypes?: UserSubType[]
   }

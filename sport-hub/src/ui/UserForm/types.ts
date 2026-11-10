@@ -49,6 +49,7 @@ export interface UserData {
   birthdate?: string;
   isaUsersId?: string;
   role?: string;
+  roles?: string[];
   userSubTypes?: string[];
   primarySubType?: string;
 }

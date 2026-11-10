@@ -1,9 +1,9 @@
 import NextAuth from "next-auth"
 import Cognito from "next-auth/providers/cognito"
-import { getUserRole, getUserPermissions, getUserSubTypes } from './rbac-service'
+import { getUserRole, getUserRoles, getUserPermissions, getUserSubTypes } from './rbac-service'
 import { ensureUserExists, enrichUserFromReferenceDb } from './onboarding'
 import { getUserByEmail } from './user-service'
-import type { Role, Permission, UserSubType } from '../types/rbac'
+import { rolesOf, type Role, type AdminRole, type Permission, type UserSubType } from '../types/rbac'
 
 // Validate required environment variables at runtime (not during build)
 // During build, secrets may not be available yet - they're only needed when server actually runs
@@ -124,21 +124,25 @@ export const { handlers, signIn, signOut, auth, unstable_update } = NextAuth({
         if (token.sportHubUserId) {
           try {
             const role = await getUserRole(token.sportHubUserId as string)
+            const roles = await getUserRoles(token.sportHubUserId as string)
             const permissions = await getUserPermissions(token.sportHubUserId as string)
             const userSubTypes = await getUserSubTypes(token.sportHubUserId as string)
             token.role = role
+            token.roles = roles
             token.permissions = permissions
             token.userSubTypes = userSubTypes
           } catch (error) {
             console.error('Error loading user role:', error)
             // Fail-safe: default to user role
             token.role = 'user'
+            token.roles = []
             token.permissions = []
             token.userSubTypes = []
           }
         } else {
           // No SportHub ID — onboarding failed, default to base role
           token.role = 'user'
+          token.roles = []
           token.permissions = []
           token.userSubTypes = []
         }
@@ -159,6 +163,8 @@ export const { handlers, signIn, signOut, auth, unstable_update } = NextAuth({
 
         // Pass role, permissions, and sub-types to session
         session.user.role = (token.role as Role) || 'user'
+        // Tokens issued before multi-role support only carry role
+        session.user.roles = (token.roles as AdminRole[] | undefined) ?? rolesOf({ role: token.role as string })
         session.user.permissions = (token.permissions as Permission[]) || []
         session.user.userSubTypes = (token.userSubTypes as UserSubType[]) || []
       }

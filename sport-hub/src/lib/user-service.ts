@@ -22,7 +22,7 @@ export function generateSportHubId(): string {
 import type { UserProfileRecord } from './relational-types';
 import { clearRoleCache } from './rbac-service';
 import { getUserIdByAthleteSlug } from './user-query-service';
-import type { Role, UserSubType } from '../types/rbac';
+import { primaryRole, type AdminRole, type UserSubType } from '../types/rbac';
 
 /**
  * Build the base athleteSlug from name/surname: diacritics stripped (e.g.
@@ -147,7 +147,7 @@ export async function deleteUser(userId: string): Promise<void> {
  * Consolidates the get→merge→put→clearRoleCache pattern used across multiple callers.
  *
  * @param userId - User ID to update
- * @param role - New role to assign
+ * @param roles - Admin roles to assign (empty = normal user); stored as `roles`, with the legacy `role` field kept in sync
  * @param userSubTypes - New sub-types
  * @param primarySubType - Optional primary sub-type (defaults to first in userSubTypes)
  * @param assignedBy - Optional user ID of who made the change
@@ -155,7 +155,7 @@ export async function deleteUser(userId: string): Promise<void> {
  */
 export async function updateUserRoleAndSubTypes(
   userId: string,
-  role: Role,
+  roles: AdminRole[],
   userSubTypes: UserSubType[],
   primarySubType?: UserSubType,
   assignedBy?: string
@@ -171,7 +171,8 @@ export async function updateUserRoleAndSubTypes(
 
   const updatedUser: UserProfileRecord = {
     ...existingUser,
-    role,
+    role: primaryRole(roles),
+    roles,
     userSubTypes,
     primarySubType: validPrimarySubType,
     roleAssignedAt: new Date().toISOString(),

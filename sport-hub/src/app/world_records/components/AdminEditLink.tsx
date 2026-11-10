@@ -8,7 +8,7 @@ import { roleHasPermission } from 'src/types/rbac';
 /** Record Managers and General admins only: open a published entry to correct, reclassify or void it. */
 export function AdminEditLink({ entry }: { entry: WorldRecord | WorldFirst }) {
   const { data: session } = useSession();
-  if (!roleHasPermission(session?.user?.role, 'records:manage')) return null;
+  if (!roleHasPermission(session?.user?.roles, 'records:manage')) return null;
   const kind = 'trickName' in entry ? 'first' : 'record';
   return (
     <Link className="underline text-amber-700 hover:text-amber-900" href={`/admin/records-review/${kind}/${encodeURIComponent(entry.entryId)}`}>

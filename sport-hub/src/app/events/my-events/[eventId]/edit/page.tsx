@@ -54,7 +54,7 @@ export default async function EditEventPage({ params }: Props) {
   const { eventId: rawEventId } = await params;
   const eventId = decodeURIComponent(rawEventId);
   const session = await auth();
-  const isAdmin = roleHasPermission(session?.user?.role, 'events:edit');
+  const isAdmin = roleHasPermission(session?.user?.roles, 'events:edit');
 
   const result = await getEvent(eventId);
 

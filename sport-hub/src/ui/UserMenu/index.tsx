@@ -103,7 +103,7 @@ export default function UserMenu() {
             My Claims
           </Link>
 
-          {roleHasPermission(session.user.role, 'admin:access') && (
+          {roleHasPermission(session.user.roles, 'admin:access') && (
             <a
               href="/admin"
               className={styles.userMenuDropdownLink}
@@ -113,7 +113,7 @@ export default function UserMenu() {
             </a>
           )}
 
-          {(roleHasPermission(session.user.role, 'events:create') || session.user.userSubTypes?.includes('organizer')) && (
+          {(roleHasPermission(session.user.roles, 'events:create') || session.user.userSubTypes?.includes('organizer')) && (
             <Link
               href="/events/my-events"
               className={styles.userMenuDropdownLink}

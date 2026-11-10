@@ -5,7 +5,7 @@ import UserManagementModal from '@ui/UserForm/UserManagementModal';
 import { deleteUser } from './actions';
 import Button from '@ui/Button';
 import SearchBar from './SearchBar';
-import type { Role, UserSubType } from 'src/types/rbac';
+import { rolesLabel, type AdminRole, type Role, type UserSubType } from 'src/types/rbac';
 import { userGenderOptions } from '@ui/Form';
 
 interface User {
@@ -24,6 +24,7 @@ interface User {
   totalPoints?: number;
   contestsParticipated?: number;
   role?: Role;
+  roles?: AdminRole[];
   userSubTypes?: UserSubType[];
   primarySubType?: UserSubType;
 }
@@ -195,11 +196,11 @@ export default function UserListPagination({
                   <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">You</span>
                 )}
                 <span className={`text-xs px-2 py-0.5 rounded ${
-                  user.role === 'admin'
+                  user.roles?.length
                     ? 'bg-purple-100 text-purple-800'
                     : 'bg-gray-100 text-gray-600'
                 }`}>
-                  {user.role || 'user'}
+                  {rolesLabel(user.roles)}
                 </span>
               </div>
               <p className="text-gray-600">{user.email}</p>

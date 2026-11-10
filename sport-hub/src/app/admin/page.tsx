@@ -1,6 +1,6 @@
 import { requirePermission } from "@lib/authorization"
 import { auth } from "@lib/auth"
-import { ROLE_LABELS, roleHasPermission, type Permission } from "src/types/rbac"
+import { rolesLabel, roleHasPermission, type Permission } from "src/types/rbac"
 import PageLayout from "@ui/PageLayout"
 import { Metadata } from "next"
 import Link from "next/link"
@@ -13,13 +13,13 @@ export default async function AdminPage() {
   // Any admin role may open the dashboard; each card shows only to roles that can use it
   await requirePermission('admin:access');
   const session = await auth();
-  const role = session?.user?.role;
-  const can = (permission: Permission) => roleHasPermission(role, permission);
+  const roles = session?.user?.roles;
+  const can = (permission: Permission) => roleHasPermission(roles, permission);
 
   return (
     <PageLayout
       title="Admin Dashboard"
-      description={`Signed in as ${role ? ROLE_LABELS[role] : "admin"}. You see the tools your role can use.`}
+      description={`Signed in as ${rolesLabel(roles)}. You see the tools your roles can use.`}
     >
       <div className="p-4 sm:p-0">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

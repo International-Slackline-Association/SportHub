@@ -1,6 +1,6 @@
 import { auth } from "@lib/auth"
 import { NextResponse } from "next/server"
-import { roleHasPermission, type Permission, type UserSubType } from "./types/rbac"
+import { isGeneralAdmin, roleHasPermission, type Permission, type UserSubType } from "./types/rbac"
 
 // Define route patterns and their required permission/sub-types.
 // The coarse gate here is "any admin role"; each admin page and action then
@@ -26,7 +26,7 @@ const PROTECTED_ROUTES: Array<{
 export default auth((req) => {
   const { pathname } = req.nextUrl
   const isLoggedIn = !!req.auth
-  const userRole = req.auth?.user?.role
+  const userRoles = req.auth?.user?.roles ?? []
   const userSubTypes = req.auth?.user?.userSubTypes ?? []
 
   // Find matching route pattern
@@ -46,10 +46,10 @@ export default auth((req) => {
     return NextResponse.redirect(signInUrl)
   }
 
-  const hasRequiredPermission = !!matchedRoute.requiredPermission && roleHasPermission(userRole, matchedRoute.requiredPermission)
+  const hasRequiredPermission = !!matchedRoute.requiredPermission && roleHasPermission(userRoles, matchedRoute.requiredPermission)
 
   // The role grants this route (General admins always do)
-  if (hasRequiredPermission || userRole === 'admin') {
+  if (hasRequiredPermission || isGeneralAdmin(userRoles)) {
     return NextResponse.next()
   }
 

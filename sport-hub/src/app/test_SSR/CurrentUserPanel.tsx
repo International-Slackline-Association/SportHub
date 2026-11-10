@@ -2,7 +2,7 @@
 
 import type { Session } from 'next-auth';
 import type { Role, UserSubType, Permission } from 'src/types/rbac';
-import { ROLE_PERMISSIONS } from 'src/types/rbac';
+import { permissionsOf } from 'src/types/rbac';
 
 interface DbUser {
   id: string;
@@ -45,7 +45,7 @@ export default function CurrentUserPanel({ session, dbUser }: CurrentUserPanelPr
   const sessionRole = session.user.role || 'user';
   const dbRole = dbUser?.role || 'user';
   const roleMismatch = sessionRole !== dbRole;
-  const permissions = ROLE_PERMISSIONS[sessionRole] || [];
+  const permissions = permissionsOf(session.user.roles);
 
   return (
     <div className="bg-white rounded-lg shadow-md mb-6 overflow-hidden">

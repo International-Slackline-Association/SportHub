@@ -6,8 +6,8 @@
  */
 
 import { dynamodb, USERS_TABLE } from './dynamodb';
-import type { Role, Permission, UserSubType } from '../types/rbac';
-import { ROLE_PERMISSIONS } from '../types/rbac';
+import type { Role, AdminRole, Permission, UserSubType } from '../types/rbac';
+import { permissionsOf, primaryRole, rolesOf } from '../types/rbac';
 import type { UserProfileRecord } from './relational-types';
 
 /**
@@ -15,6 +15,7 @@ import type { UserProfileRecord } from './relational-types';
  */
 interface RoleCacheEntry {
   role: Role;
+  roles: AdminRole[];
   permissions: Permission[];
   userSubTypes: UserSubType[];
   timestamp: number;
@@ -48,13 +49,15 @@ export async function getUserRole(userId: string): Promise<Role> {
       return 'user';
     }
 
-    const role = (user.role as Role) || 'user';
-    const permissions = ROLE_PERMISSIONS[role];
+    const roles = rolesOf(user);
+    const role = primaryRole(roles);
+    const permissions = permissionsOf(roles);
     const userSubTypes = (user.userSubTypes as UserSubType[]) || [];
 
     // Update cache
     roleCache.set(userId, {
       role,
+      roles,
       permissions,
       userSubTypes,
       timestamp: Date.now(),
@@ -83,8 +86,22 @@ export async function getUserPermissions(userId: string): Promise<Permission[]> 
   }
 
   // Fetch role (which will also cache permissions)
-  const role = await getUserRole(userId);
-  return ROLE_PERMISSIONS[role];
+  await getUserRole(userId);
+  return roleCache.get(userId)?.permissions ?? [];
+}
+
+/**
+ * Get all of a user's admin roles (permissions combine across them)
+ *
+ * @param userId - Custom user ID (SportHubID:xxx or ISA_xxx format)
+ */
+export async function getUserRoles(userId: string): Promise<AdminRole[]> {
+  const cached = roleCache.get(userId);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.roles;
+  }
+  await getUserRole(userId);
+  return roleCache.get(userId)?.roles ?? [];
 }
 
 /**
@@ -136,6 +153,7 @@ export function getCacheStats() {
     entries: Array.from(roleCache.entries()).map(([userId, entry]) => ({
       userId,
       role: entry.role,
+      roles: entry.roles,
       age: Date.now() - entry.timestamp,
     })),
   };

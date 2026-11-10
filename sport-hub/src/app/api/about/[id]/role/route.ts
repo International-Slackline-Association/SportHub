@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@lib/auth';
 import { getUser, updateUserRoleAndSubTypes } from '@lib/user-service';
 import { roleChangeError } from '@lib/authorization';
-import { isRole, type Role, type UserSubType } from 'src/types/rbac';
+import { isRole, parseAdminRoles, rolesLabel, rolesOf, type AdminRole, type Role, type UserSubType } from 'src/types/rbac';
 
 export async function PUT(
   request: Request,
@@ -20,28 +20,33 @@ export async function PUT(
     }
 
     const { id } = await params;
-    const { role, userSubTypes, primarySubType } = await request.json() as {
-      role: Role;
+    const body = await request.json() as {
+      roles?: AdminRole[];
+      role?: Role;              // Legacy single role
       userSubTypes: UserSubType[];
       primarySubType?: UserSubType;
     };
+    const { userSubTypes, primarySubType } = body;
+    const roles = body.roles !== undefined
+      ? parseAdminRoles(body.roles)
+      : isRole(body.role) ? (body.role === 'user' ? [] : [body.role]) : null;
 
-    // Validate role
-    if (!isRole(role)) {
+    // Validate roles
+    if (!roles) {
       return NextResponse.json(
         { error: 'Invalid role' },
         { status: 400 }
       );
     }
 
-    // User Managers may change user types; only General admins may change the role
-    const roleError = roleChangeError(session.user.role, (await getUser(id))?.role as Role | undefined, role);
+    // User Managers may set types and manager roles; only General admins may grant or remove General Admin
+    const roleError = roleChangeError(session.user.roles, rolesOf(await getUser(id)), roles);
     if (roleError) {
       return NextResponse.json({ error: roleError }, { status: 403 });
     }
 
     try {
-      await updateUserRoleAndSubTypes(id, role, userSubTypes, primarySubType, session.user.id);
+      await updateUserRoleAndSubTypes(id, roles, userSubTypes, primarySubType, session.user.id);
     } catch (err) {
       if (err instanceof Error && err.message === 'User not found') {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -53,8 +58,8 @@ export async function PUT(
     return NextResponse.json({
       success: true,
       message: isSelf
-        ? `Updated to ${role}. Sign out and back in to refresh your session.`
-        : `User updated to ${role} role.`,
+        ? `Updated to ${rolesLabel(roles)}. Sign out and back in to refresh your session.`
+        : `User updated to ${rolesLabel(roles)}.`,
     });
   } catch (error) {
     console.error('Error updating user role:', error);

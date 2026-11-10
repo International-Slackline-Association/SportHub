@@ -20,7 +20,7 @@ export default async function EventPage({ params, searchParams }: EventPageProps
   const { contest: contestIdParam } = await searchParams;
   const decodedEventId = decodeURIComponent(eventId);
   const session = await auth();
-  const isAdmin = roleHasPermission(session?.user?.role, 'events:edit');
+  const isAdmin = roleHasPermission(session?.user?.roles, 'events:edit');
 
   const { success, event } = await getEvent(decodedEventId);
   if (success && event) {

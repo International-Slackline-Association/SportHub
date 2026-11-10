@@ -123,7 +123,7 @@ export async function updateEventScores(
 
   try {
     const session = await auth();
-    const isAdmin = roleHasPermission(session?.user?.role, 'events:edit');
+    const isAdmin = roleHasPermission(session?.user?.roles, 'events:edit');
     const { success, event } = await getAssembledEvent(eventId);
     
     if (!success || !event) {
@@ -239,7 +239,7 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
 
     if (!existing.success || !existing.event) {
       // No Metadata record (old-format event) — only admins may migrate it to new format
-      if (!roleHasPermission(session?.user?.role, 'events:edit')) {
+      if (!roleHasPermission(session?.user?.roles, 'events:edit')) {
         return { success: false, error: 'Event not found' };
       }
       existingEvent = {
@@ -254,7 +254,7 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
       isMigration = true;
     } else {
       existingEvent = existing.event;
-      if (!roleHasPermission(session?.user?.role, 'events:edit') && existingEvent.createdBy !== session?.user?.id) {
+      if (!roleHasPermission(session?.user?.roles, 'events:edit') && existingEvent.createdBy !== session?.user?.id) {
         return { success: false, error: 'You do not have permission to edit this event' };
       }
     }
@@ -293,7 +293,7 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
     revalidatePath('/events/my-events');
 
     // An organizer changed an event that is waiting for approval
-    const isPendingRevisionByOrganizer = existingEvent.status === 'pending' && !roleHasPermission(session?.user?.role, 'events:edit');
+    const isPendingRevisionByOrganizer = existingEvent.status === 'pending' && !roleHasPermission(session?.user?.roles, 'events:edit');
     if (isPendingRevisionByOrganizer) {
       await notifyEventManagers('revised', { eventId, eventName: updatedEvent.eventName, startDate: updatedEvent.startDate, byName: session?.user?.name ?? undefined });
     }
@@ -567,7 +567,7 @@ export async function submitEventForApproval(eventId: string) {
     }
 
     // Non-admins can only submit their own events
-    if (!roleHasPermission(session?.user?.role, 'events:edit') && event.createdBy !== session?.user?.id) {
+    if (!roleHasPermission(session?.user?.roles, 'events:edit') && event.createdBy !== session?.user?.id) {
       return { success: false, error: 'You do not have permission to submit this event' };
     }
 
@@ -618,7 +618,7 @@ export async function withdrawEventFromApproval(eventId: string) {
       return { success: false, error: 'Event not found' };
     }
 
-    if (!roleHasPermission(session?.user?.role, 'events:edit') && event.createdBy !== session?.user?.id) {
+    if (!roleHasPermission(session?.user?.roles, 'events:edit') && event.createdBy !== session?.user?.id) {
       return { success: false, error: 'You do not have permission to withdraw this event' };
     }
 

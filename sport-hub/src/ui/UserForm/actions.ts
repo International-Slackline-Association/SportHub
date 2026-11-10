@@ -5,7 +5,7 @@ import { assertCanManageUsers, roleChangeError } from '@lib/authorization';
 import { revalidatePath } from 'next/cache';
 import { invalidateUsersCache } from '@lib/data-services';
 import { UserFormValues } from './types';
-import { isRole, type Role, type UserSubType } from 'src/types/rbac';
+import { parseAdminRoles, rolesLabel, rolesOf, type AdminRole, type Role, type UserSubType } from 'src/types/rbac';
 import { getUser, deleteUser as deleteUserRecord, updateUserRoleAndSubTypes as updateRoleService, saveUserProfile, generateUniqueAthleteSlug } from '@lib/user-service';
 import type { UserProfileRecord } from '@lib/relational-types';
 
@@ -76,7 +76,7 @@ export async function updateUser(formData: FormData) {
 
 export async function updateUserRoleAndSubTypes(
   userId: string,
-  role: Role,
+  requestedRoles: AdminRole[],
   userSubTypes: UserSubType[],
   primarySubType?: UserSubType
 ): Promise<{ success: boolean; message?: string; error?: string }> {
@@ -86,26 +86,27 @@ export async function updateUserRoleAndSubTypes(
     return { success: false, error: 'Authentication required' };
   }
 
-  // User Managers may change user types; only General admins may change the role
-  const roleError = roleChangeError(session.user.role, (await getUser(userId))?.role as Role | undefined, role);
+  const roles = parseAdminRoles(requestedRoles);
+  if (!roles) {
+    return { success: false, error: 'Invalid role' };
+  }
+
+  // User Managers may set types and manager roles; only General admins may grant or remove General Admin
+  const roleError = roleChangeError(session.user.roles, rolesOf(await getUser(userId)), roles);
   if (roleError) {
     return { success: false, error: roleError };
   }
 
-  if (!isRole(role)) {
-    return { success: false, error: 'Invalid role' };
-  }
-
   try {
-    await updateRoleService(userId, role, userSubTypes, primarySubType, session.user.id);
+    await updateRoleService(userId, roles, userSubTypes, primarySubType, session.user.id);
     revalidatePath('/test_SSR');
 
     const isSelf = userId === session.user.id;
     return {
       success: true,
       message: isSelf
-        ? `Updated to ${role}. Sign out and back in to refresh your session.`
-        : `User updated to ${role} role.`,
+        ? `Updated to ${rolesLabel(roles)}. Sign out and back in to refresh your session.`
+        : `User updated to ${rolesLabel(roles)}.`,
     };
   } catch (error) {
     console.error('Error updating user role:', error);

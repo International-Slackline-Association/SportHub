@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { roleHasPermission, isRole, ROLE_PERMISSIONS } from '../../types/rbac';
+import { roleHasPermission, isRole, permissionsOf, primaryRole, parseAdminRoles, rolesOf, ROLE_PERMISSIONS } from '../../types/rbac';
 
 test('General admin has every permission', () => {
   for (const p of ROLE_PERMISSIONS.admin) assert.equal(roleHasPermission('admin', p), true);
@@ -35,4 +35,24 @@ test('users and unknown roles get nothing', () => {
   assert.equal(roleHasPermission('superuser', 'admin:access'), false);
   assert.equal(isRole('superuser'), false);
   assert.equal(isRole('record_manager'), true);
+});
+
+test('multiple roles combine their permissions', () => {
+  const roles = ['event_manager', 'record_manager'] as const;
+  assert.equal(roleHasPermission(roles, 'events:edit'), true);
+  assert.equal(roleHasPermission(roles, 'records:manage'), true);
+  assert.equal(roleHasPermission(roles, 'users:manage'), false);
+  assert.deepEqual(new Set(permissionsOf(roles)), new Set([...ROLE_PERMISSIONS.event_manager, ...ROLE_PERMISSIONS.record_manager]));
+  assert.equal(roleHasPermission([], 'admin:access'), false);
+});
+
+test('rolesOf reads the roles list and falls back to the old single role', () => {
+  assert.deepEqual(rolesOf({ role: 'admin' }), ['admin']);
+  assert.deepEqual(rolesOf({ role: 'user' }), []);
+  assert.deepEqual(rolesOf({ role: 'admin', roles: ['record_manager', 'event_manager'] }), ['event_manager', 'record_manager']);
+  assert.deepEqual(rolesOf({ roles: ['bogus', 'user_manager'] }), ['user_manager']);
+  assert.equal(primaryRole(['record_manager', 'admin']), 'admin');
+  assert.equal(primaryRole([]), 'user');
+  assert.equal(parseAdminRoles(['user']), null);
+  assert.deepEqual(parseAdminRoles(['user_manager', 'event_manager']), ['event_manager', 'user_manager']);
 });

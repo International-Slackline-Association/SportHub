@@ -21,7 +21,7 @@ export async function requireTestPageAccess() {
     redirect('/auth/signin');
   }
 
-  if (!roleHasPermission(session.user.role, 'users:manage')) {
+  if (!roleHasPermission(session.user.roles, 'users:manage')) {
     redirect('/unauthorized');
   }
 }
@@ -51,7 +51,7 @@ export async function canAccessTestAPI(): Promise<{
     };
   }
 
-  if (!roleHasPermission(session.user.role, 'users:manage')) {
+  if (!roleHasPermission(session.user.roles, 'users:manage')) {
     return {
       allowed: false,
       reason: 'User Manager or General admin required',

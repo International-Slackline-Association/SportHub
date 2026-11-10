@@ -10,14 +10,14 @@ export async function requireSession() {
 /** General admins always pass; otherwise the role must grant the permission (Record Manager has records:review and records:manage). */
 export async function requireRecordsPermission(permission: Permission) {
   const session = await requireSession();
-  const allowed = roleHasPermission(session.user.role, permission);
+  const allowed = roleHasPermission(session.user.roles, permission);
   if (!allowed) throw new Error(`Missing permission ${permission}`);
   return session;
 }
 
 /** Like requireRecordsPermission, without throwing. */
 export const hasRecordsPermission = (session: Awaited<ReturnType<typeof requireSession>>, permission: Permission) =>
-  roleHasPermission(session.user.role, permission);
+  roleHasPermission(session.user.roles, permission);
 
 export const actorOf = (session: Awaited<ReturnType<typeof requireSession>>) => ({
   byUserId: session.user.id,

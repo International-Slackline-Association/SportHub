@@ -6,7 +6,9 @@
  */
 
 /**
- * Primary roles for access control
+ * Roles for access control. A user holds a list of admin roles (`roles` on the
+ * profile) and gets the combined permissions of all of them; no admin role
+ * means a normal user.
  * - user: Default role for all users, can view content and edit own profile
  * - event_manager: Event Manager. Creates, approves and edits events, competitions and results
  * - record_manager: Record Manager. Reviews claims and manages records, firsts and categories
@@ -15,6 +17,10 @@
  *   Stored as 'admin' so existing admins keep full access without a data migration.
  */
 export type Role = 'user' | 'event_manager' | 'record_manager' | 'user_manager' | 'admin';
+
+/** The admin roles a user can hold (any combination). */
+export type AdminRole = Exclude<Role, 'user'>;
+export const ADMIN_ROLES: AdminRole[] = ['event_manager', 'record_manager', 'user_manager', 'admin'];
 
 /** Every role, in the order shown when assigning roles. */
 export const ROLES: Role[] = ['user', 'event_manager', 'record_manager', 'user_manager', 'admin'];
@@ -36,6 +42,44 @@ export const ROLE_DESCRIPTIONS: Record<Role, string> = {
 };
 
 export const isRole = (value: unknown): value is Role => ROLES.includes(value as Role);
+export const isAdminRole = (value: unknown): value is AdminRole => ADMIN_ROLES.includes(value as AdminRole);
+
+/**
+ * A profile's admin roles. Reads the `roles` list, falling back to the older
+ * single `role` field so existing admins (role: 'admin') keep their access.
+ */
+export function rolesOf(profile: { role?: string | null; roles?: unknown } | null | undefined): AdminRole[] {
+  if (!profile) return [];
+  if (Array.isArray(profile.roles)) return ADMIN_ROLES.filter(r => (profile.roles as unknown[]).includes(r));
+  return isAdminRole(profile.role) ? [profile.role] : [];
+}
+
+/** Validates a roles list from a request: admin roles only, no duplicates. Null when invalid. */
+export function parseAdminRoles(input: unknown): AdminRole[] | null {
+  if (!Array.isArray(input) || !input.every(isAdminRole)) return null;
+  return ADMIN_ROLES.filter(r => input.includes(r));
+}
+
+/** Single role kept in the legacy `role` field: 'admin' for General admins, else the first admin role, else 'user'. */
+export const primaryRole = (roles: readonly Role[]): Role =>
+  roles.includes('admin') ? 'admin' : roles.find(isAdminRole) ?? 'user';
+
+type RolesInput = Role | readonly Role[] | string | null | undefined;
+const asRoles = (roles: RolesInput): string[] =>
+  roles == null ? [] : typeof roles === 'string' ? [roles] : [...roles];
+
+/** True when the roles include General admin. */
+export const isGeneralAdmin = (roles: RolesInput): boolean => asRoles(roles).includes('admin');
+
+/** Combined permissions of all roles. */
+export const permissionsOf = (roles: RolesInput): Permission[] =>
+  [...new Set(asRoles(roles).filter(isRole).flatMap(r => ROLE_PERMISSIONS[r]))];
+
+/** Human-readable list, e.g. "Event Manager, Record Manager" (or "User"). */
+export const rolesLabel = (roles: RolesInput): string => {
+  const list = asRoles(roles).filter(isAdminRole);
+  return list.length ? list.map(r => ROLE_LABELS[r]).join(', ') : ROLE_LABELS.user;
+};
 
 /**
  * User sub-types for additional classification (future use)
@@ -109,13 +153,14 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
 } as const;
 
 /**
- * Whether a role grants a permission. Derived from the role (not from the
- * permissions copied into the session token) so it works the same on server,
- * client and in middleware. General admins always pass.
+ * Whether a user's roles grant a permission (any of them is enough, so multiple
+ * roles combine). Derived from the roles, not from the permissions copied into
+ * the session token, so it works the same on server, client and in middleware.
+ * General admins always pass.
  */
-export function roleHasPermission(role: Role | string | undefined | null, permission: Permission): boolean {
-  if (role === 'admin') return true;
-  return isRole(role) && ROLE_PERMISSIONS[role].includes(permission);
+export function roleHasPermission(roles: RolesInput, permission: Permission): boolean {
+  if (isGeneralAdmin(roles)) return true;
+  return asRoles(roles).some(r => isRole(r) && ROLE_PERMISSIONS[r].includes(permission));
 }
 
 /**

@@ -22,7 +22,7 @@ export default async function EditScoresPage({ params }: Props) {
   }
 
   const session = await auth();
-  if (!roleHasPermission(session?.user?.role, 'events:edit') && event.createdBy !== session?.user?.id) {
+  if (!roleHasPermission(session?.user?.roles, 'events:edit') && event.createdBy !== session?.user?.id) {
     redirect('/events/my-events');
   }
 

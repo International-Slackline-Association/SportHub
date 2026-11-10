@@ -38,7 +38,7 @@ function generateEventId(): string {
 export async function createEventFromForm(eventForm: EventFormValues, contests: ContestFormValues[]): Promise<EventMetadataRecord> {
   // Get current user for audit trail
   const session = await auth();
-  const isAdmin = roleHasPermission(session?.user?.role, 'events:edit');
+  const isAdmin = roleHasPermission(session?.user?.roles, 'events:edit');
 
   // Transform form data to database format
   const eventId = generateEventId();
