@@ -1,6 +1,7 @@
 'use server'
 
 import { auth } from '@lib/auth';
+import { assertCanManageUsers, roleChangeError } from '@lib/authorization';
 import { revalidatePath } from 'next/cache';
 import { invalidateUsersCache } from '@lib/data-services';
 import { UserFormValues } from './types';
@@ -9,6 +10,8 @@ import { getUser, deleteUser as deleteUserRecord, updateUserRoleAndSubTypes as u
 import type { UserProfileRecord } from '@lib/relational-types';
 
 export async function createUser(payload: UserFormValues, path: string) {
+  // Also used when an Event Manager approves an event with new athletes/judges
+  await assertCanManageUsers('events:edit');
   const userId = payload?.id || `athlete-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   const athleteSlug = await generateUniqueAthleteSlug(payload.name, payload.surname);
@@ -33,6 +36,7 @@ export async function createUser(payload: UserFormValues, path: string) {
 }
 
 export async function updateUser(formData: FormData) {
+  await assertCanManageUsers();
   const id = formData.get('id') as string;
   const name = (formData.get('name') as string)?.trim();
   const surname = (formData.get('surname') as string)?.trim() || undefined;
@@ -82,8 +86,10 @@ export async function updateUserRoleAndSubTypes(
     return { success: false, error: 'Authentication required' };
   }
 
-  if (process.env.NODE_ENV === 'production' && session.user.role !== 'admin') {
-    return { success: false, error: 'Admin access required' };
+  // User Managers may change user types; only General admins may change the role
+  const roleError = roleChangeError(session.user.role, (await getUser(userId))?.role as Role | undefined, role);
+  if (roleError) {
+    return { success: false, error: roleError };
   }
 
   if (!isRole(role)) {
@@ -111,6 +117,7 @@ export async function updateUserRoleAndSubTypes(
 }
 
 export async function deleteUser(formData: FormData) {
+  await assertCanManageUsers();
   const id = formData.get('id') as string;
   if (!id) throw new Error('Missing user ID');
   await deleteUserRecord(id);

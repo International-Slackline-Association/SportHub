@@ -10,6 +10,7 @@ import { UserFormValues, UserData } from '@ui/UserForm/types';
 import { CreateUserForm } from '.';
 import { updateUserRoleAndSubTypes } from './actions';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
 import { ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS, type Role, type UserSubType } from 'src/types/rbac';
 
 const ALL_SUB_TYPES: UserSubType[] = ['athlete', 'judge', 'organizer'];
@@ -41,6 +42,9 @@ const UserManagementModal = ({
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const isCurrentUser = user?.id === currentUserId || user?.userId === currentUserId;
+  // Only General admins change roles (dev has no sign-in); User Managers can still set user types
+  const { data: session } = useSession();
+  const canChangeRole = session?.user?.role === 'admin' || process.env.NODE_ENV === 'development';
 
   const buttonLabel = action === 'CREATE' ? 'Register' : action === 'ROLES' ? 'Roles' : 'Edit';
   const modalTitle = action === 'CREATE' ? 'Add New User' : action === 'ROLES' ? 'Manage Roles & Types' : 'Edit User';
@@ -144,12 +148,13 @@ const UserManagementModal = ({
                       key={role}
                       type="button"
                       onClick={() => setSelectedRole(role)}
+                      disabled={!canChangeRole && selectedRole !== role}
                       className={`px-4 py-2 rounded-lg border-2 text-left transition-colors ${
                         selectedRole === role
                           ? role === 'user'
                             ? 'border-blue-500 bg-blue-50 text-blue-700'
                             : 'border-purple-500 bg-purple-50 text-purple-700'
-                          : 'border-gray-200 hover:border-gray-300'
+                          : 'border-gray-200 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed'
                       }`}
                     >
                       <div className="font-medium">{ROLE_LABELS[role]}</div>
@@ -157,6 +162,9 @@ const UserManagementModal = ({
                     </button>
                   ))}
                 </div>
+                {!canChangeRole && (
+                  <p className="text-xs text-gray-500 mt-1">Only a General Admin can change roles.</p>
+                )}
               </div>
 
               <div>

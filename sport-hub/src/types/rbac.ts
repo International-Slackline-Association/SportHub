@@ -10,18 +10,20 @@
  * - user: Default role for all users, can view content and edit own profile
  * - event_manager: Event Manager. Creates, approves and edits events, competitions and results
  * - record_manager: Record Manager. Reviews claims and manages records, firsts and categories
+ * - user_manager: User Manager. Creates, edits, deletes and merges user accounts and sets user types (not roles)
  * - admin: General admin. Full access, incl. user management and role assignment.
  *   Stored as 'admin' so existing admins keep full access without a data migration.
  */
-export type Role = 'user' | 'event_manager' | 'record_manager' | 'admin';
+export type Role = 'user' | 'event_manager' | 'record_manager' | 'user_manager' | 'admin';
 
 /** Every role, in the order shown when assigning roles. */
-export const ROLES: Role[] = ['user', 'event_manager', 'record_manager', 'admin'];
+export const ROLES: Role[] = ['user', 'event_manager', 'record_manager', 'user_manager', 'admin'];
 
 export const ROLE_LABELS: Record<Role, string> = {
   user: 'User',
   event_manager: 'Event Manager',
   record_manager: 'Record Manager',
+  user_manager: 'User Manager',
   admin: 'General Admin',
 };
 
@@ -29,6 +31,7 @@ export const ROLE_DESCRIPTIONS: Record<Role, string> = {
   user: 'Standard access',
   event_manager: 'Events, competitions and results',
   record_manager: 'Records, firsts and categories',
+  user_manager: 'User accounts and duplicates',
   admin: 'Full access incl. users and roles',
 };
 
@@ -53,7 +56,7 @@ export type Permission =
   | 'events:edit'
   | 'events:delete'
 
-  // User management (admin only)
+  // User management (User Manager and General admin). Assigning roles stays General admin only.
   | 'users:manage'
 
   // Ranking management
@@ -87,6 +90,10 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   record_manager: [
     'records:review',
     'records:manage',
+    'admin:access',
+  ],
+  user_manager: [
+    'users:manage',
     'admin:access',
   ],
   admin: [

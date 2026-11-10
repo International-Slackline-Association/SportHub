@@ -1,6 +1,7 @@
 'use server'
 
 import { auth } from '@lib/auth';
+import { assertCanManageUsers, roleChangeError } from '@lib/authorization';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type { Role, UserSubType } from 'src/types/rbac';
@@ -8,6 +9,7 @@ import { getUser, deleteUser as deleteUserRecord, updateUserRoleAndSubTypes as u
 import type { UserProfileRecord } from '@lib/relational-types';
 
 export async function createUser(formData: FormData) {
+  await assertCanManageUsers();
   const id = formData.get('id') as string;
   const name = (formData.get('name') as string)?.trim();
   const surname = (formData.get('surname') as string)?.trim() || undefined;
@@ -49,6 +51,7 @@ export async function createUser(formData: FormData) {
 }
 
 export async function updateUser(formData: FormData) {
+  await assertCanManageUsers();
   const id = formData.get('id') as string;
   const name = (formData.get('name') as string)?.trim();
   const surname = (formData.get('surname') as string)?.trim();
@@ -89,6 +92,7 @@ export async function updateUser(formData: FormData) {
 }
 
 export async function deleteUser(formData: FormData) {
+  await assertCanManageUsers();
   const id = formData.get('id') as string;
 
   if (!id) {
@@ -101,7 +105,7 @@ export async function deleteUser(formData: FormData) {
 
 /**
  * Update user role and sub-types
- * Requires admin role in production, any user in development
+ * Requires User Manager (types only) or General admin (role too) in production, any user in development
  */
 export async function updateUserRoleAndSubTypes(
   userId: string,
@@ -116,9 +120,10 @@ export async function updateUserRoleAndSubTypes(
     return { success: false, error: 'Authentication required' };
   }
 
-  // In production, require admin role
-  if (process.env.NODE_ENV === 'production' && session.user.role !== 'admin') {
-    return { success: false, error: 'Admin access required' };
+  // User Managers may change user types; only General admins may change the role
+  const roleError = roleChangeError(session.user.role, (await getUser(userId))?.role as Role | undefined, role);
+  if (roleError) {
+    return { success: false, error: roleError };
   }
 
   try {

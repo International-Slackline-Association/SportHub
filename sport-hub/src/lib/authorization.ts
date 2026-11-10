@@ -140,6 +140,42 @@ export async function requireRecordManager(): Promise<void> {
   await requirePermission('records:manage');
 }
 
+/** User Manager or General admin (user accounts, duplicates). */
+export async function requireUserManager(): Promise<void> {
+  await requirePermission('users:manage');
+}
+
+/**
+ * For user-management server actions: throws unless the user may manage users.
+ * Skipped in development, where sign-in is disabled (same rule as the test pages).
+ * Pass extra permissions that are also accepted (e.g. events:edit for creating
+ * pending athletes during event approval).
+ */
+export async function assertCanManageUsers(...alsoAllowed: Permission[]): Promise<void> {
+  if (process.env.NODE_ENV === 'development') return;
+  const session = await auth();
+  if (!session) throw new Error('Unauthorized: sign in required');
+  const allowed = ['users:manage' as const, ...alsoAllowed].some(p => roleHasPermission(session.user.role, p));
+  if (!allowed) throw new Error('Unauthorized: User Manager or General admin required');
+}
+
+/**
+ * Who may set a user's role and types. User Managers may change user types
+ * but only General admins may change a role (so nobody can promote themselves).
+ * Returns an error message, or null when allowed. Development allows everything.
+ */
+export function roleChangeError(
+  actorRole: Role | undefined,
+  currentRole: Role | undefined,
+  newRole: Role,
+): string | null {
+  if (process.env.NODE_ENV === 'development') return null;
+  if (actorRole === 'admin') return null;
+  if (!roleHasPermission(actorRole, 'users:manage')) return 'User Manager or General admin required';
+  if ((currentRole ?? 'user') !== newRole) return 'Only a General admin can change roles';
+  return null;
+}
+
 /**
  * Require General admin role - redirect if not admin
  *
@@ -190,8 +226,8 @@ export async function canEditUser(targetUserId: string): Promise<AuthorizationRe
     };
   }
 
-  // Admins can edit anyone
-  if (session.user.role === 'admin') {
+  // User Managers and General admins can edit anyone
+  if (roleHasPermission(session.user.role, 'users:manage')) {
     return {
       authorized: true,
       userId: session.user.id,

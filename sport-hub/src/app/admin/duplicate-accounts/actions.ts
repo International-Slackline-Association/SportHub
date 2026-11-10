@@ -11,7 +11,7 @@ import type {
 } from '@lib/relational-types';
 import { getCountryByCode } from '@utils/countries';
 import { getAllEventDataRaw } from '@lib/data-services';
-import { requireAdmin } from '@lib/authorization';
+import { requireUserManager } from '@lib/authorization';
 
 export type UserProfileAndRecords = {
   profile: UserProfileRecord | null;
@@ -21,8 +21,8 @@ export type UserProfileAndRecords = {
 };
 
 export async function fetchUserProfileAndRecords(userId: string): Promise<UserProfileAndRecords> {
-  // General admin only. The /admin middleware gate now lets Event and Record Managers through.
-  await requireAdmin();
+  // User Manager or General admin. The /admin middleware gate lets every admin role through.
+  await requireUserManager();
   const [profile, participationRecords, eventItemsRaw] = await Promise.all([
     getAthleteProfile(userId),
     getAthleteParticipations(userId, 1000),
@@ -131,7 +131,7 @@ export async function mergeDuplicateAccounts(options: {
   dryRun?: boolean 
   verbose?: boolean 
 }): Promise<{ participationRecordsMoved: number; contestRecordsUpdated: number; metadataRecordsUpdated: number; profileUpdated: boolean }> {
-  await requireAdmin();
+  await requireUserManager();
   const { dryRun = true, verbose = true } = options;
   const {
     profile: primaryProfile,

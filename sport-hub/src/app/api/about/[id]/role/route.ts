@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@lib/auth';
-import { updateUserRoleAndSubTypes } from '@lib/user-service';
+import { getUser, updateUserRoleAndSubTypes } from '@lib/user-service';
+import { roleChangeError } from '@lib/authorization';
 import { isRole, type Role, type UserSubType } from 'src/types/rbac';
 
 export async function PUT(
@@ -18,14 +19,6 @@ export async function PUT(
       );
     }
 
-    // In production, require admin role
-    if (process.env.NODE_ENV === 'production' && session.user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      );
-    }
-
     const { id } = await params;
     const { role, userSubTypes, primarySubType } = await request.json() as {
       role: Role;
@@ -39,6 +32,12 @@ export async function PUT(
         { error: 'Invalid role' },
         { status: 400 }
       );
+    }
+
+    // User Managers may change user types; only General admins may change the role
+    const roleError = roleChangeError(session.user.role, (await getUser(id))?.role as Role | undefined, role);
+    if (roleError) {
+      return NextResponse.json({ error: roleError }, { status: 403 });
     }
 
     try {

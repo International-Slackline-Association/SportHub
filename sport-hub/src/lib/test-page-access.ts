@@ -1,11 +1,12 @@
 import { auth } from './auth';
 import { redirect } from 'next/navigation';
+import { roleHasPermission } from '../types/rbac';
 
 /**
  * Check if user can access test pages
  * Test pages are accessible:
  * - In development mode (any user)
- * - In production mode (admin users only)
+ * - In production mode (User Managers and General admins: Manage Users lives here)
  */
 export async function requireTestPageAccess() {
   // Allow in development
@@ -20,7 +21,7 @@ export async function requireTestPageAccess() {
     redirect('/auth/signin');
   }
 
-  if (session.user.role !== 'admin') {
+  if (!roleHasPermission(session.user.role, 'users:manage')) {
     redirect('/unauthorized');
   }
 }
@@ -50,10 +51,10 @@ export async function canAccessTestAPI(): Promise<{
     };
   }
 
-  if (session.user.role !== 'admin') {
+  if (!roleHasPermission(session.user.role, 'users:manage')) {
     return {
       allowed: false,
-      reason: 'Admin access required',
+      reason: 'User Manager or General admin required',
       status: 403,
     };
   }

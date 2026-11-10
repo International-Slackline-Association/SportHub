@@ -15,7 +15,6 @@ export default async function AdminPage() {
   const session = await auth();
   const role = session?.user?.role;
   const can = (permission: Permission) => roleHasPermission(role, permission);
-  const isGeneralAdmin = role === 'admin';
 
   return (
     <PageLayout
@@ -72,7 +71,7 @@ export default async function AdminPage() {
             </Link>
           )}
 
-          {isGeneralAdmin && (
+          {can('users:manage') && (
             <Link
               href="/admin/duplicate-accounts"
               className="block p-6 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
@@ -84,7 +83,7 @@ export default async function AdminPage() {
             </Link>
           )}
 
-          {isGeneralAdmin && (
+          {can('users:manage') && (
             <Link
               href="/test_SSR"
               className="block p-6 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"

@@ -22,6 +22,13 @@ test('Record Manager gets records but not events or users', () => {
   assert.equal(roleHasPermission('record_manager', 'users:manage'), false);
 });
 
+test('User Manager gets users but not events or records', () => {
+  assert.equal(roleHasPermission('user_manager', 'users:manage'), true);
+  assert.equal(roleHasPermission('user_manager', 'admin:access'), true);
+  assert.equal(roleHasPermission('user_manager', 'events:edit'), false);
+  assert.equal(roleHasPermission('user_manager', 'records:manage'), false);
+});
+
 test('users and unknown roles get nothing', () => {
   assert.equal(roleHasPermission('user', 'admin:access'), false);
   assert.equal(roleHasPermission(undefined, 'admin:access'), false);
