@@ -150,7 +150,8 @@ export async function getReviewContext(kind: EntryKind, entryId: string): Promis
   context.category = recordCategory;
   if (recordCategory) {
     const published = (await getEntriesByCategory('record', recordCategory.categoryId))
-      .filter(e => e.status === 'published' && e.entryId !== entry.entryId);
+      // A pending claim is not published yet, so it never counts itself; once approved it shows as the current record.
+      .filter(e => e.status === 'published');
     for (const list of RECORD_GENDERS) {
       const { current } = splitCurrentAndHistory(recordCategory, published.filter(e => e.gender === list));
       if (current[0]) {
