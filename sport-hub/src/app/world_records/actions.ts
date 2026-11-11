@@ -117,6 +117,14 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
     if (existing && existing.status !== 'draft' && existing.status !== 'changes_requested') {
       return { success: false, errors: ['This claim can no longer be edited'] };
     }
+    // A claim sent back for changes keeps its choice of an existing or a new category
+    const isRevision = existing?.status === 'changes_requested';
+    // Firsts have no newCategoryProposal, so the type needs the 'in' check
+    const isNewCategory = !!existing && 'newCategoryProposal' in existing && !!existing.newCategoryProposal;
+    const isSwitchingPath = isNewCategory !== (values.path === 'new_category');
+    if (isRevision && kind === 'record' && isSwitchingPath) {
+      return { success: false, errors: ['A claim sent back for changes cannot switch between an existing and a new category'] };
+    }
 
     const [recordCategory, firstCategory] = await Promise.all([
       kind === 'record' && values.path === 'existing' && values.categoryId ? getRecordCategory(values.categoryId) : null,
