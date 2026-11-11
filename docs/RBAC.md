@@ -41,10 +41,9 @@ If nobody has the Event Manager role, event emails go to `EVENTS_REVIEW_EMAIL` w
 
 ## For developers
 
-**Storage.** Roles live on the user's profile item in the `sporthub-users` table (`sortKey = Profile`), not in Cognito:
+**Storage.** Roles live on the user's profile item in the `sporthub-users` table (`sortKey = Profile`), not in Cognito, as `roles: Role[]` (`event_manager`, `record_manager`, `user_manager`, `admin`). Empty or missing = normal user. There is no single `role` field any more.
 
-- `roles: AdminRole[]`: the admin roles (`event_manager`, `record_manager`, `user_manager`, `admin`). Empty or missing = normal user.
-- `role`: older single-role field, kept in sync (`admin` if General Admin, else the first role, else `user`). Profiles written before multi-role support only have `role`; `rolesOf()` reads them as `['admin']` or `[]`, so no migration is needed.
+**Migration.** Profiles created before this change have a `role: 'user' | 'admin'` attribute instead. Run `pnpm roles:migrate:dry-run` / `pnpm roles:migrate:execute` (local), and the same script against each AWS environment, to convert them. Until then `rolesOf()` reads an old `role: 'admin'` as `['admin']`; delete that fallback once every environment is migrated. Admins must sign out and in once after the deploy so their session carries `roles`.
 
 **Permissions.** Each role maps to permissions in `sport-hub/src/types/rbac.ts` (`ROLE_PERMISSIONS`):
 

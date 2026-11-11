@@ -1,4 +1,3 @@
-import { rolesLabel } from 'src/types/rbac';
 import { auth } from "@lib/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
@@ -106,7 +105,7 @@ export default async function DashboardPage() {
           birthdate={displayBirthdate}
           gender={displayGender}
           links={displayLinks}
-          role={rolesLabel(session.user.roles)}
+          roles={session.user.roles}
         />
 
         {/* Session Debug Info (Optional) */}

@@ -22,7 +22,7 @@ export function generateSportHubId(): string {
 import type { UserProfileRecord } from './relational-types';
 import { clearRoleCache } from './rbac-service';
 import { getUserIdByAthleteSlug } from './user-query-service';
-import { primaryRole, type AdminRole, type UserSubType } from '../types/rbac';
+import type { Role, UserSubType } from '../types/rbac';
 
 /**
  * Build the base athleteSlug from name/surname: diacritics stripped (e.g.
@@ -113,7 +113,7 @@ export async function createUser(
   const newUser: UserProfileRecord = {
     userId,
     sortKey: 'Profile',
-    role: 'user',
+    roles: [],
     userSubTypes: ['athlete'],
     primarySubType: 'athlete',
     createdAt: Date.now(),
@@ -142,12 +142,12 @@ export async function deleteUser(userId: string): Promise<void> {
 }
 
 /**
- * Update user role, sub-types, and clear role cache
+ * Update user roles, sub-types, and clear role cache
  *
  * Consolidates the get→merge→put→clearRoleCache pattern used across multiple callers.
  *
  * @param userId - User ID to update
- * @param roles - Admin roles to assign (empty = normal user); stored as `roles`, with the legacy `role` field kept in sync
+ * @param roles - Roles to assign (empty = normal user)
  * @param userSubTypes - New sub-types
  * @param primarySubType - Optional primary sub-type (defaults to first in userSubTypes)
  * @param assignedBy - Optional user ID of who made the change
@@ -155,7 +155,7 @@ export async function deleteUser(userId: string): Promise<void> {
  */
 export async function updateUserRoleAndSubTypes(
   userId: string,
-  roles: AdminRole[],
+  roles: Role[],
   userSubTypes: UserSubType[],
   primarySubType?: UserSubType,
   assignedBy?: string
@@ -169,9 +169,11 @@ export async function updateUserRoleAndSubTypes(
     ? primarySubType
     : userSubTypes[0];
 
+  // Drop the pre-multi-role `role` attribute if the profile still has it
+  const { role: _legacyRole, ...rest } = existingUser as UserProfileRecord & { role?: unknown };
+  void _legacyRole;
   const updatedUser: UserProfileRecord = {
-    ...existingUser,
-    role: primaryRole(roles),
+    ...rest,
     roles,
     userSubTypes,
     primarySubType: validPrimarySubType,
@@ -212,7 +214,7 @@ export async function createUserWithProfile(
   const user: UserProfileRecord = {
     userId,
     sortKey: 'Profile',
-    role: 'user',
+    roles: [],
     userSubTypes: ['athlete'],
     primarySubType: 'athlete',
     totalPoints: 0,

@@ -5,7 +5,7 @@ import { assertCanManageUsers, roleChangeError } from '@lib/authorization';
 import { revalidatePath } from 'next/cache';
 import { invalidateUsersCache } from '@lib/data-services';
 import { UserFormValues } from './types';
-import { parseAdminRoles, rolesLabel, rolesOf, type AdminRole, type Role, type UserSubType } from 'src/types/rbac';
+import { parseRoles, rolesLabel, rolesOf, type Role, type UserSubType } from 'src/types/rbac';
 import { getUser, deleteUser as deleteUserRecord, updateUserRoleAndSubTypes as updateRoleService, saveUserProfile, generateUniqueAthleteSlug } from '@lib/user-service';
 import type { UserProfileRecord } from '@lib/relational-types';
 
@@ -22,7 +22,7 @@ export async function createUser(payload: UserFormValues, path: string) {
     id: userId,
     sortKey: 'Profile',
     athleteSlug,
-    role: 'user' as Role,
+    roles: [] as Role[],
     userSubTypes: ['athlete'] as UserSubType[],
     primarySubType: 'athlete' as UserSubType,
     totalPoints: 0,
@@ -76,7 +76,7 @@ export async function updateUser(formData: FormData) {
 
 export async function updateUserRoleAndSubTypes(
   userId: string,
-  requestedRoles: AdminRole[],
+  requestedRoles: Role[],
   userSubTypes: UserSubType[],
   primarySubType?: UserSubType
 ): Promise<{ success: boolean; message?: string; error?: string }> {
@@ -86,7 +86,7 @@ export async function updateUserRoleAndSubTypes(
     return { success: false, error: 'Authentication required' };
   }
 
-  const roles = parseAdminRoles(requestedRoles);
+  const roles = parseRoles(requestedRoles);
   if (!roles) {
     return { success: false, error: 'Invalid role' };
   }

@@ -7,7 +7,7 @@
 
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { dynamodb, ddbClient, getTableName, USERS_TABLE } from './dynamodb';
-import { rolesOf, type AdminRole } from '../types/rbac';
+import type { Role } from '../types/rbac';
 import type {
   UserProfileRecord,
   AthleteRankingRecord,
@@ -272,18 +272,15 @@ export async function getAllUserProfiles(): Promise<UserProfileRecord[]> {
  * Email addresses of everyone with one of the given roles.
  * Filtered scan: only used on rare events (a new record/first claim), not on page loads.
  */
-export async function getEmailsByRole(roles: AdminRole[]): Promise<string[]> {
-  // Candidates by the roles list or the legacy single role; rolesOf decides (a roles list wins over role)
+export async function getEmailsByRole(roles: Role[]): Promise<string[]> {
   const values = Object.fromEntries(roles.map((r, i) => [`:r${i}`, r]));
-  const keys = Object.keys(values);
   const items = await dynamodb.scanItems(USERS_TABLE, {
-    projectionExpression: 'email, #role, #roles',
-    filterExpression: `sortKey = :sk AND (#role IN (${keys.join(', ')}) OR ${keys.map(k => `contains(#roles, ${k})`).join(' OR ')})`,
-    expressionAttributeNames: { '#role': 'role', '#roles': 'roles' },
+    projectionExpression: 'email',
+    filterExpression: `sortKey = :sk AND (${Object.keys(values).map(k => `contains(#roles, ${k})`).join(' OR ')})`,
+    expressionAttributeNames: { '#roles': 'roles' },
     expressionAttributeValues: { ':sk': 'Profile', ...values },
   });
-  const holders = (items ?? []).filter(i => rolesOf(i as { role?: string; roles?: unknown }).some(r => roles.includes(r)));
-  return [...new Set(holders.map(i => i.email as string | undefined).filter((e): e is string => !!e))];
+  return [...new Set((items ?? []).map(i => i.email as string | undefined).filter((e): e is string => !!e))];
 }
 
 /**

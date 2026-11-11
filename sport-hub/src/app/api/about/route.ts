@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getUsersPaginated } from '@lib/user-query-service';
 import { createUserWithProfile, generateUniqueAthleteSlug } from '@lib/user-service';
+import { rolesOf } from 'src/types/rbac';
 
 const DEFAULT_PAGE_SIZE = 100;
 
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
       gender: item.gender,
       totalPoints: item.totalPoints ?? 0,
       contestsParticipated: item.contestsParticipated ?? item.contestCount ?? 0,
-      role: item.role ?? 'user',
+      roles: rolesOf(item),
       userSubTypes: item.userSubTypes ?? [],
       primarySubType: item.primarySubType,
     }));

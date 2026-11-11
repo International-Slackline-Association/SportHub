@@ -5,7 +5,7 @@ import UserManagementModal from '@ui/UserForm/UserManagementModal';
 import { deleteUser } from './actions';
 import Button from '@ui/Button';
 import SearchBar from './SearchBar';
-import { rolesLabel, type AdminRole, type Role, type UserSubType } from 'src/types/rbac';
+import { rolesLabel, type Role, type UserSubType } from 'src/types/rbac';
 import { userGenderOptions } from '@ui/Form';
 
 interface User {
@@ -23,8 +23,7 @@ interface User {
   gender?: string;
   totalPoints?: number;
   contestsParticipated?: number;
-  role?: Role;
-  roles?: AdminRole[];
+  roles?: Role[];
   userSubTypes?: UserSubType[];
   primarySubType?: UserSubType;
 }

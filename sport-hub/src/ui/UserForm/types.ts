@@ -48,8 +48,7 @@ export interface UserData {
   city?: string;
   birthdate?: string;
   isaUsersId?: string;
-  role?: string;
-  roles?: string[];
+  roles?: string[];              // Admin roles; permissions combine. Empty = normal user
   userSubTypes?: string[];
   primarySubType?: string;
 }

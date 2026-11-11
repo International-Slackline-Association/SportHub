@@ -2,7 +2,7 @@
 // Optimized for efficient DynamoDB queries using composite sort keys and GSIs
 
 import { PendingUserData } from 'src/app/events/submit/types';
-import type { AdminRole, Role, UserSubType } from '../types/rbac';
+import type { Role, UserSubType } from '../types/rbac';
 
 // ============================================================================
 // USERS TABLE RECORDS
@@ -42,8 +42,7 @@ export interface UserProfileRecord extends UserTableRecord {
   gender?: string;
 
   // RBAC fields
-  role: Role;                     // Legacy single role, kept in sync with roles (primaryRole)
-  roles?: AdminRole[];            // All admin roles; permissions combine. Missing on older profiles (see rolesOf)
+  roles?: Role[];                 // Admin roles; permissions combine. Empty/missing = normal user. Read with rolesOf()
   permissions?: string[];
   roleAssignedAt?: string;
   roleAssignedBy?: string;

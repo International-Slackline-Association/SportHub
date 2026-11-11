@@ -5,6 +5,7 @@ import { FormikHelpers, type FormikProps } from 'formik';
 import Modal from '@ui/Modal';
 import Button from '@ui/Button';
 import { UpdateUserForm } from '@ui/UserForm';
+import { ROLES, ROLE_LABELS, rolesLabel, type Role } from 'src/types/rbac';
 
 interface FormValues {
   id: string;
@@ -22,7 +23,6 @@ const DEFAULT_PAGE_SIZE = 100;
 const PAGE_SIZE_OPTIONS = [20, 50, 100, 250, 500, 1000];
 const ALL_SUB_TYPES = ['athlete', 'judge', 'organizer'] as const;
 
-type Role = 'user' | 'admin';
 type UserSubType = 'athlete' | 'judge' | 'organizer';
 type Permission = string;
 
@@ -40,7 +40,7 @@ interface User {
   totalPoints?: number;
   contestsParticipated?: number;
   updatedAt?: string;
-  role?: Role;
+  roles?: Role[];
   userSubTypes?: UserSubType[];
   primarySubType?: UserSubType;
 }
@@ -49,7 +49,7 @@ interface SessionInfo {
   user: {
     id: string;
     email: string;
-    role: Role;
+    roles: Role[];
     cognitoSub?: string;
     permissions: Permission[];
   };
@@ -65,12 +65,12 @@ interface DbUser {
   city?: string;
   birthdate?: string;
   gender?: string;
-  role: Role;
+  roles?: Role[];
   userSubTypes: UserSubType[];
   primarySubType?: UserSubType;
 }
 
-type NewUserForm = Omit<User, 'createdAt' | 'totalPoints' | 'contestsParticipated' | 'updatedAt' | 'role' | 'userSubTypes' | 'primarySubType'>;
+type NewUserForm = Omit<User, 'createdAt' | 'totalPoints' | 'contestsParticipated' | 'updatedAt' | 'roles' | 'userSubTypes' | 'primarySubType'>;
 
 export default function TestCSRPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -96,7 +96,7 @@ export default function TestCSRPage() {
   const [sessionLoading, setSessionLoading] = useState(true);
 
   // Role editing state
-  const [selectedRole, setSelectedRole] = useState<Role>('user');
+  const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
   const [selectedSubTypes, setSelectedSubTypes] = useState<UserSubType[]>([]);
   const [primarySubType, setPrimarySubType] = useState<UserSubType | undefined>();
 
@@ -287,7 +287,7 @@ export default function TestCSRPage() {
 
   const startEditingRole = (user: User) => {
     setEditingRoleUser(user);
-    setSelectedRole(user.role || 'user');
+    setSelectedRoles(user.roles ?? []);
     setSelectedSubTypes(user.userSubTypes || []);
     setPrimarySubType(user.primarySubType);
     setMessage(null);
@@ -321,7 +321,7 @@ export default function TestCSRPage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          role: selectedRole,
+          roles: selectedRoles,
           userSubTypes: selectedSubTypes,
           primarySubType: primarySubType && selectedSubTypes.includes(primarySubType) ? primarySubType : selectedSubTypes[0],
         }),
@@ -367,8 +367,8 @@ export default function TestCSRPage() {
     );
   }
 
-  const sessionRole = session?.user?.role || 'user';
-  const dbRole = dbUser?.role || 'user';
+  const sessionRole = rolesLabel(session?.user?.roles);
+  const dbRole = rolesLabel(dbUser?.roles);
   const roleMismatch = session && dbUser && sessionRole !== dbRole;
 
   return (
@@ -426,7 +426,7 @@ export default function TestCSRPage() {
                       <dt className="text-gray-500">Role</dt>
                       <dd>
                         <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                          sessionRole === 'admin'
+                          !!session?.user?.roles?.length
                             ? 'bg-purple-100 text-purple-800'
                             : 'bg-gray-100 text-gray-700'
                         }`}>
@@ -491,7 +491,7 @@ export default function TestCSRPage() {
                         <dt className="text-gray-500">Role</dt>
                         <dd>
                           <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                            dbRole === 'admin'
+                            !!dbUser?.roles?.length
                               ? 'bg-purple-100 text-purple-800'
                               : 'bg-gray-100 text-gray-700'
                           }`}>
@@ -531,7 +531,7 @@ export default function TestCSRPage() {
               {roleMismatch && (
                 <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                   <p className="text-sm text-yellow-800">
-                    <strong>Role Mismatch:</strong> Session role ({sessionRole}) differs from database role ({dbRole}).
+                    <strong>Role Mismatch:</strong> Session roles ({sessionRole}) differ from database roles ({dbRole}).
                     Sign out and back in to refresh your session.
                   </p>
                 </div>
@@ -671,31 +671,18 @@ export default function TestCSRPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Role (Authorization)
               </label>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setSelectedRole('user')}
-                  className={`flex-1 px-4 py-2 rounded-lg border-2 transition-colors ${
-                    selectedRole === 'user'
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="font-medium">User</div>
-                  <div className="text-xs text-gray-500">Standard access</div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedRole('admin')}
-                  className={`flex-1 px-4 py-2 rounded-lg border-2 transition-colors ${
-                    selectedRole === 'admin'
-                      ? 'border-purple-500 bg-purple-50 text-purple-700'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="font-medium">Admin</div>
-                  <div className="text-xs text-gray-500">Full access</div>
-                </button>
+              <div className="space-y-2">
+                {ROLES.map(role => (
+                  <label key={role} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedRoles.includes(role)}
+                      onChange={() => setSelectedRoles(prev => prev.includes(role) ? prev.filter(r => r !== role) : ROLES.filter(r => r === role || prev.includes(r)))}
+                      className="w-4 h-4 text-purple-600 rounded"
+                    />
+                    <span className="font-medium">{ROLE_LABELS[role]}</span>
+                  </label>
+                ))}
               </div>
             </div>
 
@@ -843,11 +830,11 @@ export default function TestCSRPage() {
                         <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">You</span>
                       )}
                       <span className={`text-xs px-2 py-0.5 rounded ${
-                        user.role === 'admin'
+                        user.roles?.length
                           ? 'bg-purple-100 text-purple-800'
                           : 'bg-gray-100 text-gray-600'
                       }`}>
-                        {user.role || 'user'}
+                        {rolesLabel(user.roles)}
                       </span>
                     </div>
                     <p className="text-gray-600">{user.email}</p>

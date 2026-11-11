@@ -138,7 +138,7 @@ interface AthleteProfile {
   gender?: string;       // Gender from ISA-Rankings AthleteDetails
   profileUrl?: string;
   thumbnailUrl?: string;
-  role: string;
+  roles: string[];
   userSubTypes: string[];
   primarySubType: string;
   totalPoints: number;
@@ -546,7 +546,7 @@ async function scanAthleteDetails(
         profileUrl: item.profileUrl as string | undefined,
         thumbnailUrl: item.thumbnailUrl as string | undefined,
         links: item?.infoUrl ? (item.infoUrl as string).split(/[,\s]+/).filter(Boolean) : undefined,
-        role: 'user',
+        roles: [],
         userSubTypes: ['athlete'],
         primarySubType: 'athlete',
         totalPoints: 0, // Will calculate from participations

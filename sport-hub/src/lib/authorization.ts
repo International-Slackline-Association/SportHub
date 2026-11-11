@@ -47,7 +47,7 @@ export async function hasRole(requiredRole: Role): Promise<boolean> {
   // Admin has access to everything
   if (isGeneralAdmin(session.user.roles)) return true;
 
-  return requiredRole === 'user' || session.user.roles.includes(requiredRole);
+  return session.user.roles.includes(requiredRole);
 }
 
 /**
@@ -60,7 +60,7 @@ export async function hasAnyRole(roles: Role[]): Promise<boolean> {
   const session = await auth();
   if (!session?.user) return false;
 
-  return roles.some(r => r === 'user' || session.user.roles.includes(r));
+  return roles.some(r => session.user.roles.includes(r));
 }
 
 /**
@@ -106,7 +106,7 @@ export async function requireRole(
     return;
   }
 
-  if (requiredRole !== 'user' && !session.user.roles.includes(requiredRole)) {
+  if (!session.user.roles.includes(requiredRole)) {
     redirect(`${redirectUrl}?required=${requiredRole}`);
   }
 }
@@ -232,7 +232,7 @@ export async function canEditUser(targetUserId: string): Promise<AuthorizationRe
     return {
       authorized: true,
       userId: session.user.id,
-      role: session.user.role,
+      roles: session.user.roles,
     };
   }
 
@@ -241,7 +241,7 @@ export async function canEditUser(targetUserId: string): Promise<AuthorizationRe
     return {
       authorized: true,
       userId: session.user.id,
-      role: session.user.role,
+      roles: session.user.roles,
     };
   }
 
@@ -249,7 +249,7 @@ export async function canEditUser(targetUserId: string): Promise<AuthorizationRe
     authorized: false,
     reason: 'Insufficient permissions - you can only edit your own profile',
     userId: session.user.id,
-    role: session.user.role,
+    roles: session.user.roles,
   };
 }
 

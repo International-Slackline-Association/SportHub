@@ -4,7 +4,7 @@ import { useState } from 'react';
 import ProfileEditForm from './ProfileEditForm';
 import { getCountryByName } from '@utils/countries';
 import { CircleFlag } from 'react-circle-flags';
-import { ROLE_LABELS } from 'src/types/rbac';
+import { rolesLabel, type Role } from 'src/types/rbac';
 
 interface ProfileSectionProps {
   userId: string;
@@ -17,7 +17,7 @@ interface ProfileSectionProps {
   birthdate?: string;
   gender?: string;
   links?: string[];
-  role: string;
+  roles: Role[];
 }
 
 export default function ProfileSection({
@@ -31,7 +31,7 @@ export default function ProfileSection({
   birthdate,
   gender,
   links,
-  role,
+  roles,
 }: ProfileSectionProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -120,12 +120,12 @@ export default function ProfileSection({
             <dd className="mt-1">
               <span
                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  role !== ROLE_LABELS.user
+                  roles.length > 0
                     ? 'bg-purple-100 text-purple-800'
                     : 'bg-gray-100 text-gray-800'
                 }`}
               >
-                {role}
+                {rolesLabel(roles)}
               </span>
             </dd>
           </div>

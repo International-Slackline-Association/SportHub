@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@lib/auth';
 import { getUser, updateUserRoleAndSubTypes } from '@lib/user-service';
 import { roleChangeError } from '@lib/authorization';
-import { isRole, parseAdminRoles, rolesLabel, rolesOf, type AdminRole, type Role, type UserSubType } from 'src/types/rbac';
+import { parseRoles, rolesLabel, rolesOf, type Role, type UserSubType } from 'src/types/rbac';
 
 export async function PUT(
   request: Request,
@@ -21,15 +21,12 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json() as {
-      roles?: AdminRole[];
-      role?: Role;              // Legacy single role
+      roles: Role[];
       userSubTypes: UserSubType[];
       primarySubType?: UserSubType;
     };
     const { userSubTypes, primarySubType } = body;
-    const roles = body.roles !== undefined
-      ? parseAdminRoles(body.roles)
-      : isRole(body.role) ? (body.role === 'user' ? [] : [body.role]) : null;
+    const roles = parseRoles(body.roles);
 
     // Validate roles
     if (!roles) {

@@ -11,7 +11,7 @@ import { CreateUserForm } from '.';
 import { updateUserRoleAndSubTypes } from './actions';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import { ADMIN_ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS, isGeneralAdmin, rolesOf, type AdminRole, type UserSubType } from 'src/types/rbac';
+import { ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS, isGeneralAdmin, rolesOf, type Role, type UserSubType } from 'src/types/rbac';
 
 const ALL_SUB_TYPES: UserSubType[] = ['athlete', 'judge', 'organizer'];
 
@@ -35,7 +35,7 @@ const UserManagementModal = ({
   const queryClient = useQueryClient();
 
   // Role/subtype state (used when action === 'ROLES')
-  const [selectedRoles, setSelectedRoles] = useState<AdminRole[]>(rolesOf(user));
+  const [selectedRoles, setSelectedRoles] = useState<Role[]>(rolesOf(user));
   const [selectedSubTypes, setSelectedSubTypes] = useState<UserSubType[]>((user?.userSubTypes as UserSubType[]) || []);
   const [primarySubType, setPrimarySubType] = useState<UserSubType | undefined>(user?.primarySubType as UserSubType | undefined);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -46,8 +46,8 @@ const UserManagementModal = ({
   const { data: session } = useSession();
   const canChangeGeneralAdmin = isGeneralAdmin(session?.user?.roles) || process.env.NODE_ENV === 'development';
 
-  const handleRoleToggle = (role: AdminRole) => {
-    setSelectedRoles(prev => prev.includes(role) ? prev.filter(r => r !== role) : ADMIN_ROLES.filter(r => r === role || prev.includes(r)));
+  const handleRoleToggle = (role: Role) => {
+    setSelectedRoles(prev => prev.includes(role) ? prev.filter(r => r !== role) : ROLES.filter(r => r === role || prev.includes(r)));
   };
 
   const buttonLabel = action === 'CREATE' ? 'Register' : action === 'ROLES' ? 'Roles' : 'Edit';
@@ -148,7 +148,7 @@ const UserManagementModal = ({
                 </label>
                 <p className="text-xs text-gray-500 mb-2">None ticked = normal user. Several roles combine their access.</p>
                 <div className="space-y-2">
-                  {ADMIN_ROLES.map(role => {
+                  {ROLES.map(role => {
                     const isChecked = selectedRoles.includes(role);
                     const isLocked = role === 'admin' && !canChangeGeneralAdmin;
                     return (
