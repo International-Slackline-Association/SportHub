@@ -29,10 +29,11 @@ test('file sizes are readable', () => {
   assert.equal(formatFileSize(250 * 1024 ** 2), '250 MB');
 });
 
-test('claims need two to ten witnesses with name and email', () => {
+test('witnesses are optional, at most ten, each with name and email', () => {
   const w = (n: number) => ({ name: `W${n}`, email: `w${n}@example.com` });
+  assert.deepEqual(witnessProblems([]), []);
+  assert.deepEqual(witnessProblems([w(1)]), []);
   assert.deepEqual(witnessProblems([w(1), w(2)]), []);
-  assert.deepEqual(witnessProblems([w(1)]), ['Name at least 2 witnesses']);
   assert.deepEqual(witnessProblems(Array.from({ length: 11 }, (_, i) => w(i))), ['Name at most 10 witnesses']);
   assert.deepEqual(witnessProblems([w(1), { name: 'W2', email: '' }]), ['Each witness needs a name and an email']);
   assert.deepEqual(witnessProblems([w(1), { name: 'W2', email: 'nope' }]), ['Enter a valid email for each witness']);

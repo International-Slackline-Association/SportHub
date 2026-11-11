@@ -77,7 +77,7 @@ export const emptyClaim = (path: ClaimPath = 'existing'): ClaimFormValues => ({
   locationCountry: '',
   setup: '',
   furtherSpecs: '',
-  witnesses: [{ name: '', email: '', phone: '' }, { name: '', email: '', phone: '' }],
+  witnesses: [{ name: '', email: '', phone: '' }],
   fullVideo: true,
   noFullVideoReason: '',
   trickName: '',
@@ -109,7 +109,7 @@ const witnessFields = (w: RecordWitness): RecordWitness => {
 /** Loads a saved claim back into the form (edit a draft or a claim with changes requested). */
 export function entryToClaimValues(entry: WorldRecordOrFirstTableItem): ClaimFormValues {
   const witnesses = (entry.witnesses ?? []).map(witnessFields);
-  while (witnesses.length < 2) witnesses.push({ name: '', email: '', phone: '' });
+  if (witnesses.length === 0) witnesses.push({ name: '', email: '', phone: '' });
   const proposal = entry.kind === 'record' ? entry.newCategoryProposal : undefined;
   const base = emptyClaim(entry.kind === 'first' ? 'first' : proposal ? 'new_category' : 'existing');
   const common: ClaimFormValues = {
