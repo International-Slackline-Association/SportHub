@@ -171,7 +171,7 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
         categoryName: isNew ? values.newCategory.name.trim() : recordCategory?.name ?? '',
         value,
         ...recordDetailsFrom(values),
-        newCategoryProposal: isNew ? { ...values.newCategory, name: values.newCategory.name.trim() } : undefined,
+        newCategoryProposal: isNew ? { ...values.newCategory, name: values.newCategory.name.trim(), group: values.newCategory.group || undefined } : undefined,
       };
 
       // The value must beat or equal the current mark on its list (FR-5)
