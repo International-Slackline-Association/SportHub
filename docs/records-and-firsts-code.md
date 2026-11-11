@@ -71,4 +71,4 @@ instead of scanning.
 | `pnpm test:records` | Unit tests for `records-logic.ts` (node:test via tsx). |
 
 Email settings: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `RECORDS_REVIEW_EMAIL`,
-`RECORDS_COMMUNICATION_EMAIL`, `SITE_URL`. Without `SMTP_HOST`, or with `DYNAMODB_LOCAL=true`, emails are logged only.
+`RECORDS_COMMUNICATION_EMAIL`, `SITE_URL` (public base URL for email links and the certificate QR code; falls back to `AUTH_URL`, see `docs/AMPLIFY_DEPLOYMENT.md`). Without `SMTP_HOST`, or with `DYNAMODB_LOCAL=true`, emails are logged only.
