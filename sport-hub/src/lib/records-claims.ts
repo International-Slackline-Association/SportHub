@@ -24,6 +24,7 @@ import type {
   RecordWitness,
   WorldRecordOrFirstTableItem,
 } from './relational-types';
+import { RECORD_CATEGORY_GROUPS, type RecordCategoryGroup } from './relational-types';
 import type { ClaimFormValues } from 'src/app/world_records/claim/types';
 import { INVALID_URL_MESSAGE, isValidUrl, normalizeUrl } from '@utils/urls';
 
@@ -237,6 +238,7 @@ export function validateForSubmit(
     if (!recordCategory || recordCategory.status === 'archived') errors.push('Choose a record category');
   } else {
     required(values.newCategory.name, 'Category name');
+    if (!RECORD_CATEGORY_GROUPS.includes(values.newCategory.group as RecordCategoryGroup)) errors.push('Choose a group for the new category');
     required(values.newCategory.measurement, 'What is measured and how');
     required(values.newCategory.justification, 'Why it is a distinct record');
     if (values.newCategory.direction !== 'higher' && values.newCategory.direction !== 'lower') errors.push('Choose whether higher or lower is better');

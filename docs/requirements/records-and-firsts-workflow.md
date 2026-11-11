@@ -81,7 +81,7 @@ values of the category's entries.
 ## 5. Claim
 
 One button, "Claim World Record or World First" (on `/world_records`, "My claims" and the dashboard), opens a form
-with three paths: **(a)** record in an existing category, **(b)** record in a new category (proposal: name, what is
+with three paths: **(a)** record in an existing category, **(b)** record in a new category (proposal: name, group, what is
 measured and how, unit, direction, why it is distinct), **(c)** world first. The record form reminds claimants to
 email records@slacklineinternational.org before an attempt.
 
@@ -140,7 +140,7 @@ whatever the sheet had.
 - The detail page shows all fields, the history, the current record per list (for significance, a reviewer
   judgment), and actions **Approve**, **Request changes** (comment required), **Reject** (reason required) and
   **Modify**. Rejecting needs a reason from a list (§6.1). New-category claims show similar categories and the framework's record criteria; the reviewer
-  creates the category (Unchallenged, group Other) or maps the claim to an existing one. Firsts show the first
+  creates the category (Unchallenged, in the group the claimant chose) or maps the claim to an existing one. Firsts show the first
   criteria and the existing firsts of the discipline, and can be linked to the same trick on another list.
 - **Modify** edits every field before or after approval (logged, with an optional reason); published/historical is
   recomputed. Admins see an **Edit** link on every public row.

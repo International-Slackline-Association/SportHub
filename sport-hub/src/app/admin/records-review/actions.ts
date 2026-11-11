@@ -150,7 +150,8 @@ export async function getReviewContext(kind: EntryKind, entryId: string): Promis
   context.category = recordCategory;
   if (recordCategory) {
     const published = (await getEntriesByCategory('record', recordCategory.categoryId))
-      .filter(e => e.status === 'published' && e.entryId !== entry.entryId);
+      // A pending claim is not published yet, so it never counts itself; once approved it shows as the current record.
+      .filter(e => e.status === 'published');
     for (const list of RECORD_GENDERS) {
       const { current } = splitCurrentAndHistory(recordCategory, published.filter(e => e.gender === list));
       if (current[0]) {
@@ -182,7 +183,7 @@ export interface ApproveOptions {
   comment?: string;
 }
 
-/** Creates the category a new-category claim proposed, as Unchallenged in group Other (FR-C3, FR-19). */
+/** Creates the category a new-category claim proposed, as Unchallenged in the group the claimant chose (FR-C3, FR-19). */
 async function createProposedCategory(
   entry: WorldRecordTableItem,
   actor: ReturnType<typeof actorOf>,
@@ -197,7 +198,7 @@ async function createProposedCategory(
     categoryId,
     name: proposal.name,
     description: proposal.measurement || undefined,
-    group: 'Other',
+    group: proposal.group ?? 'Other',
     direction: proposal.direction,
     unit: proposal.unit,
     status: 'unchallenged',
@@ -478,7 +479,7 @@ export async function adminUpdateEntry(kind: EntryKind, entryId: string, values:
         ...shared,
         categoryId: proposing ? entry.categoryId : values.categoryId,
         categoryName: proposing ? values.newCategory.name.trim() : recordCategory?.name ?? entry.categoryName,
-        newCategoryProposal: proposing ? { ...values.newCategory } : undefined,
+        newCategoryProposal: proposing ? { ...values.newCategory, group: values.newCategory.group || undefined } : undefined,
         value,
         ...recordDetailsFrom(values),
       };
