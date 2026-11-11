@@ -33,6 +33,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Fonts and images the certificate PDFs read from disk at runtime
+  outputFileTracingIncludes: {
+    '/api/certificates/[kind]/[id]': ['./src/lib/certificate-assets/**'],
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: '5mb',

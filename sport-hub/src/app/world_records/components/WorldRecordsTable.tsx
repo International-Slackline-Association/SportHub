@@ -9,6 +9,7 @@ import { BREAKPOINT_LG, useClientMediaQuery } from '@utils/useClientMediaQuery';
 import Link from 'next/link';
 import {
   athleteCountriesAccessor,
+  athleteNameListAccessor,
   athleteNamesAccessor,
   athleteNamesCellFormatter,
   AthleteNames,
@@ -21,27 +22,20 @@ import {
   linkClassName,
   TitleBadge,
 } from './cellFormatters';
-import { AdminEditLink } from './AdminEditLink';
+import { AdminEditButton, useIsAdmin } from './AdminEditButton';
 import { RECORD_CATEGORY_GROUPS } from '@lib/relational-types';
+import type { RecordStanding } from '@lib/records-logic';
+import { multiSelectFilterFn } from '@ui/Table/TableFilterFields';
 
 const columnHelper = createColumnHelper<WorldRecord>();
 
-type View = 'current' | 'unchallenged' | 'history';
-
-const VIEW_OPTIONS: { value: View; label: string }[] = [
-  { value: 'current', label: 'Current world records' },
-  { value: 'unchallenged', label: 'Unchallenged categories' },
-  { value: 'history', label: 'All, with former and historical world records' },
+/** Each standing on its own (requirements §4), so any combination can be shown. */
+const STANDING_OPTIONS: { value: RecordStanding; label: string }[] = [
+  { value: 'world_record', label: 'World Record' },
+  { value: 'unchallenged', label: 'Unchallenged' },
+  { value: 'former', label: 'Former World Record' },
+  { value: 'historical', label: 'Historical World Record' },
 ];
-
-/** Current: World Records (active categories). Unchallenged: not World Records yet (§4). History: everything. */
-const inView = (row: WorldRecord, view: View) => {
-  switch (view) {
-    case 'current': return row.isCurrent && row.categoryStatus === 'active';
-    case 'unchallenged': return row.isCurrent && row.categoryStatus === 'unchallenged';
-    case 'history': return true;
-  }
-};
 
 const sharedColumns = [
   columnHelper.accessor('categoryName', {
@@ -56,6 +50,15 @@ const sharedColumns = [
     ),
     meta: { filterVariant: 'autocomplete' },
     size: 160,
+  }),
+  // Filter only (size 0 hides the column): pick one athlete, rows with them pass
+  columnHelper.accessor(athleteNameListAccessor, {
+    id: 'athlete',
+    header: 'Athlete',
+    enableColumnFilter: true,
+    filterFn: 'arrIncludes',
+    meta: { filterVariant: 'autocomplete' },
+    size: 0,
   }),
   columnHelper.accessor(athleteCountriesAccessor, {
     id: 'country',
@@ -75,12 +78,12 @@ const sharedColumns = [
     meta: { filterVariant: 'record-gender' },
     size: 40,
   }),
-  // Filter only (size 0 hides the column): current / unchallenged / history
-  columnHelper.accessor('title', {
+  // Filter only (size 0 hides the column): any combination of standings
+  columnHelper.accessor('standing', {
     header: 'Show',
     enableColumnFilter: true,
-    filterFn: (row, _columnId, view: View) => inView(row.original, view),
-    meta: { filterVariant: 'select', filterOptions: VIEW_OPTIONS },
+    filterFn: multiSelectFilterFn,
+    meta: { filterVariant: 'multi-select', filterOptions: STANDING_OPTIONS },
     size: 0,
   }),
 ] as const;
@@ -109,7 +112,9 @@ const columns = [
                 Link {idx + 1}
               </Link>
             ))}
-            <AdminEditLink entry={info.row.original} />
+          </div>
+          <div className="cluster justify-end">
+            <AdminEditButton entry={info.row.original} />
           </div>
         </div>
       );
@@ -129,6 +134,13 @@ const columns = [
     cell: linkCellFormatter,
     size: 40,
   }),
+  // Admins only: Edit button in its own column, outside the Links column
+  columnHelper.display({
+    id: 'edit',
+    header: 'Admin',
+    cell: info => <AdminEditButton entry={info.row.original} />,
+    size: 40,
+  }),
   // Shared filterable columns
   ...sharedColumns,
 ];
@@ -139,6 +151,7 @@ type WorldRecordsTableProps = {
 
 const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
   const { isDesktop } = useClientMediaQuery(BREAKPOINT_LG);
+  const isAdmin = useIsAdmin();
   const [selectedGroup, setSelectedGroup] = useState('');
 
   const groupOptions = useMemo(() => {
@@ -174,20 +187,22 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
         data: filteredData,
         initialState: {
           sorting: [{ id: 'date', desc: true }],
-          columnFilters: [{ id: 'title', value: 'current' }],
+          columnFilters: [{ id: 'standing', value: ['world_record'] }],
           columnOrder: isDesktop
-            ? ['categoryName', 'value', 'name', 'country', 'gender', 'date', 'links']
+            ? ['categoryName', 'value', 'name', 'country', 'gender', 'date', 'links', 'edit']
             : ['worldRecord', 'categoryName', 'country', 'gender'],
           columnVisibility: {
             worldRecord:  !isDesktop,
-            title:        false,
+            standing:     false,
             date:         !!isDesktop,
             value:        !!isDesktop,
             name:         !!isDesktop,
+            athlete:      false,
             country:      !!isDesktop,
             categoryName: !!isDesktop,
             gender:       !!isDesktop,
             links:        !!isDesktop,
+            edit:         !!isDesktop && isAdmin,
           },
         }
       }}
