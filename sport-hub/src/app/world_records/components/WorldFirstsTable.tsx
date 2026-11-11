@@ -104,7 +104,7 @@ const columns = [
   // Admins only: Edit button in its own column, outside the Links column
   columnHelper.display({
     id: 'edit',
-    header: '',
+    header: 'Admin',
     cell: info => <AdminEditButton entry={info.row.original} />,
     size: 40,
   }),

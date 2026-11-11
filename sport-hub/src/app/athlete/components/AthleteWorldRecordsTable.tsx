@@ -48,7 +48,7 @@ const buildColumns = (athleteId?: string) => [
   // Admins only: Edit button in its own column, outside the Links column
   columnHelper.display({
     id: 'edit',
-    header: '',
+    header: 'Admin',
     cell: ({ row }) => <AdminEditButton entry={row.original} />,
     size: 40,
   }),
