@@ -13,7 +13,7 @@ How the World Records & World Firsts workflow is built, for reviewers. Requireme
 | Data access | `lib/records-service.ts` | DynamoDB reads/writes for categories, entries, audit log, import items, profile pointers; public display rows with titles. |
 | Claim helpers | `lib/records-claims.ts` | Form → entry fields, submit validation, athlete snapshot, creating new athletes. Shared by both action files. |
 | Claimant actions | `app/world_records/actions.ts` | Save draft, submit, withdraw, delete draft, "My claims". Signed-in user; only the claimant can change a claim. |
-| Reviewer actions | `app/admin/records-review/actions.ts` | Queue, review detail, approve / request changes / reject, void / restore, Modify. `records:review`, and `records:manage` for public entries. |
+| Reviewer actions | `app/admin/records-review/actions.ts` | Queue, review detail, approve / request changes / reject, void / restore, Modify, permanent delete. `records:review`, and `records:manage` for public entries. |
 | Category actions | `app/admin/records-categories/actions.ts` | Create and edit record and first categories (`records:manage`). |
 | Import actions | `app/admin/records-import/actions.ts` | Resolve the import review list (`records:manage`). |
 | Claim forms | `claim/components/SubmitClaimClient.tsx`, `WorldRecordClaimForm.tsx`, `WorldFirstClaimForm.tsx`, `claim/schemas.ts` | `SubmitClaimClient` holds the claim choice, the draft/submit/delete actions and the server calls. Each form has its own fields and Yup schema, so errors show while filling in; drafts are saved without them. The admin Modify form reuses both forms with `admin`. |
@@ -55,6 +55,9 @@ instead of scanning.
    historical → email. Firsts can be linked to the same trick on another list (`trickGroupId`).
 3. **Titles** are computed at read time in `toWorldRecords` / `toWorldFirsts`, never stored.
 4. **Void / restore** (`setPublicEntryStatus`): voiding sets `voidedAt`; only voided entries can be restored.
+   **Permanent delete** (`deleteEntryPermanently`, `records:manage`) is for entries that should never have existed:
+   removes the entry, its audit log, profile pointers and import review items, logs the deletion in the category
+   history and recomputes the category's record statuses. Needs a reason and typing DELETE.
 5. **Concurrency:** status changes use `putEntry(entry, { expectedStatus })`, a conditional write, so the second of two
    simultaneous decisions fails with `ConcurrentChangeError`. Approval first takes a decision lock
    (`lockForDecision`, stale after 2 minutes) because it creates profiles and categories before its final write.
