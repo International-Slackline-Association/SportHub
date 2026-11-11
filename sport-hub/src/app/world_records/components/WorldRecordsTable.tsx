@@ -8,10 +8,13 @@ import tableStyles from '@ui/Table/styles.module.css';
 import { BREAKPOINT_LG, useClientMediaQuery } from '@utils/useClientMediaQuery';
 import Link from 'next/link';
 import {
+  athleteCountriesAccessor,
   athleteNameListAccessor,
   athleteNamesAccessor,
   athleteNamesCellFormatter,
   AthleteNames,
+  countriesCellFormatter,
+  countriesSortingFn,
   dateSortingFn,
   genderCellFormatter,
   genderFilterFn,
@@ -63,6 +66,16 @@ const sharedColumns = [
     filterFn: 'arrIncludes',
     meta: { filterVariant: 'autocomplete' },
     size: 0,
+  }),
+  columnHelper.accessor(athleteCountriesAccessor, {
+    id: 'country',
+    header: 'Country',
+    enableColumnFilter: true,
+    cell: countriesCellFormatter,
+    sortingFn: countriesSortingFn,
+    filterFn: 'arrIncludes',
+    meta: { filterVariant: 'select', filterIncludeAll: true },
+    size: 80,
   }),
   columnHelper.accessor('gender', {
     header: 'Gender',
@@ -173,8 +186,8 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
           sorting: [{ id: 'date', desc: true }],
           columnFilters: [{ id: 'title', value: 'current' }],
           columnOrder: isDesktop
-            ? ['categoryName', 'value', 'name', 'gender', 'date', 'links']
-            : ['worldRecord', 'categoryName', 'gender'],
+            ? ['categoryName', 'value', 'name', 'country', 'gender', 'date', 'links']
+            : ['worldRecord', 'categoryName', 'country', 'gender'],
           columnVisibility: {
             worldRecord:  !isDesktop,
             title:        false,
@@ -182,6 +195,7 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
             value:        !!isDesktop,
             name:         !!isDesktop,
             athlete:      false,
+            country:      !!isDesktop,
             categoryName: !!isDesktop,
             gender:       !!isDesktop,
             links:        !!isDesktop,
