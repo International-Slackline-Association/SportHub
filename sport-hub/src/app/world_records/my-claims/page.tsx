@@ -10,6 +10,7 @@ import type { ClaimStatus, WorldRecordOrFirstTableItem } from '@lib/relational-t
 import { getMyClaims } from '../actions';
 import { ClaimStatusBadge } from '../components/claimStatus';
 import WithdrawButton from './WithdrawButton';
+import DeleteDraftButton from './DeleteDraftButton';
 import ClaimWorkflow from './ClaimWorkflow';
 
 export const metadata: Metadata = {
@@ -75,6 +76,7 @@ export default async function MyClaimsPage({ searchParams }: Props) {
                           {entry.status === 'draft' ? 'Edit draft' : 'Make changes'}
                         </Button>
                       )}
+                      {entry.status === 'draft' && isClaimant && <DeleteDraftButton kind={entry.kind} entryId={entry.entryId} />}
                       {entry.status === 'pending' && isClaimant && <WithdrawButton kind={entry.kind} entryId={entry.entryId} />}
                       {entryHasCertificate(entry, entry.kind === 'record' ? categoryById.get(entry.categoryId)?.status : undefined) && entry.athletes.map((a, i) => (
                         <Button key={i} as="link" href={`/api/certificates/${entry.kind}/${entry.entryId}?athlete=${i}`} variant="secondary" size="small">
