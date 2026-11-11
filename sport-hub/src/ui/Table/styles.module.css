@@ -150,7 +150,7 @@
   padding: 0.5rem 2.5rem 0.5rem 0.75rem;
   text-align: left;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
 
   @media (min-width: 40rem) {
     max-width: 18rem;
