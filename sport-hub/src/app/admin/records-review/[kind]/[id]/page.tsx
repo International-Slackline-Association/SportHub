@@ -72,6 +72,7 @@ export default async function ReviewClaimPage({ params }: Props) {
             <Row label="Category">{isNewCategory && '[New category] '}{entry.categoryName}</Row>
             {entry.kind === 'record' && entry.newCategoryProposal && (
               <>
+                <Row label="Group">{entry.newCategoryProposal.group ?? 'Other (not chosen)'}</Row>
                 <Row label="What is measured">{entry.newCategoryProposal.measurement}</Row>
                 <Row label="Unit and direction">{`${entry.newCategoryProposal.unit}, ${entry.newCategoryProposal.direction} is better`}</Row>
                 <Row label="Why distinct">{entry.newCategoryProposal.justification}</Row>

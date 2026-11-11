@@ -1,5 +1,5 @@
 import type { PendingUserData } from 'src/app/events/submit/types';
-import type { RecordWitness, WorldRecordOrFirstTableItem } from '@lib/relational-types';
+import type { RecordCategoryGroup, RecordWitness, WorldRecordOrFirstTableItem } from '@lib/relational-types';
 
 /** The three paths of the claim form (FR-4). */
 export type ClaimPath = 'existing' | 'new_category' | 'first';
@@ -30,6 +30,7 @@ export interface ClaimFormValues {
   categoryId: string;              // Record category (path a) or first category (path c)
   newCategory: {
     name: string;
+    group: RecordCategoryGroup | '';
     measurement: string;
     unit: string;
     direction: 'higher' | 'lower';
@@ -66,7 +67,7 @@ export interface ClaimFormValues {
 export const emptyClaim = (path: ClaimPath = 'existing'): ClaimFormValues => ({
   path,
   categoryId: '',
-  newCategory: { name: '', measurement: '', unit: 'm', direction: 'higher', justification: '' },
+  newCategory: { name: '', group: '', measurement: '', unit: 'm', direction: 'higher', justification: '' },
   athletes: [{ name: '' }],
   jointConfirmed: false,
   consentConfirmed: false,
@@ -151,7 +152,7 @@ export function entryToClaimValues(entry: WorldRecordOrFirstTableItem): ClaimFor
   }
   return {
     ...common,
-    newCategory: entry.newCategoryProposal ? { ...entry.newCategoryProposal } : base.newCategory,
+    newCategory: entry.newCategoryProposal ? { ...entry.newCategoryProposal, group: entry.newCategoryProposal.group ?? '' } : base.newCategory,
     valueText: entry.value.original ?? '',
     setup: entry.setup ?? '',
     furtherSpecs: entry.furtherSpecs ?? '',

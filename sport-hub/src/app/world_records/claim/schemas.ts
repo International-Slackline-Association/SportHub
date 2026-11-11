@@ -6,6 +6,7 @@
 
 import * as Yup from 'yup';
 import { isValidUrl, INVALID_URL_MESSAGE } from '@utils/urls';
+import { RECORD_CATEGORY_GROUPS } from '@lib/relational-types';
 import { MAX_ATHLETES, MAX_EVIDENCE_ITEMS, MAX_WITNESSES, MIN_WITNESSES } from '@lib/records-rules';
 import type { ClaimAthleteValue, ClaimEvidenceValue } from './types';
 
@@ -93,6 +94,7 @@ export const worldRecordClaimSchema = (options: SchemaOptions) => Yup.object({
     is: 'new_category',
     then: () => Yup.object({
       name: Yup.string().trim().required(REQUIRED),
+      group: Yup.string().oneOf([...RECORD_CATEGORY_GROUPS], 'Choose a group').required('Choose a group'),
       measurement: Yup.string().trim().required(REQUIRED),
       unit: Yup.string().trim().required(REQUIRED),
       direction: Yup.string().oneOf(['higher', 'lower']).required(REQUIRED),
