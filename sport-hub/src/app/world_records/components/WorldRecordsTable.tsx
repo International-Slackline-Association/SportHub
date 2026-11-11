@@ -9,6 +9,7 @@ import { BREAKPOINT_LG, useClientMediaQuery } from '@utils/useClientMediaQuery';
 import Link from 'next/link';
 import {
   athleteCountriesAccessor,
+  athleteNameListAccessor,
   athleteNamesAccessor,
   athleteNamesCellFormatter,
   AthleteNames,
@@ -49,6 +50,15 @@ const sharedColumns = [
     ),
     meta: { filterVariant: 'autocomplete' },
     size: 160,
+  }),
+  // Filter only (size 0 hides the column): pick one athlete, rows with them pass
+  columnHelper.accessor(athleteNameListAccessor, {
+    id: 'athlete',
+    header: 'Athlete',
+    enableColumnFilter: true,
+    filterFn: 'arrIncludes',
+    meta: { filterVariant: 'autocomplete' },
+    size: 0,
   }),
   columnHelper.accessor(athleteCountriesAccessor, {
     id: 'country',
@@ -177,6 +187,7 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
             date:         !!isDesktop,
             value:        !!isDesktop,
             name:         !!isDesktop,
+            athlete:      false,
             country:      !!isDesktop,
             categoryName: !!isDesktop,
             gender:       !!isDesktop,
