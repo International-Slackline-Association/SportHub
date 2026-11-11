@@ -22,7 +22,7 @@ import {
   linkClassName,
   TitleBadge,
 } from './cellFormatters';
-import { AdminEditLink } from './AdminEditLink';
+import { AdminEditButton, useIsAdmin } from './AdminEditButton';
 import { RECORD_CATEGORY_GROUPS } from '@lib/relational-types';
 import type { RecordStanding } from '@lib/records-logic';
 import { multiSelectFilterFn } from '@ui/Table/TableFilterFields';
@@ -112,7 +112,9 @@ const columns = [
                 Link {idx + 1}
               </Link>
             ))}
-            <AdminEditLink entry={info.row.original} />
+          </div>
+          <div className="cluster justify-end">
+            <AdminEditButton entry={info.row.original} />
           </div>
         </div>
       );
@@ -132,6 +134,13 @@ const columns = [
     cell: linkCellFormatter,
     size: 40,
   }),
+  // Admins only: Edit button in its own column, outside the Links column
+  columnHelper.display({
+    id: 'edit',
+    header: 'Admin',
+    cell: info => <AdminEditButton entry={info.row.original} />,
+    size: 40,
+  }),
   // Shared filterable columns
   ...sharedColumns,
 ];
@@ -142,6 +151,7 @@ type WorldRecordsTableProps = {
 
 const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
   const { isDesktop } = useClientMediaQuery(BREAKPOINT_LG);
+  const isAdmin = useIsAdmin();
   const [selectedGroup, setSelectedGroup] = useState('');
 
   const groupOptions = useMemo(() => {
@@ -179,7 +189,7 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
           sorting: [{ id: 'date', desc: true }],
           columnFilters: [{ id: 'standing', value: ['world_record'] }],
           columnOrder: isDesktop
-            ? ['categoryName', 'value', 'name', 'country', 'gender', 'date', 'links']
+            ? ['categoryName', 'value', 'name', 'country', 'gender', 'date', 'links', 'edit']
             : ['worldRecord', 'categoryName', 'country', 'gender'],
           columnVisibility: {
             worldRecord:  !isDesktop,
@@ -192,6 +202,7 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
             categoryName: !!isDesktop,
             gender:       !!isDesktop,
             links:        !!isDesktop,
+            edit:         !!isDesktop && isAdmin,
           },
         }
       }}
