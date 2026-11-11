@@ -119,8 +119,10 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
     }
     // A claim sent back for changes keeps its choice of an existing or a new category
     const isRevision = existing?.status === 'changes_requested';
-    const wasNewCategory = !!(existing && 'newCategoryProposal' in existing && existing.newCategoryProposal);
-    if (isRevision && kind === 'record' && wasNewCategory !== (values.path === 'new_category')) {
+    // Firsts have no newCategoryProposal, so the type needs the 'in' check
+    const isNewCategory = !!existing && 'newCategoryProposal' in existing && !!existing.newCategoryProposal;
+    const isSwitchingPath = isNewCategory !== (values.path === 'new_category');
+    if (isRevision && kind === 'record' && isSwitchingPath) {
       return { success: false, errors: ['A claim sent back for changes cannot switch between an existing and a new category'] };
     }
 
