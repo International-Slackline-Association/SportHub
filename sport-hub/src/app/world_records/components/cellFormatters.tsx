@@ -14,15 +14,21 @@ export const linkClassName = "underline text-blue-600 hover:text-blue-800 visite
 // Generic formatters that infer the table row type `T` so they can be reused
 // across tables typed with `WorldRecord` or `WorldFirst` (or a union).
 
+/** Athlete names, each with a small flag and country underneath (when the profile has one). */
 export const AthleteNames = ({ athletes }: { athletes: DisplayAthlete[] }) => (
   <div className="stack gap-1">
     {athletes.map((athlete, idx) => (
-      <div className="cluster gap-2 items-center" key={`${athlete.userId ?? athlete.name}_${idx}`}>
-        <CountryFlag country={athlete.country ?? ""} defaultValue="" />
+      <div className="stack" key={`${athlete.userId ?? athlete.name}_${idx}`}>
         {athlete.userId
           ? <Link href={`/athlete/${athlete.userId}`} className={linkClassName}>{athlete.name}</Link>
           : <span>{athlete.name}</span>
         }
+        {athlete.country && (
+          <div className="cluster gap-1 items-center text-xs text-gray-600">
+            <CountryFlag country={athlete.country} defaultValue="" iconOnly size={14} />
+            <span>{countryName(athlete.country)}</span>
+          </div>
+        )}
       </div>
     ))}
   </div>

@@ -10,7 +10,6 @@ import Link from 'next/link';
 import {
   athleteNameListAccessor,
   athleteNamesAccessor,
-  athleteNamesCellFormatter,
   AthleteNames,
   dateSortingFn,
   genderCellFormatter,
@@ -118,7 +117,7 @@ const columns = [
   columnHelper.accessor(athleteNamesAccessor, {
     id: 'name',
     header: 'Name',
-    cell: athleteNamesCellFormatter,
+    cell: info => <AthleteNames athletes={info.row.original.athletes} />,
     size: 100,
   }),
   columnHelper.accessor('links', {
