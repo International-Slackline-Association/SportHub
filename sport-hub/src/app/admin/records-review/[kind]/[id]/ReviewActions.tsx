@@ -39,6 +39,9 @@ export default function ReviewActions(props: Props) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [comment, setComment] = useState('');
+  const [approveComment, setApproveComment] = useState('');
+  const [changesComment, setChangesComment] = useState('');
+  const [rejectComment, setRejectComment] = useState('');
   const [categoryChoice, setCategoryChoice] = useState<'create' | 'map'>('create');
   const [mapTo, setMapTo] = useState(props.similarCategoryIds[0] ?? '');
   const [trickLink, setTrickLink] = useState('');
@@ -54,12 +57,16 @@ export default function ReviewActions(props: Props) {
     if (!result.success) { setError(result.error ?? 'Something went wrong'); return; }
     if (result.notice) setNotice(result.notice);
     setComment('');
+    setApproveComment('');
+    setChangesComment('');
+    setRejectComment('');
     setRejectReason('');
     setOtherReason('');
     router.refresh();
   };
 
   const recordOptions = props.recordCategories.filter(c => c.status !== 'archived');
+  const isMappingWithoutCategory = props.isNewCategory && categoryChoice === 'map' && !mapTo;
   const canReject = rejectReason === OTHER_REJECTION_REASON ? !!otherReason.trim() : !!rejectReason;
 
   return (
@@ -68,86 +75,119 @@ export default function ReviewActions(props: Props) {
       {notice && <Alert variant="warning">{notice}</Alert>}
 
       {status === 'pending' && (
-        <div className="stack gap-3 border border-gray-200 rounded-lg p-4">
-          <h3 className="font-semibold">Decision</h3>
-          {props.isNewCategory && (
-            <div className="stack gap-2 text-sm">
-              <span className="font-medium">Proposed category: {props.proposedName}</span>
-              <label className="flex gap-2 items-center">
-                <input type="radio" checked={categoryChoice === 'create'} onChange={() => setCategoryChoice('create')} />
-                Create it (starts as Unchallenged)
-              </label>
-              <label className="flex gap-2 items-center">
-                <input type="radio" checked={categoryChoice === 'map'} onChange={() => setCategoryChoice('map')} />
-                Map the claim to an existing category
-              </label>
-              {categoryChoice === 'map' && (
-                <select className={inputClass} value={mapTo} onChange={e => setMapTo(e.target.value)}>
-                  <option value="">Choose a category</option>
-                  {recordOptions.map(c => <option key={c.categoryId} value={c.categoryId}>{c.group} · {c.name}</option>)}
+        <>
+          <div className="stack gap-3 border border-gray-200 rounded-lg p-4">
+            <h3 className="font-semibold">Approve</h3>
+            <p className="text-sm text-gray-600">Publish the claim and notify the claimant and athletes.</p>
+            {props.isNewCategory && (
+              <div className="stack gap-2 text-sm">
+                <span className="font-medium">Proposed category: {props.proposedName}</span>
+                <label className="flex gap-2 items-center">
+                  <input type="radio" checked={categoryChoice === 'create'} onChange={() => setCategoryChoice('create')} />
+                  Create it (starts as Unchallenged)
+                </label>
+                <label className="flex gap-2 items-center">
+                  <input type="radio" checked={categoryChoice === 'map'} onChange={() => setCategoryChoice('map')} />
+                  Map the claim to an existing category
+                </label>
+                {categoryChoice === 'map' && (
+                  <select className={inputClass} value={mapTo} onChange={e => setMapTo(e.target.value)}>
+                    <option value="">Choose a category</option>
+                    {recordOptions.map(c => <option key={c.categoryId} value={c.categoryId}>{c.group} · {c.name}</option>)}
+                  </select>
+                )}
+              </div>
+            )}
+            {kind === 'first' && props.trickLinkOptions.length > 0 && (
+              <div className="stack gap-1 text-sm">
+                <label className="font-medium" htmlFor="trick-link">Same trick on another list</label>
+                <select id="trick-link" className={inputClass} value={trickLink} onChange={e => setTrickLink(e.target.value)}>
+                  <option value="">Not the same trick as an existing first</option>
+                  {props.trickLinkOptions.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
                 </select>
+                <small className="text-gray-500">For reference only: titles follow the gender (Men&apos;s / Women&apos;s / Mixed World First).</small>
+              </div>
+            )}
+            <textarea
+              className={inputClass}
+              rows={2}
+              placeholder="Comment to the claimant (optional)"
+              aria-label="Approval comment"
+              value={approveComment}
+              onChange={e => setApproveComment(e.target.value)}
+            />
+            <div>
+              <Button
+                variant="primary"
+                disabled={busy || isMappingWithoutCategory}
+                onClick={() => run(() => approveClaim(kind, entryId, {
+                  comment: approveComment,
+                  createCategory: props.isNewCategory && categoryChoice === 'create',
+                  mapToCategoryId: props.isNewCategory && categoryChoice === 'map' ? mapTo : undefined,
+                  trickGroupWithEntryId: trickLink || undefined,
+                }))}
+              >
+                Approve
+              </Button>
+            </div>
+          </div>
+
+          <div className="stack gap-3 border border-gray-200 rounded-lg p-4">
+            <h3 className="font-semibold">Request changes</h3>
+            <p className="text-sm text-gray-600">Send the claim back to the claimant with what to fix.</p>
+            <textarea
+              className={inputClass}
+              rows={3}
+              placeholder="What should the claimant change? (required)"
+              aria-label="Requested changes"
+              value={changesComment}
+              onChange={e => setChangesComment(e.target.value)}
+            />
+            <div>
+              <Button variant="secondary" disabled={busy || !changesComment.trim()} onClick={() => run(() => requestClaimChanges(kind, entryId, changesComment))}>
+                Request changes
+              </Button>
+            </div>
+          </div>
+
+          <div className="stack gap-3 border border-gray-200 rounded-lg p-4">
+            <h3 className="font-semibold">Reject</h3>
+            <div className="stack gap-1 text-sm">
+              <label className="font-medium" htmlFor="reject-reason">Reason for rejection</label>
+              <select id="reject-reason" className={inputClass} value={rejectReason} onChange={e => setRejectReason(e.target.value)}>
+                <option value="">Choose a reason</option>
+                {REJECTION_REASONS[props.rejectionCase].map(r => <option key={r.code} value={r.code}>{r.label}</option>)}
+                <option value={OTHER_REJECTION_REASON}>Other</option>
+              </select>
+              {rejectReason === OTHER_REJECTION_REASON && (
+                <input
+                  className={inputClass}
+                  placeholder="Describe the reason (required)"
+                  aria-label="Other reason"
+                  value={otherReason}
+                  onChange={e => setOtherReason(e.target.value)}
+                />
               )}
             </div>
-          )}
-          {kind === 'first' && props.trickLinkOptions.length > 0 && (
-            <div className="stack gap-1 text-sm">
-              <label className="font-medium" htmlFor="trick-link">Same trick on another list</label>
-              <select id="trick-link" className={inputClass} value={trickLink} onChange={e => setTrickLink(e.target.value)}>
-                <option value="">Not the same trick as an existing first</option>
-                {props.trickLinkOptions.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
-              </select>
-              <small className="text-gray-500">For reference only: titles follow the gender (Men&apos;s / Women&apos;s / Mixed World First).</small>
+            <textarea
+              className={inputClass}
+              rows={2}
+              placeholder="Comment to the claimant (optional)"
+              aria-label="Rejection comment"
+              value={rejectComment}
+              onChange={e => setRejectComment(e.target.value)}
+            />
+            <div>
+              <Button
+                variant="destructive"
+                disabled={busy || !canReject}
+                onClick={() => run(() => rejectClaim(kind, entryId, { reason: rejectReason, otherReason, comment: rejectComment }))}
+              >
+                Reject
+              </Button>
             </div>
-          )}
-          <div className="stack gap-1 text-sm">
-            <label className="font-medium" htmlFor="reject-reason">Reason for rejection</label>
-            <select id="reject-reason" className={inputClass} value={rejectReason} onChange={e => setRejectReason(e.target.value)}>
-              <option value="">Choose a reason (only to reject)</option>
-              {REJECTION_REASONS[props.rejectionCase].map(r => <option key={r.code} value={r.code}>{r.label}</option>)}
-              <option value={OTHER_REJECTION_REASON}>Other</option>
-            </select>
-            {rejectReason === OTHER_REJECTION_REASON && (
-              <input
-                className={inputClass}
-                placeholder="Describe the reason (required)"
-                aria-label="Other reason"
-                value={otherReason}
-                onChange={e => setOtherReason(e.target.value)}
-              />
-            )}
           </div>
-          <textarea
-            className={inputClass}
-            rows={3}
-            placeholder="Comment to the claimant (required to request changes, optional when rejecting)"
-            value={comment}
-            onChange={e => setComment(e.target.value)}
-          />
-          <div className="flex gap-2 flex-wrap">
-            <Button
-              variant="primary"
-              disabled={busy || (props.isNewCategory && categoryChoice === 'map' && !mapTo)}
-              onClick={() => run(() => approveClaim(kind, entryId, {
-                comment,
-                createCategory: props.isNewCategory && categoryChoice === 'create',
-                mapToCategoryId: props.isNewCategory && categoryChoice === 'map' ? mapTo : undefined,
-                trickGroupWithEntryId: trickLink || undefined,
-              }))}
-            >
-              Approve
-            </Button>
-            <Button variant="secondary" disabled={busy || !comment.trim()} onClick={() => run(() => requestClaimChanges(kind, entryId, comment))}>
-              Request changes
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={busy || !canReject}
-              onClick={() => run(() => rejectClaim(kind, entryId, { reason: rejectReason, otherReason, comment }))}
-            >
-              Reject
-            </Button>
-          </div>
-        </div>
+        </>
       )}
 
       {(status === 'published' || status === 'historical') && (
