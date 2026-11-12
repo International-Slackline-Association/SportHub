@@ -3,7 +3,7 @@ import styles from "./styles.module.css";
 import Autocomplete from "@ui/Form/Autocomplete";
 import { COUNTRIES } from "@utils/countries";
 import { ContestsGenderDropdown, ContestSizeDropdown, DisciplineDropdown, RecordsGenderDropdown } from "@ui/Form";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import formStyles from "@ui/Form/styles.module.css";
 import { cn } from "@utils/cn";
 import { useClientMediaQuery } from "@utils/useClientMediaQuery";
@@ -105,6 +105,84 @@ const SelectTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) =>
         {includeAll && <option value={""}>All</option>}
         {options.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
       </select>
+    </div>
+  );
+};
+
+/** Filter fn for multi-select columns: the row passes when its value is one of the selected values. */
+export const multiSelectFilterFn = <TData,>(
+  row: Row<TData>,
+  columnId: string,
+  filterValue: string[] | undefined,
+): boolean => !filterValue?.length || filterValue.includes(String(row.getValue(columnId)));
+multiSelectFilterFn.autoRemove = (val: unknown) => !Array.isArray(val) || val.length === 0;
+
+const MultiSelectTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
+  const id = column.id;
+  const columnName = column.columnDef.header?.toString();
+  const explicitOptions = column.columnDef.meta?.filterOptions;
+  const emptyLabel = column.columnDef.meta?.filterEmptyLabel ?? "All";
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const options: { value: string; label: string }[] = explicitOptions
+    ?? [...new Set(rows.map(row => String(row.getValue(column.id))))].sort().map(v => ({ value: v, label: v }));
+
+  const selected = (column.getFilterValue() as string[] | undefined) ?? [];
+  const summary = selected.length === 0 || selected.length === options.length
+    ? emptyLabel
+    : options.filter(o => selected.includes(o.value)).map(o => o.label).join(", ");
+
+  const toggle = (value: string) => {
+    const next = selected.includes(value) ? selected.filter(v => v !== value) : [...selected, value];
+    // Keep the options' order so the summary reads the same way as the list
+    column.setFilterValue(options.map(o => o.value).filter(v => next.includes(v)));
+  };
+
+  // Close when clicking outside or pressing Escape
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (!containerRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div className={styles.columnFilter} key={`column-filter-${id}`} ref={containerRef}>
+      <label htmlFor={id}>{columnName}</label>
+      <button
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        className={styles.multiSelectButton}
+        id={id}
+        onClick={() => setOpen(!open)}
+        title={summary}
+        type="button"
+      >
+        {summary}
+      </button>
+      {open && (
+        <div aria-multiselectable="true" className={styles.multiSelectMenu} role="listbox">
+          {options.map(({ value, label }) => (
+            <label className={styles.multiSelectOption} key={value}>
+              <input
+                checked={selected.includes(value)}
+                className={formStyles.checkbox}
+                onChange={() => toggle(value)}
+                type="checkbox"
+              />
+              <span>{label}</span>
+            </label>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -246,8 +324,13 @@ const AutocompleteTableFilter = <TData,>({ column, rows }: TableFilterProps<TDat
   const columnName = column.columnDef.header?.toString();
   const explicitOptions = column.columnDef.meta?.filterOptions;
 
+  // A column whose value is a list (e.g. several athletes) offers each item on its own
+  const values = rows.flatMap(row => {
+    const value = row.getValue(column.id);
+    return Array.isArray(value) ? value.map(String) : [String(value)];
+  });
   const options: { value: string; label: string }[] = explicitOptions
-    ?? [...new Set(rows.map(row => String(row.getValue(column.id))))].sort().map(v => ({ value: v, label: v }));
+    ?? [...new Set(values.filter(Boolean))].sort().map(v => ({ value: v, label: v }));
 
   return (
     <div className={styles.columnFilter} key={`column-filter-${id}`}>
@@ -348,6 +431,10 @@ const TableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
 
   if (filterVariant === "contest-size") {
     return <ContestSizeTableFilter column={column} rows={rows} />;
+  }
+
+  if (filterVariant === "multi-select") {
+    return <MultiSelectTableFilter column={column} rows={rows} />;
   }
 
   if (filterVariant === "record-gender") {

@@ -7,7 +7,6 @@ import { Badge, Gender } from "@ui/Badge";
 import { CountryFlag, resolveIso2 } from "@ui/CountryFlag";
 import { COUNTRIES } from "@utils/countries";
 import Link from "next/link";
-import { AdminEditLink } from "./AdminEditLink";
 
 export const linkClassName = "underline text-blue-600 hover:text-blue-800 visited:text-purple-600";
 
@@ -30,6 +29,9 @@ export const AthleteNames = ({ athletes }: { athletes: DisplayAthlete[] }) => (
 
 /** Athlete names, one per line, linked to their profiles. Sorts on the joined names. */
 export const athleteNamesAccessor = (row: WorldRecord | WorldFirst) => row.athletes.map(a => a.name).join(', ');
+
+/** Each athlete's name on its own, for filtering by one athlete. */
+export const athleteNameListAccessor = (row: WorldRecord | WorldFirst) => row.athletes.map(a => a.name);
 
 export const athleteNamesCellFormatter = <T extends WorldRecord | WorldFirst>(info: CellContext<T, string>) => (
   <div className="stack gap-1">
@@ -90,7 +92,6 @@ export const Links = ({ entry, certificate }: { entry: WorldRecord | WorldFirst;
       )
     )}
     {certificate && <a className={linkClassName} href={certificate} target="_blank" rel="noreferrer">Certificate</a>}
-    <AdminEditLink entry={entry} />
   </div>
 );
 

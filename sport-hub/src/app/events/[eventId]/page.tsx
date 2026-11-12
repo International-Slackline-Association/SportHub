@@ -30,7 +30,10 @@ export default async function EventPage({ params, searchParams }: EventPageProps
     const organizerName = organizerProfile
       ? [organizerProfile.name, organizerProfile.surname].filter(Boolean).join(' ') || null
       : null;
-    const eventContests = event.contests;
+    // Drop missing/malformed contest entries (incomplete data must not crash the page)
+    const eventContests = (event.contests ?? []).filter(
+      (c): c is NonNullable<typeof c> => Boolean(c) && typeof c === 'object'
+    );
     const totalPrize = eventContests.reduce((sum, c) => sum + (c.prize ?? 0), 0);
 
     // Build an EventLike-compatible object for EventDetailsCard
@@ -87,6 +90,13 @@ export default async function EventPage({ params, searchParams }: EventPageProps
       };
     });
 
+    // A ?contest= link may point to a contest that no longer exists
+    // (e.g. after the event was edited); fall back to the first tab.
+    const requestedTab = contestIdParam
+      ? eventContests.findIndex(c => c.contestId === contestIdParam)
+      : 0;
+    const initialTab = Math.max(requestedTab, 0);
+
     return (
       <PageLayout>
         <div className="space-y-6">
@@ -106,7 +116,7 @@ export default async function EventPage({ params, searchParams }: EventPageProps
             eventId={decodedEventId}
             eventName={event.eventName}
             contests={contestTabs}
-            initialTab={contestIdParam ? eventContests.findIndex(c => c.contestId === contestIdParam) : 0}
+            initialTab={initialTab}
             isAdmin={isAdmin}
           />
         </div>

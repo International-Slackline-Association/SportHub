@@ -2,7 +2,7 @@
 
 import { auth, sheets } from '@googleapis/sheets';
 
-const SPREADSHEET_ID = process.env.ISA_CERTIFICATES_SPREADSHEET_ID;
+import { CERTIFICATES_AND_FIRSTS_SPREADSHEET_ID, WORLD_RECORDS_SPREADSHEET_ID } from '@utils/spreadsheets';
 
 // Lazy-initialised so a bad/missing key throws at call time (catchable) rather
 // than at module load time (which causes an uncatchable 500 on every page import).
@@ -77,7 +77,7 @@ export interface WorldFirstRow {
 export const getWorldFirstsSheet = async (): Promise<WorldFirstRow[]> => {
   const client = sheets({ version: 'v4', auth: getAuthClient() });
   const response = await client.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID || "1WO8RDDn6WKTmZQX4YK9xNwWfh0-eciIX0fdSvsgNRsA",
+    spreadsheetId: CERTIFICATES_AND_FIRSTS_SPREADSHEET_ID,
     range: WORLD_FIRSTS_SHEET,
   });
 
@@ -124,7 +124,7 @@ export const getWorldRecordsSheet = async (): Promise<WorldRecordRow[]> => {
   const client = sheets({ version: 'v4', auth: getAuthClient() });
 
   const response = await client.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetId: CERTIFICATES_AND_FIRSTS_SPREADSHEET_ID,
     range: WORLD_RECORDS_SHEET,
   });
 
@@ -168,11 +168,19 @@ export const getWorldRecordsSheet = async (): Promise<WorldRecordRow[]> => {
  * Raw rows of a certificates sheet tab ("World Records" / "World Firsts"),
  * header row first. Used by the one-time import into the records table.
  */
-export const getCertificatesSheetValues = async (sheet: 'World Records' | 'World Firsts'): Promise<string[][]> => {
+export const getCertificatesSheetValues = (sheet: 'World Records' | 'World Firsts'): Promise<string[][]> =>
+  getSpreadsheetValues(CERTIFICATES_AND_FIRSTS_SPREADSHEET_ID, sheet);
+
+/**
+ * Raw rows of a World Records sheet tab ("Categories" / "Data"), header row first.
+ * Used by the import with --use-records-sheet.
+ */
+export const getRecordsSheetValues = (sheet: 'Categories' | 'Data'): Promise<string[][]> =>
+  getSpreadsheetValues(WORLD_RECORDS_SPREADSHEET_ID, sheet);
+
+/** Raw rows of a spreadsheet tab, header row first. */
+const getSpreadsheetValues = async (spreadsheetId: string, range: string): Promise<string[][]> => {
   const client = sheets({ version: 'v4', auth: getAuthClient() });
-  const response = await client.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
-    range: sheet,
-  });
+  const response = await client.spreadsheets.values.get({ spreadsheetId, range });
   return (response.data.values ?? []) as string[][];
 };

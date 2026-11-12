@@ -3,7 +3,8 @@
 /**
  * Reviewer and admin server actions for record and first claims (requirements
  * §7.5): the review queue and detail, approve / request changes / reject, void
- * and restore published entries, and "Modify" (edit every field of an entry).
+ * and restore published entries, "Modify" (edit every field of an entry) and
+ * permanent delete for entries that should never have been in the database.
  *
  * Reviewing needs records:review; changing a published entry needs records:manage.
  * Admins hold both.
@@ -15,12 +16,15 @@ import { actorOf, requireRecordsPermission } from '@lib/records-auth';
 import {
   addAuditEntry,
   addCategoryAudit,
+  deleteEntry,
+  deleteItems,
   getAuditLog,
   getEntriesByCategory,
   getEntriesByStatus,
   getEntry,
   getFirstCategories,
   getFirstCategory,
+  getImportIssues,
   getRecordCategories,
   getRecordCategory,
   lockForDecision,
@@ -31,6 +35,7 @@ import {
   syncAthleteLinks,
   type EntryKind,
 } from '@lib/records-service';
+import { RECORDS_TABLE } from '@lib/dynamodb';
 import {
   challengesCategory,
   comparableValue,
@@ -150,7 +155,8 @@ export async function getReviewContext(kind: EntryKind, entryId: string): Promis
   context.category = recordCategory;
   if (recordCategory) {
     const published = (await getEntriesByCategory('record', recordCategory.categoryId))
-      .filter(e => e.status === 'published' && e.entryId !== entry.entryId);
+      // A pending claim is not published yet, so it never counts itself; once approved it shows as the current record.
+      .filter(e => e.status === 'published');
     for (const list of RECORD_GENDERS) {
       const { current } = splitCurrentAndHistory(recordCategory, published.filter(e => e.gender === list));
       if (current[0]) {
@@ -182,7 +188,7 @@ export interface ApproveOptions {
   comment?: string;
 }
 
-/** Creates the category a new-category claim proposed, as Unchallenged in group Other (FR-C3, FR-19). */
+/** Creates the category a new-category claim proposed, as Unchallenged in the group the claimant chose (FR-C3, FR-19). */
 async function createProposedCategory(
   entry: WorldRecordTableItem,
   actor: ReturnType<typeof actorOf>,
@@ -197,7 +203,7 @@ async function createProposedCategory(
     categoryId,
     name: proposal.name,
     description: proposal.measurement || undefined,
-    group: 'Other',
+    group: proposal.group ?? 'Other',
     direction: proposal.direction,
     unit: proposal.unit,
     status: 'unchallenged',
@@ -425,6 +431,52 @@ export async function setPublicEntryStatus(kind: EntryKind, entryId: string, toS
   }
 }
 
+/** What the admin types to confirm a permanent delete. */
+const DELETE_CONFIRMATION = 'DELETE';
+
+/**
+ * Admin: permanently delete a record or first that should never have been in
+ * the database (a test entry, a duplicate, an import mistake). Unlike void it
+ * can't be undone: the entry, its audit log, the athletes' and claimant's
+ * pointers and its import review items are removed. The deletion is logged in
+ * the category's history so there is still a trace of who removed what and why.
+ * Evidence files on Google Drive are left as they are.
+ */
+export async function deleteEntryPermanently(kind: EntryKind, entryId: string, reason: string, confirmation: string): Promise<ActionResult> {
+  try {
+    const session = await requireRecordsPermission('records:manage');
+    const text = reason.trim();
+    if (!text) return { success: false, error: 'A reason is required' };
+    if (confirmation.trim() !== DELETE_CONFIRMATION) return { success: false, error: `Type ${DELETE_CONFIRMATION} to confirm` };
+    const entry = await getEntry(kind, entryId);
+    if (!entry) return { success: false, error: 'Entry not found' };
+
+    await deleteEntry(entry);
+    const certIds = entry.athletes.map(a => a.certId).filter(Boolean);
+    const isIssueOfEntry = (issue: { kind: EntryKind; entryId?: string; certId: string }) =>
+      issue.kind === kind && (issue.entryId === entryId || certIds.includes(issue.certId));
+    const importIssues = (await getImportIssues()).filter(isIssueOfEntry);
+    await deleteItems(RECORDS_TABLE, importIssues.map(({ pk, sortKey }) => ({ pk, sortKey })));
+
+    const category = kind === 'record' ? await getRecordCategory(entry.categoryId) : await getFirstCategory(entry.categoryId);
+    if (category) {
+      const athletes = entry.athletes.map(a => a.name).join(', ');
+      await addCategoryAudit(category, {
+        action: 'entry_deleted',
+        fromStatus: entry.status,
+        comment: `${kind} ${entryId} (${athletes}, ${entry.date}) deleted permanently: ${text}`,
+        ...actorOf(session),
+      });
+      if (category.pk === 'RecordCategory') await recomputeRecordStatuses(category);
+    }
+    revalidateRecordPages();
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting entry:', error);
+    return { success: false, error: errorMessage(error, 'Failed to delete the entry') };
+  }
+}
+
 // ============================================================================
 // MODIFY (FR-17)
 // ============================================================================
@@ -478,7 +530,7 @@ export async function adminUpdateEntry(kind: EntryKind, entryId: string, values:
         ...shared,
         categoryId: proposing ? entry.categoryId : values.categoryId,
         categoryName: proposing ? values.newCategory.name.trim() : recordCategory?.name ?? entry.categoryName,
-        newCategoryProposal: proposing ? { ...values.newCategory } : undefined,
+        newCategoryProposal: proposing ? { ...values.newCategory, group: values.newCategory.group || undefined } : undefined,
         value,
         ...recordDetailsFrom(values),
       };

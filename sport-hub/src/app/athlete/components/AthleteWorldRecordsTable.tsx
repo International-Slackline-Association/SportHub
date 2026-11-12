@@ -10,6 +10,7 @@ import {
   TitleBadge,
 } from 'src/app/world_records/components/cellFormatters';
 import { Alert } from '@ui/Alert';
+import { AdminEditButton, useCanEditRecords } from 'src/app/world_records/components/AdminEditButton';
 
 const columnHelper = createColumnHelper<WorldRecord>();
 const buildColumns = (athleteId?: string) => [
@@ -44,6 +45,13 @@ const buildColumns = (athleteId?: string) => [
     ),
     size: 40,
   }),
+  // Admins only: Edit button in its own column, outside the Links column
+  columnHelper.display({
+    id: 'edit',
+    header: 'Admin',
+    cell: ({ row }) => <AdminEditButton entry={row.original} />,
+    size: 40,
+  }),
 ];
 
 type AthleteWorldRecordsTableProps = {
@@ -53,11 +61,12 @@ type AthleteWorldRecordsTableProps = {
 
 const AthleteWorldRecordsTable = ({ worldRecords, athleteId }: AthleteWorldRecordsTableProps) => {
   const columns = useMemo(() => buildColumns(athleteId), [athleteId]);
+  const canEditRecords = useCanEditRecords();
   if (worldRecords.length === 0) {
     return <Alert variant="info">No world records found for this athlete.</Alert>;
   }
   return (
-    <Table options={{ columns, data: worldRecords, initialState: { sorting: [{ id: 'date', desc: true }] } }} />
+    <Table options={{ columns, data: worldRecords, initialState: { sorting: [{ id: 'date', desc: true }], columnVisibility: { edit: canEditRecords } } }} />
   );
 };
 

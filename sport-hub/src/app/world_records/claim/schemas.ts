@@ -6,7 +6,8 @@
 
 import * as Yup from 'yup';
 import { isValidUrl, INVALID_URL_MESSAGE } from '@utils/urls';
-import { MAX_ATHLETES, MAX_EVIDENCE_ITEMS, MAX_WITNESSES, MIN_WITNESSES } from '@lib/records-rules';
+import { RECORD_CATEGORY_GROUPS } from '@lib/relational-types';
+import { MAX_ATHLETES, MAX_EVIDENCE_ITEMS, MAX_WITNESSES } from '@lib/records-rules';
 import type { ClaimAthleteValue, ClaimEvidenceValue } from './types';
 
 type SchemaOptions = {
@@ -62,10 +63,10 @@ function commonFields({ claimantId, admin }: SchemaOptions, evidenceRequired: (f
   return {
     athletes: Yup.array(athleteSchema(admin)).min(1, 'Add at least one athlete').max(MAX_ATHLETES, `At most ${MAX_ATHLETES} athletes`),
     date: Yup.string().required(REQUIRED).test('not-future', 'The date cannot be in the future', d => !d || d <= today()),
+    // Witnesses are optional; each one added needs a name and an email (witnessSchema)
     witnesses: admin
       ? Yup.array(witnessSchema)
       : Yup.array(witnessSchema)
-        .test('min-witnesses', `Name at least ${MIN_WITNESSES} witnesses`, ws => (ws ?? []).filter(isFilledWitness).length >= MIN_WITNESSES)
         .test('max-witnesses', `Name at most ${MAX_WITNESSES} witnesses`, ws => (ws ?? []).filter(isFilledWitness).length <= MAX_WITNESSES),
     evidence: Yup.array(evidenceSchema)
       .test('max-evidence', `At most ${MAX_EVIDENCE_ITEMS} pieces of evidence`, items => (items ?? []).filter(i => isFilledEvidence(i as ClaimEvidenceValue)).length <= MAX_EVIDENCE_ITEMS)
@@ -93,6 +94,7 @@ export const worldRecordClaimSchema = (options: SchemaOptions) => Yup.object({
     is: 'new_category',
     then: () => Yup.object({
       name: Yup.string().trim().required(REQUIRED),
+      group: Yup.string().oneOf([...RECORD_CATEGORY_GROUPS], 'Choose a group').required('Choose a group'),
       measurement: Yup.string().trim().required(REQUIRED),
       unit: Yup.string().trim().required(REQUIRED),
       direction: Yup.string().oneOf(['higher', 'lower']).required(REQUIRED),

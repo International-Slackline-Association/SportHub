@@ -32,6 +32,7 @@ import {
   type RecordStanding,
 } from './records-logic';
 import { getCountryByCode } from '@utils/countries';
+import { getAthleteProfilesBatch } from './user-query-service';
 
 export type EntryKind = 'record' | 'first';
 
@@ -505,8 +506,27 @@ export interface WorldFirst {
   links: string[];
 }
 
-const toDisplayAthletes = (entry: WorldRecordOrFirstTableItem): DisplayAthlete[] =>
-  entry.athletes.map(({ userId, name, country, gender }) => ({ userId, name, country, gender }));
+/** Country per linked athlete, read from their SportHub profile. */
+type ProfileCountries = Map<string, string>;
+
+const getProfileCountries = async (entries: WorldRecordOrFirstTableItem[]): Promise<ProfileCountries> => {
+  const userIds = [...new Set(entries.flatMap(e => e.athletes.map(a => a.userId)).filter((id): id is string => !!id))];
+  const profiles = await getAthleteProfilesBatch(userIds);
+  const countries: ProfileCountries = new Map();
+  for (const [userId, profile] of profiles) {
+    if (typeof profile.country === 'string' && profile.country) countries.set(userId, profile.country);
+  }
+  return countries;
+};
+
+/** The athlete's country comes from their profile; athletes without a profile keep the one stored on the entry. */
+const toDisplayAthletes = (entry: WorldRecordOrFirstTableItem, profileCountries: ProfileCountries): DisplayAthlete[] =>
+  entry.athletes.map(({ userId, name, country, gender }) => ({
+    userId,
+    name,
+    country: (userId ? profileCountries.get(userId) : undefined) ?? country,
+    gender,
+  }));
 
 /** Claims store ISO codes, imported rows country names. */
 const countryName = (country?: string) => (country && getCountryByCode(country)?.name) || country;
@@ -517,6 +537,7 @@ const links = (entry: WorldRecordOrFirstTableItem) => entry.evidence.filter(e =>
 const toWorldRecords = (
   categories: RecordCategoryTableItem[],
   entries: WorldRecordTableItem[],
+  profileCountries: ProfileCountries,
 ): WorldRecord[] => {
   const rows: WorldRecord[] = [];
 
@@ -538,7 +559,7 @@ const toWorldRecords = (
         value: formatRecordValue(category, entry.value),
         specs: [entry.value.original, entry.furtherSpecs, entry.setup].filter(Boolean).join(' · '),
         gender: entry.gender,
-        athletes: toDisplayAthletes(entry),
+        athletes: toDisplayAthletes(entry, profileCountries),
         date: formatISODay(entry.date),
         location: [entry.locationName, countryName(entry.locationCountry)].filter(Boolean).join(', '),
         links: links(entry),
@@ -548,7 +569,11 @@ const toWorldRecords = (
   return rows;
 };
 
-const toWorldFirsts = (categories: FirstCategoryTableItem[], entries: WorldFirstTableItem[]): WorldFirst[] => {
+const toWorldFirsts = (
+  categories: FirstCategoryTableItem[],
+  entries: WorldFirstTableItem[],
+  profileCountries: ProfileCountries,
+): WorldFirst[] => {
   const categoryById = new Map(categories.map(c => [c.categoryId, c]));
   return entries.map(entry => ({
     entryId: entry.entryId,
@@ -559,7 +584,7 @@ const toWorldFirsts = (categories: FirstCategoryTableItem[], entries: WorldFirst
     description: entry.description ?? '',
     lineDetails: entry.lineDetails ?? '',
     gender: entry.gender,
-    athletes: toDisplayAthletes(entry),
+    athletes: toDisplayAthletes(entry, profileCountries),
     date: formatISODay(entry.date),
     links: links(entry),
   }));
@@ -583,7 +608,8 @@ export async function getPublicWorldRecords(): Promise<WorldRecord[]> {
     getEntriesByStatus('record', 'published'),
     getEntriesByStatus('record', 'historical'),
   ]);
-  return toWorldRecords(categories, [...published, ...historical]);
+  const entries = [...published, ...historical];
+  return toWorldRecords(categories, entries, await getProfileCountries(entries));
 }
 
 /** Published firsts with computed titles (FR-23b). */
@@ -592,7 +618,7 @@ export async function getPublicWorldFirsts(): Promise<WorldFirst[]> {
     getFirstCategories(),
     getEntriesByStatus('first', 'published'),
   ]);
-  return toWorldFirsts(categories, published);
+  return toWorldFirsts(categories, published, await getProfileCountries(published));
 }
 
 /**
@@ -610,5 +636,5 @@ export async function getPublicEntry(kind: EntryKind, entryId: string): Promise<
   const [category, inCategory] = await Promise.all([getRecordCategory(entry.categoryId), getEntriesByCategory('record', entry.categoryId)]);
   if (!category) return null;
   const visible = inCategory.filter(e => isPublicStatus(e.status));
-  return toWorldRecords([category], visible).find(row => row.entryId === entryId) ?? null;
+  return toWorldRecords([category], visible, await getProfileCountries(visible)).find(row => row.entryId === entryId) ?? null;
 }

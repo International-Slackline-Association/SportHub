@@ -61,6 +61,7 @@ function fullDetails(entry: WorldRecordOrFirstTableItem): string[] {
       const p = entry.newCategoryProposal;
       lines.push('', 'Proposed new category:');
       add('  Name', p.name);
+      add('  Group', p.group);
       add('  What is measured', p.measurement);
       add('  Unit', `${p.unit}, ${p.direction} is better`);
       add('  Why distinct', p.justification);
@@ -194,7 +195,7 @@ export async function notifyClaimEvent(event: ClaimEvent, entry: WorldRecordOrFi
       case 'rejected':
         mails.push({
           to: recipients,
-          subject: `Not approved: ${title}`,
+          subject: `Rejected: ${title}`,
           text: `The ISA did not approve this claim.\n\nReason: ${context.comment ?? ''}\n\n${details}\n\nYour claims: ${myClaims}`,
         });
         break;
