@@ -82,7 +82,7 @@ const toSortable = (date: string) => date.replace(/^(\d{2})\/(\d{2})\/(\d{4})$/,
 export const dateSortingFn = <T extends WorldRecord | WorldFirst>(a: Row<T>, b: Row<T>, columnId: string) =>
   toSortable(a.getValue<string>(columnId)).localeCompare(toSortable(b.getValue<string>(columnId)));
 
-export const Links = ({ entry, certificate }: { entry: WorldRecord | WorldFirst; certificate?: string | null }) => (
+export const Links = ({ entry }: { entry: WorldRecord | WorldFirst }) => (
   <div className="cluster gap-2">
     {entry.links.map((link, idx) =>
       link && (
@@ -91,16 +91,8 @@ export const Links = ({ entry, certificate }: { entry: WorldRecord | WorldFirst;
         </Link>
       )
     )}
-    {certificate && <a className={linkClassName} href={certificate} target="_blank" rel="noreferrer">Certificate</a>}
   </div>
 );
 
 export const linkCellFormatter = <T extends WorldRecord | WorldFirst>(info: CellContext<T, string[]>) =>
   <Links entry={info.row.original} />;
-
-/** Certificate PDF of one athlete on an entry (FR-26). */
-export const certificateUrl = (kind: 'record' | 'first', entry: WorldRecord | WorldFirst, athleteId: string) => {
-  if ('standing' in entry && entry.standing === 'unchallenged') return null;
-  const index = entry.athletes.findIndex(a => a.userId === athleteId);
-  return index < 0 ? null : `/api/certificates/${kind}/${encodeURIComponent(entry.entryId)}?athlete=${index}`;
-};

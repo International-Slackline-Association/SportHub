@@ -1,18 +1,16 @@
-import { useMemo } from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
 import { WorldFirst } from '@lib/data-services';
 import Table from '@ui/Table';
 import {
-  certificateUrl,
   dateSortingFn,
   genderCellFormatter,
-  Links,
+  linkCellFormatter,
 } from 'src/app/world_records/components/cellFormatters';
 import { Alert } from '@ui/Alert';
 import { AdminEditButton, useCanEditRecords } from 'src/app/world_records/components/AdminEditButton';
 
 const columnHelper = createColumnHelper<WorldFirst>();
-const buildColumns = (athleteId?: string) => [
+const columns = [
   columnHelper.accessor('date', {
     header: 'Date',
     enableSorting: true,
@@ -34,9 +32,7 @@ const buildColumns = (athleteId?: string) => [
   }),
   columnHelper.accessor('links', {
     header: "Links",
-    cell: ({ row }) => (
-      <Links entry={row.original} certificate={athleteId ? certificateUrl('first', row.original, athleteId) : null} />
-    ),
+    cell: linkCellFormatter,
     size: 40,
   }),
   // Admins only: Edit button in its own column, outside the Links column
@@ -49,18 +45,18 @@ const buildColumns = (athleteId?: string) => [
 ];
 
 type AthleteWorldFirstsTableProps = {
-  athleteId?: string;
   worldFirsts: WorldFirst[];
 };
 
-const AthleteWorldFirstsTable = ({ worldFirsts, athleteId }: AthleteWorldFirstsTableProps) => {
-  const columns = useMemo(() => buildColumns(athleteId), [athleteId]);
+const AthleteWorldFirstsTable = ({ worldFirsts }: AthleteWorldFirstsTableProps) => {
   const canEditRecords = useCanEditRecords();
   if (worldFirsts.length === 0) {
     return <Alert variant="info">No world firsts found for this athlete.</Alert>;
   }
+  // Certificates are not listed on the public profile; hide Links when no entry has any.
+  const hasLinks = worldFirsts.some(entry => entry.links.some(Boolean));
   return (
-    <Table options={{ columns, data: worldFirsts, initialState: { sorting: [{ id: 'date', desc: true }], columnVisibility: { edit: canEditRecords } } }} />
+    <Table options={{ columns, data: worldFirsts, initialState: { sorting: [{ id: 'date', desc: true }], columnVisibility: { links: hasLinks, edit: canEditRecords } } }} />
   );
 };
 
