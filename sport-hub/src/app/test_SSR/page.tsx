@@ -141,7 +141,7 @@ export default async function AboutPage() {
   const { users, nextCursor, hasMore, totalCount } = usersResult;
 
   return (
-    <div className="container mx-auto p-4 max-w-4xl">
+    <div className="container mx-auto p-4 max-w-6xl">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Users Management (SSR)</h1>
         <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
@@ -160,7 +160,7 @@ export default async function AboutPage() {
         <div className="p-6 border-b">
           <h2 className="text-xl font-semibold">Users List</h2>
         </div>
-        <div className="divide-y divide-gray-200">
+        <div>
           <UserListPagination
             initialUsers={users}
             initialCursor={nextCursor}
