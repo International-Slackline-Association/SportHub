@@ -143,6 +143,13 @@ export const { handlers, signIn, signOut, auth, unstable_update } = NextAuth({
           token.userSubTypes = []
         }
       }
+
+      // TRANSITION: sessions signed in before multi-role support carry no roles.
+      // Load them once, so nobody has to sign out and in again.
+      if (token.roles === undefined && token.sportHubUserId) {
+        token.roles = await getUserRoles(token.sportHubUserId as string)
+        token.permissions = await getUserPermissions(token.sportHubUserId as string)
+      }
       return token
     },
     async session({ session, token }) {
@@ -157,8 +164,7 @@ export const { handlers, signIn, signOut, auth, unstable_update } = NextAuth({
         session.accessToken = token.accessToken as string
         session.idToken = token.idToken as string
 
-        // Pass roles, permissions, and sub-types to session.
-        // Tokens issued before multi-role support have no roles until the user signs in again.
+        // Pass roles, permissions, and sub-types to session
         session.user.roles = (token.roles as Role[] | undefined) ?? []
         session.user.permissions = (token.permissions as Permission[]) || []
         session.user.userSubTypes = (token.userSubTypes as UserSubType[]) || []

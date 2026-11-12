@@ -43,7 +43,7 @@ If nobody has the Event Manager role, event emails go to `EVENTS_REVIEW_EMAIL` w
 
 **Storage.** Roles live on the user's profile item in the `sporthub-users` table (`sortKey = Profile`), not in Cognito, as `roles: Role[]` (`event_manager`, `record_manager`, `user_manager`, `admin`). Empty or missing = normal user. There is no single `role` field any more.
 
-**Migration.** Profiles created before this change have a `role: 'user' | 'admin'` attribute instead. Run `pnpm roles:migrate:dry-run` / `pnpm roles:migrate:execute` (local), and the same script against each AWS environment, to convert them. Until then `rolesOf()` reads an old `role: 'admin'` as `['admin']`; delete that fallback once every environment is migrated. Admins must sign out and in once after the deploy so their session carries `roles`.
+**Transition from the old single role.** Profiles created before this change have `role: 'user' | 'admin'` instead of `roles`. Every current admin becomes **General Admin** automatically: the first time such a user is looked up (sign-in or any page), `rbac-service.ts` saves the profile with `roles` (`['admin']` or `[]`) and without `role`. Sessions from before the deploy load their roles once as well, so nobody has to sign out. Nothing needs to be run by hand. Once no profile has `role` any more, the marked `TRANSITION` lines in `rolesOf()`, `rbac-service.ts` and `auth.ts` can be deleted.
 
 **Permissions.** Each role maps to permissions in `sport-hub/src/types/rbac.ts` (`ROLE_PERMISSIONS`):
 

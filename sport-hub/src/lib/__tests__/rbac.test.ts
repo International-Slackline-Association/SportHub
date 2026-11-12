@@ -54,7 +54,7 @@ test('rolesOf and parseRoles clean up role lists', () => {
   assert.deepEqual(parseRoles(['user_manager', 'event_manager']), ['event_manager', 'user_manager']);
 });
 
-test('MIGRATION: unmigrated profiles with the old admin value still count as General Admin', () => {
+test('TRANSITION: unconverted profiles with the old admin value still count as General Admin', () => {
   assert.deepEqual(rolesOf({ role: 'admin' } as { roles?: unknown }), ['admin']);
   assert.deepEqual(rolesOf({ role: 'user' } as { roles?: unknown }), []);
 });

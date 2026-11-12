@@ -38,16 +38,16 @@ export const isRole = (value: unknown): value is Role => ROLES.includes(value as
 /**
  * A profile's roles, cleaned up (known roles only, fixed order).
  *
- * MIGRATION: profiles written before multi-role support have a single
- * `role: 'admin' | 'user'` attribute instead of `roles`. Until
- * `pnpm roles:migrate:*` has run on every environment, an `admin` value there
- * is read as ['admin'] so existing admins keep access. Delete the fallback
- * line after the migration; it is the only place that attribute is read.
+ * TRANSITION: profiles written before multi-role support have a single
+ * `role: 'admin' | 'user'` attribute instead of `roles`; every current admin
+ * becomes General Admin. rbac-service converts such a profile to `roles` the
+ * first time the user is looked up, so this fallback line can be deleted once
+ * no profile has `role` any more.
  */
 export function rolesOf(profile: { roles?: unknown } | null | undefined): Role[] {
   if (!profile) return [];
   if (Array.isArray(profile.roles)) return ROLES.filter(r => (profile.roles as unknown[]).includes(r));
-  return (profile as { role?: unknown }).role === 'admin' ? ['admin'] : [];  // MIGRATION fallback, see above
+  return (profile as { role?: unknown }).role === 'admin' ? ['admin'] : [];  // TRANSITION fallback, see above
 }
 
 /** Validates a roles list from a request: known roles only, no duplicates. Null when invalid. */

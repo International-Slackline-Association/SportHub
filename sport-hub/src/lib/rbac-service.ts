@@ -45,6 +45,7 @@ async function loadAccess(userId: string): Promise<Omit<RoleCacheEntry, 'timesta
     if (!user) return EMPTY_ENTRY;
 
     const roles = rolesOf(user);
+    await convertLegacyRole(user, roles);
     const entry = {
       roles,
       permissions: permissionsOf(roles),
@@ -56,6 +57,23 @@ async function loadAccess(userId: string): Promise<Omit<RoleCacheEntry, 'timesta
     console.error('Error fetching user roles:', error);
     // Fail-safe: no roles
     return EMPTY_ENTRY;
+  }
+}
+
+/**
+ * TRANSITION: profiles from before multi-role support have `role: 'admin' | 'user'`
+ * instead of `roles`. The first time such a user is looked up (sign-in or any
+ * page), the profile is saved with `roles` (admin → ['admin'] = General Admin)
+ * and without `role`. Non-fatal: a failed write is retried on the next lookup.
+ */
+async function convertLegacyRole(user: UserProfileRecord, roles: Role[]): Promise<void> {
+  const { role, ...rest } = user as UserProfileRecord & { role?: unknown };
+  if (role === undefined || Array.isArray(user.roles)) return;
+  try {
+    await dynamodb.putItem(USERS_TABLE, { ...rest, roles } as unknown as Record<string, unknown>);
+    console.log(`[RBAC] Converted ${user.userId} from role '${String(role)}' to roles ${JSON.stringify(roles)}`);
+  } catch (error) {
+    console.warn(`[RBAC] Could not convert role of ${user.userId}:`, error);
   }
 }
 
