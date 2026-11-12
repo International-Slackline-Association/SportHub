@@ -53,7 +53,24 @@
   }
 }
 
+/* The logo shrinks to fit narrow phones, so the header never gets wider than the screen */
+.logoLink {
+  align-items: center;
+  display: flex;
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-right: 0.5rem;
+}
+
+.logoSvg {
+  display: block;
+  height: auto;
+  max-width: 350px;
+  width: 100%;
+}
+
 .navContainer {
+  flex-shrink: 0;
   align-items: center;
   display: flex;
   font-family: var(--font-metropolis);

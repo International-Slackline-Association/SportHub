@@ -2,8 +2,8 @@
 
 /**
  * Picks the record category of a claim from a searchable table (group, name,
- * status). Once a category is chosen the table collapses to the choice, with
- * a button to pick another one.
+ * status): a click on a row picks it. Once a category is chosen the table
+ * collapses to the choice, with a button to pick another one.
  */
 
 import { useMemo, useState, type KeyboardEvent } from 'react';
@@ -62,30 +62,7 @@ export default function RecordCategoryPicker({ recordCategories, name = 'categor
       cell: info => statusLabel(info.getValue()),
       size: 60,
     }),
-    columnHelper.display({
-      id: 'select',
-      header: '',
-      cell: info => {
-        const isSelected = info.row.original.categoryId === field.value;
-        return (
-          <Button
-            type="button"
-            size="small"
-            variant={isSelected ? 'primary' : 'secondary'}
-            onClick={() => {
-              helpers.setValue(info.row.original.categoryId);
-              setBrowsing(false);
-            }}
-          >
-            {isSelected ? 'Selected' : 'Select'}
-          </Button>
-        );
-      },
-      size: 40,
-    }),
-  // helpers is a new object on every render but its functions are stable
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [statusOptions, field.value]);
+  ], [statusOptions]);
 
   // Enter in the search field filters the table; it must not submit the claim form
   const preventEnterSubmit = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -115,7 +92,11 @@ export default function RecordCategoryPicker({ recordCategories, name = 'categor
         <div onKeyDown={preventEnterSubmit}>
           <Table
             options={{ columns, data: recordCategories }}
-            rowClassName={({ row }) => (row.original.categoryId === field.value ? 'bg-blue-50' : undefined)}
+            rowClassName={({ row }) => (row.original.categoryId === field.value ? 'bg-blue-50 font-semibold' : undefined)}
+            onRowClick={row => {
+              helpers.setValue(row.original.categoryId);
+              setBrowsing(false);
+            }}
           />
         </div>
       )}

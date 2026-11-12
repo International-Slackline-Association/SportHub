@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ClaimStatusBadge, CLAIM_STATUS_LABELS } from 'src/app/world_records/components/claimStatus';
 import type { ClaimStatus } from '@lib/relational-types';
@@ -19,6 +20,8 @@ export interface EntryRow {
   claimant: string;
   newCategory: boolean;       // Record claim proposing a new category
 }
+
+const hrefFor = (r: EntryRow) => `/admin/records-review/${r.kind}/${encodeURIComponent(r.entryId)}`;
 
 type Props = {
   rows: EntryRow[];
@@ -55,8 +58,29 @@ export default function EntryTable({ rows, showStatus = false, filterable = fals
           </select>
         </div>
       )}
-      {shown.length === 0 ? <p className="text-gray-600 text-sm">{emptyText}</p> : (
-        <div className="overflow-x-auto">
+      {shown.length === 0 ? <p className="text-gray-600 text-sm">{emptyText}</p> : (<>
+        {/* Phones: one card per claim instead of a table that needs scrolling */}
+        <ul className="sm:hidden stack gap-2">
+          {shown.map(r => (
+            <li key={r.entryId}>
+              <Link
+                href={hrefFor(r)}
+                className="block border border-gray-200 rounded-lg p-3 text-sm hover:bg-gray-50"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <span className="font-medium text-blue-700 break-words min-w-0">{r.claim || '—'}</span>
+                  {showStatus && <span className="shrink-0"><ClaimStatusBadge status={r.status} /></span>}
+                </div>
+                <div className="text-gray-700">{[r.category, GENDER_LABELS[r.gender], r.date].filter(Boolean).join(' · ')}</div>
+                <div className="text-gray-700 break-words">{r.athletes}</div>
+                <div className="text-gray-500 text-xs mt-1">
+                  Submitted {r.submitted || '—'}{r.claimant ? ` by ${r.claimant}` : ''}
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left border-b border-gray-200">
@@ -72,7 +96,7 @@ export default function EntryTable({ rows, showStatus = false, filterable = fals
             </thead>
             <tbody>
               {shown.map(r => {
-                const href = `/admin/records-review/${r.kind}/${encodeURIComponent(r.entryId)}`;
+                const href = hrefFor(r);
                 return (
                   <tr
                     key={r.entryId}
@@ -95,7 +119,7 @@ export default function EntryTable({ rows, showStatus = false, filterable = fals
             </tbody>
           </table>
         </div>
-      )}
+      </>)}
     </div>
   );
 }
