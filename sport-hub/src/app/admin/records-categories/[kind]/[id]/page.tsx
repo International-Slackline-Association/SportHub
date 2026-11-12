@@ -81,16 +81,19 @@ export default async function CategoryPage({ params }: Props) {
             )}
           </div>
 
-          <div className="stack gap-2">
-            <h3 className="text-lg font-semibold">Delete</h3>
+          <div className="stack gap-2 border border-red-200 rounded-lg p-4">
+            <h3 className="text-lg font-semibold">Delete permanently</h3>
             {entryCount > 0 ? (
               <p className="text-sm text-gray-600">
                 This {kind === 'record' ? 'category' : 'discipline'} has {entriesText}, so it can&apos;t be deleted. Set its status to Archived to close it for new claims.
               </p>
             ) : (
               <>
-                <p className="text-sm text-gray-600">No record or claim uses this {kind === 'record' ? 'category' : 'discipline'}, so it can be deleted.</p>
-                <DeleteCategoryButton pk={pk} categoryId={category.categoryId} name={category.name} />
+                <p className="text-sm text-gray-600">
+                  No record or claim uses this {kind === 'record' ? 'category' : 'discipline'}, so it can be deleted, for example
+                  a test or a duplicate. This can&apos;t be undone. To close it for new claims instead, set its status to Archived.
+                </p>
+                <DeleteCategoryButton pk={pk} categoryId={category.categoryId} />
               </>
             )}
           </div>
