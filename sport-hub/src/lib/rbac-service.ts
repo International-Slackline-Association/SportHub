@@ -26,14 +26,18 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 const EMPTY_ENTRY = { roles: [], permissions: [], userSubTypes: [] };
 
+type Access = Omit<RoleCacheEntry, 'timestamp'>;
+
 /**
  * Load a user's roles, permissions and sub-types from the database, with caching.
- * New users (no profile yet) and failed lookups get no roles.
+ * New users (no profile yet) get no roles. A failed lookup returns null, so
+ * callers that store the result (the sign-in token) can tell it apart from
+ * "no roles" and try again later instead of keeping an empty list.
  *
  * @param userId - Custom user ID (SportHubID:xxx or ISA_xxx format), NOT Cognito UUID.
  *                 This must match the partition key in the users table.
  */
-async function loadAccess(userId: string): Promise<Omit<RoleCacheEntry, 'timestamp'>> {
+export async function getUserAccess(userId: string): Promise<Access | null> {
   const cached = roleCache.get(userId);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return cached;
@@ -54,10 +58,14 @@ async function loadAccess(userId: string): Promise<Omit<RoleCacheEntry, 'timesta
     roleCache.set(userId, { ...entry, timestamp: Date.now() });
     return entry;
   } catch (error) {
-    console.error('Error fetching user roles:', error);
-    // Fail-safe: no roles
-    return EMPTY_ENTRY;
+    console.error(`[RBAC] Error fetching roles of ${userId}:`, error);
+    return null;
   }
+}
+
+/** Like getUserAccess, but a failed lookup gives no roles (fail-safe for access checks). */
+async function loadAccess(userId: string): Promise<Access> {
+  return (await getUserAccess(userId)) ?? EMPTY_ENTRY;
 }
 
 /**
