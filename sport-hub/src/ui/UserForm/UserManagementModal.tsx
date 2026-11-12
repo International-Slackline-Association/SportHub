@@ -46,6 +46,8 @@ const UserManagementModal = ({
   const { data: session } = useSession();
   const canChangeGeneralAdmin = isGeneralAdmin(session?.user?.roles) || process.env.NODE_ENV === 'development';
 
+  const isGeneralAdminTicked = isGeneralAdmin(selectedRoles);
+
   const handleRoleToggle = (role: Role) => {
     setSelectedRoles(prev => prev.includes(role) ? prev.filter(r => r !== role) : ROLES.filter(r => r === role || prev.includes(r)));
   };
@@ -146,11 +148,15 @@ const UserManagementModal = ({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Admin roles (Authorization)
                 </label>
-                <p className="text-xs text-gray-500 mb-2">None ticked = normal user. Several roles combine their access.</p>
+                <p className="text-xs text-gray-500 mb-2">None ticked = normal user. Several roles combine their access. General Admin includes all other roles.</p>
                 <div className="space-y-2">
                   {ROLES.map(role => {
-                    const isChecked = selectedRoles.includes(role);
-                    const isLocked = role === 'admin' && !canChangeGeneralAdmin;
+                    // While General Admin is ticked the other roles show as ticked and locked; selectedRoles keeps
+                    // their own ticks, so unticking General Admin brings back what was there before
+                    const isIncludedByGeneralAdmin = role !== 'admin' && isGeneralAdminTicked;
+                    const isGeneralAdminLocked = role === 'admin' && !canChangeGeneralAdmin;
+                    const isChecked = isIncludedByGeneralAdmin || selectedRoles.includes(role);
+                    const isLocked = isIncludedByGeneralAdmin || isGeneralAdminLocked;
                     return (
                       <label
                         key={role}

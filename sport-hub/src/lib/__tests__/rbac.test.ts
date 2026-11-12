@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { roleHasPermission, isRole, permissionsOf, parseRoles, rolesLabel, rolesOf, ROLE_PERMISSIONS, type Role } from '../../types/rbac';
+import { roleHasPermission, isRole, normalizeRoles, permissionsOf, parseRoles, rolesLabel, rolesOf, ROLE_PERMISSIONS, type Role } from '../../types/rbac';
 
 const can = (roles: Role[], permission: Parameters<typeof roleHasPermission>[1]) => roleHasPermission(roles, permission);
 
@@ -57,4 +57,11 @@ test('rolesOf and parseRoles clean up role lists', () => {
 test('TRANSITION: unconverted profiles with the old admin value still count as General Admin', () => {
   assert.deepEqual(rolesOf({ role: 'admin' } as { roles?: unknown }), ['admin']);
   assert.deepEqual(rolesOf({ role: 'user' } as { roles?: unknown }), []);
+});
+
+test('General Admin includes the other roles, so lists with it collapse to General Admin', () => {
+  assert.deepEqual(normalizeRoles(['event_manager', 'admin', 'user_manager']), ['admin']);
+  assert.deepEqual(parseRoles(['record_manager', 'admin']), ['admin']);
+  assert.deepEqual(rolesOf({ roles: ['admin', 'event_manager'] }), ['admin']);
+  assert.equal(rolesLabel(['admin', 'record_manager']), 'General Admin');
 });

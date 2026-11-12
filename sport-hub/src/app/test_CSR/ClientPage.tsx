@@ -672,17 +672,22 @@ export default function TestCSRPage() {
                 Role (Authorization)
               </label>
               <div className="space-y-2">
-                {ROLES.map(role => (
-                  <label key={role} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer">
+                {ROLES.map(role => {
+                  // General Admin includes all other roles: they show as ticked and locked while it is ticked
+                  const isIncludedByGeneralAdmin = role !== 'admin' && selectedRoles.includes('admin');
+                  return (
+                  <label key={role} className={`flex items-center gap-3 p-3 rounded-lg border border-gray-200 ${isIncludedByGeneralAdmin ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
                     <input
                       type="checkbox"
-                      checked={selectedRoles.includes(role)}
+                      checked={isIncludedByGeneralAdmin || selectedRoles.includes(role)}
+                      disabled={isIncludedByGeneralAdmin}
                       onChange={() => setSelectedRoles(prev => prev.includes(role) ? prev.filter(r => r !== role) : ROLES.filter(r => r === role || prev.includes(r)))}
                       className="w-4 h-4 text-purple-600 rounded"
                     />
                     <span className="font-medium">{ROLE_LABELS[role]}</span>
                   </label>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
