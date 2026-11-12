@@ -5,7 +5,7 @@ import UserManagementModal from '@ui/UserForm/UserManagementModal';
 import { deleteUser } from './actions';
 import Button from '@ui/Button';
 import SearchBar from './SearchBar';
-import { rolesLabel, type Role, type UserSubType } from 'src/types/rbac';
+import { rolesLabel, type Role, type UserRoleFilter, type UserSubType } from 'src/types/rbac';
 import { userGenderOptions } from '@ui/Form';
 
 interface User {
@@ -53,9 +53,12 @@ export default function UserListPagination({
   const [loading, setLoading] = useState(false);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState<UserRoleFilter | ''>('');
   const [isSearching, setIsSearching] = useState(false);
 
-  const fetchUsers = useCallback(async (search: string, cursorValue?: string | null, append = false) => {
+  const isFiltered = !!searchQuery || !!roleFilter;
+
+  const fetchUsers = useCallback(async (search: string, role: UserRoleFilter | '', cursorValue?: string | null, append = false) => {
     if (append) {
       setLoading(true);
     } else {
@@ -69,6 +72,9 @@ export default function UserListPagination({
       }
       if (search) {
         params.set('search', search);
+      }
+      if (role) {
+        params.set('role', role);
       }
       const response = await fetch(`/api/about?${params.toString()}`);
       const data = await response.json();
@@ -93,14 +99,20 @@ export default function UserListPagination({
     }
   }, [pageSize]);
 
-  const handleSearch = (query: string) => {
+  const handleSearch = (query: string, role: UserRoleFilter | '') => {
     setSearchQuery(query);
+    setRoleFilter(role);
     setCursor(null);
-    fetchUsers(query);
+    if (!query && !role) {
+      handleClearSearch();
+      return;
+    }
+    fetchUsers(query, role);
   };
 
   const handleClearSearch = () => {
     setSearchQuery('');
+    setRoleFilter('');
     setUsers(initialUsers);
     setCursor(initialCursor);
     setHasMore(initialHasMore);
@@ -120,6 +132,9 @@ export default function UserListPagination({
       if (searchQuery) {
         params.set('search', searchQuery);
       }
+      if (roleFilter) {
+        params.set('role', roleFilter);
+      }
       const response = await fetch(`/api/about?${params.toString()}`);
       const data = await response.json();
 
@@ -137,13 +152,13 @@ export default function UserListPagination({
 
   // Reset to initial data when initialUsers changes (e.g., after server action)
   useEffect(() => {
-    if (!searchQuery) {
+    if (!isFiltered) {
       setUsers(initialUsers);
       setCursor(initialCursor);
       setHasMore(initialHasMore);
       setTotalCount(initialTotalCount);
     }
-  }, [initialUsers, initialCursor, initialHasMore, initialTotalCount, searchQuery]);
+  }, [initialUsers, initialCursor, initialHasMore, initialTotalCount, isFiltered]);
 
   const decrementPageSize = () => {
     const currentIndex = PAGE_SIZE_OPTIONS.indexOf(pageSize);
@@ -168,6 +183,7 @@ export default function UserListPagination({
           onClear={handleClearSearch}
           isSearching={isSearching}
           currentQuery={searchQuery}
+          currentRole={roleFilter}
         />
       </div>
 
@@ -178,7 +194,7 @@ export default function UserListPagination({
         </div>
       ) : users.length === 0 ? (
         <div className="p-6 text-center text-gray-500">
-          {searchQuery ? `No users found matching "${searchQuery}"` : 'No users found.'}
+          {isFiltered ? 'No users found matching the search.' : 'No users found.'}
         </div>
       ) : (
         users.map((user) => (
@@ -250,7 +266,7 @@ export default function UserListPagination({
         <div className="flex flex-col items-center gap-3">
           <span className="text-sm text-gray-500">
             Showing {users.length} / {totalCount} users
-            {searchQuery && ` (filtered)`}
+            {isFiltered && ` (filtered)`}
           </span>
           {hasMore && (
             <>

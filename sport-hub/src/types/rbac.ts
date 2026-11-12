@@ -35,6 +35,12 @@ export const ROLE_DESCRIPTIONS: Record<Role, string> = {
 
 export const isRole = (value: unknown): value is Role => ROLES.includes(value as Role);
 
+/** Role filter for the admin users list: a stored role, or 'none' for users without any role. */
+export type UserRoleFilter = Role | 'none';
+
+export const isUserRoleFilter = (value: unknown): value is UserRoleFilter =>
+  value === 'none' || isRole(value);
+
 /**
  * A profile's roles, cleaned up (known roles only, fixed order, see normalizeRoles).
  *

@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getUsersPaginated } from '@lib/user-query-service';
 import { createUserWithProfile, generateUniqueAthleteSlug } from '@lib/user-service';
-import { rolesOf } from 'src/types/rbac';
+import { isUserRoleFilter, rolesOf } from 'src/types/rbac';
 
 const DEFAULT_PAGE_SIZE = 100;
 
@@ -14,6 +14,11 @@ export async function GET(request: NextRequest) {
     );
     const cursorParam = searchParams.get('cursor');
     const searchQuery = searchParams.get('search')?.toLowerCase().trim() || '';
+    const roleParam = searchParams.get('role');
+    const role = isUserRoleFilter(roleParam) ? roleParam : undefined;
+    if (roleParam && !role) {
+      return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
+    }
 
     // Decode cursor (base64 encoded lastEvaluatedKey)
     let exclusiveStartKey: Record<string, unknown> | undefined;
@@ -30,6 +35,7 @@ export async function GET(request: NextRequest) {
 
     const result = await getUsersPaginated({
       search: searchQuery || undefined,
+      role,
       limit,
       exclusiveStartKey,
     });

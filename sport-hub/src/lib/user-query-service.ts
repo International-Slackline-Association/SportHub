@@ -7,7 +7,7 @@
 
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { dynamodb, ddbClient, getTableName, USERS_TABLE } from './dynamodb';
-import type { Role } from '../types/rbac';
+import type { Role, UserRoleFilter } from '../types/rbac';
 import type {
   UserProfileRecord,
   AthleteRankingRecord,
@@ -207,11 +207,48 @@ export async function getAthleteProfilesBatch(
 }
 
 /**
- * Get users with pagination and optional text search
+ * DynamoDB filter condition for a role filter, matching the stored `roles` list
+ * exactly. General Admins are stored as just ['admin'] (see normalizeRoles), so
+ * filtering by a manager role does not list them; they show under General Admin.
+ *
+ * TRANSITION: also matches profiles that still have the legacy `role: 'admin'`
+ * attribute (see rolesOf), until every profile has been converted.
+ */
+export function roleFilterCondition(filter: UserRoleFilter): {
+  expression: string;
+  names: Record<string, string>;
+  values: Record<string, unknown>;
+} {
+  const names = { '#roles': 'roles', '#legacyRole': 'role' };
+  const values: Record<string, unknown> = { ':legacyAdmin': 'admin' };
+  const isLegacyAdmin = '#legacyRole = :legacyAdmin';
+
+  if (filter === 'none') {
+    return {
+      expression: `(attribute_not_exists(#roles) OR size(#roles) = :zero) AND NOT (attribute_not_exists(#roles) AND ${isLegacyAdmin})`,
+      names,
+      values: { ...values, ':zero': 0 },
+    };
+  }
+
+  const hasRole = 'contains(#roles, :roleFilter)';
+  if (filter === 'admin') {
+    return {
+      expression: `(${hasRole} OR (attribute_not_exists(#roles) AND ${isLegacyAdmin}))`,
+      names,
+      values: { ...values, ':roleFilter': filter },
+    };
+  }
+  return { expression: hasRole, names: { '#roles': 'roles' }, values: { ':roleFilter': filter } };
+}
+
+/**
+ * Get users with pagination, optional text search and optional role filter
  * Wraps countItems + scanItemsPaginated on USERS_TABLE for Profile records
  */
 export async function getUsersPaginated(options: {
   search?: string;
+  role?: UserRoleFilter;
   limit: number;
   exclusiveStartKey?: Record<string, unknown>;
 }): Promise<{
@@ -230,6 +267,13 @@ export async function getUsersPaginated(options: {
     expressionAttributeNames['#searchName'] = 'name';
     expressionAttributeNames['#searchEmail'] = 'email';
     expressionAttributeNames['#searchSlug'] = 'athleteSlug';
+  }
+
+  if (options.role) {
+    const condition = roleFilterCondition(options.role);
+    filterExpression += ` AND ${condition.expression}`;
+    Object.assign(expressionAttributeValues, condition.values);
+    Object.assign(expressionAttributeNames, condition.names);
   }
 
   const filterOptions = {

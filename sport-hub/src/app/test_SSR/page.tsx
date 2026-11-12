@@ -149,12 +149,6 @@ export default async function AboutPage() {
         </span>
       </div>
 
-      {/* Current User Session Panel */}
-      <CurrentUserPanel
-        session={session}
-        dbUser={currentUserData}
-      />
-
       {/* Add User Form */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
         <h2 className="text-xl font-semibold mb-4">Add New User</h2>
@@ -175,6 +169,14 @@ export default async function AboutPage() {
             currentUserId={session?.user?.id}
           />
         </div>
+      </div>
+
+      {/* Current User Session Panel */}
+      <div className="mt-6">
+        <CurrentUserPanel
+          session={session}
+          dbUser={currentUserData}
+        />
       </div>
     </div>
   );
