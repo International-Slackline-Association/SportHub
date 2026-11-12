@@ -205,64 +205,48 @@ export default function UserListPagination({
           {isFiltered ? 'No users found matching the search.' : 'No users found.'}
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-gray-500 border-b">
-                <th className="px-4 py-2 font-medium whitespace-nowrap">First Name</th>
-                <th className="px-4 py-2 font-medium whitespace-nowrap">Last Name</th>
-                <th className="px-4 py-2 font-medium whitespace-nowrap">Email Address</th>
-                <th className="px-4 py-2 font-medium whitespace-nowrap">Role</th>
-                <th className="px-4 py-2" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {users.map((user) => (
-                <tr
-                  key={user.id}
-                  className={`hover:bg-gray-50 ${user.id === currentUserId ? 'bg-blue-50' : ''}`}
-                >
-                  <td className="px-4 py-2 font-medium whitespace-nowrap">
-                    {user.name}
-                    {user.id === currentUserId && (
-                      <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">You</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2 font-medium whitespace-nowrap">{user.surname}</td>
-                  <td className="px-4 py-2 text-gray-600 break-all">{user.email}</td>
-                  <td className="px-4 py-2">
-                    <span className={`text-xs px-2 py-0.5 rounded whitespace-nowrap ${
-                      user.roles?.length
-                        ? 'bg-purple-100 text-purple-800'
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {rolesLabel(user.roles)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2">
-                    <div className="flex justify-end gap-2 whitespace-nowrap">
-                      <Button
-                        as="link"
-                        href={`/athlete/${encodeURIComponent(user.id)}`}
-                        variant="secondary"
-                        size="small"
-                      >
-                        Visit Profile
-                      </Button>
-                      <UserManagementModal
-                        action="UPDATE"
-                        buttonSize="small"
-                        user={user}
-                        onDelete={() => handleDelete(user.id)}
-                      />
-                      <UserManagementModal action="ROLES" buttonSize="small" user={user} currentUserId={currentUserId} />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        users.map((user) => (
+          <div
+            key={user.id}
+            className={`px-4 py-3 flex flex-wrap justify-between items-center gap-2 hover:bg-gray-50 ${
+              user.id === currentUserId ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+            }`}
+          >
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-semibold text-lg">{`${user.name} ${user.surname || ''}`.trim()}</h3>
+                {user.id === currentUserId && (
+                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">You</span>
+                )}
+                <span className={`text-xs px-2 py-0.5 rounded ${
+                  user.roles?.length
+                    ? 'bg-purple-100 text-purple-800'
+                    : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {rolesLabel(user.roles)}
+                </span>
+              </div>
+              <p className="text-gray-600 truncate">{user.email}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                as="link"
+                href={`/athlete/${encodeURIComponent(user.id)}`}
+                variant="secondary"
+                size="small"
+              >
+                Visit Profile
+              </Button>
+              <UserManagementModal
+                action="UPDATE"
+                buttonSize="small"
+                user={user}
+                onDelete={() => handleDelete(user.id)}
+              />
+              <UserManagementModal action="ROLES" buttonSize="small" user={user} currentUserId={currentUserId} />
+            </div>
+          </div>
+        ))
       )}
       <div className="p-4 border-t">
         <div className="flex flex-col items-center gap-3">
