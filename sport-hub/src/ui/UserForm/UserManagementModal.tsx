@@ -21,6 +21,8 @@ interface UserManagementModalProps {
   buttonVariant?: ButtonVariant;
   user?: UserData;
   currentUserId?: string;
+  /** UPDATE only: adds a Delete button (with a confirm step) to the dialog */
+  onDelete?: () => Promise<void>;
 }
 
 const UserManagementModal = ({
@@ -29,6 +31,7 @@ const UserManagementModal = ({
   buttonVariant = "primary",
   user,
   currentUserId,
+  onDelete,
 }: UserManagementModalProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const formRef = useRef<FormikProps<UserFormValues>>(null);
@@ -40,6 +43,8 @@ const UserManagementModal = ({
   const [primarySubType, setPrimarySubType] = useState<UserSubType | undefined>(user?.primarySubType as UserSubType | undefined);
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const isCurrentUser = user?.id === currentUserId || user?.userId === currentUserId;
   // Only General admins grant or remove General Admin (dev has no sign-in); User Managers set the other roles
@@ -52,7 +57,7 @@ const UserManagementModal = ({
     setSelectedRoles(prev => prev.includes(role) ? prev.filter(r => r !== role) : ROLES.filter(r => r === role || prev.includes(r)));
   };
 
-  const buttonLabel = action === 'CREATE' ? 'Register' : action === 'ROLES' ? 'Roles' : 'Edit';
+  const buttonLabel = action === 'CREATE' ? 'Register' : action === 'ROLES' ? 'Set Roles' : 'Edit Details';
   const modalTitle = action === 'CREATE' ? 'Add New User' : action === 'ROLES' ? 'Manage Roles & Types' : 'Edit User';
   const resolvedButtonVariant = action === 'ROLES' ? 'secondary' : buttonVariant;
 
@@ -95,8 +100,48 @@ const UserManagementModal = ({
       setPrimarySubType(user?.primarySubType as UserSubType | undefined);
       setMessage(null);
     }
+    setIsConfirmingDelete(false);
     setIsModalOpen(true);
   };
+
+  const handleDelete = async () => {
+    if (!onDelete) return;
+    setIsDeleting(true);
+    try {
+      await onDelete();
+      setIsModalOpen(false);
+    } finally {
+      setIsDeleting(false);
+      setIsConfirmingDelete(false);
+    }
+  };
+
+  const hasDeleteAction = action === 'UPDATE' && !!onDelete;
+  const editActions = hasDeleteAction ? (
+    <>
+      {isConfirmingDelete ? (
+        <div className="flex items-center gap-2 mr-auto">
+          <span className="text-sm text-red-700">Delete this user?</span>
+          <Button variant="destructive" size="small" onClick={handleDelete} disabled={isDeleting}>
+            {isDeleting ? 'Deleting...' : 'Yes, delete'}
+          </Button>
+          <Button variant="default" size="small" onClick={() => setIsConfirmingDelete(false)} disabled={isDeleting}>
+            No
+          </Button>
+        </div>
+      ) : (
+        <Button variant="destructive-secondary" className="mr-auto" onClick={() => setIsConfirmingDelete(true)}>
+          Delete
+        </Button>
+      )}
+      <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
+        Cancel
+      </Button>
+      <Button variant="primary" onClick={() => formRef.current?.submitForm()}>
+        Save
+      </Button>
+    </>
+  ) : undefined;
 
   const FormComponentProps = {
     formRef,
@@ -119,6 +164,7 @@ const UserManagementModal = ({
           title={modalTitle}
           formRef={action !== 'ROLES' ? formRef : undefined}
           showDefaultActions={action !== 'ROLES'}
+          actions={editActions}
         >
           {action === 'CREATE' && <CreateUserForm {...FormComponentProps} />}
           {action === 'UPDATE' && <UpdateUserForm {...FormComponentProps} user={user} />}

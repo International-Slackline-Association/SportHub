@@ -6,7 +6,6 @@ import { deleteUser } from './actions';
 import Button from '@ui/Button';
 import SearchBar from './SearchBar';
 import { rolesLabel, type Role, type UserRoleFilter, type UserSubType } from 'src/types/rbac';
-import { userGenderOptions } from '@ui/Form';
 
 interface User {
   id: string;
@@ -160,6 +159,15 @@ export default function UserListPagination({
     }
   }, [initialUsers, initialCursor, initialHasMore, initialTotalCount, isFiltered]);
 
+  const handleDelete = async (id: string) => {
+    const formData = new FormData();
+    formData.set('id', id);
+    await deleteUser(formData);
+    // The server action refreshes the unfiltered list; drop the row from a filtered one too
+    setUsers(prev => prev.filter(u => u.id !== id));
+    setTotalCount(prev => prev - 1);
+  };
+
   const decrementPageSize = () => {
     const currentIndex = PAGE_SIZE_OPTIONS.indexOf(pageSize);
     if (currentIndex > 0) {
@@ -200,13 +208,13 @@ export default function UserListPagination({
         users.map((user) => (
           <div
             key={user.id}
-            className={`p-6 flex justify-between items-center hover:bg-gray-50 ${
+            className={`px-4 py-3 flex flex-wrap justify-between items-center gap-2 hover:bg-gray-50 ${
               user.id === currentUserId ? 'bg-blue-50 border-l-4 border-blue-500' : ''
             }`}
           >
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-lg">{`${user.name} ${user.surname || ''}`.trim()}</h3>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-semibold">{`${user.name} ${user.surname || ''}`.trim()}</h3>
                 {user.id === currentUserId && (
                   <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">You</span>
                 )}
@@ -217,47 +225,39 @@ export default function UserListPagination({
                 }`}>
                   {rolesLabel(user.roles)}
                 </span>
+                {user.userSubTypes?.map(subType => (
+                  <span
+                    key={subType}
+                    className={`text-xs px-2 py-0.5 rounded ${
+                      subType === user.primarySubType
+                        ? 'bg-green-100 text-green-800 font-medium'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {subType}
+                  </span>
+                ))}
               </div>
-              <p className="text-gray-600">{user.email}</p>
-              <p className="text-sm text-gray-500 font-mono">{user.id}</p>
-              {user.isaUsersId && <p className="text-sm text-gray-500">ISA ID: <span className="font-mono">{user.isaUsersId}</span></p>}
-              {user.country && <p className="text-sm text-gray-500">Country: {user.country}</p>}
-              {user.city && <p className="text-sm text-gray-500">City: {user.city}</p>}
-              {user.birthdate && <p className="text-sm text-gray-500">Birthdate: {user.birthdate}</p>}
-              {user.gender && <p className="text-sm text-gray-500 capitalize">Gender: {userGenderOptions.find(o => o.value === user.gender)?.label}</p>}
-              <div className="flex gap-4 text-sm text-gray-500 mt-1">
-                <span>Points: {user.totalPoints || 0}</span>
-                <span>Contests: {user.contestsParticipated || 0}</span>
-              </div>
-              {user.userSubTypes && user.userSubTypes.length > 0 && (
-                <div className="flex gap-1 mt-2">
-                  {user.userSubTypes.map(subType => (
-                    <span
-                      key={subType}
-                      className={`text-xs px-2 py-0.5 rounded ${
-                        subType === user.primarySubType
-                          ? 'bg-green-100 text-green-800 font-medium'
-                          : 'bg-gray-100 text-gray-600'
-                      }`}
-                    >
-                      {subType}
-                    </span>
-                  ))}
-                </div>
-              )}
+              <p className="text-sm text-gray-500 truncate">
+                {[user.email, user.country?.toUpperCase()].filter(Boolean).join(' · ')}
+              </p>
             </div>
-            <div className="flex gap-2 ml-4">
-              <UserManagementModal action="UPDATE" user={user} />
-              <UserManagementModal action="ROLES" user={user} currentUserId={currentUserId} />
-              <form action={deleteUser} style={{ display: 'inline' }}>
-                <input type="hidden" name="id" value={user.id} />
-                <Button
-                  type="submit"
-                  variant="destructive"
-                >
-                  Delete
-                </Button>
-              </form>
+            <div className="flex gap-2">
+              <Button
+                as="link"
+                href={`/athlete/${encodeURIComponent(user.id)}`}
+                variant="secondary"
+                size="small"
+              >
+                Visit Profile
+              </Button>
+              <UserManagementModal
+                action="UPDATE"
+                buttonSize="small"
+                user={user}
+                onDelete={() => handleDelete(user.id)}
+              />
+              <UserManagementModal action="ROLES" buttonSize="small" user={user} currentUserId={currentUserId} />
             </div>
           </div>
         ))
