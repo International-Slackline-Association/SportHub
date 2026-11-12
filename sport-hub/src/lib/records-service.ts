@@ -7,7 +7,7 @@
  * "Record:{id}" / "First:{id}" pointer item under their profile.
  */
 
-import { BatchWriteCommand, PutCommand, QueryCommand, UpdateCommand, type QueryCommandInput } from '@aws-sdk/lib-dynamodb';
+import { PutCommand, QueryCommand, UpdateCommand, type QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 import { formatISODay } from '@utils/dates';
 import { ddbClient, dynamodb, getTableName, RECORDS_TABLE, USERS_TABLE } from './dynamodb';
 import type {
@@ -456,14 +456,14 @@ export async function getEntriesBatch(kind: EntryKind, entryIds: string[]): Prom
   return results;
 }
 
-/** Deletes items in chunks of 25 (BatchWrite limit). Used by the local import reset. */
+/**
+ * Deletes items one DeleteItem call at a time, 25 in parallel. Not BatchWriteItem:
+ * the prod compute role (rankings-dynamodb-role) is not allowed to call it, and
+ * DeleteItem is what the rest of the app already uses.
+ */
 export async function deleteItems(tableName: string, keys: Record<string, unknown>[]): Promise<void> {
   for (let i = 0; i < keys.length; i += 25) {
-    await ddbClient.send(new BatchWriteCommand({
-      RequestItems: {
-        [getTableName(tableName)]: keys.slice(i, i + 25).map(Key => ({ DeleteRequest: { Key } })),
-      },
-    }));
+    await Promise.all(keys.slice(i, i + 25).map(key => dynamodb.deleteItem(tableName, key)));
   }
 }
 
