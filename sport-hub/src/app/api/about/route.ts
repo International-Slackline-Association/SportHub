@@ -14,9 +14,9 @@ export async function GET(request: NextRequest) {
     );
     const cursorParam = searchParams.get('cursor');
     const searchQuery = searchParams.get('search')?.toLowerCase().trim() || '';
-    const roleParam = searchParams.get('role');
-    const role = isUserRoleFilter(roleParam) ? roleParam : undefined;
-    if (roleParam && !role) {
+    // Comma-separated, e.g. role=admin,record_manager (users with any of them)
+    const roles = (searchParams.get('role') || '').split(',').filter(Boolean);
+    if (!roles.every(isUserRoleFilter)) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
     }
 
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     const result = await getUsersPaginated({
       search: searchQuery || undefined,
-      role,
+      roles,
       limit,
       exclusiveStartKey,
     });

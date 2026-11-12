@@ -52,12 +52,12 @@ export default function UserListPagination({
   const [loading, setLoading] = useState(false);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<UserRoleFilter | ''>('');
+  const [roleFilter, setRoleFilter] = useState<UserRoleFilter[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  const isFiltered = !!searchQuery || !!roleFilter;
+  const isFiltered = !!searchQuery || roleFilter.length > 0;
 
-  const fetchUsers = useCallback(async (search: string, role: UserRoleFilter | '', cursorValue?: string | null, append = false) => {
+  const fetchUsers = useCallback(async (search: string, roles: UserRoleFilter[], cursorValue?: string | null, append = false) => {
     if (append) {
       setLoading(true);
     } else {
@@ -72,8 +72,8 @@ export default function UserListPagination({
       if (search) {
         params.set('search', search);
       }
-      if (role) {
-        params.set('role', role);
+      if (roles.length) {
+        params.set('role', roles.join(','));
       }
       const response = await fetch(`/api/about?${params.toString()}`);
       const data = await response.json();
@@ -98,20 +98,20 @@ export default function UserListPagination({
     }
   }, [pageSize]);
 
-  const handleSearch = (query: string, role: UserRoleFilter | '') => {
+  const handleSearch = (query: string, roles: UserRoleFilter[]) => {
     setSearchQuery(query);
-    setRoleFilter(role);
+    setRoleFilter(roles);
     setCursor(null);
-    if (!query && !role) {
+    if (!query && !roles.length) {
       handleClearSearch();
       return;
     }
-    fetchUsers(query, role);
+    fetchUsers(query, roles);
   };
 
   const handleClearSearch = () => {
     setSearchQuery('');
-    setRoleFilter('');
+    setRoleFilter([]);
     setUsers(initialUsers);
     setCursor(initialCursor);
     setHasMore(initialHasMore);
@@ -131,8 +131,8 @@ export default function UserListPagination({
       if (searchQuery) {
         params.set('search', searchQuery);
       }
-      if (roleFilter) {
-        params.set('role', roleFilter);
+      if (roleFilter.length) {
+        params.set('role', roleFilter.join(','));
       }
       const response = await fetch(`/api/about?${params.toString()}`);
       const data = await response.json();
@@ -191,7 +191,7 @@ export default function UserListPagination({
           onClear={handleClearSearch}
           isSearching={isSearching}
           currentQuery={searchQuery}
-          currentRole={roleFilter}
+          currentRoles={roleFilter}
         />
       </div>
 

@@ -207,48 +207,51 @@ export async function getAthleteProfilesBatch(
 }
 
 /**
- * DynamoDB filter condition for a role filter, matching the stored `roles` list
- * exactly. General Admins are stored as just ['admin'] (see normalizeRoles), so
- * filtering by a manager role does not list them; they show under General Admin.
+ * DynamoDB filter condition for a role filter: users with any of the given
+ * roles, matching the stored `roles` list exactly. General Admins are stored as
+ * just ['admin'] (see normalizeRoles), so filtering by a manager role does not
+ * list them; they show under General Admin.
  *
- * TRANSITION: also matches profiles that still have the legacy `role: 'admin'`
- * attribute (see rolesOf), until every profile has been converted.
+ * TRANSITION: General Admin also matches profiles that still have the legacy
+ * `role: 'admin'` attribute (see rolesOf), until every profile has been converted.
  */
-export function roleFilterCondition(filter: UserRoleFilter): {
+export function roleFilterCondition(filters: readonly UserRoleFilter[]): {
   expression: string;
   names: Record<string, string>;
   values: Record<string, unknown>;
 } {
-  const names = { '#roles': 'roles', '#legacyRole': 'role' };
-  const values: Record<string, unknown> = { ':legacyAdmin': 'admin' };
-  const isLegacyAdmin = '#legacyRole = :legacyAdmin';
+  const names: Record<string, string> = { '#roles': 'roles' };
+  const values: Record<string, unknown> = {};
+  const isLegacyAdmin = () => {
+    names['#legacyRole'] = 'role';
+    values[':legacyAdmin'] = 'admin';
+    return '(attribute_not_exists(#roles) AND #legacyRole = :legacyAdmin)';
+  };
 
-  if (filter === 'none') {
-    return {
-      expression: `(attribute_not_exists(#roles) OR size(#roles) = :zero) AND NOT (attribute_not_exists(#roles) AND ${isLegacyAdmin})`,
-      names,
-      values: { ...values, ':zero': 0 },
-    };
-  }
+  const conditions = filters.map((filter, i) => {
+    if (filter === 'none') {
+      values[':zero'] = 0;
+      return `(attribute_not_exists(#roles) OR size(#roles) = :zero) AND NOT ${isLegacyAdmin()}`;
+    }
+    values[`:role${i}`] = filter;
+    const hasRole = `contains(#roles, :role${i})`;
+    return filter === 'admin' ? `${hasRole} OR ${isLegacyAdmin()}` : hasRole;
+  });
 
-  const hasRole = 'contains(#roles, :roleFilter)';
-  if (filter === 'admin') {
-    return {
-      expression: `(${hasRole} OR (attribute_not_exists(#roles) AND ${isLegacyAdmin}))`,
-      names,
-      values: { ...values, ':roleFilter': filter },
-    };
-  }
-  return { expression: hasRole, names: { '#roles': 'roles' }, values: { ':roleFilter': filter } };
+  // DynamoDB rejects redundant parentheses, so only group compound conditions
+  const group = (condition: string) => (/ (AND|OR) /.test(condition) ? `(${condition})` : condition);
+  const parts = conditions.length > 1 ? conditions.map(group) : conditions;
+  return { expression: group(parts.join(' OR ')), names, values };
 }
 
 /**
- * Get users with pagination, optional text search and optional role filter
+ * Get users with pagination, optional text search and optional role filter (any of the given roles)
  * Wraps countItems + scanItemsPaginated on USERS_TABLE for Profile records
  */
 export async function getUsersPaginated(options: {
   search?: string;
-  role?: UserRoleFilter;
+  /** Users with any of these roles; empty or missing = all users */
+  roles?: UserRoleFilter[];
   limit: number;
   exclusiveStartKey?: Record<string, unknown>;
 }): Promise<{
@@ -269,8 +272,8 @@ export async function getUsersPaginated(options: {
     expressionAttributeNames['#searchSlug'] = 'athleteSlug';
   }
 
-  if (options.role) {
-    const condition = roleFilterCondition(options.role);
+  if (options.roles?.length) {
+    const condition = roleFilterCondition(options.roles);
     filterExpression += ` AND ${condition.expression}`;
     Object.assign(expressionAttributeValues, condition.values);
     Object.assign(expressionAttributeNames, condition.names);
