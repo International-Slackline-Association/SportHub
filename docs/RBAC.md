@@ -36,12 +36,12 @@ If nobody has the Event Manager role, event emails go to `EVENTS_REVIEW_EMAIL` w
 
 1. Admin Panel → **Manage Users** (needs User Manager or General Admin).
 2. Find the person and click **Roles**.
-3. Tick the admin roles they should have (none ticked = normal user). User types (athlete, judge, organizer) are set in the same dialog; they describe the person and are not permissions, except that *organizer* lets a normal user submit events.
+3. Tick the admin roles they should have (none ticked = normal user). General Admin is listed first; ticking it ticks and locks all other roles, since it includes them. Unticking it brings back the roles that were ticked before. User types (athlete, judge, organizer) are set in the same dialog; they describe the person and are not permissions, except that *organizer* lets a normal user submit events.
 4. The person signs out and back in for the change to take effect.
 
 ## For developers
 
-**Storage.** Roles live on the user's profile item in the `sporthub-users` table (`sortKey = Profile`), not in Cognito, as `roles: Role[]` (`event_manager`, `record_manager`, `user_manager`, `admin`). Empty or missing = normal user. There is no single `role` field any more.
+**Storage.** Roles live on the user's profile item in the `sporthub-users` table (`sortKey = Profile`), not in Cognito, as `roles: Role[]` (`event_manager`, `record_manager`, `user_manager`, `admin`). Empty or missing = normal user. There is no single `role` field any more. A list with `admin` is saved as just `['admin']` (`normalizeRoles()`), because General Admin includes every other role.
 
 **Transition from the old single role.** Profiles created before this change have `role: 'user' | 'admin'` instead of `roles`. Every current admin becomes **General Admin** automatically: the first time such a user is looked up (sign-in or any page), `rbac-service.ts` saves the profile with `roles` (`['admin']` or `[]`) and without `role`. Sessions from before the deploy load their roles once as well, so nobody has to sign out. Nothing needs to be run by hand. Once no profile has `role` any more, the marked `TRANSITION` lines in `rolesOf()`, `rbac-service.ts` and `auth.ts` can be deleted.
 

@@ -16,8 +16,8 @@
  */
 export type Role = 'event_manager' | 'record_manager' | 'user_manager' | 'admin';
 
-/** Every role, in the order shown when assigning roles. */
-export const ROLES: Role[] = ['event_manager', 'record_manager', 'user_manager', 'admin'];
+/** Every role, in the order shown when assigning roles (General Admin first, it includes all others). */
+export const ROLES: Role[] = ['admin', 'event_manager', 'record_manager', 'user_manager'];
 
 export const ROLE_LABELS: Record<Role, string> = {
   event_manager: 'Event Manager',
@@ -36,7 +36,7 @@ export const ROLE_DESCRIPTIONS: Record<Role, string> = {
 export const isRole = (value: unknown): value is Role => ROLES.includes(value as Role);
 
 /**
- * A profile's roles, cleaned up (known roles only, fixed order).
+ * A profile's roles, cleaned up (known roles only, fixed order, see normalizeRoles).
  *
  * TRANSITION: profiles written before multi-role support have a single
  * `role: 'admin' | 'user'` attribute instead of `roles`; every current admin
@@ -46,14 +46,23 @@ export const isRole = (value: unknown): value is Role => ROLES.includes(value as
  */
 export function rolesOf(profile: { roles?: unknown } | null | undefined): Role[] {
   if (!profile) return [];
-  if (Array.isArray(profile.roles)) return ROLES.filter(r => (profile.roles as unknown[]).includes(r));
+  if (Array.isArray(profile.roles)) return normalizeRoles((profile.roles as unknown[]).filter(isRole));
   return (profile as { role?: unknown }).role === 'admin' ? ['admin'] : [];  // TRANSITION fallback, see above
 }
 
-/** Validates a roles list from a request: known roles only, no duplicates. Null when invalid. */
+/**
+ * Fixed order, no duplicates. General Admin includes every other role, so a
+ * list with General Admin is stored and shown as just ['admin'].
+ */
+export function normalizeRoles(roles: readonly Role[]): Role[] {
+  if (roles.includes('admin')) return ['admin'];
+  return ROLES.filter(r => roles.includes(r));
+}
+
+/** Validates a roles list from a request: known roles only (normalized). Null when invalid. */
 export function parseRoles(input: unknown): Role[] | null {
   if (!Array.isArray(input) || !input.every(isRole)) return null;
-  return ROLES.filter(r => input.includes(r));
+  return normalizeRoles(input);
 }
 
 type RolesInput = readonly Role[] | null | undefined;
@@ -67,7 +76,7 @@ export const permissionsOf = (roles: RolesInput): Permission[] =>
 
 /** Human-readable list, e.g. "Event Manager, Record Manager", or "User" for no roles. */
 export const rolesLabel = (roles: RolesInput): string => {
-  const list = (roles ?? []).filter(isRole);
+  const list = normalizeRoles((roles ?? []).filter(isRole));
   return list.length ? list.map(r => ROLE_LABELS[r]).join(', ') : 'User';
 };
 
