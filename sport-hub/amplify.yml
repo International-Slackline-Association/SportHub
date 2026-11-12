@@ -35,6 +35,8 @@ applications:
             - env | grep -e ^SITE_URL= >> .env.production || true
             - env | grep -e ^RECORDS_REVIEW_EMAIL= >> .env.production || true
             - env | grep -e ^RECORDS_COMMUNICATION_EMAIL= >> .env.production || true
+            - env | grep -e ^ISA_TOOLS_API_KEY= >> .env.production || true
+            - env | grep -e ^ISA_TOOLS_API_URL= >> .env.production || true
             - chmod +x scripts/build_sporthub.sh
             - ./scripts/build_sporthub.sh
       artifacts:

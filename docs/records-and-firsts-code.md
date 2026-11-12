@@ -21,7 +21,7 @@ How the World Records & World Firsts workflow is built, for reviewers. Requireme
 | Evidence | `lib/records-evidence.ts`, `claim/components/EvidenceFields.tsx`, `api/records-evidence/local` | Claim folder on Google Drive per entry: resumable uploads straight from the browser (`startEvidenceUpload`), link shortcuts and overview written by `syncEvidence` on save. Local stand-in in the temp directory when Drive isn't configured. |
 | Emails | `lib/records-notifications.ts`, `lib/mailer.ts` | One function per claim event; SMTP or log only. Never throws. |
 | CSV export | `lib/records-export.ts`, `app/api/admin/records-export/[dataset]/route.ts` | Records, firsts, athletes and categories as CSV for admins (`/admin/records-export`). |
-| Certificates | `lib/records-certificates.ts`, `app/api/certificates/[kind]/[id]/route.ts` | Official ISA templates from isa-tools (`lib/certificate-assets/world-*-en.pdf`) with name, category, specs, date and a QR code linking back to the live certificate drawn on; generated on demand for public entries. |
+| Certificates | `lib/records-certificates.ts`, `app/api/certificates/[kind]/[id]/route.ts` | Official ISA templates from isa-tools (`lib/certificate-assets/world-*-en.pdf`) with name, category, specs, date and a "Scan to verify" QR code drawn on; generated on demand for public entries. The QR code is signed by isa-tools (`lib/certificate-signing.ts`: `POST /sign`, verified at verify.slacklineinternational.org), stored per entry and athlete as a `CertificateSignature` item and reused until the statement changes; without `ISA_TOOLS_API_KEY` or when isa-tools fails it links to the live certificate. |
 | Auth | `lib/records-auth.ts` | `requireSession`, `requireRecordsPermission`, `actorOf` for audit items. |
 
 Pages: `app/world_records/` (public lists, `claim/`, `my-claims/`) and `app/admin/records-*` (review queue and detail,
@@ -75,5 +75,5 @@ instead of scanning.
 | `pnpm test:records` | Unit tests for `records-logic.ts` (node:test via tsx). |
 
 Email settings: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `RECORDS_REVIEW_EMAIL`,
-`RECORDS_COMMUNICATION_EMAIL`, `SITE_URL` (public base URL for email links and the certificate QR code; falls back to `AUTH_URL`, see `docs/AMPLIFY_DEPLOYMENT.md`). Without `SMTP_HOST`, or with `DYNAMODB_LOCAL=true`, emails are logged only.
+`RECORDS_COMMUNICATION_EMAIL`, `SITE_URL` (public base URL for email links and the fallback certificate QR code; falls back to `AUTH_URL`, see `docs/AMPLIFY_DEPLOYMENT.md`), `ISA_TOOLS_API_KEY` / `ISA_TOOLS_API_URL` (signed certificate QR codes). Without `SMTP_HOST`, or with `DYNAMODB_LOCAL=true`, emails are logged only.
 New-claim emails go to every user with the Record Manager role; `RECORDS_REVIEW_EMAIL` (default records@) is only used when nobody has that role.
