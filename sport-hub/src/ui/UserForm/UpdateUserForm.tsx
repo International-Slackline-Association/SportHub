@@ -9,7 +9,8 @@ import UserFormFields from './UserFormFields';
 
 interface UpdateUserFormProps {
   formRef?: React.RefObject<FormikProps<UserFormValues> | null>;
-  onAfterSubmit?: () => void;
+  /** Gets the saved values, so a list can show them without reloading */
+  onAfterSubmit?: (values: UserFormValues) => void;
   showSubmitButton?: boolean;
   user?: UserData;
   /** When provided, overrides the default server action (e.g. for CSR API calls) */
@@ -44,10 +45,10 @@ const UpdateUserForm = ({
 
       await updateUser(formData);
       setApiSuccess(true);
-      onAfterSubmit?.();
+      onAfterSubmit?.(values);
     } catch (error: unknown) {
       if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
-        onAfterSubmit?.();
+        onAfterSubmit?.(values);
         return;
       }
       setApiError(`Failed to update user: ${error instanceof Error ? error.message : 'Unknown error'}`);

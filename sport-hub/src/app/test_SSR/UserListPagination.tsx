@@ -5,6 +5,7 @@ import UserManagementModal from '@ui/UserForm/UserManagementModal';
 import { deleteUser } from './actions';
 import Button from '@ui/Button';
 import SearchBar from './SearchBar';
+import type { UserData } from '@ui/UserForm/types';
 import { rolesLabel, type Role, type UserRoleFilter, type UserSubType } from 'src/types/rbac';
 
 interface User {
@@ -54,6 +55,15 @@ export default function UserListPagination({
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRoleFilter[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  // Fields saved in this tab, by user id. Laid over every list we show, because the refreshed server list
+  // (an eventually consistent scan) and a filtered list fetched earlier can both still hold the old values
+  const [savedChanges, setSavedChanges] = useState<Record<string, Partial<User>>>({});
+  const shownUsers = users.map(user => savedChanges[user.id] ? { ...user, ...savedChanges[user.id] } : user);
+
+  const handleSaved = (id: string, changes: Partial<UserData>) => {
+    // Roles come back from the server already checked (Role[]); UserData just types them as strings
+    setSavedChanges(prev => ({ ...prev, [id]: { ...prev[id], ...(changes as Partial<User>) } }));
+  };
 
   const isFiltered = !!searchQuery || roleFilter.length > 0;
 
@@ -200,12 +210,12 @@ export default function UserListPagination({
         <div className="p-6 text-center text-gray-500">
           Searching...
         </div>
-      ) : users.length === 0 ? (
+      ) : shownUsers.length === 0 ? (
         <div className="p-6 text-center text-gray-500">
           {isFiltered ? 'No users found matching the search.' : 'No users found.'}
         </div>
       ) : (
-        users.map((user) => (
+        shownUsers.map((user) => (
           <div
             key={user.id}
             className={`px-4 py-3 flex flex-wrap justify-between items-center gap-2 hover:bg-gray-50 ${
@@ -242,8 +252,15 @@ export default function UserListPagination({
                 buttonSize="small"
                 user={user}
                 onDelete={() => handleDelete(user.id)}
+                onSaved={changes => handleSaved(user.id, changes)}
               />
-              <UserManagementModal action="ROLES" buttonSize="small" user={user} currentUserId={currentUserId} />
+              <UserManagementModal
+                action="ROLES"
+                buttonSize="small"
+                user={user}
+                currentUserId={currentUserId}
+                onSaved={changes => handleSaved(user.id, changes)}
+              />
             </div>
           </div>
         ))
