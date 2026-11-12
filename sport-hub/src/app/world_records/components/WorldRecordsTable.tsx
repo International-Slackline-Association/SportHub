@@ -22,7 +22,7 @@ import {
   linkClassName,
   TitleBadge,
 } from './cellFormatters';
-import { AdminEditButton, useIsAdmin } from './AdminEditButton';
+import { AdminEditButton, useCanEditRecords } from './AdminEditButton';
 import { RECORD_CATEGORY_GROUPS } from '@lib/relational-types';
 import type { RecordStanding } from '@lib/records-logic';
 import { multiSelectFilterFn } from '@ui/Table/TableFilterFields';
@@ -151,7 +151,7 @@ type WorldRecordsTableProps = {
 
 const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
   const { isDesktop } = useClientMediaQuery(BREAKPOINT_LG);
-  const isAdmin = useIsAdmin();
+  const canEditRecords = useCanEditRecords();
   const [selectedGroup, setSelectedGroup] = useState('');
 
   const groupOptions = useMemo(() => {
@@ -202,7 +202,7 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
             categoryName: !!isDesktop,
             gender:       !!isDesktop,
             links:        !!isDesktop,
-            edit:         !!isDesktop && isAdmin,
+            edit:         !!isDesktop && canEditRecords,
           },
         }
       }}

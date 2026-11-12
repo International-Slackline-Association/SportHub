@@ -42,7 +42,7 @@ export interface UserProfileRecord extends UserTableRecord {
   gender?: string;
 
   // RBAC fields
-  role: Role;
+  roles?: Role[];                 // Admin roles; permissions combine. Empty/missing = normal user. Read with rolesOf()
   permissions?: string[];
   roleAssignedAt?: string;
   roleAssignedBy?: string;

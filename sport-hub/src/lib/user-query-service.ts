@@ -7,6 +7,7 @@
 
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { dynamodb, ddbClient, getTableName, USERS_TABLE } from './dynamodb';
+import type { Role } from '../types/rbac';
 import type {
   UserProfileRecord,
   AthleteRankingRecord,
@@ -265,6 +266,21 @@ export async function getAllUserProfiles(): Promise<UserProfileRecord[]> {
     expressionAttributeValues: { ':sk': 'Profile' },
   });
   return items || [];
+}
+
+/**
+ * Email addresses of everyone with one of the given roles.
+ * Filtered scan: only used on rare events (a new record/first claim), not on page loads.
+ */
+export async function getEmailsByRole(roles: Role[]): Promise<string[]> {
+  const values = Object.fromEntries(roles.map((r, i) => [`:r${i}`, r]));
+  const items = await dynamodb.scanItems(USERS_TABLE, {
+    projectionExpression: 'email',
+    filterExpression: `sortKey = :sk AND (${Object.keys(values).map(k => `contains(#roles, ${k})`).join(' OR ')})`,
+    expressionAttributeNames: { '#roles': 'roles' },
+    expressionAttributeValues: { ':sk': 'Profile', ...values },
+  });
+  return [...new Set((items ?? []).map(i => i.email as string | undefined).filter((e): e is string => !!e))];
 }
 
 /**

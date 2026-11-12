@@ -8,6 +8,7 @@ import ContestDetails, { ContestTabData } from './components/ContestDetails';
 import { auth } from '@lib/auth';
 import { getFullUserProfile } from '../../dashboard/actions';
 import { ContestJudge } from '@lib/relational-types';
+import { roleHasPermission } from 'src/types/rbac';
 
 interface EventPageProps {
   params: Promise<{ eventId: string }>;
@@ -19,7 +20,7 @@ export default async function EventPage({ params, searchParams }: EventPageProps
   const { contest: contestIdParam } = await searchParams;
   const decodedEventId = decodeURIComponent(eventId);
   const session = await auth();
-  const isAdmin = session?.user?.role === 'admin';
+  const isAdmin = roleHasPermission(session?.user?.roles, 'events:edit');
 
   const { success, event } = await getEvent(decodedEventId);
   if (success && event) {

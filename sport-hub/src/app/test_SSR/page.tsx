@@ -5,7 +5,7 @@ import { CreateUserForm } from '@ui/UserForm';
 import UserListPagination from './UserListPagination';
 import CurrentUserPanel from './CurrentUserPanel';
 import { requireTestPageAccess } from '@lib/test-page-access';
-import type { Role, UserSubType } from 'src/types/rbac';
+import { rolesOf, type Role, type UserSubType } from 'src/types/rbac';
 
 export const metadata: Metadata = {
   title: 'SportHub - Test SSR',
@@ -28,7 +28,7 @@ interface User {
   gender?: string;
   totalPoints?: number;
   contestsParticipated?: number;
-  role?: Role;
+  roles?: Role[];
   userSubTypes?: UserSubType[];
   primarySubType?: UserSubType;
 }
@@ -71,7 +71,7 @@ async function getUsers(): Promise<PaginatedUsersResult> {
       gender: item.gender as string | undefined,
       totalPoints: (item.totalPoints as number) ?? 0,
       contestsParticipated: ((item.contestsParticipated ?? item.contestCount) as number) ?? 0,
-      role: (item.role as Role) ?? 'user',
+      roles: rolesOf(item as { role?: string; roles?: unknown }),
       userSubTypes: (item.userSubTypes as UserSubType[]) ?? [],
       primarySubType: item.primarySubType as UserSubType | undefined,
     })) : [];
@@ -117,7 +117,7 @@ async function getCurrentUserFromDb(userId: string): Promise<User | null> {
       gender: item.gender as string | undefined,
       totalPoints: (item.totalPoints as number) ?? 0,
       contestsParticipated: ((item.contestsParticipated ?? item.contestCount) as number) ?? 0,
-      role: (item.role as Role) ?? 'user',
+      roles: rolesOf(item as { role?: string; roles?: unknown }),
       userSubTypes: (item.userSubTypes as UserSubType[]) ?? [],
       primarySubType: item.primarySubType as UserSubType | undefined,
     };

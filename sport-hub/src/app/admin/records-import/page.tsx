@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import AdminNav from '../records-review/components/AdminNav';
 import PageLayout from '@ui/PageLayout';
-import { requireAdmin } from '@lib/authorization';
+import { requireRecordManager } from '@lib/authorization';
 import { getFirstCategories, getRecordCategories } from '@lib/records-service';
 import { listImportIssues } from './actions';
 import ImportIssueList from './ImportIssueList';
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RecordsImportPage() {
-  await requireAdmin();
+  await requireRecordManager();
   const [issues, recordCategories, firstCategories] = await Promise.all([listImportIssues(), getRecordCategories(), getFirstCategories()]);
 
   return (

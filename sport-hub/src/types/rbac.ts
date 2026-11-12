@@ -6,11 +6,70 @@
  */
 
 /**
- * Primary roles for access control
- * - user: Default role for all users, can view content and edit own profile
- * - admin: Full access to all features including event creation and user management
+ * Admin roles. A user holds a list of them (`roles` on the profile, any
+ * combination) and gets the combined permissions; an empty list means a
+ * normal user (edit own profile, submit claims, submit events as organizer).
+ * - event_manager: Event Manager. Creates, approves and edits events, competitions and results
+ * - record_manager: Record Manager. Reviews claims and manages records, firsts and categories
+ * - user_manager: User Manager. Manages user accounts and user types; grants the manager roles
+ * - admin: General Admin. Can do anything, incl. granting General Admin
  */
-export type Role = 'user' | 'admin';
+export type Role = 'event_manager' | 'record_manager' | 'user_manager' | 'admin';
+
+/** Every role, in the order shown when assigning roles. */
+export const ROLES: Role[] = ['event_manager', 'record_manager', 'user_manager', 'admin'];
+
+export const ROLE_LABELS: Record<Role, string> = {
+  event_manager: 'Event Manager',
+  record_manager: 'Record Manager',
+  user_manager: 'User Manager',
+  admin: 'General Admin',
+};
+
+export const ROLE_DESCRIPTIONS: Record<Role, string> = {
+  event_manager: 'Events, competitions and results',
+  record_manager: 'Records, firsts and categories',
+  user_manager: 'User accounts, duplicates and manager roles',
+  admin: 'Full access incl. granting General Admin',
+};
+
+export const isRole = (value: unknown): value is Role => ROLES.includes(value as Role);
+
+/**
+ * A profile's roles, cleaned up (known roles only, fixed order).
+ *
+ * TRANSITION: profiles written before multi-role support have a single
+ * `role: 'admin' | 'user'` attribute instead of `roles`; every current admin
+ * becomes General Admin. rbac-service converts such a profile to `roles` the
+ * first time the user is looked up, so this fallback line can be deleted once
+ * no profile has `role` any more.
+ */
+export function rolesOf(profile: { roles?: unknown } | null | undefined): Role[] {
+  if (!profile) return [];
+  if (Array.isArray(profile.roles)) return ROLES.filter(r => (profile.roles as unknown[]).includes(r));
+  return (profile as { role?: unknown }).role === 'admin' ? ['admin'] : [];  // TRANSITION fallback, see above
+}
+
+/** Validates a roles list from a request: known roles only, no duplicates. Null when invalid. */
+export function parseRoles(input: unknown): Role[] | null {
+  if (!Array.isArray(input) || !input.every(isRole)) return null;
+  return ROLES.filter(r => input.includes(r));
+}
+
+type RolesInput = readonly Role[] | null | undefined;
+
+/** True when the roles include General Admin. */
+export const isGeneralAdmin = (roles: RolesInput): boolean => !!roles?.includes('admin');
+
+/** Combined permissions of all roles. */
+export const permissionsOf = (roles: RolesInput): Permission[] =>
+  [...new Set((roles ?? []).filter(isRole).flatMap(r => ROLE_PERMISSIONS[r]))];
+
+/** Human-readable list, e.g. "Event Manager, Record Manager", or "User" for no roles. */
+export const rolesLabel = (roles: RolesInput): string => {
+  const list = (roles ?? []).filter(isRole);
+  return list.length ? list.map(r => ROLE_LABELS[r]).join(', ') : 'User';
+};
 
 /**
  * User sub-types for additional classification (future use)
@@ -31,7 +90,7 @@ export type Permission =
   | 'events:edit'
   | 'events:delete'
 
-  // User management (admin only)
+  // User management (User Manager and General admin). Assigning roles stays General admin only.
   | 'users:manage'
 
   // Ranking management
@@ -47,14 +106,26 @@ export type Permission =
   | 'admin:access';
 
 /**
- * Permission groups mapped to each role
- *
- * NOTE: 'user' role has no special permissions by default.
- * Users can access all public content and edit their own profile
- * (ownership enforced by canEditUser() check).
+ * Permissions of each role. A user without roles has none: they can access
+ * all public content and edit their own profile (canEditUser() checks ownership).
  */
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-  user: [],  // No special permissions - public access + own profile only
+  event_manager: [
+    'events:create',
+    'events:edit',
+    'events:delete',
+    'rankings:edit',
+    'admin:access',
+  ],
+  record_manager: [
+    'records:review',
+    'records:manage',
+    'admin:access',
+  ],
+  user_manager: [
+    'users:manage',
+    'admin:access',
+  ],
   admin: [
     'events:create',
     'events:edit',
@@ -68,13 +139,24 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
 } as const;
 
 /**
+ * Whether a user's roles grant a permission (any of them is enough, so multiple
+ * roles combine). Derived from the roles, not from the permissions copied into
+ * the session token, so it works the same on server, client and in middleware.
+ * General admins always pass.
+ */
+export function roleHasPermission(roles: RolesInput, permission: Permission): boolean {
+  if (isGeneralAdmin(roles)) return true;
+  return (roles ?? []).some(r => isRole(r) && ROLE_PERMISSIONS[r].includes(permission));
+}
+
+/**
  * Authorization result with detailed information
  */
 export interface AuthorizationResult {
   authorized: boolean;
   reason?: string;
   userId?: string;
-  role?: Role;
+  roles?: Role[];
 }
 
 /**

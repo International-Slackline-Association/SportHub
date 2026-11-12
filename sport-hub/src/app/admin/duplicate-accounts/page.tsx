@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import PageLayout from '@ui/PageLayout';
-import { requireAdmin } from '@lib/authorization';
+import { requireUserManager } from '@lib/authorization';
 import DuplicateAccountsLookup from './DuplicateAccountsLookup';
 
 export const metadata: Metadata = {
@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DuplicateAccountsPage() {
-  await requireAdmin();
+  await requireUserManager();
 
   return (
     <PageLayout

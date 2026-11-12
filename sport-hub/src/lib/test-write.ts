@@ -16,7 +16,7 @@ async function testWrite() {
     userId: 'SportHubID:test123',
     sortKey: 'Profile',
     athleteSlug: 'test-athlete',
-    role: 'user',
+    roles: [],
     totalPoints: 100
   };
   

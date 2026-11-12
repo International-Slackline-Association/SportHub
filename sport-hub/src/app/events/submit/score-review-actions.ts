@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { requireAdmin } from '@lib/authorization';
+import { requireEventManager } from '@lib/authorization';
 import { invalidateContestsCache } from '@lib/data-services';
 import {
   getContest,
@@ -16,13 +16,13 @@ import { PendingScoreEditRecord } from '@lib/relational-types';
 
 /**
  * Get all pending score edits across all events (admin review queue)
- * PROTECTED: Requires admin role
+ * PROTECTED: Requires Event Manager or General admin role
  */
 export async function getPendingScoreEdits(): Promise<{
   success: boolean;
   edits: PendingScoreEditRecord[];
 }> {
-  await requireAdmin();
+  await requireEventManager();
 
   try {
     const edits = await listPendingScoreEdits();
@@ -36,13 +36,13 @@ export async function getPendingScoreEdits(): Promise<{
 /**
  * Approve a staged score edit — writes the proposed judges/results onto the
  * live Contest record and discards the pending edit.
- * PROTECTED: Requires admin role
+ * PROTECTED: Requires Event Manager or General admin role
  */
 export async function approveScoreEdit(
   eventId: string,
   contestSortKey: string
 ): Promise<{ success: boolean; error?: string }> {
-  await requireAdmin();
+  await requireEventManager();
 
   try {
     const [edit, contestRecord] = await Promise.all([
@@ -98,13 +98,13 @@ export async function approveScoreEdit(
 
 /**
  * Reject a staged score edit — discards it, live contest untouched.
- * PROTECTED: Requires admin role
+ * PROTECTED: Requires Event Manager or General admin role
  */
 export async function rejectScoreEdit(
   eventId: string,
   contestSortKey: string
 ): Promise<{ success: boolean }> {
-  await requireAdmin();
+  await requireEventManager();
 
   try {
     await deletePendingScoreEdit(eventId, contestSortKey);

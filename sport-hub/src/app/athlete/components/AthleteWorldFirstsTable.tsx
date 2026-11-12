@@ -9,7 +9,7 @@ import {
   Links,
 } from 'src/app/world_records/components/cellFormatters';
 import { Alert } from '@ui/Alert';
-import { AdminEditButton, useIsAdmin } from 'src/app/world_records/components/AdminEditButton';
+import { AdminEditButton, useCanEditRecords } from 'src/app/world_records/components/AdminEditButton';
 
 const columnHelper = createColumnHelper<WorldFirst>();
 const buildColumns = (athleteId?: string) => [
@@ -55,12 +55,12 @@ type AthleteWorldFirstsTableProps = {
 
 const AthleteWorldFirstsTable = ({ worldFirsts, athleteId }: AthleteWorldFirstsTableProps) => {
   const columns = useMemo(() => buildColumns(athleteId), [athleteId]);
-  const isAdmin = useIsAdmin();
+  const canEditRecords = useCanEditRecords();
   if (worldFirsts.length === 0) {
     return <Alert variant="info">No world firsts found for this athlete.</Alert>;
   }
   return (
-    <Table options={{ columns, data: worldFirsts, initialState: { sorting: [{ id: 'date', desc: true }], columnVisibility: { edit: isAdmin } } }} />
+    <Table options={{ columns, data: worldFirsts, initialState: { sorting: [{ id: 'date', desc: true }], columnVisibility: { edit: canEditRecords } } }} />
   );
 };
 

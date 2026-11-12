@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@lib/auth';
 import { getUser } from '@lib/user-service';
-import { ROLE_PERMISSIONS } from 'src/types/rbac';
-import type { Role, UserSubType } from 'src/types/rbac';
+import { permissionsOf, rolesOf } from 'src/types/rbac';
+import type { UserSubType } from 'src/types/rbac';
 
 export async function GET() {
   try {
@@ -28,22 +28,21 @@ export async function GET() {
           city: (user.city ?? '') as string,
           birthdate: (user.birthdate ?? '') as string,
           gender: (user.gender ?? '') as string,
-          role: (user.role as Role) ?? 'user',
+          roles: rolesOf(user),
           userSubTypes: (user.userSubTypes as UserSubType[]) ?? [],
           primarySubType: user.primarySubType as UserSubType | undefined,
         };
       }
     }
 
-    const sessionRole = session.user.role || 'user';
-    const permissions = ROLE_PERMISSIONS[sessionRole] || [];
+    const permissions = permissionsOf(session.user.roles);
 
     return NextResponse.json({
       session: {
         user: {
           id: session.user.id,
           email: session.user.email,
-          role: sessionRole,
+          roles: session.user.roles,
           cognitoSub: session.user.cognitoSub,
           permissions,
         },

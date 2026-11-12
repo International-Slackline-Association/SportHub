@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import PageLayout from "@ui/PageLayout";
+import { requireEventManager } from "@lib/authorization";
 import { getPendingEvents, updateEventStatus, createPendingUserFromEvent } from "../../events/submit/actions";
 import { COUNTRIES } from "@utils/countries";
 import { PendingUserData } from "../../events/submit/types";
@@ -35,6 +36,7 @@ function collectPendingUsers(event: Record<string, unknown>): PendingEntry[] {
 }
 
 export default async function EventApprovalPage() {
+  await requireEventManager();
   const result = await getPendingEvents();
   const events = (result.events ?? []) as Record<string, unknown>[];
 

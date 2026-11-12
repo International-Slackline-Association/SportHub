@@ -16,6 +16,7 @@ import type {
 } from './relational-types';
 import { ContestFormValues, EventFormValues } from 'src/app/events/submit/types';
 import { EventStatus } from 'src/app/events/my-events/page';
+import { roleHasPermission } from 'src/types/rbac';
 
 /********************************************************************************
  * 
@@ -37,7 +38,7 @@ function generateEventId(): string {
 export async function createEventFromForm(eventForm: EventFormValues, contests: ContestFormValues[]): Promise<EventMetadataRecord> {
   // Get current user for audit trail
   const session = await auth();
-  const isAdmin = session?.user?.role === 'admin';
+  const isAdmin = roleHasPermission(session?.user?.roles, 'events:edit');
 
   // Transform form data to database format
   const eventId = generateEventId();

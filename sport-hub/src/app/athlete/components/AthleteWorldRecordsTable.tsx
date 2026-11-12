@@ -10,7 +10,7 @@ import {
   TitleBadge,
 } from 'src/app/world_records/components/cellFormatters';
 import { Alert } from '@ui/Alert';
-import { AdminEditButton, useIsAdmin } from 'src/app/world_records/components/AdminEditButton';
+import { AdminEditButton, useCanEditRecords } from 'src/app/world_records/components/AdminEditButton';
 
 const columnHelper = createColumnHelper<WorldRecord>();
 const buildColumns = (athleteId?: string) => [
@@ -61,12 +61,12 @@ type AthleteWorldRecordsTableProps = {
 
 const AthleteWorldRecordsTable = ({ worldRecords, athleteId }: AthleteWorldRecordsTableProps) => {
   const columns = useMemo(() => buildColumns(athleteId), [athleteId]);
-  const isAdmin = useIsAdmin();
+  const canEditRecords = useCanEditRecords();
   if (worldRecords.length === 0) {
     return <Alert variant="info">No world records found for this athlete.</Alert>;
   }
   return (
-    <Table options={{ columns, data: worldRecords, initialState: { sorting: [{ id: 'date', desc: true }], columnVisibility: { edit: isAdmin } } }} />
+    <Table options={{ columns, data: worldRecords, initialState: { sorting: [{ id: 'date', desc: true }], columnVisibility: { edit: canEditRecords } } }} />
   );
 };
 

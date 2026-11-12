@@ -19,7 +19,7 @@ import {
   linkCellFormatter,
   linkClassName,
 } from './cellFormatters';
-import { AdminEditButton, useIsAdmin } from './AdminEditButton';
+import { AdminEditButton, useCanEditRecords } from './AdminEditButton';
 
 const columnHelper = createColumnHelper<WorldFirst>();
 
@@ -118,7 +118,7 @@ type WorldFirstsTableProps = {
 
 const WorldFirstsTable = ({ data }: WorldFirstsTableProps) => {
   const { isDesktop } = useClientMediaQuery(BREAKPOINT_LG);
-  const isAdmin = useIsAdmin();
+  const canEditRecords = useCanEditRecords();
 
   return (
     <Table
@@ -139,7 +139,7 @@ const WorldFirstsTable = ({ data }: WorldFirstsTableProps) => {
             categoryName: !!isDesktop,
             gender:       !!isDesktop,
             links:        !!isDesktop,
-            edit:         !!isDesktop && isAdmin,
+            edit:         !!isDesktop && canEditRecords,
           },
         },
       }}

@@ -1,14 +1,17 @@
 'use server'
 
 import { auth } from '@lib/auth';
+import { assertCanManageUsers, roleChangeError } from '@lib/authorization';
 import { revalidatePath } from 'next/cache';
 import { invalidateUsersCache } from '@lib/data-services';
 import { UserFormValues } from './types';
-import type { Role, UserSubType } from 'src/types/rbac';
+import { parseRoles, rolesLabel, rolesOf, type Role, type UserSubType } from 'src/types/rbac';
 import { getUser, deleteUser as deleteUserRecord, updateUserRoleAndSubTypes as updateRoleService, saveUserProfile, generateUniqueAthleteSlug } from '@lib/user-service';
 import type { UserProfileRecord } from '@lib/relational-types';
 
 export async function createUser(payload: UserFormValues, path: string) {
+  // Also used when an Event Manager approves an event with new athletes/judges
+  await assertCanManageUsers('events:edit');
   const userId = payload?.id || `athlete-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   const athleteSlug = await generateUniqueAthleteSlug(payload.name, payload.surname);
@@ -19,7 +22,7 @@ export async function createUser(payload: UserFormValues, path: string) {
     id: userId,
     sortKey: 'Profile',
     athleteSlug,
-    role: 'user' as Role,
+    roles: [] as Role[],
     userSubTypes: ['athlete'] as UserSubType[],
     primarySubType: 'athlete' as UserSubType,
     totalPoints: 0,
@@ -33,6 +36,7 @@ export async function createUser(payload: UserFormValues, path: string) {
 }
 
 export async function updateUser(formData: FormData) {
+  await assertCanManageUsers();
   const id = formData.get('id') as string;
   const name = (formData.get('name') as string)?.trim();
   const surname = (formData.get('surname') as string)?.trim() || undefined;
@@ -72,7 +76,7 @@ export async function updateUser(formData: FormData) {
 
 export async function updateUserRoleAndSubTypes(
   userId: string,
-  role: Role,
+  requestedRoles: Role[],
   userSubTypes: UserSubType[],
   primarySubType?: UserSubType
 ): Promise<{ success: boolean; message?: string; error?: string }> {
@@ -82,20 +86,27 @@ export async function updateUserRoleAndSubTypes(
     return { success: false, error: 'Authentication required' };
   }
 
-  if (process.env.NODE_ENV === 'production' && session.user.role !== 'admin') {
-    return { success: false, error: 'Admin access required' };
+  const roles = parseRoles(requestedRoles);
+  if (!roles) {
+    return { success: false, error: 'Invalid role' };
+  }
+
+  // User Managers may set types and manager roles; only General admins may grant or remove General Admin
+  const roleError = roleChangeError(session.user.roles, rolesOf(await getUser(userId)), roles);
+  if (roleError) {
+    return { success: false, error: roleError };
   }
 
   try {
-    await updateRoleService(userId, role, userSubTypes, primarySubType, session.user.id);
+    await updateRoleService(userId, roles, userSubTypes, primarySubType, session.user.id);
     revalidatePath('/test_SSR');
 
     const isSelf = userId === session.user.id;
     return {
       success: true,
       message: isSelf
-        ? `Updated to ${role}. Sign out and back in to refresh your session.`
-        : `User updated to ${role} role.`,
+        ? `Updated to ${rolesLabel(roles)}. Sign out and back in to refresh your session.`
+        : `User updated to ${rolesLabel(roles)}.`,
     };
   } catch (error) {
     console.error('Error updating user role:', error);
@@ -107,6 +118,7 @@ export async function updateUserRoleAndSubTypes(
 }
 
 export async function deleteUser(formData: FormData) {
+  await assertCanManageUsers();
   const id = formData.get('id') as string;
   if (!id) throw new Error('Missing user ID');
   await deleteUserRecord(id);

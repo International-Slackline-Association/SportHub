@@ -1,3 +1,4 @@
+import { rolesLabel } from 'src/types/rbac';
 import { auth } from "@lib/auth"
 import Link from "next/link"
 import PageLayout from "@ui/PageLayout"
@@ -53,7 +54,7 @@ export default async function UnauthorizedPage({
                 You are currently signed in as: <strong>{session.user.email}</strong>
               </p>
               <p className="text-sm text-blue-600">
-                Role: <code className="bg-blue-100 px-2 py-1 rounded">{session.user.role}</code>
+                Role: <code className="bg-blue-100 px-2 py-1 rounded">{rolesLabel(session.user.roles)}</code>
               </p>
             </div>
           )}

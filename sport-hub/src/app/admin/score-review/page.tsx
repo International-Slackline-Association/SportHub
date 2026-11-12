@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import PageLayout from "@ui/PageLayout";
+import { requireEventManager } from "@lib/authorization";
 import { getPendingScoreEdits, approveScoreEdit, rejectScoreEdit } from "../../events/submit/score-review-actions";
 import { ContestJudge, ContestResult } from "@lib/relational-types";
 
@@ -26,6 +27,7 @@ function ResultsList({ results }: { results: ContestResult[] }) {
 }
 
 export default async function ScoreReviewPage() {
+  await requireEventManager();
   const result = await getPendingScoreEdits();
   const edits = result.edits ?? [];
 
