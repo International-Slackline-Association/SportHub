@@ -25,7 +25,6 @@ applications:
             - env | grep -e DB_REGION >> .env.production
             - env | grep -e GOOGLE_SERVICE_ACCOUNT_EMAIL >> .env.production
             - env | grep -e GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY >> .env.production
-            - env | grep -e ISA_CERTIFICATES_SPREADSHEET_ID >> .env.production
             - env | grep -e RECORDS_EVIDENCE_FOLDER_ID >> .env.production || true
             - env | grep -e GOOGLE_DRIVE_IMPERSONATE_USER >> .env.production || true
             - env | grep -e ^SMTP_HOST= >> .env.production || true
