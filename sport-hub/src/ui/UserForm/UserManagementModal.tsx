@@ -21,7 +21,7 @@ interface UserManagementModalProps {
   buttonVariant?: ButtonVariant;
   user?: UserData;
   currentUserId?: string;
-  /** UPDATE only: adds a Delete button (with a confirm step) to the dialog */
+  /** UPDATE only: adds a Delete button to the dialog */
   onDelete?: () => Promise<void>;
 }
 
@@ -43,7 +43,6 @@ const UserManagementModal = ({
   const [primarySubType, setPrimarySubType] = useState<UserSubType | undefined>(user?.primarySubType as UserSubType | undefined);
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const isCurrentUser = user?.id === currentUserId || user?.userId === currentUserId;
@@ -100,7 +99,6 @@ const UserManagementModal = ({
       setPrimarySubType(user?.primarySubType as UserSubType | undefined);
       setMessage(null);
     }
-    setIsConfirmingDelete(false);
     setIsModalOpen(true);
   };
 
@@ -112,28 +110,15 @@ const UserManagementModal = ({
       setIsModalOpen(false);
     } finally {
       setIsDeleting(false);
-      setIsConfirmingDelete(false);
     }
   };
 
   const hasDeleteAction = action === 'UPDATE' && !!onDelete;
   const editActions = hasDeleteAction ? (
     <>
-      {isConfirmingDelete ? (
-        <div className="flex items-center gap-2 mr-auto">
-          <span className="text-sm text-red-700">Delete this user?</span>
-          <Button variant="destructive" size="small" onClick={handleDelete} disabled={isDeleting}>
-            {isDeleting ? 'Deleting...' : 'Yes, delete'}
-          </Button>
-          <Button variant="default" size="small" onClick={() => setIsConfirmingDelete(false)} disabled={isDeleting}>
-            No
-          </Button>
-        </div>
-      ) : (
-        <Button variant="destructive-secondary" className="mr-auto" onClick={() => setIsConfirmingDelete(true)}>
-          Delete
-        </Button>
-      )}
+      <Button variant="destructive" className="mr-auto" onClick={handleDelete} disabled={isDeleting}>
+        {isDeleting ? 'Deleting...' : 'Delete'}
+      </Button>
       <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
         Cancel
       </Button>
