@@ -35,33 +35,8 @@ export default function RecordCategoryPicker({ recordCategories, name = 'categor
     [recordCategories],
   );
 
+  // Select comes first so it stays visible on phones, where the table scrolls sideways
   const columns = useMemo(() => [
-    columnHelper.accessor('group', {
-      header: 'Group',
-      enableColumnFilter: true,
-      meta: { filterVariant: 'select', filterIncludeAll: true, filterOptions: RECORD_CATEGORY_GROUPS.map(g => ({ value: g, label: g })) },
-      sortingFn: (a, b) => RECORD_CATEGORY_GROUPS.indexOf(a.original.group) - RECORD_CATEGORY_GROUPS.indexOf(b.original.group),
-      size: 60,
-    }),
-    columnHelper.accessor('name', {
-      header: 'Name',
-      enableColumnFilter: true,
-      meta: { filterVariant: 'text', filterPlaceholder: 'Search categories' },
-      cell: info => (
-        <div className="stack">
-          <span className="font-medium">{info.getValue()}</span>
-          {info.row.original.description && <span className="text-xs text-gray-700">{info.row.original.description}</span>}
-        </div>
-      ),
-      size: 220,
-    }),
-    columnHelper.accessor('status', {
-      header: 'Status',
-      enableColumnFilter: true,
-      meta: { filterVariant: 'select', filterIncludeAll: true, filterOptions: statusOptions },
-      cell: info => statusLabel(info.getValue()),
-      size: 60,
-    }),
     columnHelper.display({
       id: 'select',
       header: '',
@@ -82,6 +57,32 @@ export default function RecordCategoryPicker({ recordCategories, name = 'categor
         );
       },
       size: 40,
+    }),
+    columnHelper.accessor('name', {
+      header: 'Name',
+      enableColumnFilter: true,
+      meta: { filterVariant: 'text', filterPlaceholder: 'Search categories' },
+      cell: info => (
+        <div className="stack">
+          <span className="font-medium">{info.getValue()}</span>
+          {info.row.original.description && <span className="text-xs text-gray-700">{info.row.original.description}</span>}
+        </div>
+      ),
+      size: 220,
+    }),
+    columnHelper.accessor('group', {
+      header: 'Group',
+      enableColumnFilter: true,
+      meta: { filterVariant: 'select', filterIncludeAll: true, filterOptions: RECORD_CATEGORY_GROUPS.map(g => ({ value: g, label: g })) },
+      sortingFn: (a, b) => RECORD_CATEGORY_GROUPS.indexOf(a.original.group) - RECORD_CATEGORY_GROUPS.indexOf(b.original.group),
+      size: 60,
+    }),
+    columnHelper.accessor('status', {
+      header: 'Status',
+      enableColumnFilter: true,
+      meta: { filterVariant: 'select', filterIncludeAll: true, filterOptions: statusOptions },
+      cell: info => statusLabel(info.getValue()),
+      size: 60,
     }),
   // helpers is a new object on every render but its functions are stable
   // eslint-disable-next-line react-hooks/exhaustive-deps
