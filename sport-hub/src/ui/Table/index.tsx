@@ -48,9 +48,11 @@ type TableProps<TData,> = {
   options: Partial<TableOptions<TData>>;
   title?: string;
   rowClassName?: (context: RowClassContext<TData>) => string | undefined;
+  /** Makes each row clickable (mouse, Enter or Space), e.g. to pick a row. */
+  onRowClick?: (row: Row<TData>) => void;
 };
 
-const Table = <TData,>({ extraFilters, options, title, rowClassName }: TableProps<TData>) => {
+const Table = <TData,>({ extraFilters, options, title, rowClassName, onRowClick }: TableProps<TData>) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
     options?.initialState?.columnFilters ?? []
   );
@@ -141,7 +143,20 @@ const Table = <TData,>({ extraFilters, options, title, rowClassName }: TableProp
           </thead>
           <tbody>
             {visibleRows.map((row, index, rows) => (
-                <tr key={row.id} className={rowClassName?.({ row, index, rows, allRows, globalIndex: allRows.findIndex(r => r.id === row.id) })}>
+                <tr
+                  key={row.id}
+                  className={[
+                    rowClassName?.({ row, index, rows, allRows, globalIndex: allRows.findIndex(r => r.id === row.id) }),
+                    onRowClick && styles.clickableRow,
+                  ].filter(Boolean).join(' ') || undefined}
+                  {...(onRowClick && {
+                    onClick: () => onRowClick(row),
+                    onKeyDown: (e: React.KeyboardEvent) => {
+                      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRowClick(row); }
+                    },
+                    tabIndex: 0,
+                  })}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
