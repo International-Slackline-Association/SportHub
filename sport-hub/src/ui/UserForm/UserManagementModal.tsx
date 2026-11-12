@@ -23,6 +23,8 @@ interface UserManagementModalProps {
   currentUserId?: string;
   /** UPDATE only: adds a Delete button to the dialog */
   onDelete?: () => Promise<void>;
+  /** UPDATE and ROLES: called with the saved fields, so the list row updates without a page reload */
+  onSaved?: (changes: Partial<UserData>) => void;
 }
 
 const UserManagementModal = ({
@@ -32,6 +34,7 @@ const UserManagementModal = ({
   user,
   currentUserId,
   onDelete,
+  onSaved,
 }: UserManagementModalProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const formRef = useRef<FormikProps<UserFormValues>>(null);
@@ -81,6 +84,7 @@ const UserManagementModal = ({
     const userId = user.userId || user.id;
     const result = await updateUserRoleAndSubTypes(userId, selectedRoles, selectedSubTypes, primarySubType);
     if (result.success) {
+      onSaved?.({ roles: result.roles ?? selectedRoles, userSubTypes: selectedSubTypes, primarySubType });
       setMessage({ type: 'success', text: result.message || 'Updated successfully' });
       setTimeout(() => {
         setIsModalOpen(false);
@@ -130,7 +134,11 @@ const UserManagementModal = ({
 
   const FormComponentProps = {
     formRef,
-    onAfterSubmit: () => {
+    onAfterSubmit: (values?: UserFormValues) => {
+      if (values && action === 'UPDATE') {
+        const { name, surname, email, gender, country, city, birthdate } = values;
+        onSaved?.({ name, surname, email, gender, country, city, birthdate });
+      }
       setIsModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ['users'], refetchType: 'all' });
     },

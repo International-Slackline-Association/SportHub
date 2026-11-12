@@ -79,7 +79,7 @@ export async function updateUserRoleAndSubTypes(
   requestedRoles: Role[],
   userSubTypes: UserSubType[],
   primarySubType?: UserSubType
-): Promise<{ success: boolean; message?: string; error?: string }> {
+): Promise<{ success: boolean; message?: string; error?: string; roles?: Role[] }> {
   const session = await auth();
 
   if (!session) {
@@ -104,6 +104,7 @@ export async function updateUserRoleAndSubTypes(
     const isSelf = userId === session.user.id;
     return {
       success: true,
+      roles,
       message: isSelf
         ? `Updated to ${rolesLabel(roles)}. Sign out and back in to refresh your session.`
         : `User updated to ${rolesLabel(roles)}.`,
