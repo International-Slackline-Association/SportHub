@@ -43,7 +43,7 @@ If nobody has the Event Manager role, event emails go to `EVENTS_REVIEW_EMAIL` w
 
 **Storage.** Roles live on the user's profile item in the `sporthub-users` table (`sortKey = Profile`), not in Cognito, as `roles: Role[]` (`event_manager`, `record_manager`, `user_manager`, `admin`). Empty or missing = normal user. There is no single `role` field any more.
 
-**Transition from the old single role.** Profiles created before this change have `role: 'user' | 'admin'` instead of `roles`. Every current admin becomes **General Admin** automatically: the first time such a user is looked up (sign-in or any page), `rbac-service.ts` saves the profile with `roles` (`['admin']` or `[]`) and without `role`. Sessions from before the deploy load their roles once as well, so nobody has to sign out. Nothing needs to be run by hand. Once no profile has `role` any more, the marked `TRANSITION` lines in `rolesOf()`, `rbac-service.ts` and `auth.ts` can be deleted.
+**Transition from the old single role.** Profiles created before this change have `role: 'user' | 'admin'` instead of `roles`. Every current admin becomes **General Admin** automatically: the first time such a user is looked up (sign-in or any page), `rbac-service.ts` saves the profile with `roles` (`['admin']` or `[]`) and without `role`. Sessions from before the deploy load their roles once as well (the token's `rolesVersion` is older than `ROLES_VERSION` in `auth.ts`), so nobody has to sign out. A failed lookup is not stored in the token; it is retried on the next request. (Before version 2 a failed lookup was stored as "no roles", which locked some admins out until they signed in again; version 2 reloads those sessions.) Nothing needs to be run by hand. Once no profile has `role` any more, the marked `TRANSITION` lines in `rolesOf()`, `rbac-service.ts` and `auth.ts` can be deleted.
 
 **Permissions.** Each role maps to permissions in `sport-hub/src/types/rbac.ts` (`ROLE_PERMISSIONS`):
 
@@ -63,6 +63,6 @@ If nobody has the Event Manager role, event emails go to `EVENTS_REVIEW_EMAIL` w
 
 **Layers.** `src/middleware.ts` lets any admin role into `/admin` (and organizers into event submission); every admin page and server action then checks its own permission. Never rely on the middleware alone: server actions can be called directly.
 
-**Session.** On sign-in the roles are loaded from DynamoDB (`rbac-service.ts`, cached 5 minutes) and stored in the session token as `session.user.roles`. Role changes apply after the next sign-in.
+**Session.** On sign-in the roles are loaded from DynamoDB (`rbac-service.ts`, cached 5 minutes) and stored in the session token as `session.user.roles`. Role changes apply after the next sign-in. If the database lookup fails, the token keeps no roles for that request and tries again on the next one.
 
 The diagram is rendered from `images/roles.html` (open it in a browser and take a screenshot to update `images/roles.png`).
