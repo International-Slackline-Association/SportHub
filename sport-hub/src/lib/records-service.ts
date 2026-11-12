@@ -98,6 +98,11 @@ export async function putCategory(category: RecordCategoryTableItem | FirstCateg
   await dynamodb.putItem(RECORDS_TABLE, category as unknown as Record<string, unknown>);
 }
 
+/** Removes a category item. Its audit items stay, so the deletion remains on record. */
+export async function deleteCategory(pk: 'RecordCategory' | 'FirstCategory', categoryId: string): Promise<void> {
+  await dynamodb.deleteItem(RECORDS_TABLE, { pk, sortKey: `${pk}:${categoryId}` });
+}
+
 /** Category changes are logged in the category partition (FR-C5): sortKey "Audit:{categoryId}:{iso}". */
 export async function addCategoryAudit(
   category: Pick<RecordCategoryTableItem | FirstCategoryTableItem, 'pk' | 'categoryId'>,

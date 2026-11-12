@@ -4,6 +4,7 @@ import { Form, Formik } from 'formik';
 import * as Yup from 'yup';
 import { useRouter } from 'next/navigation';
 import Button from '@ui/Button';
+import DeleteCategoryButton from './DeleteCategoryButton';
 import { FormikNumberField, FormikSelectField, FormikSubmitButton, FormikTextAreaField, FormikTextField } from '@ui/Form';
 import type { FirstCategoryStatus, FirstCategoryTableItem } from '@lib/relational-types';
 import { createFirstCategory, updateFirstCategory } from '../actions';
@@ -56,9 +57,12 @@ export default function FirstCategoryForm({ category, onDone, onError }: Props) 
             : <FormikSelectField id="first-status" name="status" label="Status" options={FIRST_STATUS_OPTIONS} required />}
         </div>
         <FormikTextAreaField id="first-termination-rule" name="terminationRule" label="Termination rule" placeholder="When the trick counts as landed" />
-        <div className="flex gap-2 justify-end">
-          <Button type="button" variant="secondary" onClick={onDone}>Cancel</Button>
-          <FormikSubmitButton>{category ? 'Save' : 'Create'}</FormikSubmitButton>
+        <div className="flex gap-2 justify-between items-center flex-wrap">
+          {category ? <DeleteCategoryButton pk="FirstCategory" categoryId={category.categoryId} name={category.name} onDone={onDone} onError={onError} /> : <span />}
+          <div className="flex gap-2">
+            <Button type="button" variant="secondary" onClick={onDone}>Cancel</Button>
+            <FormikSubmitButton>{category ? 'Save' : 'Create'}</FormikSubmitButton>
+          </div>
         </div>
       </Form>
     </Formik>

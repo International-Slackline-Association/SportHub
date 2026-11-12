@@ -6,6 +6,7 @@ import { actorOf, requireRecordsPermission } from '@lib/records-auth';
 import { parseRecordValue, slugify, unitKind } from '@lib/records-logic';
 import {
   addCategoryAudit,
+  deleteCategory as deleteCategoryItem,
   getCategoryAuditLog,
   getEntriesByCategory,
   getFirstCategories,
@@ -205,6 +206,29 @@ export async function createFirstCategory(input: NewFirstCategory) {
     return { success: true, categoryId };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Failed to create the category' };
+  }
+}
+
+/**
+ * Deletes a record category or first discipline that nothing uses. A category with
+ * entries (drafts and rejected claims included) can't be deleted: archive it instead.
+ */
+export async function deleteCategory(pk: 'RecordCategory' | 'FirstCategory', categoryId: string) {
+  try {
+    const session = await requireRecordsPermission('records:manage');
+    const category = pk === 'RecordCategory' ? await getRecordCategory(categoryId) : await getFirstCategory(categoryId);
+    if (!category) return { success: false, error: 'Category not found' };
+    const entries = pk === 'RecordCategory' ? await getEntriesByCategory('record', categoryId) : await getEntriesByCategory('first', categoryId);
+    if (entries.length > 0) {
+      const what = entries.length === 1 ? '1 record or claim' : `${entries.length} records or claims`;
+      return { success: false, error: `"${category.name}" has ${what} and can't be deleted. Set its status to Archived instead.` };
+    }
+    await deleteCategoryItem(pk, categoryId);
+    await addCategoryAudit(category, { action: 'deleted', comment: `deleted "${category.name}"`, ...actorOf(session) });
+    revalidateCategoryPages();
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to delete the category' };
   }
 }
 
