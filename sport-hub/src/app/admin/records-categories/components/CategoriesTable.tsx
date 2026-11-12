@@ -4,13 +4,13 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createColumnHelper } from '@tanstack/react-table';
 import Table from '@ui/Table';
+import Button from '@ui/Button';
 import { RECORD_CATEGORY_GROUPS } from '@lib/relational-types';
 import type { FirstCategoryStatus, FirstCategoryTableItem, RecordCategoryStatus, RecordCategoryTableItem } from '@lib/relational-types';
 import { updateFirstCategory, updateRecordCategory } from '../actions';
 import { FIRST_STATUS_OPTIONS, RECORD_STATUS_OPTIONS } from './statusOptions';
 
 const selectClass = 'border border-gray-300 rounded px-2 py-1 text-sm';
-const linkButtonClass = 'text-blue-600 hover:underline text-sm';
 
 type RowActions<T> = {
   onEdit: (category: T) => void;
@@ -46,9 +46,9 @@ function StatusSelect<S extends string>({ name, status, options, onChange }: {
 }
 
 const RowButtons = ({ onEdit, onHistory }: { onEdit: () => void; onHistory: () => void }) => (
-  <div className="flex gap-3">
-    <button type="button" className={linkButtonClass} onClick={onEdit}>Edit</button>
-    <button type="button" className={linkButtonClass} onClick={onHistory}>History</button>
+  <div className="flex gap-2 mt-1">
+    <Button variant="secondary" size="small" onClick={onEdit}>Edit</Button>
+    <Button variant="secondary" size="small" onClick={onHistory}>History</Button>
   </div>
 );
 
@@ -73,6 +73,7 @@ export function RecordCategoriesTable({ categories, onEdit, onHistory, onError }
             <span className="font-medium">{info.getValue()}</span>
             {info.row.original.description && <span className="text-xs text-gray-700">{info.row.original.description}</span>}
             <span className="text-xs text-gray-500">{info.row.original.categoryId}</span>
+            <RowButtons onEdit={() => onEdit(info.row.original)} onHistory={() => onHistory(info.row.original)} />
           </div>
         ),
         size: 220,
@@ -101,12 +102,6 @@ export function RecordCategoriesTable({ categories, onEdit, onHistory, onError }
             onChange={(status, comment) => setStatus(info.row.original, status, comment)}
           />
         ),
-        size: 60,
-      }),
-      recordColumnHelper.display({
-        id: 'actions',
-        header: '',
-        cell: info => <RowButtons onEdit={() => onEdit(info.row.original)} onHistory={() => onHistory(info.row.original)} />,
         size: 60,
       }),
     ];
@@ -141,6 +136,7 @@ export function FirstCategoriesTable({ categories, onEdit, onHistory, onError }:
           <div className="stack">
             <span className="font-medium">{info.getValue()}</span>
             <span className="text-xs text-gray-500">{info.row.original.terminationRule || 'no termination rule'} · {info.row.original.categoryId}</span>
+            <RowButtons onEdit={() => onEdit(info.row.original)} onHistory={() => onHistory(info.row.original)} />
           </div>
         ),
         size: 220,
@@ -155,12 +151,6 @@ export function FirstCategoriesTable({ categories, onEdit, onHistory, onError }:
             onChange={(status, comment) => setStatus(info.row.original, status, comment)}
           />
         ),
-        size: 60,
-      }),
-      firstColumnHelper.display({
-        id: 'actions',
-        header: '',
-        cell: info => <RowButtons onEdit={() => onEdit(info.row.original)} onHistory={() => onHistory(info.row.original)} />,
         size: 60,
       }),
     ];

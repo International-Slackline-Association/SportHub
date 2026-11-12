@@ -48,8 +48,7 @@ export default function FirstCategoryForm({ category, onDone, onError }: Props) 
 
   return (
     <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={submit}>
-      <Form className="border border-gray-200 rounded-lg p-4 stack gap-2 text-sm">
-        <h3 className="font-semibold">{category ? `Edit "${category.name}"` : 'New first discipline'}</h3>
+      <Form className="stack gap-2 text-sm">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <FormikTextField id="first-name" name="name" label="Name" placeholder="e.g. Waterline" required />
           {category
@@ -57,9 +56,9 @@ export default function FirstCategoryForm({ category, onDone, onError }: Props) 
             : <FormikSelectField id="first-status" name="status" label="Status" options={FIRST_STATUS_OPTIONS} required />}
         </div>
         <FormikTextAreaField id="first-termination-rule" name="terminationRule" label="Termination rule" placeholder="When the trick counts as landed" />
-        <div className="flex gap-2">
-          <FormikSubmitButton>{category ? 'Save' : 'Create'}</FormikSubmitButton>
+        <div className="flex gap-2 justify-end">
           <Button type="button" variant="secondary" onClick={onDone}>Cancel</Button>
+          <FormikSubmitButton>{category ? 'Save' : 'Create'}</FormikSubmitButton>
         </div>
       </Form>
     </Formik>

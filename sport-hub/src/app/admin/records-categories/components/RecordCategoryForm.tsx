@@ -79,8 +79,7 @@ export default function RecordCategoryForm({ category, onDone, onError }: Props)
   return (
     <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={submit}>
       {({ values }) => (
-        <Form className="border border-gray-200 rounded-lg p-4 stack gap-2 text-sm">
-          <h3 className="font-semibold">{category ? `Edit "${category.name}"` : 'New record category'}</h3>
+        <Form className="stack gap-2 text-sm">
           <FormikTextField id="name" name="name" label="Name" required />
           <FormikTextAreaField id="description" name="description" label="Description" rows={2} placeholder="What is measured and how" />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -103,9 +102,9 @@ export default function RecordCategoryForm({ category, onDone, onError }: Props)
           {category && unitKind(values.unit) !== unitKind(category.unit) && (
             <span className="text-xs text-amber-700">Changing the unit type re-reads the values of all entries in this category.</span>
           )}
-          <div className="flex gap-2">
-            <FormikSubmitButton>{category ? 'Save' : 'Create'}</FormikSubmitButton>
+          <div className="flex gap-2 justify-end">
             <Button type="button" variant="secondary" onClick={onDone}>Cancel</Button>
+            <FormikSubmitButton>{category ? 'Save' : 'Create'}</FormikSubmitButton>
           </div>
         </Form>
       )}
