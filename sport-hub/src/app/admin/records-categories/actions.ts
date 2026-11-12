@@ -121,7 +121,8 @@ export async function createRecordCategory(input: NewRecordCategory) {
     if (invalid) return { success: false, error: invalid };
     const existing = await getRecordCategories();
     let categoryId = slugify(input.name);
-    if (existing.some(c => c.categoryId === categoryId)) categoryId = `${categoryId}-${Date.now().toString(36)}`;
+    // "new" is the URL of the create page
+    if (categoryId === 'new' || existing.some(c => c.categoryId === categoryId)) categoryId = `${categoryId}-${Date.now().toString(36)}`;
     const now = Date.now();
     const category: RecordCategoryTableItem = {
       pk: 'RecordCategory',
@@ -187,7 +188,8 @@ export async function createFirstCategory(input: NewFirstCategory) {
     if (!FIRST_STATUSES.includes(input.status)) return { success: false, error: 'Unknown status' };
     const existing = await getFirstCategories();
     let categoryId = slugify(input.name);
-    if (existing.some(c => c.categoryId === categoryId)) categoryId = `${categoryId}-${Date.now().toString(36)}`;
+    // "new" is the URL of the create page
+    if (categoryId === 'new' || existing.some(c => c.categoryId === categoryId)) categoryId = `${categoryId}-${Date.now().toString(36)}`;
     const now = Date.now();
     const category: FirstCategoryTableItem = {
       pk: 'FirstCategory',
