@@ -14,7 +14,7 @@ How the World Records & World Firsts workflow is built, for reviewers. Requireme
 | Claim helpers | `lib/records-claims.ts` | Form → entry fields, submit validation, athlete snapshot, creating new athletes. Shared by both action files. |
 | Claimant actions | `app/world_records/actions.ts` | Save draft, submit, withdraw, delete draft, "My claims". Signed-in user; only the claimant can change a claim. |
 | Reviewer actions | `app/admin/records-review/actions.ts` | Queue, review detail, approve / request changes / reject, void / restore, Modify, permanent delete. `records:review`, and `records:manage` for public entries. |
-| Category actions | `app/admin/records-categories/actions.ts` | Create and edit record and first categories (`records:manage`). |
+| Category actions | `app/admin/records-categories/actions.ts` | Create, edit (status with optional reason) and permanently delete unused record and first categories (`records:manage`). |
 | Import actions | `app/admin/records-import/actions.ts` | Resolve the import review list (`records:manage`). |
 | Sheet import | `lib/migrations/import-records-from-sheet.ts`, `lib/records-sheet.ts` | One-time import. `--use-records-sheet` reads categories and records from the World Records sheet (tabs Categories and Data); firsts still come from the certificates sheet. Both sheet ids are constants in `utils/spreadsheets.ts`. Without it, record categories come from `lib/records-categories.ts` and records from the certificates sheet. |
 | Claim forms | `claim/components/SubmitClaimClient.tsx`, `WorldRecordClaimForm.tsx`, `WorldFirstClaimForm.tsx`, `claim/schemas.ts` | `SubmitClaimClient` holds the claim choice, the draft/submit/delete actions and the server calls. Each form has its own fields and Yup schema, so errors show while filling in; drafts are saved without them. The admin Modify form reuses both forms with `admin`. |
@@ -25,7 +25,8 @@ How the World Records & World Firsts workflow is built, for reviewers. Requireme
 | Auth | `lib/records-auth.ts` | `requireSession`, `requireRecordsPermission`, `actorOf` for audit items. |
 
 Pages: `app/world_records/` (public lists, `claim/`, `my-claims/`) and `app/admin/records-*` (review queue and detail,
-Modify pages, categories, import). The admin pages check `requireAdmin()`; the actions check permissions again,
+Modify pages, categories list and detail `records-categories/[kind]/[id]`, import). The admin pages check
+`requireRecordManager()` (Record Manager or General Admin, see `docs/RBAC.md`); the actions check permissions again,
 since server actions can be called directly.
 
 ## Data model (`sporthub-records`)
