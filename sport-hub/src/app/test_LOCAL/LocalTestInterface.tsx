@@ -265,12 +265,12 @@ export default function LocalTestInterface({ envReady, initialStats }: LocalTest
           <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <a
-              href="/test_SSR"
+              href="/admin/users-management"
               className="block bg-indigo-100 p-4 rounded-lg hover:bg-indigo-200 transition-colors"
             >
-              <h3 className="font-semibold">Server-Side Testing</h3>
+              <h3 className="font-semibold">User Management</h3>
               <p className="text-sm text-gray-600 mt-1">
-                Test DynamoDB operations with server actions
+                List, edit and set roles of users
               </p>
             </a>
             <a

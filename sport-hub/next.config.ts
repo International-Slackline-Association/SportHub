@@ -37,6 +37,10 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     '/api/certificates/[kind]/[id]': ['./src/lib/certificate-assets/**'],
   },
+  // The user management page used to live at /test_SSR
+  async redirects() {
+    return [{ source: '/test_SSR', destination: '/admin/users-management', permanent: true }];
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: '5mb',

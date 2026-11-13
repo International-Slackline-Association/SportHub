@@ -47,7 +47,7 @@ export async function createUser(formData: FormData) {
   };
 
   await saveUserProfile(user as unknown as UserProfileRecord);
-  revalidatePath('/test_SSR');
+  revalidatePath('/admin/users-management');
 }
 
 export async function updateUser(formData: FormData) {
@@ -87,8 +87,8 @@ export async function updateUser(formData: FormData) {
   };
 
   await saveUserProfile(updatedUser as unknown as UserProfileRecord);
-  revalidatePath('/test_SSR');
-  redirect('/test_SSR');
+  revalidatePath('/admin/users-management');
+  redirect('/admin/users-management');
 }
 
 export async function deleteUser(formData: FormData) {
@@ -100,7 +100,7 @@ export async function deleteUser(formData: FormData) {
   }
 
   await deleteUserRecord(id);
-  revalidatePath('/test_SSR');
+  revalidatePath('/admin/users-management');
 }
 
 /**
@@ -133,7 +133,7 @@ export async function updateUserRoleAndSubTypes(
 
   try {
     await updateRoleService(userId, roles, userSubTypes, primarySubType, session.user.id);
-    revalidatePath('/test_SSR');
+    revalidatePath('/admin/users-management');
 
     const isSelf = userId === session.user.id;
     return {

@@ -8,7 +8,7 @@ import { requireTestPageAccess } from '@lib/test-page-access';
 import { rolesOf, type Role, type UserSubType } from 'src/types/rbac';
 
 export const metadata: Metadata = {
-  title: 'SportHub - Test SSR',
+  title: 'SportHub - User Management',
 };
 
 const PAGE_SIZE = 100;
@@ -143,7 +143,7 @@ export default async function AboutPage() {
   return (
     <div className="container mx-auto p-4 max-w-4xl">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Users Management (SSR)</h1>
+        <h1 className="text-3xl font-bold">User Management</h1>
         <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
           {process.env.NODE_ENV === 'development' ? 'Dev Mode' : 'Admin Only'}
         </span>

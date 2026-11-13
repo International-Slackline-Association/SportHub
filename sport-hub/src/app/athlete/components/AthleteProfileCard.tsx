@@ -20,6 +20,8 @@ export const AthleteProfileCard = ({ disciplines, ...athleteProfile }: AthletePr
     thumbnailUrl,
     links,
     userSubTypes,
+    userId,
+    athleteSlug,
   } = athleteProfile;
 
   // Calculate age from birthdate
@@ -36,6 +38,9 @@ export const AthleteProfileCard = ({ disciplines, ...athleteProfile }: AthletePr
 
   const roles = userSubTypes?.map((t: string) => t.toUpperCase()) || ['ATHLETE'];
 
+  // Copy Link always shares the public profile, also when the card is shown on admin pages
+  const publicProfilePath = `/athlete/${encodeURIComponent(athleteSlug || userId)}`;
+
   const profileImage = profileUrl || thumbnailUrl || undefined;
 
   const displayName = `${name} ${surname || ""}`.trim();
@@ -44,7 +49,7 @@ export const AthleteProfileCard = ({ disciplines, ...athleteProfile }: AthletePr
   return (
     <StackedMediaCard
       className={styles.athleteProfileCard}
-      media={<ProfileMediaLinks avatarDefaultLabel={abbreviatedName} profileImage={profileImage} links={links} />}
+      media={<ProfileMediaLinks avatarDefaultLabel={abbreviatedName} profileImage={profileImage} links={links} shareUrl={publicProfilePath} />}
       desktopDirection="horizontal"
       mobileDirection="vertical"
     >
