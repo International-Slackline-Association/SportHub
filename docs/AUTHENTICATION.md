@@ -170,7 +170,7 @@ Roles are cached in `rbac-service.ts` with a 5-minute TTL to reduce DynamoDB cal
 | Page | Purpose |
 |------|---------|
 | `/test_LOCAL` | DynamoDB test UI |
-| `/test_SSR` | SSR tests + role management |
+| `/admin/users-management` | User management + role management |
 | `/test_CSR` | CSR tests + role management |
 
 Access: any authenticated user in dev; admin-only in production.
@@ -219,7 +219,7 @@ src/
 
 **`session.user.role` is undefined**: User may not have a sporthub-users Profile record. Check `getUserByEmail` returns a result for their email.
 
-**Test pages not accessible in production**: Only admins can access test pages in prod. Promote your user via another admin's `/test_SSR` page.
+**Test pages not accessible in production**: Only admins can access test pages in prod. Promote your user via another admin's User Management page (`/admin/users-management`).
 
 ---
 

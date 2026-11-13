@@ -80,7 +80,7 @@ Once seeded, visit these pages to test functionality:
 
 - **`/test_LOCAL`** - Main database testing interface
 - **`/relational-demo`** - Demonstrates relational data structure
-- **`/test_SSR`** - Server-side rendering tests
+- **`/admin/users-management`** - User management (list, edit, set roles)
 - **`/test_CSR`** - Client-side rendering tests
 
 ## Seed Data Source

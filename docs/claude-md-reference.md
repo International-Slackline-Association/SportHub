@@ -74,7 +74,6 @@ sport-hub/
 │   │   ├── world_records/      # World records display (Google Sheets)
 │   │   ├── demo/               # UI component showcase
 │   │   ├── test_LOCAL/         # Local DynamoDB test UI
-│   │   ├── test_SSR/           # SSR tests
 │   │   └── test_CSR/           # CSR tests
 │   ├── ui/                     # Reusable UI components
 │   │   ├── Alert/
@@ -316,7 +315,7 @@ open http://localhost:3000/test_LOCAL
 
 ## Test Pages
 - `/test_LOCAL` — DynamoDB test UI (setup, seed, query, stats)
-- `/test_SSR` — Server-side rendering tests
+- `/admin/users-management` — User management (list, edit, set roles)
 - `/test_CSR` — Client-side rendering tests
 - `/demo` — UI component showcase
 - All test pages restricted to `NODE_ENV=development` via `canAccessTestAPI()`

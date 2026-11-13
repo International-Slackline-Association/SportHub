@@ -4,12 +4,17 @@ import { CopyIcon } from '@ui/Icons';
 import { PropsWithChildren, useState } from "react";
 import Button from "@ui/Button";
 
-export const ClipBoardButton = ({ children }: PropsWithChildren) => {
+type ClipBoardButtonProps = PropsWithChildren<{
+  /** Path or absolute URL to copy. Defaults to the current page URL. */
+  url?: string;
+}>;
+
+export const ClipBoardButton = ({ children, url }: ClipBoardButtonProps) => {
   const [copySuccess, setCopySuccess] = useState('');
 
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(url ? new URL(url, window.location.origin).href : window.location.href);
       setCopySuccess('Copied!');
       setTimeout(() => setCopySuccess(''), 2000);
     } catch {

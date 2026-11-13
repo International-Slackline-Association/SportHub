@@ -71,7 +71,7 @@ export async function updateUser(formData: FormData) {
   };
 
   await saveUserProfile(updatedUser as unknown as UserProfileRecord);
-  revalidatePath('/test_SSR');
+  revalidatePath('/admin/users-management');
 }
 
 export async function updateUserRoleAndSubTypes(
@@ -99,7 +99,7 @@ export async function updateUserRoleAndSubTypes(
 
   try {
     await updateRoleService(userId, roles, userSubTypes, primarySubType, session.user.id);
-    revalidatePath('/test_SSR');
+    revalidatePath('/admin/users-management');
 
     const isSelf = userId === session.user.id;
     return {
@@ -122,5 +122,5 @@ export async function deleteUser(formData: FormData) {
   const id = formData.get('id') as string;
   if (!id) throw new Error('Missing user ID');
   await deleteUserRecord(id);
-  revalidatePath('/test_SSR');
+  revalidatePath('/admin/users-management');
 }
