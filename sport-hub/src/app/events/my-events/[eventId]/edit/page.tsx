@@ -83,6 +83,7 @@ export default async function EditEventPage({ params }: Props) {
         eventName: eventData?.name || eventData?.eventName,
         website,
         city: event.city || "",
+        organizer: { id: event.createdBy || '', name: event.createdByName || '' },
       },
       contests: contests.map(c => ({
         ...c,
@@ -127,7 +128,7 @@ export default async function EditEventPage({ params }: Props) {
 
   return (
     <PageLayout title="Edit Event">
-      <EditEventClient eventId={eventId} initialValues={initialValues} />
+      <EditEventClient eventId={eventId} initialValues={initialValues} canEditOrganizer={isAdmin} />
     </PageLayout>
   );
 }
