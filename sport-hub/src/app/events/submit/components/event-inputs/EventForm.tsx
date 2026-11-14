@@ -17,6 +17,7 @@ import YouTubePreviewTextField from './YouTubePreviewTextField'
 import FileInputField from './FileInputField';
 import { Alert } from '@ui/Alert';
 import { LinkFieldArray } from '@ui/Form';
+import UserAutocomplete from '@ui/UserAutocomplete';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -54,7 +55,7 @@ const CollapsibleSection = ({
   );
 };
 
-export default function EventForm() {
+export default function EventForm({ canEditOrganizer = false }: { canEditOrganizer?: boolean }) {
   const { errors, values } = useFormikContext<EventSubmissionFormValues>();
   const isError = Object.keys(errors.event || {}).length > 0;
 
@@ -74,6 +75,7 @@ export default function EventForm() {
       <CollapsibleSection title="General Information" defaultOpen>
         <div className={sharedStyles.formGrid}>
           <EventAutocomplete />
+          {canEditOrganizer && <UserAutocomplete formKey="event.organizer" label="Organizer" />}
           <FormikTextField
             id="event.website"
             label="Event Website"
