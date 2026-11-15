@@ -26,7 +26,7 @@ export default async function ManageEntriesPage({ params }: Props) {
     >
       <AdminNav current={`/admin/records-manage/${segment}`} />
       <section className="p-4 sm:p-0">
-        <EntryTable rows={rows} showStatus filterable emptyText="No entries." />
+        <EntryTable rows={rows} showStatus filterable />
       </section>
     </PageLayout>
   );
