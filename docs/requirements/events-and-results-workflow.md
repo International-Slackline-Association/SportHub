@@ -1,6 +1,6 @@
 # Requirements: Events and Results Workflow
 
-Status: **v1.1**, 2026-11-05 (v1.1: several competitions per discipline allowed). Agreed with Jonas in the project thread and a voice session.
+Status: **v1.2**, 2026-11-15 (v1.2: level per contest, competition = discipline, evaluation per event). Agreed with Jonas in the project thread and a voice session.
 Rules source: ISA [*Contest Size Overview*](https://docs.google.com/spreadsheets/d/109k-XNNN_e9MWt0bzEeJ6hYREpyYZDiBCt7bz5wt324) v6.0 (2026), page 1. Where this document and the sheet differ, this
 document wins for SportHub; signed World Cup agreements may set stricter deadlines (not enforced by SportHub).
 
@@ -15,18 +15,31 @@ beginning (levels, licences, deadlines) and at the end (results review per conte
 few changes to existing behaviour.
 
 **Out of scope (v1):** co-organizers and ownership transfer; fee payment handling (only a checkbox); enforcing
-documentation rules; a separate competition record in the data (contests carry a competition id); migration of existing events (left to developers).
+documentation rules; a separate competition record in the data; migration of existing events (left to developers).
 
 ## 2. Terminology and levels
 
 - **Event**: the umbrella term. **Festival**: an event with no competitions.
-- **Competition**: a group of contests of one discipline in an event, at one level (each of the 14 disciplines in
-  the code is its own discipline, so freestyle highline and speed highline are separate competitions). Usually one
-  competition per discipline, but an event can hold two of the same discipline at different levels (e.g. a World
-  Cup and an Open). One event can hold competitions at different levels.
-- **Contest**: a division of a competition (men, women, mixed, youth, senior…).
-- **Level**: set per competition; all its contests share it. The code calls it "contest size" (`contestSize`) or
-  "size". The code's "Grand Slam" is shown as **National**.
+- **Competition**: all contests of one discipline in an event. The discipline is the one stored on the contest (e.g.
+  `TRICKLINE_AERIAL`, `FREESTYLE_HIGHLINE`, `SPEED_HIGHLINE`); group values such as `TRICKLINE` or `FREESTYLE` are
+  only used for filters. The contests of a competition can have different levels.
+- **Contest**: a division of a competition by gender, age category and level (men, women, mixed, youth, senior;
+  Challenge … World Championship).
+- **Level**: set per contest. The code calls it "contest size" (`contestSize`) or "size". The code's "Grand Slam" is
+  shown as **National**.
+
+Example:
+
+```
+Event: Bop Games Edition Belo Horizonte
+├── Competition: Trickline
+│   ├── Contest: Trickline Men's National
+│   ├── Contest: Trickline Women's National
+│   └── Contest: Trickline Men's Challenge
+└── Competition: Speed Highline
+    ├── Contest: Speed Highline Men's National
+    └── Contest: Speed Highline Women's National
+```
 
 | Level | 1st place pts | Min. field m/f | Licence | Info to ISA / announce / rules | Fee member / partner / third party |
 |---|---|---|---|---|---|
@@ -55,12 +68,13 @@ Results are due **2 weeks after the competition** at every level.
 
 - The organizer uses today's submission form: name, city, country, dates, website, links, logo, and contests. A
   future event needs no judges or results.
-- **Per competition** the organizer proposes a level and declares member, partner or third party (a "?" tooltip
-  explains each). The form groups contests into competitions (one per discipline by default, a second one can be added), forces all contests of a competition to the same level, and shows the fee from §2.
+- **Per contest** the organizer proposes a level, as today. **Once per event** the organizer declares member,
+  partner or third party (a "?" tooltip explains each). The form shows the fee from §2 for each discipline and level
+  in the event.
 - Submitting sends the event to **Event Approval** as today. Nothing is public before approval. The admin should
   answer within 1 week (Challenge, Open) or 2 weeks (other levels); after that sport@ gets a reminder.
 - The admin **approves** (event goes on the calendar) or **rejects** with a reason (back to draft, organizer
-  emailed). On approval the admin confirms each competition's proposed level and membership status.
+  emailed). On approval the admin confirms each contest's proposed level and the membership status.
 - **World Cup / World Championship** show as "licence pending" until the admin confirms the licence. If refused, the
   admin sets a lower level as a counter proposal; the organizer is emailed and can adjust or cancel. That level is
   then only proposed.
@@ -74,8 +88,9 @@ Results are due **2 weeks after the competition** at every level.
 
 ## 6. Deadlines
 
-- Deadlines count from **each competition's own dates**, using the table in §2: deadlines before the competition
-  count back from its **earliest contest start**, the results deadline counts from its **latest contest end**.
+- Deadlines count from **each contest's own dates and level**, using the table in §2: deadlines before the contest
+  count back from its start, the results deadline counts from its end. Contests of an event with the same deadline
+  share one email and one confirmation.
 - SportHub checks "information sent to ISA" (submission date) and "results submitted" automatically. The organizer
   confirms the others (public announcement incl. athlete invitation, rules published) by a link in the email, on
   trust and without evidence.
@@ -107,16 +122,16 @@ Results are due **2 weeks after the competition** at every level.
   points), and direct admin **edit** (logged; the organizer is emailed what changed).
 - Before approving, the admin:
   - creates each new athlete or judge profile (this is the duplicate check);
-  - ticks **"licensing fee received"** when the fee for the competition is above €0;
-  - sets the competition's **final level** when approving its first contest; the other contests inherit it, and a
-    later level change recalculates all of them. SportHub shows each contest's field size next to the level's
-    minimum; there is no automatic rule, and contests below 3 athletes are the admin's call. Licensed World Cups and
+  - ticks **"licensing fee received"** when the fee for the contest's discipline and level is above €0;
+  - sets each contest's **final level** (a change recalculates its points; the admin can apply one level to all
+    contests of a discipline at once). SportHub shows each contest's field size next to the level's minimum; there is no automatic rule, and contests below 3 athletes are the admin's call. Licensed World Cups and
     World Championships keep their level.
 - **Edits after publication** stay pending; the published results remain live and unchanged until approved.
 
 ## 9. Evaluation (World Cup and World Championship)
 
-- After a competition's results are published, an admin picks evaluators (ISA officials who attended; any SportHub
+- The evaluation is **per event**: one per event that has at least one World Cup or World Championship contest.
+- After the event's results are published, an admin picks evaluators (ISA officials who attended; any SportHub
   user). Each gets an email with a link; they log in to fill in the form. 2 weeks to respond, one reminder.
 - Ten statements, each rated strongly disagree / disagree / neutral / agree / strongly agree (all phrased so
   "strongly agree" is best):
@@ -124,7 +139,7 @@ Results are due **2 weeks after the competition** at every level.
   2. Safety and rigging met ISA standards.
   3. Judging was done properly, with qualified judges and the official judging system.
   4. Athletes were well looked after.
-  5. The athletes' level matched the competition level, taking wild cards into account.
+  5. The athletes' level matched the contest levels, taking wild cards into account.
   6. Documentation and media coverage were adequate.
   7. The venue was suitable.
   8. The event was well run on the day.
@@ -141,7 +156,7 @@ Results are due **2 weeks after the competition** at every level.
    Score Review.
 3. **Edit event loophole:** "Edit event" currently re-creates all contests and results without review; after
    approval it no longer touches judges or results.
-4. Points read-only for organizers; level per competition instead of per contest; level icon hidden until confirmed;
+4. Points read-only for organizers; level icon hidden until confirmed;
    Event Approval answers per level; Score Review gains first submissions, request changes and reject reasons.
 
 ## 11. Notifications and infrastructure
