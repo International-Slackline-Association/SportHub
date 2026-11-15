@@ -20,7 +20,7 @@ export default async function AllRecordsAndFirstsPage() {
     >
       <AdminNav current="/admin/records-all" />
       <section className="p-4 sm:p-0">
-        <EntryTable rows={rows} showKind showStatus filterable emptyText="No entries." />
+        <EntryTable rows={rows} showKind showStatus filterable />
       </section>
     </PageLayout>
   );

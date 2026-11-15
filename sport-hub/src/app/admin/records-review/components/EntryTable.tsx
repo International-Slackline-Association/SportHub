@@ -6,7 +6,8 @@ import { createColumnHelper } from '@tanstack/react-table';
 import Table from '@ui/Table';
 import { ClaimStatusBadge, CLAIM_STATUS_LABELS } from 'src/app/world_records/components/claimStatus';
 import type { ClaimStatus } from '@lib/relational-types';
-import { GENDER_LABELS } from '@lib/records-logic';
+import { textToTitleCase } from '@utils/strings';
+import { normalizeGender } from '@utils/gender';
 
 export interface EntryRow {
   kind: 'record' | 'first';
@@ -24,7 +25,6 @@ export interface EntryRow {
 }
 
 const KIND_OPTIONS = [{ value: 'record', label: 'Record' }, { value: 'first', label: 'First' }];
-const KIND_LABELS: Record<EntryRow['kind'], string> = { record: 'Record', first: 'First' };
 
 /** Status shown in the table: voided entries are stored as rejected but listed on their own. */
 type DisplayStatus = ClaimStatus | 'voided';
@@ -41,17 +41,15 @@ type Props = {
   showKind?: boolean;
   /** Search box and Kind/Status filters, for the full lists. */
   filterable?: boolean;
-  emptyText: string;
 };
 
 const columnHelper = createColumnHelper<EntryRow>();
 
-export default function EntryTable({ rows, showStatus = false, showKind = false, filterable = false, emptyText }: Props) {
+export default function EntryTable({ rows, showStatus = false, showKind = false, filterable = false }: Props) {
   const columns = useMemo(() => {
     const statusOptions = STATUS_ORDER
       .filter(s => rows.some(r => displayStatus(r) === s))
       .map(s => ({ value: s, label: DISPLAY_STATUS_LABELS[s] }));
-    const claimHeader = showKind ? 'Record / Trick' : rows[0]?.kind === 'first' ? 'Trick' : 'Record';
 
     return [
       // Filter-only column (size 0 hides it): one search box over the text columns
@@ -67,34 +65,25 @@ export default function EntryTable({ rows, showStatus = false, showKind = false,
         enableColumnFilter: filterable,
         filterFn: 'equalsString',
         meta: { filterVariant: 'select', filterIncludeAll: true, filterOptions: KIND_OPTIONS },
-        cell: info => KIND_LABELS[info.getValue()],
+        cell: info => textToTitleCase(info.getValue()),
       })] : []),
-      columnHelper.accessor('submitted', {
-        header: 'Submitted',
-        cell: info => <span className="whitespace-nowrap">{info.getValue() || '—'}</span>,
-      }),
+      columnHelper.accessor('submitted', { header: 'Submitted' }),
       columnHelper.accessor('category', { header: 'Category' }),
       columnHelper.accessor('claim', {
-        header: claimHeader,
+        header: showKind ? 'Record / Trick' : rows[0]?.kind === 'first' ? 'Trick' : 'Record',
         cell: info => (
           <Link href={detailHref(info.row.original)} className="font-medium text-blue-700 hover:underline">
             {info.getValue() || '—'}
           </Link>
         ),
       }),
-      columnHelper.accessor('date', {
-        header: 'Date',
-        cell: info => <span className="whitespace-nowrap">{info.getValue()}</span>,
-      }),
+      columnHelper.accessor('date', { header: 'Date' }),
       columnHelper.accessor('athletes', { header: 'Athletes' }),
       columnHelper.accessor('gender', {
         header: 'Gender',
-        cell: info => GENDER_LABELS[info.getValue()],
+        cell: info => textToTitleCase(normalizeGender(info.getValue()) ?? ''),
       }),
-      columnHelper.accessor('claimant', {
-        header: 'Claimant',
-        cell: info => info.getValue() || '—',
-      }),
+      columnHelper.accessor('claimant', { header: 'Claimant' }),
       ...(showStatus ? [columnHelper.accessor(displayStatus, {
         id: 'status',
         header: 'Status',
@@ -112,7 +101,7 @@ export default function EntryTable({ rows, showStatus = false, showKind = false,
     ];
   }, [rows, showKind, showStatus, filterable]);
 
-  if (rows.length === 0) return <p className="text-gray-600 text-sm">{emptyText}</p>;
+  if (rows.length === 0) return <p className="text-gray-600 text-sm">No entries.</p>;
 
   return (
     <Table
