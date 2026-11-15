@@ -9,10 +9,10 @@ import {
   certificateStatement,
   certificateVerifyUrl,
   isReusable,
-  prettyDate,
   signConfigFromEnv,
   type StoredSignature,
 } from '../certificate-signing';
+import { formatLongDay } from '../../utils/dates';
 
 const config = { apiUrl: 'https://tools.example', apiKey: 'key-123' };
 const FUTURE = new Date(Date.now() + 5 * 365 * 24 * 3600 * 1000).toISOString();
@@ -37,8 +37,9 @@ test('statement uses the isa-tools wording with value and readable date', () => 
     certificateStatement({ kind: 'first', athleteName: 'A', otherAthletes: ['B', 'C'], title: 'Double front flip', date: '' }),
     '"A" (together with B, C) has a valid WORLD FIRST certificate for "Double front flip"',
   );
-  assert.equal(prettyDate('unknown'), 'unknown');
-  assert.equal(prettyDate('31.12.2020'), '31 December 2020');
+  assert.equal(formatLongDay('unknown'), 'unknown');
+  assert.equal(formatLongDay('31.12.2020'), '31 December 2020');
+  assert.equal(formatLongDay('31/02/2020'), '31/02/2020');
 });
 
 test('a stored signature is reused only for the same statement with over a year left', () => {

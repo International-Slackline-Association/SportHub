@@ -16,6 +16,8 @@
  * store functions in.
  */
 
+import { formatLongDay } from '../utils/dates';
+
 export type CertificateKind = 'record' | 'first';
 
 export const DEFAULT_ISA_TOOLS_API_URL = 'https://tools-api.slacklineinternational.org';
@@ -24,16 +26,6 @@ export const SIGNATURE_VALIDITY_SECONDS = 10 * 365 * 24 * 60 * 60;
 /** Sign again once a stored signature has less than this left. */
 const RENEW_BEFORE_MS = 365 * 24 * 60 * 60 * 1000;
 const SIGN_TIMEOUT_MS = 8000;
-
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-/** DD/MM/YYYY (or DD.MM.YYYY) → "12 November 2026"; anything else is returned as is. */
-export function prettyDate(date: string): string {
-  const m = /^(\d{1,2})[/.](\d{1,2})[/.](\d{4})$/.exec(date.trim());
-  if (!m) return date.trim();
-  const month = MONTHS[Number(m[2]) - 1];
-  return month ? `${Number(m[1])} ${month} ${m[3]}` : date.trim();
-}
 
 export interface StatementInput {
   kind: CertificateKind;
@@ -54,7 +46,7 @@ export function certificateStatement(s: StatementInput): string {
   const together = s.otherAthletes.length > 0 ? ` (together with ${s.otherAthletes.join(', ')})` : '';
   const label = s.kind === 'first' ? 'WORLD FIRST' : 'WORLD RECORD';
   const detail = s.detail ? ` (${s.detail})` : '';
-  const date = s.date ? ` achieved on ${prettyDate(s.date)}` : '';
+  const date = s.date ? ` achieved on ${formatLongDay(s.date)}` : '';
   const statement = `"${s.athleteName}"${together} has a valid ${label} certificate for "${s.title}"${detail}${date}`;
   // isa-tools accepts 10 to 1024 characters
   return statement.length > 1024 ? `${statement.slice(0, 1023)}…` : statement;
