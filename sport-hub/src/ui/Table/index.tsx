@@ -73,6 +73,11 @@ const Table = <TData,>({ extraFilters, options, title, rowClassName }: TableProp
   const table = useReactTable({
     defaultColumn: {
       enableColumnFilter: false,
+      // Empty values show a dash
+      cell: info => {
+        const value = info.renderValue();
+        return value === null || value === undefined || value === '' ? '—' : String(value);
+      },
       size: undefined,
     },
     initialState: {
