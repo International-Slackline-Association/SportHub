@@ -5,7 +5,7 @@
  * Events contain multiple contests as child records using composite key (PK + SK).
  */
 
-import { DISCIPLINE_DATA } from '@utils/consts';
+import { DISCIPLINE_ENUM_VALUES } from '@utils/discipline-enum-values';
 import { dynamodb, EVENTS_TABLE, USERS_TABLE } from './dynamodb';
 import { auth } from '@lib/auth';
 import type {
@@ -14,8 +14,8 @@ import type {
   PendingScoreEditRecord,
   AthleteParticipationRecord,
 } from './relational-types';
-import { ContestFormValues, EventFormValues } from 'src/app/events/submit/types';
-import { EventStatus } from 'src/app/events/my-events/page';
+import type { ContestFormValues, EventFormValues } from 'src/app/events/submit/types';
+import type { EventStatus } from 'src/app/events/my-events/page';
 
 /********************************************************************************
  * 
@@ -257,7 +257,7 @@ export function generateContestId() {
 
 export function getContestSortKey({ discipline, contestId }: ContestFormValues | ContestRecord): string {
   const disciplineEnumValue = Number.isNaN(Number(discipline))
-    ? DISCIPLINE_DATA[discipline as Discipline]?.enumValue
+    ? DISCIPLINE_ENUM_VALUES[discipline as Discipline]
     : discipline;
   
   return `Contest:${disciplineEnumValue}:${contestId}`;

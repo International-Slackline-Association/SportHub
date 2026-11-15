@@ -6,6 +6,7 @@ import {
   FreestyleTricklineIcon,
 } from "@ui/Icons";
 import { JSX } from "react";
+import { DISCIPLINE_ENUM_VALUES } from "./discipline-enum-values";
 
 
 type IconProps = {
@@ -22,20 +23,20 @@ type DisciplineUIData = {
 
 export const DISCIPLINE_DATA: Record<Discipline, DisciplineUIData> = {
   OVERALL: {
-    enumValue: 0,
+    enumValue: DISCIPLINE_ENUM_VALUES.OVERALL,
     name: 'All Disciplines',
     description: 'Combined overall ranking',
     Icon: () => <></>
   },
   TRICKLINE: {
-    enumValue: 1,
+    enumValue: DISCIPLINE_ENUM_VALUES.TRICKLINE,
     name: 'Trickline',
     description: 'Dynamic tricks and flips',
     Icon: (iconProps: IconProps) => <FreestyleTricklineIcon {...iconProps} />
   },
   // TODO: Confirm with Tom how to handle Trickline sub-disciplines. Currently we only have records for trickline aerial.
   TRICKLINE_AERIAL: {
-    enumValue: 2,
+    enumValue: DISCIPLINE_ENUM_VALUES.TRICKLINE_AERIAL,
     name: 'Trickline',
     // name: 'Trickline Aerial',
     description: 'Dynamic tricks and flips',
@@ -43,67 +44,67 @@ export const DISCIPLINE_DATA: Record<Discipline, DisciplineUIData> = {
     Icon: (iconProps: IconProps) => <FreestyleTricklineIcon {...iconProps} />
   },
   TRICKLINE_JIB_AND_STATIC: {
-    enumValue: 3,
+    enumValue: DISCIPLINE_ENUM_VALUES.TRICKLINE_JIB_AND_STATIC,
     name: 'Trickline Jib & Static',
     description: 'Jib and static trickline tricks',
     Icon: (iconProps: IconProps) => <FreestyleTricklineIcon {...iconProps} />
   },
   TRICKLINE_TRANSFER: {
-    enumValue: 4,
+    enumValue: DISCIPLINE_ENUM_VALUES.TRICKLINE_TRANSFER,
     name: 'Trickline Transfer',
     description: 'Trickline transfer tricks',
     Icon: (iconProps: IconProps) => <FreestyleTricklineIcon {...iconProps} />
   },
   FREESTYLE_HIGHLINE: {
-    enumValue: 5,
+    enumValue: DISCIPLINE_ENUM_VALUES.FREESTYLE_HIGHLINE,
     name: 'Freestyle Highline',
     description: 'Artistic expression on the highline',
     Icon: (iconProps: IconProps) => <FreestyleHighlineIcon {...iconProps} />
   },
   SPEED: {
-    enumValue: 6,
+    enumValue: DISCIPLINE_ENUM_VALUES.SPEED,
     name: 'Speed',
     description: 'Speed competitions',
     Icon: (iconProps: IconProps) => <SpeedShortIcon {...iconProps} />
   },
   SPEED_SHORT: {
-    enumValue: 7,
+    enumValue: DISCIPLINE_ENUM_VALUES.SPEED_SHORT,
     name: 'Speedline Short',
     description: 'Racing over ground',
     Icon: (iconProps: IconProps) => <SpeedShortIcon {...iconProps} />
   },
   SPEED_HIGHLINE: {
-    enumValue: 8,
+    enumValue: DISCIPLINE_ENUM_VALUES.SPEED_HIGHLINE,
     name: 'Speed Highline',
     description: 'Racing at height',
     Icon: (iconProps: IconProps) => <SpeedHighlineIcon {...iconProps} />
   },
   ENDURANCE: {
-    enumValue: 9,
+    enumValue: DISCIPLINE_ENUM_VALUES.ENDURANCE,
     name: 'Endurance',
     description: 'Long-distance balance challenge',
     Icon: (iconProps: IconProps) => <SpeedHighlineIcon {...iconProps} />
   },
   BLIND: {
-    enumValue: 10,
+    enumValue: DISCIPLINE_ENUM_VALUES.BLIND,
     name: 'Blind',
     description: 'Blindfolded slackline walking',
     Icon: (iconProps: IconProps) => <FreestyleHighlineIcon {...iconProps} />
   },
   RIGGING: {
-    enumValue: 11,
+    enumValue: DISCIPLINE_ENUM_VALUES.RIGGING,
     name: 'Rigging',
     description: 'Technical setup mastery',
     Icon: (iconProps: IconProps) => <RiggingIcon {...iconProps} />
   },
   FREESTYLE: {
-    enumValue: 12,
+    enumValue: DISCIPLINE_ENUM_VALUES.FREESTYLE,
     name: 'Freestyle',
     description: 'Freestyle slackline tricks',
     Icon: (iconProps: IconProps) => <FreestyleHighlineIcon {...iconProps} />
   },
   WALKING: {
-    enumValue: 13,
+    enumValue: DISCIPLINE_ENUM_VALUES.WALKING,
     name: 'Walking',
     description: 'Slackline walking',
     Icon: (iconProps: IconProps) => <SpeedHighlineIcon {...iconProps} />

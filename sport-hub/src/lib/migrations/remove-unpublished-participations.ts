@@ -17,8 +17,13 @@
  *   pnpm migrate:unpublished-participations:aws:execute
  */
 
-import { dynamodb, EVENTS_TABLE, USERS_TABLE } from '../dynamodb';
-import type { AthleteParticipationRecord, EventMetadataRecord } from '../relational-types';
+import {
+  getEventContests,
+  getParticipationRecords,
+  isPublishedEventStatus,
+  scanAllEventItems,
+  syncContestParticipationRecords,
+} from '../event-contest-service';
 
 const DRY_RUN = process.argv.includes('--dry-run');
 const EXECUTE = process.argv.includes('--execute');
@@ -32,38 +37,35 @@ if (!DRY_RUN && !EXECUTE) {
 }
 
 async function main(): Promise<void> {
-  const metadataRecords = (await dynamodb.scanItems(EVENTS_TABLE, {
+  const metadataRecords = await scanAllEventItems({
     filterExpression: 'sortKey = :metadata',
     expressionAttributeValues: { ':metadata': 'Metadata' },
     projectionExpression: 'eventId, eventName, #status',
     expressionAttributeNames: { '#status': 'status' },
-  })) as Pick<EventMetadataRecord, 'eventId' | 'eventName' | 'status'>[];
+  });
+  const unpublished = metadataRecords.filter((event) => !isPublishedEventStatus(event.status));
+  console.log(`Found ${unpublished.length} unpublished events`);
 
-  const unpublished = new Map(
-    metadataRecords
-      // Same rule as isPublishedEventStatus in event-contest-service
-      .filter((event) => event.status !== undefined && event.status !== null && event.status !== 'published')
-      .map((event) => [event.eventId, event])
-  );
-  console.log(`Found ${unpublished.size} unpublished events`);
-
-  const participations = (await dynamodb.scanItems(USERS_TABLE, {
-    filterExpression: 'begins_with(sortKey, :prefix)',
-    expressionAttributeValues: { ':prefix': 'Participation:' },
-    projectionExpression: 'userId, sortKey, eventId',
-  })) as Pick<AthleteParticipationRecord, 'userId' | 'sortKey' | 'eventId'>[];
-
-  const stale = participations.filter((p) => unpublished.has(p.eventId));
-  for (const p of stale) {
-    const event = unpublished.get(p.eventId);
-    console.log(`${DRY_RUN ? '[dry-run] would delete' : 'Deleting'} ${p.userId} ${p.sortKey} (${event?.eventName ?? p.eventId}, ${event?.status})`);
-    if (EXECUTE) {
-      await dynamodb.deleteItem(USERS_TABLE, { userId: p.userId, sortKey: p.sortKey });
+  let total = 0;
+  for (const event of unpublished) {
+    for (const contest of await getEventContests(event.eventId)) {
+      const participations = await getParticipationRecords(event.eventId, contest.contestId);
+      if (participations.length === 0) continue;
+      total += participations.length;
+      console.log(
+        `${DRY_RUN ? '[dry-run] would remove' : 'Removing'} ${participations.length} Participation records of ` +
+        `${event.eventName ?? event.eventId} (${event.status}), contest ${contest.contestId}`
+      );
+      // The sync derives Participation:* from the contest's results and the
+      // event status, so for an unpublished event it removes them all.
+      if (EXECUTE) {
+        await syncContestParticipationRecords(event.eventId, contest);
+      }
     }
   }
 
-  console.log(`${DRY_RUN ? 'Would delete' : 'Deleted'} ${stale.length} Participation records`);
-  if (EXECUTE && stale.length > 0) {
+  console.log(`${DRY_RUN ? 'Would remove' : 'Removed'} ${total} Participation records`);
+  if (EXECUTE && total > 0) {
     console.log('Run `pnpm revalidate:all` after changing production data.');
   }
 }
