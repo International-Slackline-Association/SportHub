@@ -2,14 +2,16 @@
  * Signed "Scan to verify" QR codes for record and first certificates.
  *
  * Signing goes through the isa-tools API (github.com/International-Slackline-Association/isa-tools),
- * the same service that signed ISA certificates before SportHub: POST {ISA_TOOLS_API_URL}/sign
- * with the trusted service key in `x-api-key`. isa-tools signs the statement as an RS256 JWT with
+ * the same service that signed ISA certificates before SportHub: POST {ISA_TOOLS_API_URL}/v1/sign
+ * with an OAuth client-credentials token of SportHub's own `sporthub-service` client in the ISA
+ * user pool, which only has the `isa-tools/documents.sign` scope (see "How apps reach ISA services",
+ * docs/engineering/app-access.md in the ISA monorepo). isa-tools signs the statement as an RS256 JWT with
  * the ISA key, stores it under an 8-character code and returns
  * https://verify.slacklineinternational.org/?token=<code>, which shows the signed statement.
  *
  * Each signature is stored per entry and athlete (`CertificateSignature` items in the records
  * table) and reused while the statement is unchanged and far from expiry, so repeated downloads
- * keep the same code. Without ISA_TOOLS_API_KEY, or when isa-tools fails, the QR code falls back
+ * keep the same code. Without ISA_TOOLS_CLIENT_ID / ISA_TOOLS_CLIENT_SECRET, or when isa-tools fails, the QR code falls back
  * to the live certificate link, so a certificate is always generated.
  *
  * This file has no database or Next.js imports so it can be unit tested; the route passes the
@@ -21,6 +23,8 @@ import { formatLongDay } from '../utils/dates';
 export type CertificateKind = 'record' | 'first';
 
 export const DEFAULT_ISA_TOOLS_API_URL = 'https://tools-api.slacklineinternational.org';
+export const DEFAULT_ISA_TOKEN_URL = 'https://auth.slacklineinternational.org/oauth2/token';
+export const SIGN_SCOPE = 'isa-tools/documents.sign';
 /** A certificate states a historical fact, so its signature should outlive any printed copy. */
 export const SIGNATURE_VALIDITY_SECONDS = 10 * 365 * 24 * 60 * 60;
 /** Sign again once a stored signature has less than this left. */
@@ -67,13 +71,48 @@ export function isReusable(stored: StoredSignature | undefined, statement: strin
 
 export interface SignConfig {
   apiUrl: string;
-  apiKey: string;
+  tokenUrl: string;
+  clientId: string;
+  clientSecret: string;
 }
 
 export function signConfigFromEnv(env: Record<string, string | undefined> = process.env): SignConfig | undefined {
-  const apiKey = env.ISA_TOOLS_API_KEY?.trim();
-  if (!apiKey) return undefined;
-  return { apiKey, apiUrl: (env.ISA_TOOLS_API_URL?.trim() || DEFAULT_ISA_TOOLS_API_URL).replace(/\/$/, '') };
+  const clientId = env.ISA_TOOLS_CLIENT_ID?.trim();
+  const clientSecret = env.ISA_TOOLS_CLIENT_SECRET?.trim();
+  if (!clientId || !clientSecret) return undefined;
+  return {
+    clientId,
+    clientSecret,
+    apiUrl: (env.ISA_TOOLS_API_URL?.trim() || DEFAULT_ISA_TOOLS_API_URL).replace(/\/$/, ''),
+    tokenUrl: env.ISA_TOOLS_TOKEN_URL?.trim() || DEFAULT_ISA_TOKEN_URL,
+  };
+}
+
+let cachedToken: { clientId: string; value: string; expiresAt: number } | undefined;
+
+/** For tests: forget the cached access token. */
+export function clearTokenCache() {
+  cachedToken = undefined;
+}
+
+/** Client-credentials access token for the sign scope, cached until a minute before it expires. */
+async function accessToken(config: SignConfig, fetchImpl: typeof fetch): Promise<string> {
+  if (cachedToken && cachedToken.clientId === config.clientId && cachedToken.expiresAt > Date.now() + 60_000) {
+    return cachedToken.value;
+  }
+  const credentials = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64');
+  const res = await fetchImpl(config.tokenUrl, {
+    method: 'POST',
+    headers: { Authorization: `Basic ${credentials}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ grant_type: 'client_credentials', scope: SIGN_SCOPE }).toString(),
+    signal: AbortSignal.timeout(SIGN_TIMEOUT_MS),
+  });
+  if (!res.ok) throw new Error(`ISA token request returned ${res.status}`);
+  const body = await res.json() as { access_token?: unknown; expires_in?: unknown };
+  if (typeof body.access_token !== 'string') throw new Error('ISA token request returned no access token');
+  const expiresIn = typeof body.expires_in === 'number' ? body.expires_in : 3600;
+  cachedToken = { clientId: config.clientId, value: body.access_token, expiresAt: Date.now() + expiresIn * 1000 };
+  return cachedToken.value;
 }
 
 /** Signs one statement with isa-tools and returns its verification URL and expiry. */
@@ -83,16 +122,18 @@ export async function signWithIsaTools(
   statement: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<StoredSignature> {
-  const res = await fetchImpl(`${config.apiUrl}/sign`, {
+  const token = await accessToken(config, fetchImpl);
+  const res = await fetchImpl(`${config.apiUrl}/v1/sign`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': config.apiKey },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ subject, content: statement, expiresInSeconds: SIGNATURE_VALIDITY_SECONDS, createHash: true }),
     signal: AbortSignal.timeout(SIGN_TIMEOUT_MS),
   });
-  if (!res.ok) throw new Error(`isa-tools /sign returned ${res.status}`);
+  if (res.status === 401 || res.status === 403) cachedToken = undefined;
+  if (!res.ok) throw new Error(`isa-tools /v1/sign returned ${res.status}`);
   const body = await res.json() as { verificationUrl?: unknown; expiresAt?: unknown };
   if (typeof body.verificationUrl !== 'string' || !/^https:\/\//.test(body.verificationUrl)) {
-    throw new Error('isa-tools /sign returned no verification URL');
+    throw new Error('isa-tools /v1/sign returned no verification URL');
   }
   return {
     statement,

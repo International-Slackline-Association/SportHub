@@ -91,7 +91,7 @@ AUTH_URL=https://df-dev.d2c5lq1ojcfw0k.amplifyapp.com
 |----------|---------|
 | `AUTH_SECRET` | NextAuth JWT encryption key |
 | `COGNITO_CLIENT_SECRET` | Cognito client authentication |
-| `ISA_TOOLS_API_KEY` | Trusted service key for the isa-tools API (AWS SSM `/isa-tools-trusted-service-api-key` in the isa-tools account). Signs the "Scan to verify" QR code on record/first certificates (`src/lib/certificate-signing.ts`). Optional: without it the QR code links to the live certificate. `ISA_TOOLS_API_URL` (plain) overrides the default `https://tools-api.slacklineinternational.org`. |
+| `ISA_TOOLS_CLIENT_SECRET` | Secret of SportHub's `sporthub-service` client in the ISA user pool (Cognito, eu-central-1), which may only call isa-tools `POST /v1/sign` (scope `isa-tools/documents.sign`). Handed over by the isa-tools maintainer. Signs the "Scan to verify" QR code on record/first certificates (`src/lib/certificate-signing.ts`). Set together with `ISA_TOOLS_CLIENT_ID` (plain env var, the client id). Optional: without them the QR code links to the live certificate. `ISA_TOOLS_API_URL` and `ISA_TOOLS_TOKEN_URL` (plain) override `https://tools-api.slacklineinternational.org` and `https://auth.slacklineinternational.org/oauth2/token`. |
 
 #### ❌ Remove (Unnecessary)
 
