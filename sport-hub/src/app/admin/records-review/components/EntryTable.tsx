@@ -60,7 +60,7 @@ export default function EntryTable({ rows, showStatus = false, filterable = fals
       )}
       {shown.length === 0 ? <p className="text-gray-600 text-sm">{emptyText}</p> : (<>
         {/* Phones: one card per claim instead of a table that needs scrolling */}
-        <ul className="sm:hidden stack gap-2">
+        <ul className="flex flex-col gap-2 sm:hidden">
           {shown.map(r => (
             <li key={r.entryId}>
               <Link
