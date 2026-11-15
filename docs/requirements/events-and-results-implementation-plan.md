@@ -30,6 +30,17 @@ site working. Sizes are rough estimates: S < 150 lines, M 150–400, L > 400 (L 
 | 3 | Close the "Edit event" loophole | S | `updateEvent` on a published event keeps existing contests' judges and results for non-admins (only metadata and new contests change). Edit form shows judges/results read-only with a link to "Edit scores". |
 | 4 | Points read-only for organizers | S | Points field disabled for non-admins, always recalculated server-side on save from rank, level and field size (ties: equal points, next place skipped; already supported). |
 
+## Cleanup before Phase 2 (review feedback)
+
+Done before any new data is added to contests, so later PRs don't have to keep old paths in sync:
+
+- Remove embedded contests (the `contests` attribute on event `Metadata` items) and the logic that reads or writes
+  them; `Contest:*` items become the only source.
+- Tests for the current submission form flow.
+- One reusable "new athlete" modal shared by events and records & firsts (today two approaches).
+- Review the event image upload: enforce file size limits, check the resize Lambda and S3 storage.
+- Remove old seed-data logic that uses a different data shape.
+
 ## Phase 2: results review per contest
 
 | # | PR | Size | Content |
@@ -73,6 +84,7 @@ mailer into its own small PR first.
 
 ```
 1 ─ 2 ─ 3 ─ 4                (fixes, any order after 2)
+        └─ cleanup (embedded contests, tests, athlete modal, uploads, seed data)
         └─ 5 ─ 6 ─ 7 ─ 8 ─ 9
               └─ 10 ─ 11 ─ 12
 #113 ─ 13 ─ 14 ─ 15 ─ 16 ─ 17

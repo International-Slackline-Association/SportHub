@@ -22,7 +22,7 @@ import {
 } from '@lib/event-contest-service';
 import { EventMetadataRecord, ContestRecord } from '@lib/relational-types';
 import { EventStatus } from '../my-events/page';
-import { withCalculatedPoints } from '@utils/points';
+import { calculatePointsForRank } from '@utils/points';
 
 /**
  * Save event to DynamoDB
@@ -50,13 +50,24 @@ function validatePastEventRequirements(values: EventSubmissionFormValues): strin
   return null;
 }
 
-// Organizers can't set points themselves: recalculate them from rank and
-// contest size. Admins may override.
+// Organizers can't set points themselves: recalculate every ranked result's
+// points from rank, contest size and field size (tied ranks get equal points).
+// Admins may override.
 function withServerPoints(contests: ContestFormValues[], isAdmin: boolean): ContestFormValues[] {
   if (isAdmin) return contests;
-  return contests.map((c) => (
-    c.results ? { ...c, results: withCalculatedPoints(c.results, c.contestSize) } : c
-  ));
+  return contests.map((c) => {
+    const { results, contestSize } = c;
+    if (!results || !contestSize) return c;
+    return {
+      ...c,
+      results: results.map((result) => {
+        const rank = Number(result.rank);
+        return rank > 0
+          ? { ...result, isaPoints: calculatePointsForRank(rank, contestSize, results.length) }
+          : result;
+      }),
+    };
+  });
 }
 
 export async function saveEvent(values: EventSubmissionFormValues) {

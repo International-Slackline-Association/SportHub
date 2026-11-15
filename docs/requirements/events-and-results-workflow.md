@@ -1,7 +1,7 @@
 # Requirements: Events and Results Workflow
 
 Status: **v1.1**, 2026-11-05 (v1.1: several competitions per discipline allowed). Agreed with Jonas in the project thread and a voice session.
-Rules source: ISA *Contest Size Overview* v6.0 (2026), page 1. Where this document and the sheet differ, this
+Rules source: ISA [*Contest Size Overview*](https://docs.google.com/spreadsheets/d/109k-XNNN_e9MWt0bzEeJ6hYREpyYZDiBCt7bz5wt324) v6.0 (2026), page 1. Where this document and the sheet differ, this
 document wins for SportHub; signed World Cup agreements may set stricter deadlines (not enforced by SportHub).
 
 ## 1. Goal and principle
@@ -25,7 +25,8 @@ documentation rules; a separate competition record in the data (contests carry a
   competition per discipline, but an event can hold two of the same discipline at different levels (e.g. a World
   Cup and an Open). One event can hold competitions at different levels.
 - **Contest**: a division of a competition (men, women, mixed, youth, senior…).
-- **Level**: set per competition; all its contests share it. The code's "Grand Slam" is shown as **National**.
+- **Level**: set per competition; all its contests share it. The code calls it "contest size" (`contestSize`) or
+  "size". The code's "Grand Slam" is shown as **National**.
 
 | Level | 1st place pts | Min. field m/f | Licence | Info to ISA / announce / rules | Fee member / partner / third party |
 |---|---|---|---|---|---|
@@ -49,27 +50,6 @@ Results are due **2 weeks after the competition** at every level.
 ## 4. Workflow
 
 ![Workflow](events-results-workflow.png)
-
-```mermaid
-flowchart TD
-  A[Organizer registers event<br/>+ competitions, proposed level,<br/>membership status] --> B{Event Approval<br/>admin}
-  B -- reject with reason --> A
-  B -- approve --> C[On ISA calendar]
-  B -. WC/WCh licence refused .-> L[Admin counter-proposes level<br/>organizer adjusts or cancels]
-  L --> C
-  C --> F{Festival?}
-  F -- yes --> Z1[Done]
-  F -- no --> D[Deadline tracking per competition<br/>reminder, deadline email, 48h grace,<br/>then sport@ flagged]
-  D --> R[Organizer submits results<br/>due 2 weeks after competition]
-  R --> S{Score Review<br/>per contest}
-  S -- request changes --> R
-  S -- reject --> X[Contest earns no points]
-  S -- approve: fee checked,<br/>new users created, final level set --> P[Results public,<br/>ranking points counted]
-  P --> E{World Cup or<br/>World Championship?}
-  E -- no --> Z2[Done]
-  E -- yes --> V[Evaluation by ISA officials<br/>consolidated, sent privately to organizer]
-  P -. later edits .-> S
-```
 
 ## 5. Registration and Event Approval
 
