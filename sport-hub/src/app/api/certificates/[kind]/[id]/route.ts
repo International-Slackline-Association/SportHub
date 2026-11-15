@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getPublicEntry } from '@lib/records-service';
 import { buildCertificatePdf } from '@lib/records-certificates';
 import { hasCertificate } from '@lib/records-logic';
+import { siteUrl } from '@lib/mailer';
 
 /**
  * GET /api/certificates/{record|first}/{entryId}?athlete={index}
@@ -22,7 +23,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ kind: st
     const athlete = entry.athletes[index];
     if (!athlete) return NextResponse.json({ error: 'Athlete not found' }, { status: 404 });
 
-    const pdf = await buildCertificatePdf(kind, entry, athlete);
+    // The QR code links back to this live certificate, so a scan shows the current entry
+    const verifyUrl = siteUrl(`/api/certificates/${kind}/${encodeURIComponent(id)}?athlete=${index}`);
+    const pdf = await buildCertificatePdf(kind, entry, athlete, verifyUrl);
     const filename = `ISA-${kind === 'first' ? 'World-First' : 'World-Record'}-${athlete.name}`.normalize('NFKD').replace(/[^A-Za-z0-9-]+/g, '-');
     return new NextResponse(Buffer.from(pdf), {
       headers: {

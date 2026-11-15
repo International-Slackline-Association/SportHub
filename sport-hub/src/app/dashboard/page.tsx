@@ -105,7 +105,7 @@ export default async function DashboardPage() {
           birthdate={displayBirthdate}
           gender={displayGender}
           links={displayLinks}
-          role={session.user.role}
+          roles={session.user.roles}
         />
 
         {/* Session Debug Info (Optional) */}

@@ -18,7 +18,7 @@ export class TestHelpers {
       userId,
       sortKey: 'Profile', // New hierarchical schema
       athleteSlug: overrides.athleteSlug || userId.replace(/^test-/, 'test-athlete-'),
-      role: 'user',
+      roles: [],
       userSubTypes: ['athlete'],
       primarySubType: 'athlete',
       createdAt: Date.now(),

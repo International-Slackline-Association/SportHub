@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Button from '@ui/Button';
 import PageLayout from '@ui/PageLayout';
-import { requireAdmin } from '@lib/authorization';
+import { requireRecordManager } from '@lib/authorization';
 import { EXPORT_DATASETS, type ExportDataset } from '@lib/records-export';
 import AdminNav from '../records-review/components/AdminNav';
 
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RecordsExportPage() {
-  await requireAdmin();
+  await requireRecordManager();
   const datasets = Object.entries(EXPORT_DATASETS) as [ExportDataset, string][];
 
   return (

@@ -1,5 +1,5 @@
 import { auth } from './auth';
-import type { Permission } from 'src/types/rbac';
+import { roleHasPermission, type Permission } from 'src/types/rbac';
 
 export async function requireSession() {
   const session = await auth();
@@ -7,17 +7,17 @@ export async function requireSession() {
   return session;
 }
 
-/** Admins always pass; otherwise the permission must be on the session (records:review / records:manage). */
+/** General admins always pass; otherwise the role must grant the permission (Record Manager has records:review and records:manage). */
 export async function requireRecordsPermission(permission: Permission) {
   const session = await requireSession();
-  const allowed = session.user.role === 'admin' || session.user.permissions?.includes(permission);
+  const allowed = roleHasPermission(session.user.roles, permission);
   if (!allowed) throw new Error(`Missing permission ${permission}`);
   return session;
 }
 
 /** Like requireRecordsPermission, without throwing. */
 export const hasRecordsPermission = (session: Awaited<ReturnType<typeof requireSession>>, permission: Permission) =>
-  session.user.role === 'admin' || !!session.user.permissions?.includes(permission);
+  roleHasPermission(session.user.roles, permission);
 
 export const actorOf = (session: Awaited<ReturnType<typeof requireSession>>) => ({
   byUserId: session.user.id,

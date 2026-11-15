@@ -2,7 +2,7 @@
 
 import type { Session } from 'next-auth';
 import type { Role, UserSubType, Permission } from 'src/types/rbac';
-import { ROLE_PERMISSIONS } from 'src/types/rbac';
+import { permissionsOf, rolesLabel } from 'src/types/rbac';
 
 interface DbUser {
   id: string;
@@ -14,7 +14,7 @@ interface DbUser {
   city?: string;
   birthdate?: string;
   gender?: string;
-  role?: Role;
+  roles?: Role[];
   userSubTypes?: UserSubType[];
   primarySubType?: UserSubType;
 }
@@ -42,10 +42,10 @@ export default function CurrentUserPanel({ session, dbUser }: CurrentUserPanelPr
     );
   }
 
-  const sessionRole = session.user.role || 'user';
-  const dbRole = dbUser?.role || 'user';
+  const sessionRole = rolesLabel(session.user.roles);
+  const dbRole = rolesLabel(dbUser?.roles);
   const roleMismatch = sessionRole !== dbRole;
-  const permissions = ROLE_PERMISSIONS[sessionRole] || [];
+  const permissions = permissionsOf(session.user.roles);
 
   return (
     <div className="bg-white rounded-lg shadow-md mb-6 overflow-hidden">
@@ -76,7 +76,7 @@ export default function CurrentUserPanel({ session, dbUser }: CurrentUserPanelPr
                 <dt className="text-gray-500">Role</dt>
                 <dd>
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                    sessionRole === 'admin'
+                    session.user.roles.length > 0
                       ? 'bg-purple-100 text-purple-800'
                       : 'bg-gray-100 text-gray-700'
                   }`}>
@@ -141,7 +141,7 @@ export default function CurrentUserPanel({ session, dbUser }: CurrentUserPanelPr
                   <dt className="text-gray-500">Role</dt>
                   <dd>
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                      dbRole === 'admin'
+                      !!dbUser?.roles?.length
                         ? 'bg-purple-100 text-purple-800'
                         : 'bg-gray-100 text-gray-700'
                     }`}>
@@ -183,7 +183,7 @@ export default function CurrentUserPanel({ session, dbUser }: CurrentUserPanelPr
         {roleMismatch && (
           <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <p className="text-sm text-yellow-800">
-              <strong>Role Mismatch:</strong> Session role ({sessionRole}) differs from database role ({dbRole}).
+              <strong>Role Mismatch:</strong> Session roles ({sessionRole}) differ from database roles ({dbRole}).
               Sign out and back in to refresh your session.
             </p>
           </div>

@@ -231,7 +231,8 @@ Build output: pages should show `○` (Static), not `ƒ` (Dynamic).
 
 - **Sheets**: "World Records" and "World Firsts" tabs
 - **Auth**: Google service account (lazy-initialized, throws at call time not import time)
-- **Required env vars**: `ISA_CERTIFICATES_SPREADSHEET_ID`, `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`
+- **Spreadsheet ids**: constants `CERTIFICATES_AND_FIRSTS_SPREADSHEET_ID` and `WORLD_RECORDS_SPREADSHEET_ID` in `src/utils/spreadsheets.ts`
+- **Required env vars**: `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`
 
 ## Database Schema
 
@@ -292,7 +293,6 @@ REVALIDATE_SECRET=your_revalidation_secret
 NEXT_PUBLIC_URL=https://your-app.com
 REFERENCE_DB_TABLE=isa-users
 REFERENCE_DB_REGION=eu-central-1
-ISA_CERTIFICATES_SPREADSHEET_ID=your_sheet_id
 GOOGLE_SERVICE_ACCOUNT_EMAIL=your_sa@project.iam.gserviceaccount.com
 GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n..."
 ```

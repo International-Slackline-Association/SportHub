@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import PageLayout from '@ui/PageLayout';
-import { requireAdmin } from '@lib/authorization';
+import { requireRecordManager } from '@lib/authorization';
 import AdminNav from '../records-review/components/AdminNav';
 import EntryTable from '../records-review/components/EntryTable';
 import { getEveryEntry, toEntryRows } from '../records-review/components/rows';
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AllRecordsAndFirstsPage() {
-  await requireAdmin();
+  await requireRecordManager();
   const rows = await toEntryRows(await getEveryEntry());
 
   return (

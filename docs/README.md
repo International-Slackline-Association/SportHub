@@ -11,7 +11,7 @@ Developer reference hub. The root [`README.md`](../README.md) covers quick start
 |-----|-------------|
 | [AUTHENTICATION.md](./AUTHENTICATION.md) | Cognito + NextAuth flow, onboarding, `sportHubUserId` vs `isaUsersId`, RBAC |
 | [architecture/reference-db-pattern.md](./architecture/reference-db-pattern.md) | Why isa-users is read-only, two-DB pattern, ID model deep-dive |
-| [RBAC.md](./RBAC.md) | Roles, permissions, protection layers |
+| [RBAC.md](./RBAC.md) | Admin roles (Event, Record, User Manager, General Admin), how they combine, who gets review emails |
 
 ### Database
 | Doc | What's in it |

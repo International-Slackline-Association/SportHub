@@ -10,7 +10,7 @@ import { getIn, FieldArray, useFormikContext } from 'formik';
 import Button from '@ui/Button';
 import { Alert } from '@ui/Alert';
 import { FormikCheckboxField, FormikTextField } from '@ui/Form';
-import { ETHICS_STATEMENT, MAX_ATHLETES, MAX_WITNESSES, MIN_WITNESSES } from '@lib/records-rules';
+import { ETHICS_STATEMENT, MAX_ATHLETES, MAX_WITNESSES } from '@lib/records-rules';
 import type { ClaimFormValues } from '../types';
 import AthletePicker from './AthletePicker';
 import EvidenceFields, { type EnsureClaimSaved } from './EvidenceFields';
@@ -25,7 +25,7 @@ export function Section({ title, children, description }: { title: string; descr
   );
 }
 
-/** A list-level validation message, e.g. "Name at least 2 witnesses". Shown once the form was submitted. */
+/** A list-level validation message, e.g. "Add at least one athlete". Shown once the form was submitted. */
 export function ListError({ name }: { name: string }) {
   const { errors, submitCount } = useFormikContext<ClaimFormValues>();
   const error = getIn(errors, name);
@@ -95,18 +95,16 @@ export function AthletesSection({ isFirst, claimantId, admin, children }: Athlet
 export function WitnessesSection({ isFirst }: { isFirst: boolean }) {
   const { values } = useFormikContext<ClaimFormValues>();
   return (
-    <Section title="Witnesses" description={`At least ${MIN_WITNESSES} witnesses who saw the ${isFirst ? 'landing' : 'attempt'}.`}>
+    <Section title="Witnesses" description={`Optional: people who saw the ${isFirst ? 'landing' : 'attempt'}. Each witness you add needs a name and an email.`}>
       <FieldArray name="witnesses">
         {({ push, remove }) => (
           <div className="stack gap-3">
             {values.witnesses.map((_, i) => (
               <div key={i} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end">
-                <FormikTextField id={`witnesses.${i}.name`} name={`witnesses.${i}.name`} label="Name" required={i < MIN_WITNESSES} />
-                <FormikTextField id={`witnesses.${i}.email`} name={`witnesses.${i}.email`} type="email" label="Email" required={i < MIN_WITNESSES} />
+                <FormikTextField id={`witnesses.${i}.name`} name={`witnesses.${i}.name`} label="Name" />
+                <FormikTextField id={`witnesses.${i}.email`} name={`witnesses.${i}.email`} type="email" label="Email" />
                 <FormikTextField id={`witnesses.${i}.phone`} name={`witnesses.${i}.phone`} type="tel" label="Phone" />
-                {i >= MIN_WITNESSES ? (
-                  <button type="button" className="text-xs text-red-600 underline pb-2" onClick={() => remove(i)}>Remove</button>
-                ) : <span />}
+                <button type="button" className="text-xs text-red-600 underline pb-2" onClick={() => remove(i)}>Remove</button>
               </div>
             ))}
             {values.witnesses.length < MAX_WITNESSES && (

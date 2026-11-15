@@ -19,7 +19,7 @@ import {
   linkCellFormatter,
   linkClassName,
 } from './cellFormatters';
-import { AdminEditLink } from './AdminEditLink';
+import { AdminEditButton, useCanEditRecords } from './AdminEditButton';
 
 const columnHelper = createColumnHelper<WorldFirst>();
 
@@ -80,7 +80,9 @@ const columns = [
                 Link {idx + 1}
               </Link>
             ))}
-            <AdminEditLink entry={info.row.original} />
+          </div>
+          <div className="cluster justify-end">
+            <AdminEditButton entry={info.row.original} />
           </div>
         </div>
       );
@@ -99,6 +101,13 @@ const columns = [
     cell: linkCellFormatter,
     size: 40,
   }),
+  // Admins only: Edit button in its own column, outside the Links column
+  columnHelper.display({
+    id: 'edit',
+    header: 'Admin',
+    cell: info => <AdminEditButton entry={info.row.original} />,
+    size: 40,
+  }),
   // Shared filterable columns
   ...sharedColumns,
 ];
@@ -109,6 +118,7 @@ type WorldFirstsTableProps = {
 
 const WorldFirstsTable = ({ data }: WorldFirstsTableProps) => {
   const { isDesktop } = useClientMediaQuery(BREAKPOINT_LG);
+  const canEditRecords = useCanEditRecords();
 
   return (
     <Table
@@ -118,7 +128,7 @@ const WorldFirstsTable = ({ data }: WorldFirstsTableProps) => {
         initialState: {
           sorting: [{ id: 'date', desc: true }],
           columnOrder: isDesktop
-            ? ['trickName', 'categoryName', 'name', 'country', 'gender', 'date', 'links']
+            ? ['trickName', 'categoryName', 'name', 'country', 'gender', 'date', 'links', 'edit']
             : ['worldFirst', 'trickName', 'categoryName', 'country', 'gender'],
           columnVisibility: {
             worldFirst:   !isDesktop,
@@ -129,6 +139,7 @@ const WorldFirstsTable = ({ data }: WorldFirstsTableProps) => {
             categoryName: !!isDesktop,
             gender:       !!isDesktop,
             links:        !!isDesktop,
+            edit:         !!isDesktop && canEditRecords,
           },
         },
       }}

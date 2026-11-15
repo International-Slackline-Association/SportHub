@@ -6,6 +6,7 @@ import { actorOf, requireRecordsPermission } from '@lib/records-auth';
 import { parseRecordValue, slugify, unitKind } from '@lib/records-logic';
 import {
   addCategoryAudit,
+  deleteCategory as deleteCategoryItem,
   getCategoryAuditLog,
   getEntriesByCategory,
   getFirstCategories,
@@ -120,7 +121,8 @@ export async function createRecordCategory(input: NewRecordCategory) {
     if (invalid) return { success: false, error: invalid };
     const existing = await getRecordCategories();
     let categoryId = slugify(input.name);
-    if (existing.some(c => c.categoryId === categoryId)) categoryId = `${categoryId}-${Date.now().toString(36)}`;
+    // "new" is the URL of the create page
+    if (categoryId === 'new' || existing.some(c => c.categoryId === categoryId)) categoryId = `${categoryId}-${Date.now().toString(36)}`;
     const now = Date.now();
     const category: RecordCategoryTableItem = {
       pk: 'RecordCategory',
@@ -186,7 +188,8 @@ export async function createFirstCategory(input: NewFirstCategory) {
     if (!FIRST_STATUSES.includes(input.status)) return { success: false, error: 'Unknown status' };
     const existing = await getFirstCategories();
     let categoryId = slugify(input.name);
-    if (existing.some(c => c.categoryId === categoryId)) categoryId = `${categoryId}-${Date.now().toString(36)}`;
+    // "new" is the URL of the create page
+    if (categoryId === 'new' || existing.some(c => c.categoryId === categoryId)) categoryId = `${categoryId}-${Date.now().toString(36)}`;
     const now = Date.now();
     const category: FirstCategoryTableItem = {
       pk: 'FirstCategory',
@@ -205,6 +208,35 @@ export async function createFirstCategory(input: NewFirstCategory) {
     return { success: true, categoryId };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Failed to create the category' };
+  }
+}
+
+const DELETE_CONFIRMATION = 'DELETE';
+
+/**
+ * Deletes a record category or first discipline that nothing uses, like the permanent
+ * delete of records: a reason and typing DELETE are required. A category with entries
+ * (drafts and rejected claims included) can't be deleted: archive it instead.
+ */
+export async function deleteCategory(pk: 'RecordCategory' | 'FirstCategory', categoryId: string, reason: string, confirmation: string) {
+  try {
+    const session = await requireRecordsPermission('records:manage');
+    const text = reason.trim();
+    if (!text) return { success: false, error: 'A reason is required' };
+    if (confirmation.trim() !== DELETE_CONFIRMATION) return { success: false, error: `Type ${DELETE_CONFIRMATION} to confirm` };
+    const category = pk === 'RecordCategory' ? await getRecordCategory(categoryId) : await getFirstCategory(categoryId);
+    if (!category) return { success: false, error: 'Category not found' };
+    const entries = pk === 'RecordCategory' ? await getEntriesByCategory('record', categoryId) : await getEntriesByCategory('first', categoryId);
+    if (entries.length > 0) {
+      const what = entries.length === 1 ? '1 record or claim' : `${entries.length} records or claims`;
+      return { success: false, error: `"${category.name}" has ${what} and can't be deleted. Set its status to Archived instead.` };
+    }
+    await deleteCategoryItem(pk, categoryId);
+    await addCategoryAudit(category, { action: 'deleted', comment: `deleted "${category.name}": ${text}`, ...actorOf(session) });
+    revalidateCategoryPages();
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to delete the category' };
   }
 }
 

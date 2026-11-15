@@ -29,7 +29,6 @@ const amplifyVars = [
 const googleSheetsVars = [
   'GOOGLE_SERVICE_ACCOUNT_EMAIL',
   'GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY',
-  'ISA_CERTIFICATES_SPREADSHEET_ID',
 ];
 
 // Unnecessary variables - Amplify provides these or they're not needed

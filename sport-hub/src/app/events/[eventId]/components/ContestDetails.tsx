@@ -25,9 +25,9 @@ export default function ContestDetails({
   initialTab = 0
 }: ContestDetailsProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
-  const contest = contests[activeTab];
+  const contest = contests[activeTab] ?? contests[0];
 
-  if (!contests.length) {
+  if (!contest) {
     return <Alert variant="info">No contests available for this event.</Alert>;
   }
 

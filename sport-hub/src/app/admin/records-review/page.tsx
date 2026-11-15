@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import PageLayout from '@ui/PageLayout';
-import { requireAdmin } from '@lib/authorization';
+import { requireRecordManager } from '@lib/authorization';
 import { getReviewQueue } from 'src/app/admin/records-review/actions';
 import AdminNav from './components/AdminNav';
 import EntryTable from './components/EntryTable';
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RecordsReviewPage() {
-  await requireAdmin();
+  await requireRecordManager();
   const rows = await toEntryRows(await getReviewQueue());
 
   return (

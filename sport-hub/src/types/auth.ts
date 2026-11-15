@@ -9,8 +9,8 @@ declare module "next-auth" {
     user: {
       id: string                     // SportHub user ID (SportHubID:xxx) — sporthub-users partition key. isaUsersId is the optional ISA identity link.
       cognitoSub?: string            // Cognito UUID (for debugging/reference)
-      role: Role                     // User's role: 'user' | 'admin'
-      permissions?: Permission[]     // Granular permissions based on role
+      roles: Role[]                  // Admin roles; permissions combine. Empty = normal user
+      permissions?: Permission[]     // Combined permissions of roles (informational; checks use roleHasPermission(roles, …))
       userSubTypes?: UserSubType[]   // User sub-types: 'athlete' | 'organizer' | 'judge'
     } & DefaultSession["user"]
     accessToken?: string
@@ -22,7 +22,7 @@ declare module "next-auth" {
    */
   interface User {
     id: string
-    role: Role
+    roles?: Role[]
     permissions?: Permission[]
     userSubTypes?: UserSubType[]
   }

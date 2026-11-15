@@ -40,14 +40,14 @@ export const ContestTabGroup = ({ contests, ...tabGroupProps }: Omit<TabGroupPro
           disciplineKey = discipline as Discipline;
         }
         
-        const { name: disciplineName = "", Icon } = DISCIPLINE_DATA[disciplineKey];
+        const { name: disciplineName = "", Icon } = DISCIPLINE_DATA[disciplineKey] ?? {};
 
         return {
           id: String(idx),
           label: (
             <div className="flex flex-col gap-1 p-2">
               <div className="flex flex-row items-center gap-2">
-                <Icon height={24} width={24} />
+                {Icon && <Icon height={24} width={24} />}
                 {disciplineName}
               </div>
               <Gender value={(gender || "") as ContestGender} />

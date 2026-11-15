@@ -4,7 +4,6 @@ import { getWorldRecordsSheet, getWorldFirstsSheet } from '@lib/google-sheets';
 // TEMPORARY debug endpoint — remove after diagnosing production 500
 export async function GET() {
   const env = {
-    ISA_CERTIFICATES_SPREADSHEET_ID: process.env.ISA_CERTIFICATES_SPREADSHEET_ID ? '***SET***' : 'MISSING',
     GOOGLE_SERVICE_ACCOUNT_EMAIL: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || 'MISSING',
     GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
       ? `SET (starts with: ${process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY.slice(0, 40)}...)`

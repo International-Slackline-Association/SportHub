@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getUsersPaginated } from '@lib/user-query-service';
 import { createUserWithProfile, generateUniqueAthleteSlug } from '@lib/user-service';
+import { isUserRoleFilter, rolesOf } from 'src/types/rbac';
 
 const DEFAULT_PAGE_SIZE = 100;
 
@@ -13,6 +14,11 @@ export async function GET(request: NextRequest) {
     );
     const cursorParam = searchParams.get('cursor');
     const searchQuery = searchParams.get('search')?.toLowerCase().trim() || '';
+    // Comma-separated, e.g. role=admin,record_manager (users with any of them)
+    const roles = (searchParams.get('role') || '').split(',').filter(Boolean);
+    if (!roles.every(isUserRoleFilter)) {
+      return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
+    }
 
     // Decode cursor (base64 encoded lastEvaluatedKey)
     let exclusiveStartKey: Record<string, unknown> | undefined;
@@ -29,6 +35,7 @@ export async function GET(request: NextRequest) {
 
     const result = await getUsersPaginated({
       search: searchQuery || undefined,
+      roles,
       limit,
       exclusiveStartKey,
     });
@@ -50,7 +57,7 @@ export async function GET(request: NextRequest) {
       gender: item.gender,
       totalPoints: item.totalPoints ?? 0,
       contestsParticipated: item.contestsParticipated ?? item.contestCount ?? 0,
-      role: item.role ?? 'user',
+      roles: rolesOf(item),
       userSubTypes: item.userSubTypes ?? [],
       primarySubType: item.primarySubType,
     }));

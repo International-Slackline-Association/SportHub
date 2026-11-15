@@ -7,6 +7,7 @@
 
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { dynamodb, ddbClient, getTableName, USERS_TABLE } from './dynamodb';
+import type { Role, UserRoleFilter } from '../types/rbac';
 import type {
   UserProfileRecord,
   AthleteRankingRecord,
@@ -206,11 +207,51 @@ export async function getAthleteProfilesBatch(
 }
 
 /**
- * Get users with pagination and optional text search
+ * DynamoDB filter condition for a role filter: users with any of the given
+ * roles, matching the stored `roles` list exactly. General Admins are stored as
+ * just ['admin'] (see normalizeRoles), so filtering by a manager role does not
+ * list them; they show under General Admin.
+ *
+ * TRANSITION: General Admin also matches profiles that still have the legacy
+ * `role: 'admin'` attribute (see rolesOf), until every profile has been converted.
+ */
+export function roleFilterCondition(filters: readonly UserRoleFilter[]): {
+  expression: string;
+  names: Record<string, string>;
+  values: Record<string, unknown>;
+} {
+  const names: Record<string, string> = { '#roles': 'roles' };
+  const values: Record<string, unknown> = {};
+  const isLegacyAdmin = () => {
+    names['#legacyRole'] = 'role';
+    values[':legacyAdmin'] = 'admin';
+    return '(attribute_not_exists(#roles) AND #legacyRole = :legacyAdmin)';
+  };
+
+  const conditions = filters.map((filter, i) => {
+    if (filter === 'none') {
+      values[':zero'] = 0;
+      return `(attribute_not_exists(#roles) OR size(#roles) = :zero) AND NOT ${isLegacyAdmin()}`;
+    }
+    values[`:role${i}`] = filter;
+    const hasRole = `contains(#roles, :role${i})`;
+    return filter === 'admin' ? `${hasRole} OR ${isLegacyAdmin()}` : hasRole;
+  });
+
+  // DynamoDB rejects redundant parentheses, so only group compound conditions
+  const group = (condition: string) => (/ (AND|OR) /.test(condition) ? `(${condition})` : condition);
+  const parts = conditions.length > 1 ? conditions.map(group) : conditions;
+  return { expression: group(parts.join(' OR ')), names, values };
+}
+
+/**
+ * Get users with pagination, optional text search and optional role filter (any of the given roles)
  * Wraps countItems + scanItemsPaginated on USERS_TABLE for Profile records
  */
 export async function getUsersPaginated(options: {
   search?: string;
+  /** Users with any of these roles; empty or missing = all users */
+  roles?: UserRoleFilter[];
   limit: number;
   exclusiveStartKey?: Record<string, unknown>;
 }): Promise<{
@@ -229,6 +270,13 @@ export async function getUsersPaginated(options: {
     expressionAttributeNames['#searchName'] = 'name';
     expressionAttributeNames['#searchEmail'] = 'email';
     expressionAttributeNames['#searchSlug'] = 'athleteSlug';
+  }
+
+  if (options.roles?.length) {
+    const condition = roleFilterCondition(options.roles);
+    filterExpression += ` AND ${condition.expression}`;
+    Object.assign(expressionAttributeValues, condition.values);
+    Object.assign(expressionAttributeNames, condition.names);
   }
 
   const filterOptions = {
@@ -265,6 +313,21 @@ export async function getAllUserProfiles(): Promise<UserProfileRecord[]> {
     expressionAttributeValues: { ':sk': 'Profile' },
   });
   return items || [];
+}
+
+/**
+ * Email addresses of everyone with one of the given roles.
+ * Filtered scan: only used on rare events (a new record/first claim), not on page loads.
+ */
+export async function getEmailsByRole(roles: Role[]): Promise<string[]> {
+  const values = Object.fromEntries(roles.map((r, i) => [`:r${i}`, r]));
+  const items = await dynamodb.scanItems(USERS_TABLE, {
+    projectionExpression: 'email',
+    filterExpression: `sortKey = :sk AND (${Object.keys(values).map(k => `contains(#roles, ${k})`).join(' OR ')})`,
+    expressionAttributeNames: { '#roles': 'roles' },
+    expressionAttributeValues: { ':sk': 'Profile', ...values },
+  });
+  return [...new Set((items ?? []).map(i => i.email as string | undefined).filter((e): e is string => !!e))];
 }
 
 /**

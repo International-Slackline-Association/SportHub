@@ -182,7 +182,7 @@ export function transformRankingsData(): {
       athleteSlug: athlete.athleteId,
       name: athlete.name,
       gender,
-      role: 'user',
+      roles: [],
       userSubTypes: ['athlete'],
       primarySubType: 'athlete',
       totalPoints: athlete.totalPoints,

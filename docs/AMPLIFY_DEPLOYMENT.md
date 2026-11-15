@@ -82,6 +82,7 @@ AUTH_URL=https://df-dev.d2c5lq1ojcfw0k.amplifyapp.com
 | `COGNITO_USER_POOL_ID` | `eu-central-1_iGaYGKeyJ` | Cognito user pool |
 | `AMPLIFY_MONOREPO_APP_ROOT` | `sport-hub` | Monorepo app location |
 | `AUTH_URL` | `https://df-dev.d2c5lq1ojcfw0k.amplifyapp.com` | Base URL for auth |
+| `SITE_URL` | e.g. `https://slacklinesport.org` | Public base URL for absolute links in emails and the "Scan to verify" QR code on record/first certificates (`src/lib/mailer.ts` `siteUrl`). Falls back to `AUTH_URL`, then `http://localhost:3000`; set it on every deployed branch so certificates don't point to localhost. |
 | `DB_REGION` | e.g. `eu-central-1` | AWS region for the DynamoDB tables (`src/lib/dynamodb.ts`). **Set this explicitly per branch** — do not rely on `AWS_REGION` here (see note below); if unset, DynamoDB access silently falls back to `AWS_REGION`, then the hardcoded `us-east-2` default. |
 
 #### ✅ Keep in Secrets (encrypted)
