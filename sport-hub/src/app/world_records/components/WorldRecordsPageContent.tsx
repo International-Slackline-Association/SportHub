@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { WorldRecord, WorldFirst } from '@lib/data-services';
-import { TabGroup } from '@ui/Tab';
+import { Tabs } from '@slacklineinternational/onsight/react';
 import WorldRecordsTable from './WorldRecordsTable';
 import WorldFirstsTable from './WorldFirstsTable';
 
@@ -21,12 +21,13 @@ const WorldRecordsPageContent = ({ worldRecords, worldFirsts }: WorldRecordsPage
 
   return (
     <div>
-      <TabGroup
-        tabs={TABS}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        variant="secondary"
+      <Tabs
+        aria-label="Records and firsts"
         className="mb-6"
+        onChange={setActiveTab}
+        tabs={TABS}
+        value={activeTab}
+        variant="pill"
       />
       {activeTab === 'records' && <WorldRecordsTable data={worldRecords} />}
       {activeTab === 'firsts'  && <WorldFirstsTable  data={worldFirsts}  />}

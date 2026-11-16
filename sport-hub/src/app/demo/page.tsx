@@ -3,11 +3,10 @@
 import { useState } from "react";
 import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
-import { Badge, Button } from '@slacklineinternational/onsight/react';
+import { Badge, Button, Tabs } from '@slacklineinternational/onsight/react';
 import { AgeCategory, ContestSize, Discipline, Gender, Role } from "@ui/Badge";
 import PageLayout from "@ui/PageLayout";
 import Modal from "@ui/Modal";
-import { TabGroup } from "@ui/Tab";
 import { FormikCheckboxField, FormikCheckboxGroup, FormikRadioGroup, FormikSelectField, FormikSubmitButton, FormikTextField } from "@ui/Form";
 import FormikAutocomplete from "@ui/Form/FormikAutocomplete";
 import DisciplineDropdown from "@ui/Form/DisciplineDropdown";
@@ -146,21 +145,23 @@ export default function Page() {
         <div className="stack gap-8">
           <div className="stack gap-4">
             <strong>Primary Tabs</strong>
-            <TabGroup
+            <Tabs
+              aria-label="Primary tabs"
+              onChange={setActiveTab}
               tabs={[
                 { id: "rankings", label: "Rankings" },
                 { id: "events", label: "Events" },
                 { id: "athletes", label: "Athletes" },
                 { id: "judges", label: "Judges" }
               ]}
-              variant="primary"
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
+              value={activeTab}
             />
           </div>
           <div className="stack gap-4">
             <strong>Large Tabs</strong>
-            <TabGroup
+            <Tabs
+              aria-label="Large tabs"
+              size="large"
               tabs={[
                 { id: "rankings", label: "Rankings" },
                 { id: "events", label: "Events" },
@@ -168,19 +169,19 @@ export default function Page() {
                 { id: "records", label: "World Records" },
                 { id: "admin", label: "Admin" }
               ]}
-              variant="large"
             />
           </div>
           <div className="stack gap-4">
             <strong>Secondary Tabs</strong>
-            <TabGroup
+            <Tabs
+              aria-label="Secondary tabs"
               tabs={[
                 { id: "nav1", label: "Nav Item" },
                 { id: "nav2", label: "Nav Item" },
                 { id: "nav3", label: "Nav Item" },
                 { id: "nav4", label: "Nav Item" }
               ]}
-              variant="secondary"
+              variant="pill"
             />
           </div>
         </div>

@@ -44,10 +44,9 @@ export default function ContestDetails({
       <div className="bg-gray-50 p-4 rounded-lg mb-4">
         <h3 className="mb-2">Contests</h3>
         <ContestTabGroup
-          activeTab={String(activeTab)}
-          onTabChange={(tabId: string) => setActiveTab(Number(tabId))}
           contests={contests}
-          variant="secondary"
+          onChange={(tabId: string) => setActiveTab(Number(tabId))}
+          value={String(activeTab)}
         />
       </div>
 
