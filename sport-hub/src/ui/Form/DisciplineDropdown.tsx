@@ -59,13 +59,17 @@ export default function DisciplineDropdown({
       >
         {selected ? (
           <span className="cluster items-center gap-2">
-            {selectedKey !== 'OVERALL' && <selected.Icon height={16} width={16} />}
+            {selectedKey !== 'OVERALL' && (
+              <span className="inline-flex shrink-0">
+                <selected.Icon height={24} width={24} />
+              </span>
+            )}
             {selected.name}
           </span>
         ) : 'Select Discipline'}
       </button>
       {isOpen && (
-        <div className={cn(styles.dropdown)}>
+        <div className={cn(styles.dropdown, styles.dropdownWide)}>
           <ul className={styles.dropdownList}>
             {SUPPORTED_DISCIPLINES.map((discipline) => {
               const { enumValue, name, Icon } = DISCIPLINE_DATA[discipline];
@@ -77,9 +81,11 @@ export default function DisciplineDropdown({
                       onClick={() => handleSelect({ label: name, value: String(enumValue) })}
                       type="button"
                     >
-                      <div className="cluster gap-2">
-                        <Icon height={24} width={24} />
-                        {name}
+                      <div className="cluster items-center gap-2">
+                        <span className="inline-flex shrink-0">
+                          <Icon height={24} width={24} />
+                        </span>
+                        <span className="whitespace-nowrap">{name}</span>
                       </div>
                     </button>
                   </li>
