@@ -1,8 +1,7 @@
 import React, { PropsWithChildren, ReactNode } from 'react';
 import { Field, useField, useFormikContext, type FieldInputProps, type FieldMetaProps, type FormikHelpers } from 'formik';
 import styles from './styles.module.css';
-import { Button } from '@slacklineinternational/onsight/react';
-import { Tooltip } from '@ui/Tooltip';
+import { Button, Tooltip } from '@slacklineinternational/onsight/react';
 import { cn } from '@utils/cn';
 import { pascalCaseToTitleCase } from '@utils/strings';
 export * from './commonOptions';
@@ -49,7 +48,14 @@ export const FormikFormField = (props: PropsWithChildren<TextFieldProps | Select
           <label htmlFor={id} className={styles.label}>
             {displayLabel}
           </label>
-          {tooltip && <Tooltip content={tooltip} />}
+          {tooltip && (
+            <Tooltip
+              content={tooltip}
+              label={typeof displayLabel === 'string' && displayLabel
+                ? `About ${displayLabel.replace(/\*$/, '')}`
+                : 'More information'}
+            />
+          )}
         </div>
         {caption && captionPlacement === "top" && (<small className={styles.caption}>{caption}</small>)}
       </div>
