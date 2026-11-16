@@ -130,7 +130,7 @@ export const MyEventsTable = ({ events }: {events: Record<string, unknown>[]}) =
                   </td>
                   <td>{formattedDateRange}</td>
                   <td>{formattedLocation}</td>
-                  <td>{disciplines.map(d => <Discipline key={d} variant={d} />)}</td>
+                  <td className="space-x-1">{disciplines.map(d => <Discipline key={d} variant={d} />)}</td>
                   <td>{contests.length}</td>
                   <td>
                     <Badge color={statusColor[status]}>

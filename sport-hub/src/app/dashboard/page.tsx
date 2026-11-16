@@ -2,7 +2,8 @@ import { auth } from "@lib/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import PageLayout from "@ui/PageLayout"
-import { Button } from '@slacklineinternational/onsight/react';
+import { Alert, Button } from '@slacklineinternational/onsight/react';
+import { GridSection } from "../components/GridSection"
 import ProfileSection from "./components/ProfileSection"
 import { getUserProfile, getFullUserProfile, becomeOrganizer } from "./actions"
 
@@ -29,100 +30,119 @@ export default async function DashboardPage() {
   const isaUsersId = dbProfile?.isaUsersId;
   const displayLinks = dbProfile?.links;
 
+  const isOrganizer = profileResult.success && profileResult.user?.userSubTypes?.includes('organizer');
+
   return (
     <PageLayout
-      title="Dashboard"
-      description="Manage your profile and view your information"
+      title={`Welcome back, ${displayName}!`}
+      description="Manage your profile and access your personal information."
     >
-      <div className="p-4 sm:p-0 space-y-6">
-        {/* Info message if user not in database */}
+      {/* Info message if user not in database */}
+      <div className="p-4 sm:p-0 stack gap-4">
         {!profileResult.success && (
-          <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded">
+          <Alert variant="info">
             <p className="font-medium">Complete your profile</p>
             <p className="text-sm">Click &ldquo;Edit Profile&rdquo; below to save your information to the database.</p>
-          </div>
+          </Alert>
         )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <GridSection
+            color="blue"
+            title="View athlete profile"
+            content={
+              <>
+                View your athlete profile as displayed to the public.
+                <div className="flex mt-2">
+                  <Button
+                    as={Link}
+                    className="mt-2"
+                    href={`/athlete/${encodeURIComponent(session.user.id)}`}
+                    variant="neutral"
+                  >
+                    Go to profile
+                  </Button>
+                </div>
+              </>
+            }
+          />
 
-        {/* Welcome Message */}
-        <div className="bg-white shadow rounded-lg p-6 flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h2 className="text-2xl font-bold mb-2">Welcome back, {displayName}!</h2>
-            <p className="text-gray-600">
-              Manage your profile and access your personal information.
-            </p>
-          </div>
-          <Link
-            href={`/athlete/${encodeURIComponent(session.user.id)}`}
-            className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 font-medium shrink-0"
-          >
-            View Profile
-          </Link>
-        </div>
+          <GridSection
+            color="amber"
+            title="Records & Firsts"
+            content={
+              <>
+                View the status of your pending personal records and firsts.
+                <div className="flex flex-row gap-2 mt-2">
+                  <Button as={Link} href="/world_records/my-claims" variant="neutral" size="small">My Claims</Button>
+                  <Button as={Link} href="/world_records/claim" variant="neutral" size="small">Submit a claim</Button>
+                </div>
+              </>
+            }
+          />
 
-        {/* World records and firsts */}
-        <div className="bg-white shadow rounded-lg p-4 flex items-center justify-between gap-4 flex-wrap">
-          <span className="font-medium text-sm">Records &amp; Firsts</span>
-          <div className="flex gap-3 flex-wrap">
-            <Button as={Link} href="/world_records/claim" variant="secondary" size="small">Submit a claim</Button>
-            <Button as={Link} href="/world_records/my-claims" variant="secondary" size="small">My Claims</Button>
-          </div>
-        </div>
+            <GridSection
+              color="green"
+              content={
+                <>
+                  {isOrganizer 
+                    ? 'You are an event organizer. Manage the competitions you submit.'
+                    : 'You are not an event organizer. Become one to submit and manage competitions on SportHub.'
+                  }
+                  <div className="flex mt-2">
+                    {isOrganizer ? (
+                      <Button
+                        as={Link}
+                        href="/events/my-events"
+                        variant="neutral"
+                      >
+                        View my events
+                      </Button>
+                    ) : (
+                      <form action={becomeOrganizer}>
+                        <Button type="submit" variant="primary" size="small">
+                          Become an organizer
+                        </Button>
+                      </form>
+                    )}
+                  </div>
+                </>
+              }
+              title={isOrganizer ? "Manage my events" : "Want to host events?"}
+            />
 
-        {/* Organizer Section */}
-        {profileResult.success && profileResult.user?.userSubTypes?.includes('organizer') ? (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center justify-between gap-4">
-            <span className="text-green-800 font-medium text-sm">You are an event organizer</span>
-            <Link href="/events/my-events" className="text-sm text-blue-600 hover:underline font-medium">
-              My Events →
-            </Link>
-          </div>
-        ) : (
-          <div className="bg-white shadow rounded-lg p-6">
-            <h3 className="text-lg font-semibold mb-1">Want to host events?</h3>
-            <p className="text-gray-600 text-sm mb-4">
-              Become an event organizer to submit and manage competitions on SportHub.
-            </p>
-            <form action={becomeOrganizer}>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm cursor-pointer"
-              >
-                Become an Organizer
-              </button>
-            </form>
-          </div>
-        )}
+          <GridSection
+            color="red"
+            title="Personal Information"
+            content={
+              <ProfileSection
+                userId={session.user.id}
+                isaUsersId={isaUsersId}
+                name={firstName}
+                surname={surname}
+                email={displayEmail}
+                country={displayCountry}
+                city={displayCity}
+                birthdate={displayBirthdate}
+                gender={displayGender}
+                links={displayLinks}
+                roles={session.user.roles}
+              />
+            }
+          />
 
-        {/* Profile Section with Edit Button */}
-        <ProfileSection
-          userId={session.user.id}
-          isaUsersId={isaUsersId}
-          name={firstName}
-          surname={surname}
-          email={displayEmail}
-          country={displayCountry}
-          city={displayCity}
-          birthdate={displayBirthdate}
-          gender={displayGender}
-          links={displayLinks}
-          roles={session.user.roles}
-        />
-
-        {/* Session Debug Info (Optional) */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <details className="text-sm">
-            <summary className="cursor-pointer text-gray-600 hover:text-gray-800 font-medium">
-              View Session Details
-            </summary>
-            <div className="mt-4 bg-gray-50 rounded p-4">
-              <p className="text-sm text-gray-600 mb-2">
-                You are authenticated with AWS Cognito via OIDC.
-              </p>
-              <pre className="mt-2 bg-gray-900 text-gray-100 p-3 rounded overflow-auto text-xs">
-                {JSON.stringify(session, null, 2)}
-              </pre>
-            </div>
-          </details>
+          <GridSection
+            color="gray"
+            title="Session details"
+            content={
+              <details>
+                <summary className="cursor-pointer font-medium">View session JSON</summary>
+                <p className="mt-4 mb-2">You are authenticated with AWS Cognito via OIDC.</p>
+                <pre className="bg-gray-900 text-gray-100 p-3 rounded overflow-auto text-xs">
+                  {JSON.stringify(session, null, 2)}
+                </pre>
+              </details>
+            }
+          />
         </div>
       </div>
     </PageLayout>
