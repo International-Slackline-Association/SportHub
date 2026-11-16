@@ -2,8 +2,7 @@
 import { useRef, useState } from 'react';
 import { Formik, Form, getIn } from 'formik';
 import Link from 'next/link';
-import { TabGroup } from '@ui/Tab';
-import { Button, Alert } from '@slacklineinternational/onsight/react';
+import { Alert, Button, Tabs } from '@slacklineinternational/onsight/react';
 import EventForm from './event-inputs/EventForm';
 import {
   initialEventValues,
@@ -118,15 +117,15 @@ export default function SubmitEventClient() {
         return (
           <Form className={cn(styles.formWrapper, "stack")}>
             {/* Form Header */}
-            <TabGroup
-              activeTab={activeTab}
-              className={cn(styles.borderBottom, "mb-2")}
-              onTabChange={(tabId) => {
+            <Tabs
+              aria-label="Submission steps"
+              className="mb-2"
+              onChange={(tabId) => {
                 const newStep = stepOrder.indexOf(tabId as Step);
                 setCurrentStep(newStep);
               }}
               tabs={tabState}
-              variant="primary"
+              value={activeTab}
             />
 
             {/* Form Content */}

@@ -3,8 +3,7 @@
 import { FieldArray, getIn, useFormikContext } from 'formik';
 import { EventSubmissionFormValues, initialContestValues } from '../../types';
 import sharedStyles from '../styles.module.css';
-import { Button } from '@slacklineinternational/onsight/react';
-import { TabGroup } from '@ui/Tab';
+import { Button, Tabs } from '@slacklineinternational/onsight/react';
 import { useState } from 'react';
 import ContestForm from './ContestForm';
 import { cn } from '@utils/cn';
@@ -115,11 +114,12 @@ export default function TabbedContestForms({
                     No contests. Click &quot;Add Contest&quot; to create one.
                   </div>
                 )}
-                <TabGroup
-                  activeTab={String(activeContestIdx)}
-                  onTabChange={(newTabId) => setActiveContestIdx(Number(newTabId))}
+                <Tabs
+                  aria-label="Contests"
+                  onChange={(newTabId) => setActiveContestIdx(Number(newTabId))}
                   tabs={tabs}
-                  variant="secondary"
+                  value={String(activeContestIdx)}
+                  variant="pill"
                 />
                 {showContestActions && (<Button
                   disabled={contests.length > 0 && contestHasErrors}
