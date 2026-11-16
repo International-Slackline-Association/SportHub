@@ -1,4 +1,8 @@
 @import 'tailwindcss';
+/* Onsight tokens and component classes. The Tailwind theme stays out until default color classes are gone. */
+@import '@slacklineinternational/onsight/fonts.css';
+@import '@slacklineinternational/onsight/tokens.css';
+@import '@slacklineinternational/onsight/components.css' layer(components);
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
