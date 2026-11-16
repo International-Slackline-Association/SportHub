@@ -1,7 +1,7 @@
-import { Badge } from "@slacklineinternational/onsight/react";
 import { normalizeGender } from "@utils/gender";
 import { textToTitleCase } from "@utils/strings";
 import { FemaleIcon, MaleIcon } from "@ui/Icons";
+import { cn } from "@utils/cn";
 
 interface GenderProps {
   className?: string;
@@ -15,7 +15,6 @@ interface GenderProps {
 const Gender = ({
   className,
   showIcon = true,
-  variant = "normal",
   value,
 }: GenderProps) => {
   const normalizedGender = normalizeGender(value) || "";
@@ -26,7 +25,7 @@ const Gender = ({
   const includeMaleIcon = normalizedGender === "MEN" || normalizedGender === "MIXED";
 
   return (
-    <Badge color="neutral" variant={variant === "normal" ? "soft" : "outline"} className={className}>
+    <span className={cn("cluster items-center gap-2", className)}>
       {showIcon && (includeFemaleIcon || includeMaleIcon) && (
         <span aria-hidden="true" className="inline-flex">
           {includeFemaleIcon && <FemaleIcon />}
@@ -34,7 +33,7 @@ const Gender = ({
         </span>
       )}
       {label}
-    </Badge>
+    </span>
   );
 };
 
