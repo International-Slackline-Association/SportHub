@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
-import { Button } from '@slacklineinternational/onsight/react';
-import { AgeCategory, Badge, ContestSize, Discipline, Gender, Role } from "@ui/Badge";
+import { Badge, Button } from '@slacklineinternational/onsight/react';
+import { AgeCategory, ContestSize, Discipline, Gender, Role } from "@ui/Badge";
 import PageLayout from "@ui/PageLayout";
 import Modal from "@ui/Modal";
 import { TabGroup } from "@ui/Tab";
@@ -100,16 +100,16 @@ export default function Page() {
             <Gender value="WOMEN" />
           </div>
           <div className="stack gap-4">
-            <Badge color="NEUTRAL">NEUTRAL</Badge>
-            <Badge color="BLUE">BLUE</Badge>
-            <Badge color="GREEN">GREEN</Badge>
-            <Badge color="ORANGE">ORANGE</Badge>
-            <Badge color="PINK">PINK</Badge>
-            <Badge color="RED">RED</Badge>
-            <Badge color="TEAL">TEAL</Badge>
-            <Badge color="VIOLET">VIOLET</Badge>
-            <Badge color="YELLOW">YELLOW</Badge>
-            <Badge color="PURPLE">PURPLE</Badge>
+            <Badge color="neutral">Neutral</Badge>
+            <Badge color="blue">Blue</Badge>
+            <Badge color="green">Green</Badge>
+            <Badge color="orange">Orange</Badge>
+            <Badge color="pink">Pink</Badge>
+            <Badge color="red">Red</Badge>
+            <Badge color="teal">Teal</Badge>
+            <Badge color="violet">Violet</Badge>
+            <Badge color="yellow">Yellow</Badge>
+            <Badge color="purple">Purple</Badge>
           </div>
         </div>
       </section>

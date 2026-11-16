@@ -1,6 +1,4 @@
-import React from "react";
-import styles from "./styles.module.css";
-import { snakeCaseToPascalCase } from "@utils/strings";
+import { Badge } from "@slacklineinternational/onsight/react";
 
 interface AgeCategoryProps {
   variant: AgeCategory;
@@ -13,21 +11,10 @@ const ageCategoryLabels: Record<AgeCategory, string> = {
   SENIOR: "Senior",
 };
 
-const AgeCategory = ({ variant, className = "" }: AgeCategoryProps) => {
-  const variantClass = `age${snakeCaseToPascalCase(variant)}`;
-
-  return (
-    <div
-      className={[
-        styles.badge,
-        styles.badgeBold,
-        styles[variantClass],
-        className
-      ].filter(Boolean).join(" ")}
-    >
-      {ageCategoryLabels[variant]}
-    </div>
-  );
-};
+const AgeCategory = ({ variant, className }: AgeCategoryProps) => (
+  <Badge color="neutral" className={className}>
+    {ageCategoryLabels[variant] ?? variant}
+  </Badge>
+);
 
 export default AgeCategory;

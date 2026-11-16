@@ -3,16 +3,16 @@ import { submitEventForApproval, withdrawEventFromApproval } from "../../submit/
 import { COUNTRIES } from "@utils/countries";
 import tableStyles from '@ui/Table/styles.module.css';
 import { formatDate, formatDateRangeShort } from "@utils/dates";
-import { Button } from '@slacklineinternational/onsight/react';
-import { Badge, BadgeColor, Discipline } from "@ui/Badge";
+import { Badge, Button, type BadgeCategoryColor, type BadgeStatusColor } from '@slacklineinternational/onsight/react';
+import { Discipline } from "@ui/Badge";
 import { EventStatus } from "../page";
 import { Alert } from "@ui/Alert";
 
-export const statusColor: Record<EventStatus, BadgeColor> = {
-  draft: "NEUTRAL",
-  pending: "ORANGE",
-  published: "GREEN",
-  cancelled: "RED",
+export const statusColor: Record<EventStatus, BadgeCategoryColor | BadgeStatusColor> = {
+  draft: "neutral",
+  pending: "warning",
+  published: "success",
+  cancelled: "danger",
 };
 
 export const MyEventActions = ({ eventId, status }: { eventId: string, status: EventStatus }) => (

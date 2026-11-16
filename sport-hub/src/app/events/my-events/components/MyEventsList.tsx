@@ -3,7 +3,8 @@ import { EventStatus } from "../page";
 import { COUNTRIES } from "@utils/countries";
 import { formatDate, formatDateRangeShort } from "@utils/dates";
 import Link from "next/link";
-import { Badge, Discipline } from "@ui/Badge";
+import { Badge } from "@slacklineinternational/onsight/react";
+import { Discipline } from "@ui/Badge";
 import { MyEventActions, statusColor } from "./MyEventsTable";
 
 export const MyEventsList = ({ events }: {events: Record<string, unknown>[]}) => {
