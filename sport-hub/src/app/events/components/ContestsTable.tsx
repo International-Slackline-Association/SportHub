@@ -114,11 +114,11 @@ const columns = [
                 {disciplineData.name}
               </div>
             )}
-            <Gender variant="normal" value={genderKey} />
+            <Gender variant="outline" value={genderKey} />
             <ContestSize
               singleIcon
               value={contestSize as ContestType}
-              variant="normal"
+              variant="outline"
             />
           </div>
         </div>
@@ -195,7 +195,7 @@ const columns = [
     cell: info => (
       <Gender
         value={info.getValue()}
-        variant="normal"
+        variant="outline"
       />
     ),
     filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
@@ -211,7 +211,7 @@ const columns = [
     enableColumnFilter: true,
     header: "Size",
     cell: info => (
-      <ContestSize className="flex-col !items-start" value={info.getValue()} variant="normal" />
+      <ContestSize className="flex-col !items-start" value={info.getValue()} variant="outline" />
     ),
     meta: { filterVariant: 'contest-size', filterIncludeAll: true },
     size: 120,

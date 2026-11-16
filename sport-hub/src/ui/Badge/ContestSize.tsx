@@ -29,7 +29,7 @@ interface ContestSizeProps {
   showIcon?: boolean;
   singleIcon?: boolean;
   size?: "sm" | "md" | "lg";
-  variant?: "normal" | "bold";
+  variant?: "normal" | "bold" | "outline";
   value: ContestType | string | undefined;
 }
 
@@ -52,7 +52,7 @@ const ContestSize = ({
   const numTrophies = singleIcon ? 1 : getContestSizeTrophyCount(contestSizeOption.value);
 
   return (
-    <Badge color="neutral" variant={variant === "bold" ? "outline" : "soft"} className={className}>
+    <Badge color="neutral" variant={variant === "normal" ? "soft" : "outline"} className={className}>
       {showIcon && numTrophies > 0 && (
         <span aria-hidden="true" className="inline-flex">
           {Array(numTrophies).fill("").map((_, idx) => (

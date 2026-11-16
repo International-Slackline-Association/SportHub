@@ -8,13 +8,14 @@ interface GenderProps {
   color?: "gray" | "neutral";
   showIcon?: boolean;
   size?: "sm" | "md" | "lg";
-  variant?: "normal" | "bold";
+  variant?: "normal" | "bold" | "outline";
   value: Gender | ContestGender | string | undefined;
 }
 
 const Gender = ({
   className,
   showIcon = true,
+  variant = "normal",
   value,
 }: GenderProps) => {
   const normalizedGender = normalizeGender(value) || "";
@@ -25,7 +26,7 @@ const Gender = ({
   const includeMaleIcon = normalizedGender === "MEN" || normalizedGender === "MIXED";
 
   return (
-    <Badge color="neutral" className={className}>
+    <Badge color="neutral" variant={variant === "normal" ? "soft" : "outline"} className={className}>
       {showIcon && (includeFemaleIcon || includeMaleIcon) && (
         <span aria-hidden="true" className="inline-flex">
           {includeFemaleIcon && <FemaleIcon />}
