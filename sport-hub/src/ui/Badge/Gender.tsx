@@ -1,8 +1,6 @@
-import React from "react";
-import styles from "./styles.module.css";
+import { Badge } from "@slacklineinternational/onsight/react";
 import { normalizeGender } from "@utils/gender";
-import { cn } from "@utils/cn";
-import { snakeCaseToPascalCase, textToTitleCase } from "@utils/strings";
+import { textToTitleCase } from "@utils/strings";
 import { FemaleIcon, MaleIcon } from "@ui/Icons";
 
 interface GenderProps {
@@ -15,34 +13,27 @@ interface GenderProps {
 }
 
 const Gender = ({
-  className = "",
-  color = "neutral",
+  className,
   showIcon = true,
-  variant = "bold",
-  value
+  value,
 }: GenderProps) => {
-  const genderClass = `gender${snakeCaseToPascalCase(value || "")}`;
   const normalizedGender = normalizeGender(value) || "";
+  const label = textToTitleCase(normalizedGender);
+  if (!label) return null;
+
   const includeFemaleIcon = normalizedGender === "WOMEN" || normalizedGender === "MIXED";
   const includeMaleIcon = normalizedGender === "MEN" || normalizedGender === "MIXED";
-  const colorClass = color === "gray" ? styles.genderGray : "";
-  const typographyClass = variant === "normal" ? '' : styles.badgeBold;
 
   return (
-    <div
-      className={cn(
-        styles.badge,
-        colorClass,
-        typographyClass,
-        styles.gender,
-        styles[genderClass],
-        className
+    <Badge color="neutral" className={className}>
+      {showIcon && (includeFemaleIcon || includeMaleIcon) && (
+        <span aria-hidden="true" className="inline-flex">
+          {includeFemaleIcon && <FemaleIcon />}
+          {includeMaleIcon && <MaleIcon />}
+        </span>
       )}
-    >
-      {showIcon && includeFemaleIcon && <FemaleIcon />}
-      {showIcon && includeMaleIcon && <MaleIcon />}
-      {textToTitleCase(normalizedGender)}
-    </div>
+      {label}
+    </Badge>
   );
 };
 

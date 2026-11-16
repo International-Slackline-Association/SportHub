@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { Button } from '@slacklineinternational/onsight/react';
+import { Badge, Button, type BadgeCategoryColor, type BadgeStatusColor } from '@slacklineinternational/onsight/react';
 import Image from 'next/image';
-import { Badge, BadgeColor, Discipline } from '@ui/Badge';
+import { Discipline } from '@ui/Badge';
 import { LocationIcon, CalendarIcon } from '@ui/Icons';
 import styles from './styles.module.css';
 import { getCountryByCode } from '@utils/countries';
@@ -14,10 +14,10 @@ interface FeaturedContestCardProps {
   contest: ContestData;
 }
 
-const StatusBadgeColors: Record<string, BadgeColor> = {
-  UPCOMING: "GREEN",
-  LIVE: "RED",
-  RECENT: "NEUTRAL",
+const StatusBadgeColors: Record<string, BadgeCategoryColor | BadgeStatusColor> = {
+  UPCOMING: "info",
+  LIVE: "danger",
+  RECENT: "neutral",
 };
 
 /**
