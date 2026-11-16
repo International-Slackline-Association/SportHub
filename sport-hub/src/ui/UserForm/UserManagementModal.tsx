@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import { Button, type ButtonVariant } from '@slacklineinternational/onsight/react';
-import Modal from '@ui/Modal';
+import { Button, Dialog, type ButtonVariant } from '@slacklineinternational/onsight/react';
 import UpdateUserForm from '@ui/UserForm/UpdateUserForm';
 import { FormikProps } from 'formik';
 import { UserFormValues, UserData } from '@ui/UserForm/types';
@@ -114,19 +112,30 @@ const UserManagementModal = ({
   };
 
   const hasDeleteAction = action === 'UPDATE' && !!onDelete;
-  const editActions = hasDeleteAction ? (
+  const dialogActions = action === 'ROLES' ? (
     <>
-      <Button variant="danger" className="mr-auto" onClick={handleDelete} disabled={isDeleting}>
-        {isDeleting ? 'Deleting...' : 'Delete'}
-      </Button>
-      <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
+      <Button type="button" variant="neutral" onClick={() => setIsModalOpen(false)}>
         Cancel
       </Button>
-      <Button variant="primary" onClick={() => formRef.current?.submitForm()}>
+      <Button type="button" variant="primary" loading={isUpdating} onClick={handleRoleUpdate}>
+        {isUpdating ? 'Saving…' : 'Save Changes'}
+      </Button>
+    </>
+  ) : (
+    <>
+      <Button type="button" variant="neutral" onClick={() => setIsModalOpen(false)}>
+        Cancel
+      </Button>
+      {hasDeleteAction && (
+        <Button type="button" variant="danger" loading={isDeleting} onClick={handleDelete}>
+          {isDeleting ? 'Deleting…' : 'Delete'}
+        </Button>
+      )}
+      <Button type="button" variant="primary" onClick={() => formRef.current?.submitForm()}>
         Save
       </Button>
     </>
-  ) : undefined;
+  );
 
   const FormComponentProps = {
     formRef,
@@ -142,15 +151,12 @@ const UserManagementModal = ({
       <Button onClick={openModal} size={buttonSize} variant={resolvedButtonVariant} type="button">
         {buttonLabel}
       </Button>
-      {isModalOpen && typeof document !== 'undefined' && createPortal(
-        <Modal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          title={modalTitle}
-          formRef={action !== 'ROLES' ? formRef : undefined}
-          showDefaultActions={action !== 'ROLES'}
-          actions={editActions}
-        >
+      <Dialog
+        actions={dialogActions}
+        onClose={() => setIsModalOpen(false)}
+        open={isModalOpen}
+        title={modalTitle}
+      >
           {action === 'CREATE' && <CreateUserForm {...FormComponentProps} />}
           {action === 'UPDATE' && <UpdateUserForm {...FormComponentProps} user={user} />}
           {action === 'ROLES' && (
@@ -259,19 +265,9 @@ const UserManagementModal = ({
                 </p>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t">
-                <Button variant="secondary" onClick={() => setIsModalOpen(false)} className="flex-1">
-                  Cancel
-                </Button>
-                <Button variant="primary" onClick={handleRoleUpdate} disabled={isUpdating} className="flex-1">
-                  {isUpdating ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </div>
             </div>
           )}
-        </Modal>,
-        document.body
-      )}
+      </Dialog>
     </>
   );
 }
