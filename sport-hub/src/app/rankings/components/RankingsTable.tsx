@@ -1,5 +1,5 @@
 "use client";
-import { Alert, Spinner } from '@slacklineinternational/onsight/react';
+import { Alert, Spinner, Tooltip } from '@slacklineinternational/onsight/react';
 
 import { createColumnHelper } from '@tanstack/react-table';
 import { AthleteRanking } from '@lib/data-services';
@@ -13,7 +13,6 @@ import tableStyles from '@ui/Table/styles.module.css';
 import { CountryFlag } from '@ui/CountryFlag';
 import { DisciplineDropdown, RankingsGenderDropdown } from '@ui/Form';
 import { DISCIPLINE_DATA, MAP_DISCIPLINE_ENUM_TO_NAME } from '@utils/consts';
-import { Tooltip } from '@ui/Tooltip';
 import { cn } from '@utils/cn';
 import { AthleteParticipationRecord } from '@lib/relational-types';
 import { Gender } from '@ui/Badge';
@@ -209,8 +208,10 @@ const RankingsTable = ({
                   <div className={cn("flex gap-2", isDesktop ? "flex-row" : "flex-col")}>
                     Points
                     <Tooltip
-                      content={'Ranking is determined by adding the top two awarded points from the contests athletes have participated in within the defined season.'}
-                      position="bottom"
+                      content="Ranking is determined by adding the top two awarded points from the contests athletes have participated in within the defined season."
+                      label="About ranking points"
+                      placement="bottom"
+                      align="end"
                     />
                   </div>
                 ),
