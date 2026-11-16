@@ -27,7 +27,7 @@ const Gender = ({
   return (
     <span className={cn("cluster items-center gap-2", className)}>
       {showIcon && (includeFemaleIcon || includeMaleIcon) && (
-        <span aria-hidden="true" className="inline-flex">
+        <span aria-hidden="true" className="inline-flex items-center gap-1">
           {includeFemaleIcon && <FemaleIcon />}
           {includeMaleIcon && <MaleIcon />}
         </span>
