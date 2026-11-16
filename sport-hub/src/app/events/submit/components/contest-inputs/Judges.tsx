@@ -2,7 +2,7 @@
 
 import { FieldArray, useFormikContext } from 'formik';
 import { cn } from '@utils/cn';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import { TrashIcon } from '@ui/Icons';
 import UserAutocomplete from '@ui/UserAutocomplete';
 import PendingUserForm from './PendingUserForm';
@@ -35,7 +35,7 @@ export const Judges = ({ contestKey, judges }: Props) => {
                       <PendingUserForm formKey={judgeFormKey} />
                       <Button
                         onClick={() => remove(idx)}
-                        variant='destructive-secondary'
+                        variant="danger-secondary"
                         type="button"
                       >
                         <TrashIcon />

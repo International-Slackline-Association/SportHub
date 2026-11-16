@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Form, Formik } from 'formik';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import { Alert } from '@ui/Alert';
 import { FormikSelectField, FormikTextField } from '@ui/Form';
 import FormikAutocomplete from '@ui/Form/FormikAutocomplete';

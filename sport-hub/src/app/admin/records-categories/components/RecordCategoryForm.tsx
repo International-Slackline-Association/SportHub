@@ -1,10 +1,11 @@
 'use client';
+import Link from 'next/link';
 
 import { useState } from 'react';
 import { Form, Formik, type FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import { useRouter } from 'next/navigation';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import { Alert } from '@ui/Alert';
 import { FormikNumberField, FormikSelectField, FormikSubmitButton, FormikTextAreaField, FormikTextField } from '@ui/Form';
 import { UNIT_SUGGESTIONS, unitKind } from '@lib/records-logic';
@@ -113,7 +114,7 @@ export default function RecordCategoryForm({ category }: Props) {
           {saved && <Alert variant="success">Saved.</Alert>}
           <div className="flex gap-2">
             <FormikSubmitButton>{category ? 'Save changes' : 'Create'}</FormikSubmitButton>
-            {!category && <Button as="link" href={LIST_HREF} variant="secondary">Cancel</Button>}
+            {!category && <Button as={Link} href={LIST_HREF} variant="secondary">Cancel</Button>}
           </div>
         </Form>
       )}

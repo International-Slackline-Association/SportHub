@@ -1,5 +1,4 @@
 import React from "react";
-import Button from "../Button";
 import styles from "./styles.module.css";
 
 export type TabVariant = "primary" | "secondary" | "large";
@@ -22,7 +21,7 @@ const Tab = ({
   variant = "primary",
 }: TabProps) => {
   return (
-    <Button
+    <button
       className={[
         styles.tabItem,
         styles[variant],
@@ -32,10 +31,9 @@ const Tab = ({
       disabled={disabled}
       onClick={onClick}
       type="button"
-      variant="tab"
     >
       {children}
-    </Button>
+    </button>
   );
 };
 

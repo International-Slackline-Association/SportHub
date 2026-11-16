@@ -2,7 +2,7 @@
 
 import { FieldArray, getIn, useFormikContext } from 'formik';
 import { cn } from '@utils/cn';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import { TrashIcon } from '@ui/Icons';
 import UserAutocomplete from '@ui/UserAutocomplete';
 import { EventSubmissionFormValues } from '../../types';
@@ -69,7 +69,7 @@ const AthleteListItem = ({
         className="self-end"
         onClick={onDelete}
         type="button"
-        variant='destructive-secondary'
+        variant="danger-secondary"
       >
         <TrashIcon/>
       </Button>

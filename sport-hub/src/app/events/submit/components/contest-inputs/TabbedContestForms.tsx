@@ -3,7 +3,7 @@
 import { FieldArray, getIn, useFormikContext } from 'formik';
 import { EventSubmissionFormValues, initialContestValues } from '../../types';
 import sharedStyles from '../styles.module.css';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import { TabGroup } from '@ui/Tab';
 import { useState } from 'react';
 import ContestForm from './ContestForm';

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import { Alert } from '@ui/Alert';
 import { deleteCategory } from '../actions';
 
@@ -48,7 +48,7 @@ export default function DeleteCategoryButton({ pk, categoryId }: Props) {
       />
       {error && <Alert>{error}</Alert>}
       <div>
-        <Button variant="destructive" disabled={busy || !canDelete} onClick={remove}>Delete permanently</Button>
+        <Button variant="danger" disabled={busy || !canDelete} onClick={remove}>Delete permanently</Button>
       </div>
     </div>
   );

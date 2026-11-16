@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
-import Button from "@ui/Button";
+import { Button } from '@slacklineinternational/onsight/react';
 import { AgeCategory, Badge, ContestSize, Discipline, Gender, Role } from "@ui/Badge";
 import PageLayout from "@ui/PageLayout";
 import Modal from "@ui/Modal";
@@ -55,9 +55,9 @@ export default function Page() {
         <div className="flex flex-row gap-4">
           <Button variant="primary">Primary Button</Button>
           <Button variant="secondary">Secondary Button</Button>
-          <Button variant="default">Default Button</Button>
-          <Button variant="destructive">Destructive Button</Button>
-          <Button variant="destructive-secondary">Destructive Secondary Button</Button>
+          <Button variant="neutral">Neutral</Button>
+          <Button variant="danger">Danger</Button>
+          <Button variant="danger-secondary">Danger secondary</Button>
           <Button variant="ghost">Ghost Button</Button>
         </div>
       </section>

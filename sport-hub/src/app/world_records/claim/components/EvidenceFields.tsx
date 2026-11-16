@@ -9,7 +9,7 @@
 
 import { useRef, useState } from 'react';
 import { FieldArray, useFormikContext } from 'formik';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import { Alert } from '@ui/Alert';
 import { FormikTextField } from '@ui/Form';
 import { EVIDENCE_FILE_ACCEPT, evidenceFileProblem, formatFileSize, MAX_EVIDENCE_FILE_LABEL, MAX_EVIDENCE_ITEMS } from '@lib/records-rules';

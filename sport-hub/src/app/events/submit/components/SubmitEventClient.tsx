@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { Formik, Form, getIn } from 'formik';
 import Link from 'next/link';
 import { TabGroup } from '@ui/Tab';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import EventForm from './event-inputs/EventForm';
 import {
   initialEventValues,

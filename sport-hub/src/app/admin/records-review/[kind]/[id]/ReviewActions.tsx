@@ -1,8 +1,9 @@
 'use client';
+import Link from 'next/link';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import { Alert } from '@ui/Alert';
 import type { ClaimStatus, RecordCategoryTableItem, FirstCategoryTableItem } from '@lib/relational-types';
 import { OTHER_REJECTION_REASON, REJECTION_REASONS, type RejectionCase } from '@lib/records-rules';
@@ -196,7 +197,7 @@ export default function ReviewActions(props: Props) {
             />
             <div>
               <Button
-                variant="destructive"
+                variant="danger"
                 disabled={busy || !canReject}
                 onClick={() => run(() => rejectClaim(kind, entryId, { reason: rejectReason, otherReason, comment: rejectComment }))}
               >
@@ -213,7 +214,7 @@ export default function ReviewActions(props: Props) {
           <p className="text-sm text-gray-600">For example a fair-play violation found after publication. The entry is removed from the public lists.</p>
           <textarea className={inputClass} rows={2} placeholder="Reason (required)" value={comment} onChange={e => setComment(e.target.value)} />
           <div>
-            <Button variant="destructive" disabled={busy || !comment.trim()} onClick={() => run(() => setPublicEntryStatus(kind, entryId, 'rejected', comment))}>
+            <Button variant="danger" disabled={busy || !comment.trim()} onClick={() => run(() => setPublicEntryStatus(kind, entryId, 'rejected', comment))}>
               Void
             </Button>
           </div>
@@ -235,7 +236,7 @@ export default function ReviewActions(props: Props) {
         <h3 className="font-semibold">Modify</h3>
         <p className="text-sm text-gray-600">Edit every detail: category, value or trick, athletes, date, location, witnesses and links.</p>
         <div>
-          <Button as="link" href={`/admin/records-review/${kind}/${encodeURIComponent(entryId)}/edit`} variant="secondary">Modify</Button>
+          <Button as={Link} href={`/admin/records-review/${kind}/${encodeURIComponent(entryId)}/edit`} variant="secondary">Modify</Button>
         </div>
       </div>
 
@@ -261,7 +262,7 @@ export default function ReviewActions(props: Props) {
           onChange={e => setDeleteConfirmation(e.target.value)}
         />
         <div>
-          <Button variant="destructive" disabled={busy || !canDelete} onClick={deleteEntry}>
+          <Button variant="danger" disabled={busy || !canDelete} onClick={deleteEntry}>
             Delete permanently
           </Button>
         </div>

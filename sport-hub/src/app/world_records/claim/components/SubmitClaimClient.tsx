@@ -9,7 +9,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { FormikHelpers, FormikProps } from 'formik';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import { Alert } from '@ui/Alert';
 import Spinner from '@ui/Spinner';
 import type { ClaimStatus, FirstCategoryTableItem, RecordCategoryTableItem } from '@lib/relational-types';
@@ -128,7 +128,7 @@ export default function SubmitClaimClient({ recordCategories, firstCategories, i
           Return to My Claims
         </Button>
         {isSavedDraft && (
-          <Button type="button" variant="destructive-secondary" disabled={busy || deleting} onClick={() => removeDraft(form.values.entryId!)}>
+          <Button type="button" variant="danger-secondary" disabled={busy || deleting} onClick={() => removeDraft(form.values.entryId!)}>
             {deleting ? <Spinner size="small" /> : 'Delete draft'}
           </Button>
         )}

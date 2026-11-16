@@ -1,11 +1,12 @@
 'use client';
+import Link from 'next/link';
 
 import { useState } from 'react';
 import ResultsTable from './ResultsTable';
 import { Alert } from '@ui/Alert';
 import { ContestTabGroup, type ContestJudge, type ContestResult, type ContestTabData } from './ContestTabGroup';
 import { ContestAbout } from './ContestAbout';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 
 export type { ContestJudge, ContestResult, ContestTabData };
 
@@ -57,16 +58,16 @@ export default function ContestDetails({
         <div className="flex flex-row gap-2 mb-2">
           {isAdmin && (
             <Button
-              as="link"
+              as={Link}
               href={`/events/my-events/${eventId}/edit`}
-              variant="destructive-secondary"
+              variant="danger-secondary"
               size="small"
             >
               Edit Event
             </Button>
           )}
           <Button
-            as="link"
+            as={Link}
             href={emailHref}
             variant="secondary"
             size="small"

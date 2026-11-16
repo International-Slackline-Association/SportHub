@@ -1,9 +1,10 @@
 'use client';
+import Link from 'next/link';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { FormikHelpers, FormikProps } from 'formik';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import { Alert } from '@ui/Alert';
 import Spinner from '@ui/Spinner';
 import type { FirstCategoryTableItem, RecordCategoryTableItem } from '@lib/relational-types';
@@ -50,7 +51,7 @@ export default function AdminEditForm({ kind, entryId, initialValues, recordCate
         <Button type="submit" variant="primary" disabled={isSubmitting}>
           {isSubmitting ? <Spinner size="small" color="white" /> : 'Save changes'}
         </Button>
-        <Button as="link" href={back} variant="secondary">Cancel</Button>
+        <Button as={Link} href={back} variant="secondary">Cancel</Button>
       </section>
     </>
   );

@@ -7,7 +7,7 @@
 
 import { useEffect } from 'react';
 import { getIn, FieldArray, useFormikContext } from 'formik';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import { Alert } from '@ui/Alert';
 import { FormikCheckboxField, FormikTextField } from '@ui/Form';
 import { ETHICS_STATEMENT, MAX_ATHLETES, MAX_WITNESSES } from '@lib/records-rules';

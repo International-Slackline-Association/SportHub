@@ -1,6 +1,7 @@
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import PageLayout from '@ui/PageLayout';
 import { requireRecordManager } from '@lib/authorization';
 import { getCategoryAuditLog, getEntriesByCategory, getFirstCategory, getRecordCategory } from '@lib/records-service';
@@ -18,7 +19,7 @@ type Props = { params: Promise<{ kind: string; id: string }> };
 
 const BackToList = () => (
   <section className="p-4 sm:p-0">
-    <Button as="link" href="/admin/records-categories" variant="secondary" size="small">Back to all categories</Button>
+    <Button as={Link} href="/admin/records-categories" variant="secondary" size="small">Back to all categories</Button>
   </section>
 );
 

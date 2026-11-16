@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Formik, Form } from 'formik';
 import Link from 'next/link';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import TabbedContestForms from '../../../submit/components/contest-inputs/TabbedContestForms';
 import { updateEventScores } from '../../../submit/actions';
 import { EventSubmissionFormValues } from '../../../submit/types';

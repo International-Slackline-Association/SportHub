@@ -1,4 +1,5 @@
-import Button from '@ui/Button';
+import Link from 'next/link';
+import { Button } from '@slacklineinternational/onsight/react';
 import Image from 'next/image';
 import { Badge, BadgeColor, Discipline } from '@ui/Badge';
 import { LocationIcon, CalendarIcon } from '@ui/Icons';
@@ -85,8 +86,8 @@ const FeaturedContestCard = ({ contest }: FeaturedContestCardProps) => {
           <Discipline variant={discipline} />
         </div>
         <Button
-          as="link"
-          variant={isUpcoming ? 'primary' : 'default'}
+          as={Link}
+          variant={isUpcoming ? 'primary' : 'neutral'}
           href={href}
         >
           {isUpcoming ? 'Register Now' : 'View Results'}

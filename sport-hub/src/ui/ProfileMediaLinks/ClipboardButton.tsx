@@ -2,7 +2,7 @@
 
 import { CopyIcon } from '@ui/Icons';
 import { PropsWithChildren, useState } from "react";
-import Button from "@ui/Button";
+import { Button } from '@slacklineinternational/onsight/react';
 
 export const ClipBoardButton = ({ children }: PropsWithChildren) => {
   const [copySuccess, setCopySuccess] = useState('');

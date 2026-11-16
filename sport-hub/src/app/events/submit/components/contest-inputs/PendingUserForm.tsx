@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { getIn, useFormikContext } from 'formik';
 import { EventSubmissionFormValues, PendingUserData } from '../../types';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import { FormikSelectField, FormikTextField, countryCodeOptions, userGenderOptions } from '@ui/Form';
 
 type Props = { formKey: string };
