@@ -3,6 +3,12 @@
 @import '@slacklineinternational/onsight/fonts.css';
 @import '@slacklineinternational/onsight/tokens.css';
 @import '@slacklineinternational/onsight/components.css' layer(components);
+/* Tailwind's margin reset drops the browser's dialog centering, and a stretched
+   height pins the dialog to the top. Fit the content and let auto margins center it. */
+.isa-dialog {
+  height: fit-content;
+  margin: auto;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
