@@ -3,10 +3,9 @@
 import { useState } from "react";
 import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
-import { Badge, Button, Tabs } from '@slacklineinternational/onsight/react';
+import { Badge, Button, Dialog, Tabs } from '@slacklineinternational/onsight/react';
 import { AgeCategory, ContestSize, Discipline, Gender, Role } from "@ui/Badge";
 import PageLayout from "@ui/PageLayout";
-import Modal from "@ui/Modal";
 import { FormikCheckboxField, FormikCheckboxGroup, FormikRadioGroup, FormikSelectField, FormikSubmitButton, FormikTextField } from "@ui/Form";
 import FormikAutocomplete from "@ui/Form/FormikAutocomplete";
 import DisciplineDropdown from "@ui/Form/DisciplineDropdown";
@@ -113,31 +112,31 @@ export default function Page() {
         </div>
       </section>
       <section>
-        <h2>Modal</h2>
+        <h2>Dialog</h2>
         <div className="flex flex-row gap-4">
           <Button 
             variant="primary" 
             onClick={() => setIsModalOpen(true)}
           >
-            Open Modal
+            Open Dialog
           </Button>
-          <Modal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            title="Welcome to This New Feature"
+          <Dialog
             actions={
               <>
-                <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
+                <Button type="button" variant="neutral" onClick={() => setIsModalOpen(false)}>
                   Cancel
                 </Button>
-                <Button variant="primary" onClick={() => setIsModalOpen(false)}>
+                <Button type="button" variant="primary" onClick={() => setIsModalOpen(false)}>
                   Save
                 </Button>
               </>
             }
+            onClose={() => setIsModalOpen(false)}
+            open={isModalOpen}
+            title="Welcome to This New Feature"
           >
             Used for multiline pieces of content. Lorem ipsum dolor sit amet, ex lucilius hendrerit vim, tempor scaevola iudicabit ei ius, te eum illud impetus antiopam. Eu wisi commune volutpat pro, usu at alii magna aperiam.
-          </Modal>
+          </Dialog>
         </div>
       </section>
       <section>
