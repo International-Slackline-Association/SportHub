@@ -13,11 +13,11 @@
   }
 }
 
-/* Desktop navigation styles */
-.navbar nav ul {
+/* Desktop navigation styles. Scoped so they do not restyle the menu drawer. */
+.navContainer nav ul {
   align-items: center;
   display: flex;
-  flex-direction: row; /* Always horizontal when desktop nav is shown */
+  flex-direction: row;
   font-size: var(--nav-font-size);
   font-weight: var(--nav-font-weight);
   gap: var(--nav-gap);
@@ -26,15 +26,15 @@
   padding: 0;
 }
 
-.navbar nav a {
+.navContainer nav a {
   border-radius: var(--nav-border-radius);
   color: white;
   padding: var(--nav-padding);
   text-decoration: none;
 }
 
-.navbar nav a:hover,
-.navbar nav a[aria-current] {
+.navContainer nav a:hover,
+.navContainer nav a[aria-current] {
   background: var(--color-primary-dark)
 }
 
