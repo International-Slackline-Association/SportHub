@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { PropsWithChildren, useState } from "react";
 import type { HTMLAttributes } from "react";
 import styles from "./styles.module.css";
-import Drawer from "@ui/Drawer";
+import { Drawer, Nav } from "@slacklineinternational/onsight/react";
 import UserMenu from "@ui/UserMenu";
 import { SlacklineSportHubIcon } from "@ui/Icons";
 
@@ -67,7 +67,13 @@ const NavList = ({ onClickItem }: NavListProps) => {
 
 const Navigation = () => {
   const { isDesktop, isHydrated } = useClientMediaQuery();
+  const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuItems = navItems.map(({ href, name }) => ({
+    href,
+    label: name,
+    current: pathname === href,
+  }));
 
   return (
     <div className={cn(styles.navbar, "cluster", "clearfix", "inter-500")}>
@@ -106,10 +112,14 @@ const Navigation = () => {
               ☰
             </button>
           </div>
-          <Drawer isOpen={menuOpen} onClose={() => setMenuOpen(false)} position="right">
-            <nav>
-              <NavList onClickItem={() => setMenuOpen(false)} />
-            </nav>
+          <Drawer id="mobile-menu" onClose={() => setMenuOpen(false)} open={menuOpen} side="end" title="Menu">
+            <Nav
+              aria-label="Main"
+              items={menuItems}
+              linkAs={Link}
+              onItemClick={() => setMenuOpen(false)}
+              vertical
+            />
           </Drawer>
         </>
       )}
