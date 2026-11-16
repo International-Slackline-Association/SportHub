@@ -4,8 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { FormikHelpers, FormikProps } from 'formik';
-import { Button, Alert } from '@slacklineinternational/onsight/react';
-import Spinner from '@ui/Spinner';
+import { Alert, Button } from '@slacklineinternational/onsight/react';
 import type { FirstCategoryTableItem, RecordCategoryTableItem } from '@lib/relational-types';
 import { adminUpdateEntry } from 'src/app/admin/records-review/actions';
 import PathChoice from 'src/app/world_records/claim/components/PathChoice';
@@ -47,8 +46,8 @@ export default function AdminEditForm({ kind, entryId, initialValues, recordCate
         <input id="modify-comment" className="border border-gray-300 rounded px-3 py-2 text-sm" value={comment} onChange={e => setComment(e.target.value)} />
       </section>
       <section className="p-4 sm:p-0 flex gap-3">
-        <Button type="submit" variant="primary" disabled={isSubmitting}>
-          {isSubmitting ? <Spinner size="small" color="white" /> : 'Save changes'}
+        <Button type="submit" variant="primary" loading={isSubmitting}>
+          {isSubmitting ? 'Saving…' : 'Save changes'}
         </Button>
         <Button as={Link} href={back} variant="secondary">Cancel</Button>
       </section>

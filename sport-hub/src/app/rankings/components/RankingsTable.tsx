@@ -1,5 +1,5 @@
 "use client";
-import { Alert } from '@slacklineinternational/onsight/react';
+import { Alert, Spinner } from '@slacklineinternational/onsight/react';
 
 import { createColumnHelper } from '@tanstack/react-table';
 import { AthleteRanking } from '@lib/data-services';
@@ -9,7 +9,6 @@ import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import Link from 'next/link';
 import { getIocCode } from '@utils/countries';
 import { useQuery } from '@tanstack/react-query';
-import Spinner from '@ui/Spinner';
 import tableStyles from '@ui/Table/styles.module.css';
 import { CountryFlag } from '@ui/CountryFlag';
 import { DisciplineDropdown, RankingsGenderDropdown } from '@ui/Form';
@@ -165,8 +164,8 @@ const RankingsTable = ({
     <div className="flex items-center justify-center min-h-64">
       {isLoading && (
         <div className="text-center">
-          <Spinner/>
-          <p>Loading rankings...</p>
+          <Spinner label="Loading rankings" />
+          <p>Loading rankings…</p>
         </div>
       )}
       {isError && (
