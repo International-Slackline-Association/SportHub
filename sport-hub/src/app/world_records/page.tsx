@@ -1,6 +1,7 @@
+import Link from 'next/link';
 import type { Metadata } from 'next'
 import PageLayout from '@ui/PageLayout'
-import Button from '@ui/Button'
+import { Button } from '@slacklineinternational/onsight/react';
 import { randomS3Image } from '@utils/images'
 import { getWorldRecords, getWorldFirsts } from '@lib/data-services'
 import { auth } from '@lib/auth'
@@ -22,8 +23,8 @@ export default async function Page() {
       {/* Claiming needs an account */}
       {session?.user && (
         <section className="p-4 sm:p-0 flex gap-3 flex-wrap items-center">
-          <Button as="link" href="/world_records/claim" variant="primary">Claim World Record or World First</Button>
-          <Button as="link" href="/world_records/my-claims" variant="secondary">My Claims</Button>
+          <Button as={Link} href="/world_records/claim" variant="primary">Claim World Record or World First</Button>
+          <Button as={Link} href="/world_records/my-claims" variant="secondary">My Claims</Button>
         </section>
       )}
       <section className="p-4 sm:p-0">

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import { deleteDraft } from '../actions';
 
 /** Deletes a draft claim for good. The server checks that it is the user's own draft. */
@@ -12,7 +12,7 @@ export default function DeleteDraftButton({ kind, entryId }: { kind: 'record' | 
   return (
     <Button
       type="button"
-      variant="destructive-secondary"
+      variant="danger-secondary"
       size="small"
       disabled={busy}
       onClick={async () => {

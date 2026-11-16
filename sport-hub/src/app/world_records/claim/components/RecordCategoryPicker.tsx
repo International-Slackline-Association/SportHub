@@ -9,7 +9,7 @@
 import { useMemo, useState, type KeyboardEvent } from 'react';
 import { useField } from 'formik';
 import { createColumnHelper } from '@tanstack/react-table';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import Table from '@ui/Table';
 import { RECORD_CATEGORY_GROUPS } from '@lib/relational-types';
 import type { RecordCategoryTableItem } from '@lib/relational-types';

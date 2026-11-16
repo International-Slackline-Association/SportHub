@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import Button, { ButtonVariant } from '@ui/Button';
+import { Button, type ButtonVariant } from '@slacklineinternational/onsight/react';
 import Modal from '@ui/Modal';
 import UpdateUserForm from '@ui/UserForm/UpdateUserForm';
 import { FormikProps } from 'formik';
@@ -116,7 +116,7 @@ const UserManagementModal = ({
   const hasDeleteAction = action === 'UPDATE' && !!onDelete;
   const editActions = hasDeleteAction ? (
     <>
-      <Button variant="destructive" className="mr-auto" onClick={handleDelete} disabled={isDeleting}>
+      <Button variant="danger" className="mr-auto" onClick={handleDelete} disabled={isDeleting}>
         {isDeleting ? 'Deleting...' : 'Delete'}
       </Button>
       <Button variant="secondary" onClick={() => setIsModalOpen(false)}>

@@ -2,7 +2,7 @@
 
 import { CopyIcon } from '@ui/Icons';
 import { PropsWithChildren, useState } from "react";
-import Button from "@ui/Button";
+import { Button } from '@slacklineinternational/onsight/react';
 
 type ClipBoardButtonProps = PropsWithChildren<{
   /** Path or absolute URL to copy. Defaults to the current page URL. */

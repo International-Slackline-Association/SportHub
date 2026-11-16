@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import PageLayout from '@ui/PageLayout';
 import { Alert } from '@ui/Alert';
 import { requireAuth } from '@lib/authorization';
@@ -34,7 +34,7 @@ export default async function ClaimPage({ searchParams }: Props) {
         <PageLayout title="Claim a World Record or First">
           <section className="p-4 sm:p-0 stack gap-2">
             <Alert>This claim cannot be edited. It may be under review or already decided.</Alert>
-            <Button as="link" href="/world_records/my-claims" variant="secondary" size="small">Back to my claims</Button>
+            <Button as={Link} href="/world_records/my-claims" variant="secondary" size="small">Back to my claims</Button>
           </section>
         </PageLayout>
       );

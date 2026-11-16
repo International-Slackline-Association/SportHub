@@ -1,7 +1,7 @@
 import React, { PropsWithChildren, ReactNode } from 'react';
 import { Field, useField, useFormikContext, type FieldInputProps, type FieldMetaProps, type FormikHelpers } from 'formik';
 import styles from './styles.module.css';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import Spinner from '@ui/Spinner';
 import { Tooltip } from '@ui/Tooltip';
 import { cn } from '@utils/cn';

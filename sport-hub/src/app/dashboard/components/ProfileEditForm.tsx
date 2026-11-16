@@ -6,7 +6,7 @@ import { updateProfile } from '../actions';
 import { COUNTRIES, getCountryByName } from '@utils/countries';
 import { CircleFlag } from 'react-circle-flags';
 import { FormikTextField, LinkFieldArray } from '@ui/Form';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 
 interface CountryDropdownProps {
   value: string;

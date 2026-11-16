@@ -5,7 +5,7 @@ import { Form, Formik } from 'formik';
 import UserAutocomplete from '@ui/UserAutocomplete';
 import { AthleteProfileCard } from '../../athlete/components/AthleteProfileCard';
 import { fetchUserProfileAndRecords, mergeDuplicateAccounts, UserProfileAndRecords } from './actions';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import { Alert, AlertProps } from '@ui/Alert';
 import { FormikCheckboxField } from '@ui/Form';
 import { ResultEntryList } from './ResultEntryList';
@@ -220,7 +220,7 @@ export default function DuplicateAccountsLookup() {
                 <Button
                   disabled={isSubmitting || !isLookUpValid || !hasReviewedResults}
                   type="submit"
-                  variant="destructive"
+                  variant="danger"
                 >
                   {isSubmitting ? 'Merging…' : 'Merge accounts'}
                 </Button>

@@ -9,7 +9,7 @@
 
 import { useRef, useState } from 'react';
 import { FieldArray, useFormikContext } from 'formik';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import { Alert } from '@ui/Alert';
 import { FormikFormField, FormikTextField } from '@ui/Form';
 import formStyles from '@ui/Form/styles.module.css';

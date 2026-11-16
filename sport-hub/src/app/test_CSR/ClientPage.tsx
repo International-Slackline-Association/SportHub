@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { FormikHelpers, type FormikProps } from 'formik';
 import Modal from '@ui/Modal';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import { UpdateUserForm } from '@ui/UserForm';
 import { ROLES, ROLE_LABELS, rolesLabel, type Role } from 'src/types/rbac';
 
@@ -884,7 +884,7 @@ export default function TestCSRPage() {
                       Roles
                     </Button>
                     <Button
-                      variant="destructive"
+                      variant="danger"
                       onClick={() => deleteUser(user.id)}
                     >
                       Delete

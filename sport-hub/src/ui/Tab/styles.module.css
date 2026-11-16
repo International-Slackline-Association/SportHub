@@ -1,4 +1,30 @@
-/* Tab Styles */
+/* Tab Styles. The tab row moves to Onsight Tabs in a later pass. */
+.tabItem {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-metropolis);
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1em;
+  text-align: center;
+  transition: all 0.2s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  color: var(--color-neutral-500);
+  min-width: auto;
+  height: auto;
+  border-radius: 0;
+}
+
+.tabItem:hover:not(:disabled) {
+  color: var(--color-neutral-600);
+}
+
 .tabItem.active {
   color: var(--color-primary);
 }

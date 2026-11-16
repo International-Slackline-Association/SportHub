@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 import { AthleteRanking } from "@lib/data-services";
 import { Avatar } from '@ui/Avatar';
@@ -9,7 +10,7 @@ import { Discipline } from '@ui/Badge';
 import { getCountryByCode } from '@utils/countries';
 import { StackedMediaCard } from '@ui/StackedMediaCard';
 import pageStyles from '../../app/page.module.css';
-import Button from "@ui/Button";
+import { Button } from '@slacklineinternational/onsight/react';
 import { useQuery } from "@tanstack/react-query";
 import Spinner from "@ui/Spinner";
 import { Alert } from "@ui/Alert";
@@ -68,7 +69,7 @@ export const FeaturedAthleteCard = ({ athlete }: FeaturedAthleteCardProps) => {
           ))}
         </div>
         <Button
-          as="link"
+          as={Link}
           variant="secondary"
           href={href}
         >
