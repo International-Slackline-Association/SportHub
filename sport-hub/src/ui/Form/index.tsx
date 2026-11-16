@@ -2,7 +2,6 @@ import React, { PropsWithChildren, ReactNode } from 'react';
 import { Field, useField, useFormikContext, type FieldInputProps, type FieldMetaProps, type FormikHelpers } from 'formik';
 import styles from './styles.module.css';
 import { Button } from '@slacklineinternational/onsight/react';
-import Spinner from '@ui/Spinner';
 import { Tooltip } from '@ui/Tooltip';
 import { cn } from '@utils/cn';
 import { pascalCaseToTitleCase } from '@utils/strings';
@@ -16,9 +15,8 @@ export const FormikSubmitButton = ({ children }: PropsWithChildren) => {
   const { isSubmitting, isValid, dirty } = useFormikContext();
 
   return (
-    <Button type="submit" variant="primary" disabled={isSubmitting || !isValid || !dirty}>
-      {isSubmitting && <Spinner color="white" size="small" />}
-      {!isSubmitting && (children || "Submit Form")}
+    <Button type="submit" variant="primary" loading={isSubmitting} disabled={!isSubmitting && (!isValid || !dirty)}>
+      {isSubmitting ? 'Saving…' : (children || 'Submit Form')}
     </Button>
   );
 };

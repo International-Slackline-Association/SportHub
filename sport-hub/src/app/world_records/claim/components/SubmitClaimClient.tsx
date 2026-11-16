@@ -10,7 +10,6 @@ import { useCallback, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { FormikHelpers, FormikProps } from 'formik';
 import { Button, Alert } from '@slacklineinternational/onsight/react';
-import Spinner from '@ui/Spinner';
 import type { ClaimStatus, FirstCategoryTableItem, RecordCategoryTableItem } from '@lib/relational-types';
 import { deleteDraft, saveClaim } from '../../actions';
 import type { ClaimFormValues, ClaimPath } from '../types';
@@ -110,11 +109,11 @@ export default function SubmitClaimClient({ recordCategories, firstCategories, i
     const isSavedDraft = !!form.values.entryId && (status ?? 'draft') === 'draft';
     return (
       <section className="p-4 sm:p-0 flex gap-3 flex-wrap">
-        <Button type="button" variant="secondary" disabled={busy} onClick={() => saveDraft(form)}>
-          {saving ? <Spinner size="small" /> : 'Save draft'}
+        <Button type="button" variant="secondary" loading={saving} disabled={busy && !saving} onClick={() => saveDraft(form)}>
+          {saving ? 'Saving…' : 'Save draft'}
         </Button>
-        <Button type="submit" variant="primary" disabled={busy}>
-          {form.isSubmitting ? <Spinner size="small" color="white" /> : 'Submit for review'}
+        <Button type="submit" variant="primary" loading={form.isSubmitting} disabled={busy && !form.isSubmitting}>
+          {form.isSubmitting ? 'Submitting…' : 'Submit for review'}
         </Button>
         <Button
           type="button"
@@ -127,8 +126,8 @@ export default function SubmitClaimClient({ recordCategories, firstCategories, i
           Return to My Claims
         </Button>
         {isSavedDraft && (
-          <Button type="button" variant="danger-secondary" disabled={busy || deleting} onClick={() => removeDraft(form.values.entryId!)}>
-            {deleting ? <Spinner size="small" /> : 'Delete draft'}
+          <Button type="button" variant="danger-secondary" loading={deleting} disabled={busy && !deleting} onClick={() => removeDraft(form.values.entryId!)}>
+            {deleting ? 'Deleting…' : 'Delete draft'}
           </Button>
         )}
       </section>

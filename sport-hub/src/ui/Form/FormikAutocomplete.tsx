@@ -6,7 +6,7 @@ import { BaseFormFieldProps } from '@ui/Form';
 import { Field } from 'formik';
 import styles from './styles.module.css';
 import React from 'react';
-import Spinner from '@ui/Spinner';
+import { Spinner } from '@slacklineinternational/onsight/react';
 
 export interface FormikAutocompleteProps extends BaseFormFieldProps<HTMLInputElement> {
   hideErrorMessage?: boolean;
@@ -80,7 +80,7 @@ export default function FormikAutocomplete({
         id={id}
         label={
           <div>
-            {isLoading && <Spinner size="small" className="inline-block mr-2" />}
+            {isLoading && <Spinner size="small" label="Loading options" className="inline-block mr-2" />}
             {label}
           </div>
         }

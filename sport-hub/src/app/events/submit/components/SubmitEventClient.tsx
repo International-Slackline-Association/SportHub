@@ -16,7 +16,6 @@ import { saveEvent } from '../actions';
 import { cn } from '@utils/cn';
 import TabbedContestForms from './contest-inputs/TabbedContestForms';
 import { ReviewEventForm } from './ReviewEventForm';
-import Spinner from '@ui/Spinner';
 
 type Step = "EVENT" | "CONTESTS" | "REVIEW";
 type SubmitIntent = 'draft' | 'pending';
@@ -112,7 +111,9 @@ export default function SubmitEventClient() {
           );
         }
 
-        const submitDisabled = isSubmitting || !isValid || !dirty;
+        const submitDisabled = !isValid || !dirty;
+        const savingDraft = isSubmitting && submitIntentRef.current === 'draft';
+        const submitting = isSubmitting && submitIntentRef.current === 'pending';
 
         return (
           <Form className={cn(styles.formWrapper, "stack")}>
@@ -206,20 +207,20 @@ export default function SubmitEventClient() {
                   <Button
                     type="submit"
                     variant="secondary"
-                    disabled={submitDisabled}
+                    loading={savingDraft}
+                    disabled={submitDisabled || submitting}
                     onClick={() => { submitIntentRef.current = 'draft'; }}
                   >
-                    {isSubmitting && submitIntentRef.current === 'draft' && <Spinner size="small" color="white" />}
-                    Save as Draft
+                    {savingDraft ? 'Saving…' : 'Save as Draft'}
                   </Button>
                   <Button
                     type="submit"
                     variant="primary"
-                    disabled={submitDisabled}
+                    loading={submitting}
+                    disabled={submitDisabled || savingDraft}
                     onClick={() => { submitIntentRef.current = 'pending'; }}
                   >
-                    {isSubmitting && submitIntentRef.current === 'pending' && <Spinner size="small" color="white" />}
-                    Submit for Approval
+                    {submitting ? 'Submitting…' : 'Submit for Approval'}
                   </Button>
                 </>
               )}

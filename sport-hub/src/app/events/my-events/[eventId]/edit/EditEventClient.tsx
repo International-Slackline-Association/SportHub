@@ -15,7 +15,6 @@ import { updateEvent } from '../../../submit/actions';
 import { cn } from '@utils/cn';
 import TabbedContestForms from '../../../submit/components/contest-inputs/TabbedContestForms';
 import { ReviewEventForm } from '../../../submit/components/ReviewEventForm';
-import Spinner from '@ui/Spinner';
 
 type Step = 'EVENT' | 'CONTESTS' | 'REVIEW';
 const stepOrder: Step[] = ['EVENT', 'CONTESTS', 'REVIEW'];
@@ -89,7 +88,7 @@ export default function EditEventClient({ eventId, initialValues, canEditOrganiz
           { id: 'REVIEW', label: 'Step 3: Review', disabled: isErrorEvent || isErrorContest },
         ];
 
-        const submitDisabled = isSubmitting || !isValid || !dirty;
+        const submitDisabled = !isValid || !dirty;
 
         return (
           <Form className={cn(styles.formWrapper, 'stack')}>
@@ -162,10 +161,10 @@ export default function EditEventClient({ eventId, initialValues, canEditOrganiz
                 <Button
                   type="submit"
                   variant="primary"
+                  loading={isSubmitting}
                   disabled={submitDisabled}
                 >
-                  {isSubmitting && <Spinner size="small" color="white" />}
-                  Save Changes
+                  {isSubmitting ? 'Saving…' : 'Save Changes'}
                 </Button>
               )}
             </div>

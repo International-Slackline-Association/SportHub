@@ -10,9 +10,8 @@ import { Discipline } from '@ui/Badge';
 import { getCountryByCode } from '@utils/countries';
 import { StackedMediaCard } from '@ui/StackedMediaCard';
 import pageStyles from '../../app/page.module.css';
-import { Alert, Button, EmptyState } from '@slacklineinternational/onsight/react';
+import { Alert, Button, EmptyState, Spinner } from '@slacklineinternational/onsight/react';
 import { useQuery } from "@tanstack/react-query";
-import Spinner from "@ui/Spinner";
 
 export interface FeaturedAthleteCardProps {
   athlete: AthleteRanking;
@@ -114,7 +113,7 @@ export const FeaturedAthleteSection = ({
   return (
     <section className={pageStyles.section}>
       <h2 className={pageStyles.sectionTitle}>
-        Featured Athletes {isLoading && <Spinner className="ml-4" />}
+        Featured Athletes {isLoading && <Spinner size="small" label="Loading featured athletes" className="ml-4" />}
       </h2>
       {isError && (
         <Alert variant="danger">{error?.message}</Alert>
