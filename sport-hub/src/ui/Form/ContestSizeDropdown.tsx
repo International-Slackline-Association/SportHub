@@ -65,7 +65,7 @@ export default function ContestSizeDropdown({
       </button>
 
       {isOpen && (
-        <div className={cn(styles.dropdown)}>
+        <div className={cn(styles.dropdown, styles.dropdownWide)}>
           <ul>
             {options.map((option) => (
               <li key={option.value} className={styles.dropdownItem}>

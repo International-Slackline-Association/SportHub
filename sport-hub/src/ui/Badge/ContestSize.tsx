@@ -53,13 +53,13 @@ const ContestSize = ({
   return (
     <span className={cn("cluster items-center gap-2", className)}>
       {showIcon && numTrophies > 0 && (
-        <span aria-hidden="true" className="inline-flex">
+        <span aria-hidden="true" className="inline-flex shrink-0">
           {Array(numTrophies).fill("").map((_, idx) => (
             <TrophyIcon key={`trophy-${idx}`} size={TROPHY_SIZES[size]} />
           ))}
         </span>
       )}
-      {snakeCaseToTitleCase(contestSizeOption.label)}
+      <span className="whitespace-nowrap">{snakeCaseToTitleCase(contestSizeOption.label)}</span>
     </span>
   );
 };
