@@ -2,8 +2,7 @@ import Link from 'next/link';
 import { formatISODay } from '@utils/dates';
 import type { Metadata } from 'next';
 import PageLayout from '@ui/PageLayout';
-import { Button } from '@slacklineinternational/onsight/react';
-import { Alert } from '@ui/Alert';
+import { Button, Alert } from '@slacklineinternational/onsight/react';
 import { auth } from '@lib/auth';
 import { getRecordCategories } from '@lib/records-service';
 import { entryHasCertificate, formatRecordValue, GENDER_TITLE_LABELS } from '@lib/records-logic';
@@ -88,7 +87,7 @@ export default async function MyClaimsPage({ searchParams }: Props) {
                     <div className="ml-auto"><ClaimStatusBadge status={entry.status} /></div>
                   </div>
                   {entry.reviewComment && ['changes_requested', 'rejected'].includes(entry.status) && (
-                    <Alert variant={entry.status === 'rejected' ? 'error' : 'warning'} size="SM">ISA: {entry.reviewComment}</Alert>
+                    <Alert variant={entry.status === 'rejected' ? 'danger' : 'warning'}>ISA: {entry.reviewComment}</Alert>
                   )}
                 </div>
               );

@@ -5,8 +5,7 @@ import { useState } from 'react';
 import { Form, Formik, type FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import { useRouter } from 'next/navigation';
-import { Button } from '@slacklineinternational/onsight/react';
-import { Alert } from '@ui/Alert';
+import { Button, Alert } from '@slacklineinternational/onsight/react';
 import { FormikNumberField, FormikSelectField, FormikSubmitButton, FormikTextAreaField, FormikTextField } from '@ui/Form';
 import type { FirstCategoryStatus, FirstCategoryTableItem } from '@lib/relational-types';
 import { createFirstCategory, updateFirstCategory } from '../actions';
@@ -69,7 +68,7 @@ export default function FirstCategoryForm({ category }: Props) {
           {category && <FormikNumberField id="first-order" name="order" label="Order" />}
         </div>
         {category && <FormikTextField id="first-comment" name="comment" label="Reason for the change" placeholder="Optional, shown in the history" />}
-        {error && <Alert>{error}</Alert>}
+        {error && <Alert variant="danger">{error}</Alert>}
         {saved && <Alert variant="success">Saved.</Alert>}
         <div className="flex gap-2">
           <FormikSubmitButton>{category ? 'Save changes' : 'Create'}</FormikSubmitButton>

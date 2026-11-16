@@ -1,4 +1,5 @@
 "use client";
+import { Alert } from '@slacklineinternational/onsight/react';
 
 import { createColumnHelper } from '@tanstack/react-table';
 import { AthleteRanking } from '@lib/data-services';
@@ -9,7 +10,6 @@ import Link from 'next/link';
 import { getIocCode } from '@utils/countries';
 import { useQuery } from '@tanstack/react-query';
 import Spinner from '@ui/Spinner';
-import { Alert } from '@ui/Alert';
 import tableStyles from '@ui/Table/styles.module.css';
 import { CountryFlag } from '@ui/CountryFlag';
 import { DisciplineDropdown, RankingsGenderDropdown } from '@ui/Form';
@@ -170,7 +170,7 @@ const RankingsTable = ({
         </div>
       )}
       {isError && (
-        <Alert variant="error">{error?.message}</Alert>
+        <Alert variant="danger">{error?.message}</Alert>
       )}
       {isSuccess && (
         <Table

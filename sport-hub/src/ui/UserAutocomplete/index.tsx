@@ -1,11 +1,11 @@
 'use client';
+import { Alert } from '@slacklineinternational/onsight/react';
 
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getIn, useFormikContext } from 'formik';
 import FormikAutocomplete from '@ui/Form/FormikAutocomplete';
 import { UserProfileRecord } from '@lib/relational-types';
-import { Alert } from '@ui/Alert';
 
 const createUserLabel = (user: UserProfileRecord) => `${user.name} ${user.surname} | ${user.userId}`.toLocaleLowerCase();
 
@@ -96,7 +96,7 @@ export default function UserAutocomplete<TFormValues>({
   }
 
   if (isError) {
-    return <Alert>Error loading users for autocomplete.</Alert>;
+    return <Alert variant="danger">Error loading users for autocomplete.</Alert>;
   }
 
   return (

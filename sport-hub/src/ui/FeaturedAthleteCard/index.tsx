@@ -10,10 +10,9 @@ import { Discipline } from '@ui/Badge';
 import { getCountryByCode } from '@utils/countries';
 import { StackedMediaCard } from '@ui/StackedMediaCard';
 import pageStyles from '../../app/page.module.css';
-import { Button } from '@slacklineinternational/onsight/react';
+import { Alert, Button, EmptyState } from '@slacklineinternational/onsight/react';
 import { useQuery } from "@tanstack/react-query";
 import Spinner from "@ui/Spinner";
-import { Alert } from "@ui/Alert";
 
 export interface FeaturedAthleteCardProps {
   athlete: AthleteRanking;
@@ -118,10 +117,12 @@ export const FeaturedAthleteSection = ({
         Featured Athletes {isLoading && <Spinner className="ml-4" />}
       </h2>
       {isError && (
-        <Alert variant="error">{error?.message}</Alert>
+        <Alert variant="danger">{error?.message}</Alert>
       )}
       {isSuccess && !athletes.length && (
-        <Alert variant="error">No featured athletes found</Alert>
+        <EmptyState title="No featured athletes" plain>
+          No athletes match this season and category.
+        </EmptyState>
       )}
       {isSuccess && athletes.length && (
         <CardGrid columns={athletes.length}>

@@ -4,8 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { FormikHelpers, FormikProps } from 'formik';
-import { Button } from '@slacklineinternational/onsight/react';
-import { Alert } from '@ui/Alert';
+import { Button, Alert } from '@slacklineinternational/onsight/react';
 import Spinner from '@ui/Spinner';
 import type { FirstCategoryTableItem, RecordCategoryTableItem } from '@lib/relational-types';
 import { adminUpdateEntry } from 'src/app/admin/records-review/actions';
@@ -70,11 +69,8 @@ export default function AdminEditForm({ kind, entryId, initialValues, recordCate
     <div className="stack gap-8">
       {errors.length > 0 && (
         <section className="p-4 sm:p-0">
-          <Alert>
-            <div className="stack gap-1">
-              <span>The changes could not be saved:</span>
-              <ul className="list-disc pl-5">{errors.map(e => <li key={e}>{e}</li>)}</ul>
-            </div>
+          <Alert variant="danger" title="The changes could not be saved">
+            <ul className="list-disc pl-5">{errors.map(e => <li key={e}>{e}</li>)}</ul>
           </Alert>
         </section>
       )}

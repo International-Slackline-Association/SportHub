@@ -9,8 +9,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { FormikHelpers, FormikProps } from 'formik';
-import { Button } from '@slacklineinternational/onsight/react';
-import { Alert } from '@ui/Alert';
+import { Button, Alert } from '@slacklineinternational/onsight/react';
 import Spinner from '@ui/Spinner';
 import type { ClaimStatus, FirstCategoryTableItem, RecordCategoryTableItem } from '@lib/relational-types';
 import { deleteDraft, saveClaim } from '../../actions';
@@ -147,11 +146,8 @@ export default function SubmitClaimClient({ recordCategories, firstCategories, i
       )}
       {errors.length > 0 && (
         <section className="p-4 sm:p-0">
-          <Alert variant="error">
-            <div className="stack gap-1">
-              <span>The claim could not be {intent === 'submit' ? 'submitted' : 'saved'}:</span>
-              <ul className="list-disc pl-5">{errors.map(e => <li key={e}>{e}</li>)}</ul>
-            </div>
+          <Alert variant="danger" title={`The claim could not be ${intent === 'submit' ? 'submitted' : 'saved'}`}>
+            <ul className="list-disc pl-5">{errors.map(e => <li key={e}>{e}</li>)}</ul>
           </Alert>
         </section>
       )}

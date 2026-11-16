@@ -4,8 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Form, Formik } from 'formik';
-import { Button } from '@slacklineinternational/onsight/react';
-import { Alert } from '@ui/Alert';
+import { Button, Alert } from '@slacklineinternational/onsight/react';
 import { FormikSelectField, FormikTextField } from '@ui/Form';
 import FormikAutocomplete from '@ui/Form/FormikAutocomplete';
 import UserAutocomplete from '@ui/UserAutocomplete';
@@ -88,7 +87,7 @@ function IssueCard({ issue, recordCategories, firstCategories }: { issue: Record
       {issue.entryId && !NOT_IMPORTED.includes(issue.reason) && (
         <Link href={`/admin/records-review/${issue.kind}/${issue.entryId}`} className="text-blue-600 hover:underline">Open the entry</Link>
       )}
-      {error && <Alert size="SM">{error}</Alert>}
+      {error && <Alert variant="danger">{error}</Alert>}
 
       {!issue.resolved && (
         <Formik initialValues={initialValues} onSubmit={submit}>
