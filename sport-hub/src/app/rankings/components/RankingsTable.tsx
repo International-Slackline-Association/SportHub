@@ -205,7 +205,7 @@ const RankingsTable = ({
               ...columns,
               columnHelper.accessor('points', {
                 header: () => (
-                  <div className={cn("flex gap-2", isDesktop ? "flex-row" : "flex-col")}>
+                  <div className={cn("flex items-center gap-2", isDesktop ? "flex-row" : "flex-col")}>
                     Points
                     <Tooltip
                       content="Ranking is determined by adding the top two awarded points from the contests athletes have participated in within the defined season."
