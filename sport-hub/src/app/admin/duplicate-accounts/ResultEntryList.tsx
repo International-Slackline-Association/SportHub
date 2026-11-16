@@ -1,5 +1,5 @@
+import { EmptyState } from '@slacklineinternational/onsight/react';
 import { AthleteParticipationRecord, ContestRecord, EventMetadataRecord } from "@lib/relational-types";
-import { Alert } from "@ui/Alert";
 import { DISCIPLINE_DATA, MAP_DISCIPLINE_ENUM_TO_NAME } from "@utils/consts";
 import { formatDate } from "@utils/dates";
 import { snakeCaseToTitleCase } from "@utils/strings";
@@ -79,7 +79,9 @@ export const ResultEntryList = ({
 
   if (!sortedParticipations.length && !sortedContests.length && !sortedEmbeddedContests.length) {
     return (
-      <Alert variant="info">No results found.</Alert>
+      <EmptyState title={`No ${title.toLowerCase()}`} plain>
+        Nothing is recorded for this account.
+      </EmptyState>
     )
   }
 

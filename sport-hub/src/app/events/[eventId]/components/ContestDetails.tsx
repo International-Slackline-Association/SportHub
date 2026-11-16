@@ -3,10 +3,9 @@ import Link from 'next/link';
 
 import { useState } from 'react';
 import ResultsTable from './ResultsTable';
-import { Alert } from '@ui/Alert';
 import { ContestTabGroup, type ContestJudge, type ContestResult, type ContestTabData } from './ContestTabGroup';
 import { ContestAbout } from './ContestAbout';
-import { Button } from '@slacklineinternational/onsight/react';
+import { Button, EmptyState } from '@slacklineinternational/onsight/react';
 
 export type { ContestJudge, ContestResult, ContestTabData };
 
@@ -29,7 +28,11 @@ export default function ContestDetails({
   const contest = contests[activeTab] ?? contests[0];
 
   if (!contest) {
-    return <Alert variant="info">No contests available for this event.</Alert>;
+    return (
+      <EmptyState title="No contests for this event">
+        Contests added to this event will show up here.
+      </EmptyState>
+    );
   }
 
   const emailHref = `mailto:info@slacklineinternational.org`
@@ -86,7 +89,9 @@ export default function ContestDetails({
           }))}
         />
       ) : (
-        <Alert variant="info">No results available at this time.</Alert>
+        <EmptyState title="No results yet" titleAs="h4" plain>
+          Results show up here once they are recorded.
+        </EmptyState>
       )}
     </section>
   );

@@ -1,4 +1,5 @@
 "use client"
+import { Alert } from '@slacklineinternational/onsight/react';
 
 import { createColumnHelper } from '@tanstack/react-table';
 import Table, { RowClassContext } from '@ui/Table';
@@ -10,7 +11,6 @@ import { CircleFlag } from 'react-circle-flags';
 import { COUNTRIES, getIocCode, getIso2FromIoc } from '@utils/countries';
 import { dateFilterFn } from '@ui/Table/TableFilterFields';
 import Spinner from '@ui/Spinner';
-import { Alert } from '@ui/Alert';
 import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import { CountryFlag } from '@ui/CountryFlag';
 import styles from './styles.module.css';
@@ -260,7 +260,7 @@ const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
         </div>
       )}
       {isError && (
-        <Alert>Error loading events: {error?.message}</Alert>
+        <Alert variant="danger">Error loading events: {error?.message}</Alert>
       )}
       {isSuccess && (
         <Table

@@ -8,10 +8,9 @@ import { Results } from './Results';
 import { TabGroup } from '@ui/Tab';
 import { FormikErrors, getIn, useFormikContext } from 'formik';
 import { useState } from 'react';
-import { Button } from '@slacklineinternational/onsight/react';
+import { Button, Alert } from '@slacklineinternational/onsight/react';
 import sharedStyles from '../styles.module.css';
 import styles from './styles.module.css';
-import { Alert } from '@ui/Alert';
 import { getContestNameFromForm } from './TabbedContestForms';
 
 type Props = {
@@ -90,7 +89,7 @@ export default function ContestForm({
     <>
       <section className={cn("stack", "gap-4", "my-4", sharedStyles.sectionContent)}>
         {contestIsTouched && contestHasErrors && (
-          <Alert>{errorMessage}</Alert>
+          <Alert variant="danger">{errorMessage}</Alert>
         )}
         <div className={cn(styles.contestFormHeader)}>
           <h3>{getContestNameFromForm(values, contestIdx)}</h3>

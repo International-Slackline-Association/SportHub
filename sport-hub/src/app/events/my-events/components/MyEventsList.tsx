@@ -1,18 +1,17 @@
-import { Alert } from "@ui/Alert";
 import { EventStatus } from "../page";
 import { COUNTRIES } from "@utils/countries";
 import { formatDate, formatDateRangeShort } from "@utils/dates";
 import Link from "next/link";
-import { Badge } from "@slacklineinternational/onsight/react";
+import { Badge, EmptyState } from "@slacklineinternational/onsight/react";
 import { Discipline } from "@ui/Badge";
 import { MyEventActions, statusColor } from "./MyEventsTable";
 
 export const MyEventsList = ({ events }: {events: Record<string, unknown>[]}) => {
   if (events.length === 0) {
     return (
-      <Alert variant="info">
-        You haven&apos;t submitted any events yet.
-      </Alert>
+      <EmptyState title="No events yet">
+        Events you submit show up here.
+      </EmptyState>
     );
   }
 

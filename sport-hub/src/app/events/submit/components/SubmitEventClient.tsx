@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { Formik, Form, getIn } from 'formik';
 import Link from 'next/link';
 import { TabGroup } from '@ui/Tab';
-import { Button } from '@slacklineinternational/onsight/react';
+import { Button, Alert } from '@slacklineinternational/onsight/react';
 import EventForm from './event-inputs/EventForm';
 import {
   initialEventValues,
@@ -15,7 +15,6 @@ import styles from './styles.module.css';
 import { saveEvent } from '../actions';
 import { cn } from '@utils/cn';
 import TabbedContestForms from './contest-inputs/TabbedContestForms';
-import { Alert } from '../../../../ui/Alert';
 import { ReviewEventForm } from './ReviewEventForm';
 import Spinner from '@ui/Spinner';
 
@@ -136,11 +135,8 @@ export default function SubmitEventClient() {
 
             {/*  Validation */}
             {hasValidated && !isValid && (
-              <Alert
-                className={cn(styles.borderTop, "justify-end", "gap-1", "pb-4")}
-                size="SM"
-              >
-                Please review errors before proceeding.
+              <Alert variant="danger">
+                Please review the fields marked on this step before continuing.
               </Alert>
             )}
 

@@ -1,4 +1,5 @@
 'use client';
+import { Alert } from '@slacklineinternational/onsight/react';
 
 import { useState } from 'react';
 import { useFormikContext } from 'formik';
@@ -15,7 +16,6 @@ import { ChevronIcon } from '@ui/Icons';
 import EventAutocomplete from './EventAutocomplete';
 import YouTubePreviewTextField from './YouTubePreviewTextField'
 import FileInputField from './FileInputField';
-import { Alert } from '@ui/Alert';
 import { LinkFieldArray } from '@ui/Form';
 
 interface CollapsibleSectionProps {
@@ -61,7 +61,7 @@ export default function EventForm() {
   return (
     <div className={styles.eventForm}>
       {isError && (
-        <Alert>
+        <Alert variant="danger">
           Event form has errors, please review.
         </Alert>
       )}

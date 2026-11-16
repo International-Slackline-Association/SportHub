@@ -7,8 +7,7 @@
 
 import { useEffect } from 'react';
 import { getIn, FieldArray, useFormikContext } from 'formik';
-import { Button } from '@slacklineinternational/onsight/react';
-import { Alert } from '@ui/Alert';
+import { Button, Alert } from '@slacklineinternational/onsight/react';
 import { FormikCheckboxField, FormikTextField } from '@ui/Form';
 import { ETHICS_STATEMENT, MAX_ATHLETES, MAX_WITNESSES } from '@lib/records-rules';
 import type { ClaimFormValues } from '../types';
@@ -155,7 +154,7 @@ export function ValidationSummary() {
   if (submitCount === 0 || isValid) return null;
   return (
     <section className="p-4 sm:p-0">
-      <Alert variant="error">Some fields need attention. They are marked above.</Alert>
+      <Alert variant="danger">Some fields need attention. They are marked above.</Alert>
     </section>
   );
 }

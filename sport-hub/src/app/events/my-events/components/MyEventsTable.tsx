@@ -3,10 +3,9 @@ import { submitEventForApproval, withdrawEventFromApproval } from "../../submit/
 import { COUNTRIES } from "@utils/countries";
 import tableStyles from '@ui/Table/styles.module.css';
 import { formatDate, formatDateRangeShort } from "@utils/dates";
-import { Badge, Button, type BadgeCategoryColor, type BadgeStatusColor } from '@slacklineinternational/onsight/react';
+import { Badge, Button, EmptyState, type BadgeCategoryColor, type BadgeStatusColor } from '@slacklineinternational/onsight/react';
 import { Discipline } from "@ui/Badge";
 import { EventStatus } from "../page";
-import { Alert } from "@ui/Alert";
 
 export const statusColor: Record<EventStatus, BadgeCategoryColor | BadgeStatusColor> = {
   draft: "neutral",
@@ -80,9 +79,9 @@ export const MyEventActions = ({ eventId, status }: { eventId: string, status: E
 export const MyEventsTable = ({ events }: {events: Record<string, unknown>[]}) => {
   if (events.length === 0) {
     return (
-      <Alert variant="info">
-        You haven&apos;t submitted any events yet.
-      </Alert>
+      <EmptyState title="No events yet">
+        Events you submit show up here.
+      </EmptyState>
     );
   }
   return (

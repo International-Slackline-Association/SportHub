@@ -3,8 +3,7 @@ import Link from 'next/link';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@slacklineinternational/onsight/react';
-import { Alert } from '@ui/Alert';
+import { Button, Alert } from '@slacklineinternational/onsight/react';
 import type { ClaimStatus, RecordCategoryTableItem, FirstCategoryTableItem } from '@lib/relational-types';
 import { OTHER_REJECTION_REASON, REJECTION_REASONS, type RejectionCase } from '@lib/records-rules';
 import {
@@ -89,7 +88,7 @@ export default function ReviewActions(props: Props) {
 
   return (
     <div className="stack gap-4">
-      {error && <Alert>{error}</Alert>}
+      {error && <Alert variant="danger">{error}</Alert>}
       {notice && <Alert variant="warning">{notice}</Alert>}
 
       {status === 'pending' && (

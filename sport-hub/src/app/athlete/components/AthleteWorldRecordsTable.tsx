@@ -1,3 +1,4 @@
+import { EmptyState } from '@slacklineinternational/onsight/react';
 import { createColumnHelper } from '@tanstack/react-table';
 import { WorldRecord } from '@lib/data-services';
 import Table from '@ui/Table';
@@ -7,7 +8,6 @@ import {
   linkCellFormatter,
   TitleBadge,
 } from 'src/app/world_records/components/cellFormatters';
-import { Alert } from '@ui/Alert';
 import { AdminEditButton, useCanEditRecords } from 'src/app/world_records/components/AdminEditButton';
 
 const columnHelper = createColumnHelper<WorldRecord>();
@@ -57,7 +57,7 @@ type AthleteWorldRecordsTableProps = {
 const AthleteWorldRecordsTable = ({ worldRecords }: AthleteWorldRecordsTableProps) => {
   const canEditRecords = useCanEditRecords();
   if (worldRecords.length === 0) {
-    return <Alert variant="info">No world records found for this athlete.</Alert>;
+    return <EmptyState title="No world records" plain>This athlete has no world records.</EmptyState>;
   }
   // Certificates are not listed on the public profile; hide Links when no entry has any.
   const hasLinks = worldRecords.some(entry => entry.links.some(Boolean));
