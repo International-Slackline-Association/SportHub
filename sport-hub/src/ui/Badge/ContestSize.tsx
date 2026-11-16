@@ -1,8 +1,8 @@
-import { Badge } from "@slacklineinternational/onsight/react";
 import { TrophyIcon } from "@ui/Icons";
 import { snakeCaseToTitleCase } from "@utils/strings";
 import { contestSizeOptions } from "@ui/Form/commonOptions";
 import { MAP_CONTEST_TYPE_ENUM_TO_NAME } from "@utils/consts";
+import { cn } from "@utils/cn";
 
 const getContestSizeOption = (
   value: number | string | null | undefined,
@@ -40,7 +40,6 @@ const ContestSize = ({
   showIcon = true,
   size = "md",
   singleIcon = false,
-  variant = "bold",
   value,
 }: ContestSizeProps) => {
   const contestSizeOption = getContestSizeOption(value);
@@ -52,7 +51,7 @@ const ContestSize = ({
   const numTrophies = singleIcon ? 1 : getContestSizeTrophyCount(contestSizeOption.value);
 
   return (
-    <Badge color="neutral" variant={variant === "normal" ? "soft" : "outline"} className={className}>
+    <span className={cn("cluster items-center gap-2", className)}>
       {showIcon && numTrophies > 0 && (
         <span aria-hidden="true" className="inline-flex">
           {Array(numTrophies).fill("").map((_, idx) => (
@@ -61,7 +60,7 @@ const ContestSize = ({
         </span>
       )}
       {snakeCaseToTitleCase(contestSizeOption.label)}
-    </Badge>
+    </span>
   );
 };
 

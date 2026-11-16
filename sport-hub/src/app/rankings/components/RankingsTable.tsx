@@ -92,7 +92,7 @@ const columns = [
     header: 'Gender',
     enableSorting: false,
     cell: info => (
-      <Gender value={info.getValue()} variant="outline" showIcon={false} />
+      <Gender value={info.getValue()} />
     ),
   }),
   columnHelper.accessor((row: AthleteRanking) => getIocCode(row.country), {
