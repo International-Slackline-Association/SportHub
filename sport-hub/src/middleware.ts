@@ -72,16 +72,22 @@ export default auth((req) => {
   return NextResponse.next()
 })
 
+// Run only on the protected routes above. Auth.js re-issues the session
+// cookie (Set-Cookie) on every request the middleware handles, and
+// prerendered pages (/rankings, /faq, ...) are sent with
+// "Cache-Control: s-maxage=31536000". A shared cache (Amplify/CloudFront)
+// could then store one user's session cookie with a public page and hand it
+// to other visitors. Public pages read the session client-side through
+// /api/auth/session, which is never cached.
+// Keep this list in sync with PROTECTED_ROUTES.
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api/auth (auth API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - static (public static files)
-     */
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|static).*)',
+    '/dashboard/:path*',
+    '/admin/:path*',
+    '/events/submit/:path*',
+    '/events/my-events/:path*',
+    '/api/admin/:path*',
+    '/world_records/claim/:path*',
+    '/world_records/my-claims/:path*',
   ],
 }
