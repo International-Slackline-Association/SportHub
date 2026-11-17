@@ -265,7 +265,7 @@ export default function LocalTestInterface({ envReady, initialStats }: LocalTest
           <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <a
-              href="/admin/users-management"
+              href="/admin/user-management"
               className="block bg-indigo-100 p-4 rounded-lg hover:bg-indigo-200 transition-colors"
             >
               <h3 className="font-semibold">User Management</h3>

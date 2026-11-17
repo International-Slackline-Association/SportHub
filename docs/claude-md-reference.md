@@ -315,7 +315,7 @@ open http://localhost:3000/test_LOCAL
 
 ## Test Pages
 - `/test_LOCAL` — DynamoDB test UI (setup, seed, query, stats)
-- `/admin/users-management` — User management (list, edit, set roles)
+- `/admin/user-management` — User management (list, edit, set roles)
 - `/test_CSR` — Client-side rendering tests
 - `/demo` — UI component showcase
 - All test pages restricted to `NODE_ENV=development` via `canAccessTestAPI()`
