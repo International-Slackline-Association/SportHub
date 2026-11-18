@@ -56,9 +56,9 @@
     "records:import:aws:prod:execute": "env $(grep -v '^#' .env.production | xargs) tsx src/lib/migrations/import-records-from-sheet.ts --execute --report records-import-report.md"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.821.0",
-    "@aws-sdk/client-s3": "^3.1071.0",
-    "@aws-sdk/lib-dynamodb": "^3.821.0",
+    "@aws-sdk/client-dynamodb": "^3.1171.0",
+    "@aws-sdk/client-s3": "^3.1171.0",
+    "@aws-sdk/lib-dynamodb": "^3.1171.0",
     "@googleapis/sheets": "^13.0.1",
     "@pdf-lib/fontkit": "1.1.1",
     "@tanstack/react-query": "^5.90.9",
@@ -69,11 +69,11 @@
     "clsx": "^2.1.1",
     "formik": "^2.4.6",
     "google": "link:next/font/google",
-    "next": "15.3",
-    "next-auth": "5.0.0-beta.30",
-    "nodemailer": "7.0.9",
+    "next": "~15.5.29",
+    "next-auth": "5.0.0-beta.32",
+    "nodemailer": "10.6.0",
     "pdf-lib": "1.17.1",
-    "postcss": "^8.5.3",
+    "postcss": "^8.5.33",
     "qrcode": "1.5.4",
     "react": "^19.0.0",
     "react-circle-flags": "^0.0.23",
@@ -87,13 +87,13 @@
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4.0.14",
     "@types/node": "^20",
-    "@types/nodemailer": "7.0.2",
+    "@types/nodemailer": "8.0.2",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "dotenv": "^17.2.3",
     "eslint": "^9",
-    "eslint-config-next": "15.3.2",
+    "eslint-config-next": "15.5.29",
     "tailwindcss": "^4.0.14",
     "tsx": "^4.7.1",
     "typescript": "^5"
@@ -101,6 +101,24 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "sharp"
-    ]
+    ],
+    "overrides": {
+      "lodash": "^4.18.1",
+      "lodash-es": "^4.18.1",
+      "postcss": "^8.5.33",
+      "browserslist": "^4.29.6",
+      "qs": "^6.17.1",
+      "fast-xml-parser@4": "^4.5.5",
+      "brace-expansion@1": "^1.1.22",
+      "brace-expansion@2": "^2.1.8",
+      "minimatch@3": "^3.1.5",
+      "minimatch@9": "^9.0.9",
+      "picomatch@2": "^2.3.2",
+      "picomatch@4": "^4.0.7",
+      "js-yaml@4": "^4.3.2",
+      "flatted": "^3.4.4",
+      "ajv@6": "^6.15.0",
+      "@humanfs/node": "^0.16.8"
+    }
   }
 }
