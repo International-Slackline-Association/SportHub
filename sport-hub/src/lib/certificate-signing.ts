@@ -76,10 +76,19 @@ export interface SignConfig {
   clientSecret: string;
 }
 
+let warnedHalfConfigured = false;
+
 export function signConfigFromEnv(env: Record<string, string | undefined> = process.env): SignConfig | undefined {
   const clientId = env.ISA_TOOLS_CLIENT_ID?.trim();
   const clientSecret = env.ISA_TOOLS_CLIENT_SECRET?.trim();
-  if (!clientId || !clientSecret) return undefined;
+  if (!clientId || !clientSecret) {
+    if ((clientId || clientSecret) && !warnedHalfConfigured) {
+      // One of the two set means signing was meant to be on: say so instead of silently using the live link
+      warnedHalfConfigured = true;
+      console.warn(`Certificate signing is off: ${clientId ? 'ISA_TOOLS_CLIENT_SECRET' : 'ISA_TOOLS_CLIENT_ID'} is not set, so QR codes link to the live certificate`);
+    }
+    return undefined;
+  }
   return {
     clientId,
     clientSecret,
