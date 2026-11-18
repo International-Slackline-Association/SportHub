@@ -54,7 +54,7 @@ interface TextFile {
 }
 
 interface EvidenceBackend {
-  findOrCreateFolder(entryId: string, name: string): Promise<string>;
+  findOrCreateFolder(entryId: string): Promise<string>;
   listFiles(folderId: string): Promise<StoredFile[]>;
   createUploadSession(folderId: string, file: { name: string; mimeType: string; size: number; description: string }, origin: string): Promise<string>;
   writeTextFile(folderId: string, file: TextFile, existingId?: string): Promise<string>;
@@ -140,16 +140,15 @@ const multipartBody = (metadata: object, file: TextFile) => {
 };
 
 const driveBackend: EvidenceBackend = {
-  async findOrCreateFolder(entryId, name) {
-    // Older folders are named after the entry id; newer ones carry it in appProperties
-    const q = `(name = '${entryId}' or appProperties has { key='entryId' and value='${entryId}' }) and '${parentFolderId()}' in parents and mimeType = '${FOLDER_MIME}' and trashed = false`;
+  async findOrCreateFolder(entryId) {
+    const q = `name = '${entryId}' and '${parentFolderId()}' in parents and mimeType = '${FOLDER_MIME}' and trashed = false`;
     const found = await driveFetch(`${DRIVE_API}?${withDrives({ q, fields: 'files(id)', includeItemsFromAllDrives: 'true' })}`);
     const { files } = await found.json() as { files: { id: string }[] };
     if (files[0]) return files[0].id;
     const created = await driveFetch(`${DRIVE_API}?${withDrives({ fields: 'id' })}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, mimeType: FOLDER_MIME, parents: [parentFolderId()], appProperties: { sporthub: 'claim', entryId } }),
+      body: JSON.stringify({ name: entryId, mimeType: FOLDER_MIME, parents: [parentFolderId()], appProperties: { sporthub: 'claim' } }),
     });
     return (await created.json() as { id: string }).id;
   },
@@ -253,7 +252,6 @@ const localFileUrl = (fileId: string) => `/api/records-evidence/local?file=${enc
 
 const localBackend: EvidenceBackend = {
   async findOrCreateFolder(entryId) {
-    // Local folders keep the entry id as their name
     const folderId = `${LOCAL_PREFIX}${entryId}`;
     if (!SAFE_ID.test(folderId)) throw new Error('Invalid entry id');
     await fs.mkdir(path.join(LOCAL_ROOT, folderId), { recursive: true });
@@ -344,21 +342,11 @@ export const evidenceFolderUrl = (folderId?: string) => {
 // OPERATIONS
 // ============================================================================
 
-type FolderEntry = Pick<WorldRecordOrFirstTableItem, 'entryId' | 'evidenceFolderId' | 'date' | 'categoryName' | 'athletes'>;
-
-/** Readable folder name, e.g. "claim-first-12 - 2026-11-18 - Category - Athlete A, Athlete B". */
-export const evidenceFolderName = (entry: FolderEntry) =>
-  [entry.entryId, entry.date, entry.categoryName || 'No category yet', entry.athletes.map(a => a.name).filter(Boolean).join(', ')]
-    .filter(Boolean)
-    .join(' - ')
-    .replace(/[\\/]/g, '-')
-    .slice(0, 200);
-
 /** Folder for a claim's evidence, created on first use. */
-export async function ensureEvidenceFolder(entry: FolderEntry): Promise<string> {
+export async function ensureEvidenceFolder(entry: Pick<WorldRecordOrFirstTableItem, 'entryId' | 'evidenceFolderId'>): Promise<string> {
   const store = backend();
   if (!store) throw new Error('File uploads are not set up');
-  return entry.evidenceFolderId ?? store.findOrCreateFolder(entry.entryId, evidenceFolderName(entry));
+  return entry.evidenceFolderId ?? store.findOrCreateFolder(entry.entryId);
 }
 
 /** Upload address for one file; the browser sends the file there with a PUT. */
@@ -449,8 +437,6 @@ export async function syncEvidence(
   if (items.length === 0 && !entry.evidenceFolderId) return { evidence: [], errors };
 
   const folderId = await ensureEvidenceFolder(entry);
-  // The name follows the claim's date, category and athletes as they change
-  await store.updateMetadata(folderId, { name: evidenceFolderName(entry) });
   const files = await store.listFiles(folderId);
   const byId = new Map(files.map(f => [f.id, f]));
   const previousLinks = new Map(entry.evidence.filter(e => e.type === 'link' && e.driveFileId).map(e => [e.driveFileId!, e]));
