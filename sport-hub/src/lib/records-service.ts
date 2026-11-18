@@ -10,6 +10,7 @@
 import { PutCommand, QueryCommand, UpdateCommand, type QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 import { formatISODay } from '@utils/dates';
 import { ddbClient, dynamodb, getTableName, RECORDS_TABLE, USERS_TABLE } from './dynamodb';
+import type { StoredSignature } from './certificate-signing';
 import type {
   AthleteRecordOrFirstLinkTableItem,
   ClaimStatus,
@@ -642,4 +643,26 @@ export async function getPublicEntry(kind: EntryKind, entryId: string): Promise<
   if (!category) return null;
   const visible = inCategory.filter(e => isPublicStatus(e.status));
   return toWorldRecords([category], visible, await getProfileCountries(visible)).find(row => row.entryId === entryId) ?? null;
+}
+
+// ---- Certificate signatures (signed "Scan to verify" QR codes, see certificate-signing.ts) ----
+
+const certificateSignatureKey = (kind: 'record' | 'first', entryId: string, athleteIndex: number) => ({
+  pk: 'CertificateSignature',
+  sortKey: `CertificateSignature:${kind}:${entryId}:${athleteIndex}`,
+});
+
+/** The stored isa-tools signature for one athlete's certificate, if any. */
+export async function getCertificateSignature(kind: 'record' | 'first', entryId: string, athleteIndex: number): Promise<StoredSignature | undefined> {
+  const item = await dynamodb.getItem(RECORDS_TABLE, certificateSignatureKey(kind, entryId, athleteIndex));
+  if (!item) return undefined;
+  return { statement: String(item.statement ?? ''), verificationUrl: String(item.verificationUrl ?? ''), expiresAt: String(item.expiresAt ?? '') };
+}
+
+export async function saveCertificateSignature(kind: 'record' | 'first', entryId: string, athleteIndex: number, signature: StoredSignature): Promise<void> {
+  await dynamodb.putItem(RECORDS_TABLE, {
+    ...certificateSignatureKey(kind, entryId, athleteIndex),
+    ...signature,
+    signedAt: new Date().toISOString(),
+  });
 }
