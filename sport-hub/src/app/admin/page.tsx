@@ -97,7 +97,7 @@ export default async function AdminPage() {
 
           {can('users:manage') && (
             <Link
-              href="/test_SSR"
+              href="/admin/user-management"
               className="block p-6 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
             >
               <h3 className="text-lg font-semibold text-green-900 mb-2">Manage Users</h3>
