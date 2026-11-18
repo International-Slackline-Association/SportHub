@@ -16,6 +16,9 @@ export interface EventFormValues {
   profileUrl?: string;
   thumbnailUrl?: string;
 
+  // Organizer (editable by admins only; set from the event's createdBy/createdByName)
+  organizer?: { id: string; name: string };
+
   // General Information
   eventName: string;
   city: string;

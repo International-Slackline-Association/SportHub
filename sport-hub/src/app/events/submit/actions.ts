@@ -24,6 +24,7 @@ import { EventMetadataRecord, ContestRecord } from '@lib/relational-types';
 import { EventStatus } from '../my-events/page';
 import { roleHasPermission } from 'src/types/rbac';
 import { notifyEventManagers } from '@lib/events-notifications';
+import { applyOrganizerChange } from '@lib/event-organizer';
 
 /**
  * Save event to DynamoDB
@@ -259,12 +260,13 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
       }
     }
 
-    const { event, contests } = values;
+    const { event: { organizer, ...event }, contests } = values;
+    const isAdmin = roleHasPermission(session?.user?.roles, 'events:edit');
 
     // Strip assembled contests field before writing Metadata record
     const { contests: previousContests = [], ...existingMetadata } = existingEvent;
     const updatedEvent = {
-      ...existingMetadata,
+      ...applyOrganizerChange(existingMetadata, organizer, isAdmin),
       ...event,
       disciplines: [...new Set(contests.map(c => c.discipline))],
       updatedAt: new Date().toISOString(),

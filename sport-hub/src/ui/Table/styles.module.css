@@ -65,6 +65,14 @@
 }
 
 
+.clickableRow {
+  cursor: pointer;
+}
+
+.clickableRow:hover td {
+  background: var(--color-neutral-50);
+}
+
 .tableWrapper {
   overflow-x: auto;
   /* Ensure table wrapper can scroll horizontally when needed */

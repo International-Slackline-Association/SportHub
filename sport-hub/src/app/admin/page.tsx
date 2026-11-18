@@ -71,6 +71,18 @@ export default async function AdminPage() {
             </Link>
           )}
 
+          {can('records:manage') && (
+            <Link
+              href="/admin/records-all"
+              className="block p-6 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+            >
+              <h3 className="text-lg font-semibold text-amber-900 mb-2">All Records and Firsts</h3>
+              <p className="text-sm text-amber-700">
+                Every record and first in the workflow, whatever its status: draft, under review, changes requested, published, former, rejected or voided
+              </p>
+            </Link>
+          )}
+
           {can('users:manage') && (
             <Link
               href="/admin/duplicate-accounts"
@@ -85,7 +97,7 @@ export default async function AdminPage() {
 
           {can('users:manage') && (
             <Link
-              href="/test_SSR"
+              href="/admin/user-management"
               className="block p-6 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
             >
               <h3 className="text-lg font-semibold text-green-900 mb-2">Manage Users</h3>

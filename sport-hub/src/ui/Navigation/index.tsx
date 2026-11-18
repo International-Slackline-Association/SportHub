@@ -71,8 +71,8 @@ const Navigation = () => {
 
   return (
     <div className={cn(styles.navbar, "cluster", "clearfix", "inter-500")}>
-      <Link href="/" aria-label="SportHub home" className="flex items-center">
-        <SlacklineSportHubIcon />
+      <Link href="/" aria-label="SportHub home" className={styles.logoLink}>
+        <SlacklineSportHubIcon className={styles.logoSvg} />
       </Link>
       {!isHydrated ? (
         // Show mobile layout during SSR to prevent hydration mismatch

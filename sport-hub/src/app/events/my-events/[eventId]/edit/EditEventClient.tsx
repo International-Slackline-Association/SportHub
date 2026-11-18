@@ -24,9 +24,10 @@ const stepOrder: Step[] = ['EVENT', 'CONTESTS', 'REVIEW'];
 type Props = {
   eventId: string;
   initialValues: EventSubmissionFormValues;
+  canEditOrganizer?: boolean;
 };
 
-export default function EditEventClient({ eventId, initialValues }: Props) {
+export default function EditEventClient({ eventId, initialValues, canEditOrganizer = false }: Props) {
   const [currentStep, setCurrentStep] = useState(0);
   const [saved, setSaved] = useState(false);
   const [hasValidated, setHasValidated] = useState(false);
@@ -101,7 +102,7 @@ export default function EditEventClient({ eventId, initialValues }: Props) {
               variant="primary"
             />
 
-            {activeTab === 'EVENT' && <EventForm />}
+            {activeTab === 'EVENT' && <EventForm canEditOrganizer={canEditOrganizer} />}
             {activeTab === 'CONTESTS' && <TabbedContestForms />}
             {activeTab === 'REVIEW' && <ReviewEventForm />}
 
