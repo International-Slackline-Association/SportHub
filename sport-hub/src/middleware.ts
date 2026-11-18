@@ -1,4 +1,5 @@
 import { auth } from "@lib/auth"
+import type { NextAuthRequest } from "next-auth"
 import { NextResponse } from "next/server"
 import { isGeneralAdmin, roleHasPermission, type Permission, type UserSubType } from "./types/rbac"
 
@@ -23,7 +24,7 @@ const PROTECTED_ROUTES: Array<{
   { pattern: '/world_records/my-claims', requireAuth: true },
 ];
 
-export default auth((req) => {
+function guard(req: NextAuthRequest): NextResponse {
   const { pathname } = req.nextUrl
   const isLoggedIn = !!req.auth
   const userRoles = req.auth?.user?.roles ?? []
@@ -70,6 +71,15 @@ export default auth((req) => {
   }
 
   return NextResponse.next()
+}
+
+// Every response from here may carry auth cookies (the refreshed session, or
+// the csrf and callback-url cookies on redirects), so no shared cache may
+// store it.
+export default auth((req) => {
+  const res = guard(req)
+  res.headers.set('Cache-Control', 'private, no-store')
+  return res
 })
 
 // Run only on the protected routes above. Auth.js re-issues the session
