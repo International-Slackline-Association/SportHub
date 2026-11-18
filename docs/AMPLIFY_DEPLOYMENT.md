@@ -84,6 +84,8 @@ AUTH_URL=https://df-dev.d2c5lq1ojcfw0k.amplifyapp.com
 | `AUTH_URL` | `https://df-dev.d2c5lq1ojcfw0k.amplifyapp.com` | Base URL for auth |
 | `SITE_URL` | e.g. `https://slacklinesport.org` | Public base URL for absolute links in emails and the "Scan to verify" QR code on record/first certificates (`src/lib/mailer.ts` `siteUrl`). Falls back to `AUTH_URL`, then `http://localhost:3000`; set it on every deployed branch so certificates don't point to localhost. |
 | `DB_REGION` | e.g. `eu-central-1` | AWS region for the DynamoDB tables (`src/lib/dynamodb.ts`). **Set this explicitly per branch** — do not rely on `AWS_REGION` here (see note below); if unset, DynamoDB access silently falls back to `AWS_REGION`, then the hardcoded `us-east-2` default. |
+| `RECORDS_EVIDENCE_FOLDER_ID` | Drive folder id | Parent folder for claim evidence (`src/lib/records-evidence.ts`). The "Upload a file" button on the claim form shows only when this and a service account (below) are set. The folder must be on a Shared Drive with the service account as Content manager. |
+| `GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL` / `GOOGLE_DRIVE_SERVICE_ACCOUNT_PRIVATE_KEY` | optional | Own service account for evidence uploads, in a Google Cloud project with the **Google Drive API** enabled. Paste the key like `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` (with `\n`). Without them, uploads use `GOOGLE_SERVICE_ACCOUNT_*` (whose project must then have the Drive API enabled). Check with `/api/debug-sheets`. |
 
 #### ✅ Keep in Secrets (encrypted)
 

@@ -27,6 +27,8 @@ applications:
             - env | grep -e GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY >> .env.production
             - env | grep -e RECORDS_EVIDENCE_FOLDER_ID >> .env.production || true
             - env | grep -e GOOGLE_DRIVE_IMPERSONATE_USER >> .env.production || true
+            - env | grep -e ^GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL= >> .env.production || true
+            - env | grep -e ^GOOGLE_DRIVE_SERVICE_ACCOUNT_PRIVATE_KEY= >> .env.production || true
             - env | grep -e ^SMTP_HOST= >> .env.production || true
             - env | grep -e ^SMTP_PORT= >> .env.production || true
             - env | grep -e ^SMTP_USER= >> .env.production || true
