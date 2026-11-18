@@ -48,8 +48,20 @@ type TableProps<TData,> = {
   options: Partial<TableOptions<TData>>;
   title?: string;
   rowClassName?: (context: RowClassContext<TData>) => string | undefined;
-  /** Makes each row clickable (mouse, Enter or Space), e.g. to pick a row. */
-  onRowClick?: (row: Row<TData>) => void;
+  /**
+   * Makes each row clickable (mouse, Enter or Space), e.g. to pick or open a row.
+   * Clicks on links, buttons and form fields inside the row keep their own behaviour.
+   */
+  onRowClick?: (row: Row<TData>, event: React.MouseEvent | React.KeyboardEvent) => void;
+};
+
+/** Elements inside a clickable row that handle clicks themselves. */
+const INTERACTIVE_SELECTOR = 'a, button, input, select, textarea, label, [role="button"]';
+
+const isFromInteractiveChild = (event: React.SyntheticEvent) => {
+  const target = event.target as HTMLElement;
+  const interactive = target.closest(INTERACTIVE_SELECTOR);
+  return interactive !== null && event.currentTarget.contains(interactive);
 };
 
 const Table = <TData,>({ extraFilters, options, title, rowClassName, onRowClick }: TableProps<TData>) => {
@@ -155,9 +167,12 @@ const Table = <TData,>({ extraFilters, options, title, rowClassName, onRowClick 
                     onRowClick && styles.clickableRow,
                   ].filter(Boolean).join(' ') || undefined}
                   {...(onRowClick && {
-                    onClick: () => onRowClick(row),
+                    onClick: (e: React.MouseEvent) => {
+                      if (!isFromInteractiveChild(e)) onRowClick(row, e);
+                    },
                     onKeyDown: (e: React.KeyboardEvent) => {
-                      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRowClick(row); }
+                      const isRowActivation = e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ');
+                      if (isRowActivation) { e.preventDefault(); onRowClick(row, e); }
                     },
                     tabIndex: 0,
                   })}
