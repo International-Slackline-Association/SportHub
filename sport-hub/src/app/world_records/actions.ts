@@ -136,7 +136,7 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
     errors.push(...evidenceProblems(values));
     if (submit) errors.push(...validateForSubmit(values, kind, recordCategory, firstCategory, athletes, claimantId));
 
-    const entryId = existing?.entryId ?? newEntryId();
+    const entryId = existing?.entryId ?? await newEntryId(kind);
     const now = Date.now();
     const gender = athletes.length > 0 ? deriveGender(athletes) : 'MEN_ONLY';
     const base = {
