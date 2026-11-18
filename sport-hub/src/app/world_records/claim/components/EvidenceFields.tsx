@@ -138,9 +138,6 @@ export default function EvidenceFields({ ensureSaved, uploadsEnabled }: Props) {
               ensureSaved={ensureSaved}
               onClose={() => setUploadOpen(false)}
               onUploaded={item => {
-                // Replace the empty link row a new claim starts with
-                const emptyRow = values.evidence.findIndex(e => e.type === 'link' && !e.url.trim() && !e.description.trim());
-                if (emptyRow >= 0) remove(emptyRow);
                 push(item);
                 setUploadOpen(false);
               }}

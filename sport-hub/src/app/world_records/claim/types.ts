@@ -86,7 +86,8 @@ export const emptyClaim = (path: ClaimPath = 'existing'): ClaimFormValues => ({
   similarTricks: '',
   lineDetails: '',
   eventId: '',
-  evidence: [emptyEvidenceLink()],
+  // Links and uploads are equal choices, so a new claim starts with no evidence row
+  evidence: [],
   ethicsConfirmed: false,
 });
 
@@ -136,7 +137,7 @@ export function entryToClaimValues(entry: WorldRecordOrFirstTableItem): ClaimFor
         mimeType: e.mimeType,
         size: e.size,
       }))
-      : [emptyEvidenceLink()],
+      : [],
     witnesses,
     ethicsConfirmed: entry.ethicsConfirmed ?? false,
   };
