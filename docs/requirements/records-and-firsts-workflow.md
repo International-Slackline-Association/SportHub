@@ -1,6 +1,6 @@
 # Requirements: World Records & World Firsts Workflow
 
-Status: **v13**, 2026-11-13. Describes what runs on `main` and on slacklinesport.org.
+Status: **v13**, 2026-11-18. Describes what runs on `main` and on slacklinesport.org.
 Rules source: ISA Sport Commission, *Slackline World Records and World Firsts*, October 2026 v2. Where this
 document and the framework differ, the framework wins; the Sport Commission decides on every record and first.
 Every section states the decisions taken; §9 lists what is still open. Code map for reviewers:
@@ -10,7 +10,7 @@ Every section states the decisions taken; §9 lists what is still open. Code map
 searchable category picker, claim revision keeps its kind, Delete draft on My claims (§5), Show and Athlete filters,
 countries from profiles (§6.2), void / restore / permanent delete (§6), official ISA certificate templates, no
 certificates on public profiles (§6.3), "Rejected:" subject and Record Manager emails (§7), production import done
-(§8), open issues updated (§9). v12 (2026-11-08): optional witnesses, Drive evidence uploads, proposed group.
+(§8), All records and firsts page (§6), open issues updated (§9). v12 (2026-11-08): optional witnesses, Drive evidence uploads, proposed group.
 v11: rejection reasons. v9–10: category status.
 
 ## 1. Goal and scope
@@ -137,9 +137,10 @@ first succeeds; the second is asked to reload. Imported entries keep whatever th
 ## 6. Review and administration
 
 - **Review queue** (`/admin/records-review`): three tables, records, records in a new category, firsts (oldest
-  first). The admin pages share a button bar: Review queue, Modify Records, Modify Categories, Modify Firsts, Import
+  first). The admin pages share a button bar: Review queue, All records and firsts, Modify Records, Modify Categories, Modify Firsts, Import
   review, Export CSV. **Modify Records / Modify Firsts** (`/admin/records-manage/{records|firsts}`) list every
-  non-draft entry with search and status filter.
+  non-draft entry with search and status filter. **All records and firsts** (`/admin/records-all`) lists every entry
+  of both kinds in any status, drafts and voided entries included, with Kind and Status filters.
 - **Detail page**: all fields with the history, the current record per list, and the decision buttons grouped with
   the fields they need: **Approve**, **Request changes** (comment required), **Reject** (reason, §6.1) and
   **Modify**. New-category claims show similar categories and the framework's record criteria; the reviewer creates
@@ -224,16 +225,15 @@ witnesses per claim.
 3. **Import review on production:** 192 athletes to link to profiles, and a possible duplicate (wr145 / wr146).
    Known wrong or broken emails in the sheet: Anthony/Antony Newton (wr 43–48), "Raphael Bridi" (wr 240), Ando
    Franscini (wr 35), Tancrède Melet (wr 280), Quirin Herterich (wr 229–232).
-4. **Production settings:** SMTP (`SMTP_*`, `RECORDS_*_EMAIL`) and the Drive evidence folder on a Shared Drive
-   (§5.1) are not set up yet, so production sends no emails and accepts links only.
+4. **Evidence uploads on production:** `RECORDS_EVIDENCE_FOLDER_ID` is not set and the folder is not on a Shared
+   Drive yet (§5.1), so production accepts links only. (Emails are live: SMTP sends as ISA Records from Jonas's
+   Workspace account; switching the sender to records@ needs a new app password.)
 5. **Verifiable certificates** (PR #148, open): sign the QR code through the isa-tools `/sign` service so a scan
    shows the ISA-signed statement on verify.slacklineinternational.org, like the old certificates. Needs the
-   `ISA_TOOLS_API_KEY` Amplify secret and agreement on a 10-year validity.
-6. **All records and firsts overview** (PR #128, open, changes requested): one admin table of every entry in any
-   status, voided included.
-7. **Phone layouts** (PR #147, open): claim lists as cards below 640px, category picker without the Select column,
-   header that fits a phone.
-8. **Athletes with gender "other" or none** can't be on a claim for now.
-9. **Retire the Google Sheet fallback** in `data-services.ts` now that production has data; and remove the
+   `ISA_TOOLS_CLIENT_ID` and `ISA_TOOLS_CLIENT_SECRET` Amplify secrets and agreement on a 10-year validity.
+6. **Admin claim tables on phones:** the review queue, Modify and All records tables scroll sideways on a phone; the
+   card layout from PR #147 was dropped when the tables moved to the shared `@ui/Table`.
+7. **Athletes with gender "other" or none** can't be on a claim for now.
+8. **Retire the Google Sheet fallback** in `data-services.ts` now that production has data; and remove the
    duplicate `validateForSubmit` (the Yup schema is the single source of form validation).
-10. **Records & Firsts header image** does not load on production.
+9. **Records & Firsts header image** does not load on production.
