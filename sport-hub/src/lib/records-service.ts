@@ -176,6 +176,9 @@ export async function putEntry(entry: WorldRecordOrFirstTableItem, options: PutE
     statusKey: statusKeyFor(entry.kind, entry.status),
     dateSortKey: dateSortKeyFor(entry.date, entry.entryId),
   };
+  // categoryId is a category-index key, which DynamoDB rejects as an empty string.
+  // A draft saved before its category is chosen (e.g. to upload evidence) leaves it out.
+  if (!item.categoryId) delete (item as Partial<WorldRecordOrFirstTableItem>).categoryId;
   if (!options.expectedStatus) {
     await dynamodb.putItem(RECORDS_TABLE, item as unknown as Record<string, unknown>);
     return;
