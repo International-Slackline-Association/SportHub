@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { createColumnHelper } from '@tanstack/react-table';
 import Table from '@ui/Table';
 import { ClaimStatusBadge, CLAIM_STATUS_LABELS } from 'src/app/world_records/components/claimStatus';
@@ -46,6 +47,7 @@ type Props = {
 const columnHelper = createColumnHelper<EntryRow>();
 
 export default function EntryTable({ rows, showStatus = false, showKind = false, filterable = false }: Props) {
+  const router = useRouter();
   const columns = useMemo(() => {
     const statusOptions = STATUS_ORDER
       .filter(s => rows.some(r => displayStatus(r) === s))
@@ -110,6 +112,13 @@ export default function EntryTable({ rows, showStatus = false, showKind = false,
         data: rows,
         getRowId: r => `${r.kind}:${r.entryId}`,
         initialState: { pagination: { pageIndex: 0, pageSize: 100 } },
+      }}
+      onRowClick={(row, event) => {
+        const href = detailHref(row.original);
+        // Cmd/Ctrl-click opens a new tab, like a link
+        const opensNewTab = event.metaKey || event.ctrlKey;
+        if (opensNewTab) window.open(href, '_blank', 'noopener');
+        else router.push(href);
       }}
     />
   );
