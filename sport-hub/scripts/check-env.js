@@ -29,6 +29,9 @@ const amplifyVars = [
 const googleSheetsVars = [
   'GOOGLE_SERVICE_ACCOUNT_EMAIL',
   'GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY',
+  // Evidence uploads on the claim form need these two plus the folder id
+  'RECORDS_EVIDENCE_FOLDER_ID',
+  'GOOGLE_DRIVE_IMPERSONATE_USER',  // optional
 ];
 
 // Unnecessary variables - Amplify provides these or they're not needed
@@ -93,7 +96,9 @@ console.log('\nGoogle Sheets Specific Variables:');
 googleSheetsVars.forEach(varName => {
   const value = process.env[varName];
   const isPresent = !!value;
-  const displayValue = value || 'NOT SET';
+  const displayValue = varName.includes('KEY')
+    ? (value ? '***PRESENT***' : 'NOT SET')
+    : (value || 'NOT SET');
   console.log(`${isPresent ? '✅' : 'ℹ️ '} ${varName}: ${displayValue}`);
 });
 
