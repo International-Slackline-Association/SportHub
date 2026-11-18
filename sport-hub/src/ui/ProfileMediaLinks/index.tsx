@@ -8,13 +8,16 @@ type ProfileMediaLinksProps = {
   isSquare?: boolean;
   links?: string[];
   profileImage?: string;
+  /** Link the Copy Link button copies (path or absolute URL). Defaults to the current page. */
+  shareUrl?: string;
 }
 
 export const ProfileMediaLinks = ({
   avatarDefaultLabel,
   isSquare,
   profileImage,
-  links
+  links,
+  shareUrl
 }: ProfileMediaLinksProps) => {
   return (
     <div className={cn("flex flex-col", "items-center", "gap-4")}>
@@ -39,7 +42,7 @@ export const ProfileMediaLinks = ({
           );
         })}
       </div>
-      <ClipBoardButton>Copy Link</ClipBoardButton>
+      <ClipBoardButton url={shareUrl}>Copy Link</ClipBoardButton>
     </div>
   );
 };
