@@ -55,8 +55,9 @@ const GenderDropdown = ({
         className={cn(styles.input, styles.dropdownTrigger, 'text-base')}
         id={id}
         onClick={() => setIsOpen((open) => !open)}
+        type="button"
       >
-        {selectedOption?.label ?? 'Select Gender'}
+        {selectedOption ? <Gender value={selectedOption.value} /> : 'Select Gender'}
       </button>
 
       {isOpen && (
@@ -69,7 +70,7 @@ const GenderDropdown = ({
                   className={cn(styles.dropdownButton)}
                   onClick={() => handleSelect(option)}
                 >
-                  <Gender value={option.value} variant="normal" />
+                  <Gender value={option.value} />
                 </button>
               </li>
             ))}

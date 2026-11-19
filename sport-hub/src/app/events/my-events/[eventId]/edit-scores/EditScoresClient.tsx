@@ -3,13 +3,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Formik, Form } from 'formik';
 import Link from 'next/link';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import TabbedContestForms from '../../../submit/components/contest-inputs/TabbedContestForms';
 import { updateEventScores } from '../../../submit/actions';
 import { EventSubmissionFormValues } from '../../../submit/types';
 import { cn } from '@utils/cn';
 import styles from '../../../submit/components/styles.module.css';
-import Spinner from '@ui/Spinner';
 
 type Props = {
   eventId: string;
@@ -68,9 +67,8 @@ export default function EditScoresClient({ eventId, initialValues }: Props) {
             <Link href="/events/my-events">
               <Button type="button" variant="ghost">Cancel</Button>
             </Link>
-            <Button type="submit" variant="primary" disabled={isSubmitting}>
-              {isSubmitting && <Spinner size="small" color="white" />}
-              Save Judges &amp; Scores
+            <Button type="submit" variant="primary" loading={isSubmitting}>
+              {isSubmitting ? 'Saving…' : 'Save Judges & Scores'}
             </Button>
           </div>
         </Form>

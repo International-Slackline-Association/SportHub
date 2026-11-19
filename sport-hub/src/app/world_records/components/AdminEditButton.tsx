@@ -1,7 +1,8 @@
 'use client';
+import Link from 'next/link';
 
 import { useSession } from 'next-auth/react';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import type { WorldFirst, WorldRecord } from '@lib/data-services';
 import { roleHasPermission } from 'src/types/rbac';
 
@@ -14,7 +15,7 @@ export function AdminEditButton({ entry }: { entry: WorldRecord | WorldFirst }) 
   if (!canEdit) return null;
   const kind = 'trickName' in entry ? 'first' : 'record';
   return (
-    <Button as="link" href={`/admin/records-review/${kind}/${encodeURIComponent(entry.entryId)}`} variant="secondary" size="small">
+    <Button as={Link} href={`/admin/records-review/${kind}/${encodeURIComponent(entry.entryId)}`} variant="secondary" size="small">
       Edit
     </Button>
   );

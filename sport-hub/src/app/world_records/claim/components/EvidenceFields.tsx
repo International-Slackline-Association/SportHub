@@ -9,8 +9,7 @@
 
 import { useRef, useState } from 'react';
 import { FieldArray, useFormikContext } from 'formik';
-import Button from '@ui/Button';
-import { Alert } from '@ui/Alert';
+import { Button, Alert } from '@slacklineinternational/onsight/react';
 import { FormikFormField, FormikTextField } from '@ui/Form';
 import formStyles from '@ui/Form/styles.module.css';
 import { EVIDENCE_FILE_ACCEPT, evidenceFileProblem, formatFileSize, MAX_EVIDENCE_FILE_LABEL, MAX_EVIDENCE_ITEMS } from '@lib/records-rules';
@@ -106,7 +105,7 @@ function FileUpload({ ensureSaved, onUploaded, onClose }: { ensureSaved: EnsureC
           <small className="text-xs">Uploading… {Math.round((progress ?? 0) * 100)}%. Keep this page open.</small>
         </div>
       )}
-      {error && <Alert variant="error">{error}</Alert>}
+      {error && <Alert variant="danger">{error}</Alert>}
       <div className="flex gap-2">
         <Button type="button" variant="primary" size="small" disabled={uploading} onClick={upload}>Upload</Button>
         <Button type="button" variant="secondary" size="small" disabled={uploading} onClick={onClose}>Cancel</Button>

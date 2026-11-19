@@ -1,4 +1,5 @@
 'use client';
+import { Alert } from '@slacklineinternational/onsight/react';
 
 /**
  * The fields of a world record claim (requirements §8.1): a category, or a
@@ -8,7 +9,6 @@
 
 import { useEffect, useState } from 'react';
 import { useFormikContext } from 'formik';
-import { Alert } from '@ui/Alert';
 import { FormikCheckboxField, FormikSelectField, FormikTextAreaField, FormikTextField, countryCodeOptions } from '@ui/Form';
 import { deriveGender, GENDER_TITLE_LABELS, UNIT_SUGGESTIONS, unitKind, valueHint } from '@lib/records-logic';
 import { RECORD_CATEGORY_GROUPS, type RecordCategoryTableItem } from '@lib/relational-types';
@@ -63,12 +63,12 @@ function GenderAndMark({ recordCategories }: { recordCategories: RecordCategoryT
   return (
     <div className="stack gap-2">
       {loadedAll && missing.map(a => (
-        <Alert key={a.userId ?? a.name} variant="warning" size="SM">
+        <Alert key={a.userId ?? a.name} variant="warning">
           {a.name || 'An athlete'} has no male or female gender {a.userId ? 'on their profile' : 'set'}. A claim can only be submitted once it is set.
         </Alert>
       ))}
       {gender && (
-        <Alert variant="info" size="SM" showIcon={false}>
+        <Alert variant="info" icon={false}>
           {/* One paragraph, so the text flows inline inside the flex alert */}
           <p>
             This claim counts as a <strong>{GENDER_TITLE_LABELS[gender].toLowerCase()} world record</strong>.
@@ -93,7 +93,7 @@ function CategoryFields({ recordCategories }: { recordCategories: RecordCategory
   }
   return (
     <Section title="New category">
-      <Alert variant="info" size="SM" showIcon={false}>
+      <Alert variant="info" icon={false}>
         The ISA checks a new category against the record criteria: measurable, standardisable, breakable, significant and separable from existing categories. It may map your claim to an existing category instead.
       </Alert>
       <FormikTextField id="newCategory.name" name="newCategory.name" label="Category name" required />

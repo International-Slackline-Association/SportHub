@@ -3,11 +3,9 @@
 import { useState } from "react";
 import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
-import Button from "@ui/Button";
-import { AgeCategory, Badge, ContestSize, Discipline, Gender, Role } from "@ui/Badge";
+import { Badge, Button, Dialog, Tabs } from '@slacklineinternational/onsight/react';
+import { AgeCategory, ContestSize, Discipline, Gender, Role } from "@ui/Badge";
 import PageLayout from "@ui/PageLayout";
-import Modal from "@ui/Modal";
-import { TabGroup } from "@ui/Tab";
 import { FormikCheckboxField, FormikCheckboxGroup, FormikRadioGroup, FormikSelectField, FormikSubmitButton, FormikTextField } from "@ui/Form";
 import FormikAutocomplete from "@ui/Form/FormikAutocomplete";
 import DisciplineDropdown from "@ui/Form/DisciplineDropdown";
@@ -55,9 +53,9 @@ export default function Page() {
         <div className="flex flex-row gap-4">
           <Button variant="primary">Primary Button</Button>
           <Button variant="secondary">Secondary Button</Button>
-          <Button variant="default">Default Button</Button>
-          <Button variant="destructive">Destructive Button</Button>
-          <Button variant="destructive-secondary">Destructive Secondary Button</Button>
+          <Button variant="neutral">Neutral</Button>
+          <Button variant="danger">Danger</Button>
+          <Button variant="danger-secondary">Danger secondary</Button>
           <Button variant="ghost">Ghost Button</Button>
         </div>
       </section>
@@ -100,45 +98,45 @@ export default function Page() {
             <Gender value="WOMEN" />
           </div>
           <div className="stack gap-4">
-            <Badge color="NEUTRAL">NEUTRAL</Badge>
-            <Badge color="BLUE">BLUE</Badge>
-            <Badge color="GREEN">GREEN</Badge>
-            <Badge color="ORANGE">ORANGE</Badge>
-            <Badge color="PINK">PINK</Badge>
-            <Badge color="RED">RED</Badge>
-            <Badge color="TEAL">TEAL</Badge>
-            <Badge color="VIOLET">VIOLET</Badge>
-            <Badge color="YELLOW">YELLOW</Badge>
-            <Badge color="PURPLE">PURPLE</Badge>
+            <Badge color="neutral">Neutral</Badge>
+            <Badge color="blue">Blue</Badge>
+            <Badge color="green">Green</Badge>
+            <Badge color="orange">Orange</Badge>
+            <Badge color="pink">Pink</Badge>
+            <Badge color="red">Red</Badge>
+            <Badge color="teal">Teal</Badge>
+            <Badge color="violet">Violet</Badge>
+            <Badge color="yellow">Yellow</Badge>
+            <Badge color="purple">Purple</Badge>
           </div>
         </div>
       </section>
       <section>
-        <h2>Modal</h2>
+        <h2>Dialog</h2>
         <div className="flex flex-row gap-4">
           <Button 
             variant="primary" 
             onClick={() => setIsModalOpen(true)}
           >
-            Open Modal
+            Open Dialog
           </Button>
-          <Modal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            title="Welcome to This New Feature"
+          <Dialog
             actions={
               <>
-                <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
+                <Button type="button" variant="neutral" onClick={() => setIsModalOpen(false)}>
                   Cancel
                 </Button>
-                <Button variant="primary" onClick={() => setIsModalOpen(false)}>
+                <Button type="button" variant="primary" onClick={() => setIsModalOpen(false)}>
                   Save
                 </Button>
               </>
             }
+            onClose={() => setIsModalOpen(false)}
+            open={isModalOpen}
+            title="Welcome to This New Feature"
           >
             Used for multiline pieces of content. Lorem ipsum dolor sit amet, ex lucilius hendrerit vim, tempor scaevola iudicabit ei ius, te eum illud impetus antiopam. Eu wisi commune volutpat pro, usu at alii magna aperiam.
-          </Modal>
+          </Dialog>
         </div>
       </section>
       <section>
@@ -146,21 +144,23 @@ export default function Page() {
         <div className="stack gap-8">
           <div className="stack gap-4">
             <strong>Primary Tabs</strong>
-            <TabGroup
+            <Tabs
+              aria-label="Primary tabs"
+              onChange={setActiveTab}
               tabs={[
                 { id: "rankings", label: "Rankings" },
                 { id: "events", label: "Events" },
                 { id: "athletes", label: "Athletes" },
                 { id: "judges", label: "Judges" }
               ]}
-              variant="primary"
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
+              value={activeTab}
             />
           </div>
           <div className="stack gap-4">
             <strong>Large Tabs</strong>
-            <TabGroup
+            <Tabs
+              aria-label="Large tabs"
+              size="large"
               tabs={[
                 { id: "rankings", label: "Rankings" },
                 { id: "events", label: "Events" },
@@ -168,19 +168,19 @@ export default function Page() {
                 { id: "records", label: "World Records" },
                 { id: "admin", label: "Admin" }
               ]}
-              variant="large"
             />
           </div>
           <div className="stack gap-4">
             <strong>Secondary Tabs</strong>
-            <TabGroup
+            <Tabs
+              aria-label="Secondary tabs"
               tabs={[
                 { id: "nav1", label: "Nav Item" },
                 { id: "nav2", label: "Nav Item" },
                 { id: "nav3", label: "Nav Item" },
                 { id: "nav4", label: "Nav Item" }
               ]}
-              variant="secondary"
+              variant="pill"
             />
           </div>
         </div>

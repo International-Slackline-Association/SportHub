@@ -1,5 +1,6 @@
 import type { EventRecord } from '@lib/relational-types';
-import { Badge, Country, Role } from '@ui/Badge';
+import { Badge } from '@slacklineinternational/onsight/react';
+import { Country, Role } from '@ui/Badge';
 import { LabelValuePair } from '@ui/LabelValuePair';
 import { StackedMediaCard } from '@ui/StackedMediaCard';
 import { ProfileMediaLinks } from '@ui/ProfileMediaLinks';
@@ -96,7 +97,7 @@ export const EventDetailsCard = ({ event }: EventDetailsCardProps) => {
 			<div className="flex flex-row">
 				<div className="grid grid-flow-row grid-cols-2 gap-4 p-4 text-left">
 					<div className="flex flex-col gap-2 col-span-full">
-						{verified ? <Role variant="ISA_VERIFIED" /> : <Badge color="NEUTRAL">Unverified</Badge>}
+						{verified ? <Role variant="ISA_VERIFIED" /> : <Badge color="neutral">Unverified</Badge>}
 						<h2>{name}</h2>
 					</div>
 					<LabelValuePair label="Date(s)" value={dateRange} />

@@ -4,7 +4,7 @@ import { useSession, signIn, signOut } from "next-auth/react"
 import Link from "next/link"
 import { useState, useRef, useEffect } from "react"
 import styles from "./styles.module.css"
-import Button from "@ui/Button"
+import { Button } from '@slacklineinternational/onsight/react';
 import Image from "next/image"
 import { ChevronIcon } from "@ui/Icons/ChevronIcon"
 import { roleHasPermission } from "src/types/rbac"

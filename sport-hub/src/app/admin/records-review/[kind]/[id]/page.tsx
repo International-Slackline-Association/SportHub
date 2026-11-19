@@ -1,10 +1,9 @@
 import { formatISODay } from '@utils/dates';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Button from '@ui/Button';
+import { Button, Alert } from '@slacklineinternational/onsight/react';
 import { notFound } from 'next/navigation';
 import PageLayout from '@ui/PageLayout';
-import { Alert } from '@ui/Alert';
 import { requireRecordManager } from '@lib/authorization';
 import { entryHasCertificate, formatRecordValue, GENDER_LABELS, GENDER_TITLE_LABELS, RECORD_GENDERS } from '@lib/records-logic';
 import { FIRST_CRITERIA, formatFileSize, isNewCategoryClaim, RECORD_CRITERIA, rejectionCaseOf } from '@lib/records-rules';
@@ -52,7 +51,7 @@ export default async function ReviewClaimPage({ params }: Props) {
   return (
     <PageLayout title={entry.kind === 'first' ? `First: ${entry.trickName}` : `Record: ${entry.categoryName}`}>
       <section className="p-4 sm:p-0 flex gap-3 items-center flex-wrap">
-        <Button as="link" href="/admin/records-review" variant="secondary" size="small">Back to the review queue</Button>
+        <Button as={Link} href="/admin/records-review" variant="secondary" size="small">Back to the review queue</Button>
         <Link href={`/admin/records-manage/${entry.kind === 'first' ? 'firsts' : 'records'}`} className="text-blue-600 hover:underline text-sm">All {entry.kind === 'first' ? 'firsts' : 'records'}</Link>
         <ClaimStatusBadge status={entry.status} />
         <span className="text-sm text-gray-600">Gender: {GENDER_LABELS[entry.gender]}</span>

@@ -5,13 +5,11 @@ import { EventSubmissionFormValues } from '../../types';
 import { GeneralInformation } from './GeneralInformation';
 import { Judges } from './Judges';
 import { Results } from './Results';
-import { TabGroup } from '@ui/Tab';
 import { FormikErrors, getIn, useFormikContext } from 'formik';
 import { useState } from 'react';
-import Button from '@ui/Button';
+import { Alert, Button, Tabs } from '@slacklineinternational/onsight/react';
 import sharedStyles from '../styles.module.css';
 import styles from './styles.module.css';
-import { Alert } from '@ui/Alert';
 import { getContestNameFromForm } from './TabbedContestForms';
 
 type Props = {
@@ -90,20 +88,19 @@ export default function ContestForm({
     <>
       <section className={cn("stack", "gap-4", "my-4", sharedStyles.sectionContent)}>
         {contestIsTouched && contestHasErrors && (
-          <Alert>{errorMessage}</Alert>
+          <Alert variant="danger">{errorMessage}</Alert>
         )}
         <div className={cn(styles.contestFormHeader)}>
           <h3>{getContestNameFromForm(values, contestIdx)}</h3>
-          <TabGroup
-            activeTab={activeTab}
-            className={sharedStyles.borderBottom}
-            onTabChange={setActiveTab}
+          <Tabs
+            aria-label="Contest sections"
+            onChange={setActiveTab}
             tabs={[
               ...(showGeneralInfoTab ? [{ id: 'GENERAL_INFO', label: 'General Information' }] : []),
               { id: 'JUDGES', label: 'Judges' },
               { id: 'RESULTS', label: 'Results' },
             ]}
-            variant="primary"
+            value={activeTab}
           />
         </div>
         {activeTab === 'GENERAL_INFO' && (
@@ -120,7 +117,7 @@ export default function ContestForm({
         <div className={cn('cluster', 'items-center', 'gap-4', 'justify-end')}>
           <Button
             type="button"
-            variant="destructive-secondary"
+            variant="danger-secondary"
             onClick={onRemove}
           >
             Delete Contest

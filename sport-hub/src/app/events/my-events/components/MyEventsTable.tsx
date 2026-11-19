@@ -3,16 +3,15 @@ import { submitEventForApproval, withdrawEventFromApproval } from "../../submit/
 import { COUNTRIES } from "@utils/countries";
 import tableStyles from '@ui/Table/styles.module.css';
 import { formatDate, formatDateRangeShort } from "@utils/dates";
-import Button from "@ui/Button";
-import { Badge, BadgeColor, Discipline } from "@ui/Badge";
+import { Badge, Button, EmptyState, type BadgeCategoryColor, type BadgeStatusColor } from '@slacklineinternational/onsight/react';
+import { Discipline } from "@ui/Badge";
 import { EventStatus } from "../page";
-import { Alert } from "@ui/Alert";
 
-export const statusColor: Record<EventStatus, BadgeColor> = {
-  draft: "NEUTRAL",
-  pending: "ORANGE",
-  published: "GREEN",
-  cancelled: "RED",
+export const statusColor: Record<EventStatus, BadgeCategoryColor | BadgeStatusColor> = {
+  draft: "neutral",
+  pending: "warning",
+  published: "success",
+  cancelled: "danger",
 };
 
 export const MyEventActions = ({ eventId, status }: { eventId: string, status: EventStatus }) => (
@@ -32,7 +31,7 @@ export const MyEventActions = ({ eventId, status }: { eventId: string, status: E
           </Button>
         </form>
         <Button
-          as="link"
+          as={Link}
           href={`/events/my-events/${eventId}/edit`}
           size="small"
           variant="secondary"
@@ -50,13 +49,13 @@ export const MyEventActions = ({ eventId, status }: { eventId: string, status: E
           <Button
             size="small"
             type="submit"
-            variant="destructive-secondary"
+            variant="danger-secondary"
           >
             Withdraw
           </Button>
         </form>
         <Button
-          as="link"
+          as={Link}
           href={`/events/my-events/${eventId}/edit`}
           size="small"
         >
@@ -66,7 +65,7 @@ export const MyEventActions = ({ eventId, status }: { eventId: string, status: E
     )}
     {status === "published" && (
       <Button
-        as="link"
+        as={Link}
         href={`/events/my-events/${eventId}/edit-scores`}
         size="small"
         variant="secondary"
@@ -80,9 +79,9 @@ export const MyEventActions = ({ eventId, status }: { eventId: string, status: E
 export const MyEventsTable = ({ events }: {events: Record<string, unknown>[]}) => {
   if (events.length === 0) {
     return (
-      <Alert variant="info">
-        You haven&apos;t submitted any events yet.
-      </Alert>
+      <EmptyState title="No events yet">
+        Events you submit show up here.
+      </EmptyState>
     );
   }
   return (
@@ -131,7 +130,7 @@ export const MyEventsTable = ({ events }: {events: Record<string, unknown>[]}) =
                   </td>
                   <td>{formattedDateRange}</td>
                   <td>{formattedLocation}</td>
-                  <td>{disciplines.map(d => <Discipline key={d} variant={d} />)}</td>
+                  <td className="space-x-1">{disciplines.map(d => <Discipline key={d} variant={d} />)}</td>
                   <td>{contests.length}</td>
                   <td>
                     <Badge color={statusColor[status]}>

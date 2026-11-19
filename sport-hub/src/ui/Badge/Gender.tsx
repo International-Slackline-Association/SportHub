@@ -1,48 +1,39 @@
-import React from "react";
-import styles from "./styles.module.css";
 import { normalizeGender } from "@utils/gender";
-import { cn } from "@utils/cn";
-import { snakeCaseToPascalCase, textToTitleCase } from "@utils/strings";
+import { textToTitleCase } from "@utils/strings";
 import { FemaleIcon, MaleIcon } from "@ui/Icons";
+import { cn } from "@utils/cn";
 
 interface GenderProps {
   className?: string;
   color?: "gray" | "neutral";
   showIcon?: boolean;
   size?: "sm" | "md" | "lg";
-  variant?: "normal" | "bold";
+  variant?: "normal" | "bold" | "outline";
   value: Gender | ContestGender | string | undefined;
 }
 
 const Gender = ({
-  className = "",
-  color = "neutral",
+  className,
   showIcon = true,
-  variant = "bold",
-  value
+  value,
 }: GenderProps) => {
-  const genderClass = `gender${snakeCaseToPascalCase(value || "")}`;
   const normalizedGender = normalizeGender(value) || "";
+  const label = textToTitleCase(normalizedGender);
+  if (!label) return null;
+
   const includeFemaleIcon = normalizedGender === "WOMEN" || normalizedGender === "MIXED";
   const includeMaleIcon = normalizedGender === "MEN" || normalizedGender === "MIXED";
-  const colorClass = color === "gray" ? styles.genderGray : "";
-  const typographyClass = variant === "normal" ? '' : styles.badgeBold;
 
   return (
-    <div
-      className={cn(
-        styles.badge,
-        colorClass,
-        typographyClass,
-        styles.gender,
-        styles[genderClass],
-        className
+    <span className={cn("cluster items-center gap-2", className)}>
+      {showIcon && (includeFemaleIcon || includeMaleIcon) && (
+        <span aria-hidden="true" className="inline-flex items-center gap-1">
+          {includeFemaleIcon && <FemaleIcon />}
+          {includeMaleIcon && <MaleIcon />}
+        </span>
       )}
-    >
-      {showIcon && includeFemaleIcon && <FemaleIcon />}
-      {showIcon && includeMaleIcon && <MaleIcon />}
-      {textToTitleCase(normalizedGender)}
-    </div>
+      {label}
+    </span>
   );
 };
 

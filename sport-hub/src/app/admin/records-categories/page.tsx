@@ -1,6 +1,7 @@
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import AdminNav from '../records-review/components/AdminNav';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import PageLayout from '@ui/PageLayout';
 import { requireRecordManager } from '@lib/authorization';
 import { getFirstCategories, getRecordCategories } from '@lib/records-service';
@@ -26,12 +27,12 @@ export default async function RecordCategoriesPage() {
       <section className="p-4 sm:p-0 stack gap-6">
         <div className="stack gap-3">
           <h3 className="text-lg font-semibold">World record categories</h3>
-          <div><Button as="link" href={categoryHref('record', 'new')} variant="secondary">Add a record category</Button></div>
+          <div><Button as={Link} href={categoryHref('record', 'new')} variant="secondary">Add a record category</Button></div>
           <RecordCategoriesTable categories={recordCategories} />
         </div>
         <div className="stack gap-3">
           <h3 className="text-lg font-semibold">World first disciplines</h3>
-          <div><Button as="link" href={categoryHref('first', 'new')} variant="secondary">Add a first discipline</Button></div>
+          <div><Button as={Link} href={categoryHref('first', 'new')} variant="secondary">Add a first discipline</Button></div>
           <FirstCategoriesTable categories={firstCategories} />
         </div>
       </section>

@@ -185,6 +185,13 @@
   overflow-y: auto;
 }
 
+/* Wide enough for an icon plus a long label, instead of squashing the icon. */
+.dropdownWide {
+  right: auto;
+  width: max-content;
+  min-width: 100%;
+}
+
 .dropdownItem {
   margin: 0;
   padding: 0;

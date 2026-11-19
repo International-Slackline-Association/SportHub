@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { ContestData } from "@lib/data-services";
 import Image from 'next/image';
 import { CardGrid } from '@ui/Card';
@@ -7,7 +8,7 @@ import { cn } from '@utils/cn';
 import { getCountryByCode } from '@utils/countries';
 import { StackedMediaCard } from '@ui/StackedMediaCard';
 import pageStyles from '../../app/page.module.css';
-import Button from "@ui/Button";
+import { Button } from '@slacklineinternational/onsight/react';
 import styles from '../../app/components/styles.module.css';
 export interface FeaturedEventCardProps {
   event: ContestData;
@@ -50,7 +51,7 @@ export const FeaturedEventCard = ({ event }: FeaturedEventCardProps) => {
         )}
         <Discipline variant={discipline} key={discipline} />
         <Button
-          as="link"
+          as={Link}
           variant="secondary"
           href={href}
         >

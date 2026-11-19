@@ -1,37 +1,28 @@
-import React from "react";
-import styles from "./styles.module.css";
-import Image from 'next/image';
-import { snakeCaseToPascalCase } from "@utils/strings";
+import { Badge, type BadgeCategoryColor } from "@slacklineinternational/onsight/react";
+import Image from "next/image";
 
 interface RoleProps {
   variant: Role;
   className?: string;
 }
 
-const roleLabels: Record<Role, string> = {
-  ATHLETE: "Athlete",
-  JUDGE: "JUDGE",
-  ISA_VERIFIED: "ISA Verified",
-  ORGANIZER: "Organizer",
+const roles: Record<Role, { label: string; color: BadgeCategoryColor; variant?: "soft" | "outline" }> = {
+  ATHLETE: { label: "Athlete", color: "red" },
+  JUDGE: { label: "Judge", color: "green" },
+  ORGANIZER: { label: "Organizer", color: "neutral", variant: "outline" },
+  ISA_VERIFIED: { label: "ISA Verified", color: "brand" },
 };
 
-const Role = ({ variant, className = "" }: RoleProps) => {
-  const variantClass = `role${snakeCaseToPascalCase(variant)}`;
+const Role = ({ variant, className }: RoleProps) => {
+  const role = roles[variant];
 
   return (
-    <div
-      className={[
-        styles.badge,
-        styles.badgeBold,
-        styles[variantClass],
-        className
-      ].filter(Boolean).join(" ")}
-    >
+    <Badge color={role.color} variant={role.variant} className={className}>
       {variant === "ISA_VERIFIED" && (
-        <Image src="/static/images/icons/check-circle.svg" alt="Checkmark" width={12} height={12} />
+        <Image src="/static/images/icons/check-circle.svg" alt="" width={12} height={12} />
       )}
-      {roleLabels[variant]}
-    </div>
+      {role.label}
+    </Badge>
   );
 };
 

@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Button from '@ui/Button';
-import { Alert } from '@ui/Alert';
+import { Button, Alert } from '@slacklineinternational/onsight/react';
 import { deleteCategory } from '../actions';
 
 const inputClass = 'w-full border border-gray-300 rounded px-3 py-2 text-sm';
@@ -46,9 +45,9 @@ export default function DeleteCategoryButton({ pk, categoryId }: Props) {
         value={confirmation}
         onChange={e => setConfirmation(e.target.value)}
       />
-      {error && <Alert>{error}</Alert>}
+      {error && <Alert variant="danger">{error}</Alert>}
       <div>
-        <Button variant="destructive" disabled={busy || !canDelete} onClick={remove}>Delete permanently</Button>
+        <Button variant="danger" disabled={busy || !canDelete} onClick={remove}>Delete permanently</Button>
       </div>
     </div>
   );

@@ -1,9 +1,10 @@
 'use client';
+import Link from 'next/link';
 
 import { useState, useEffect, useCallback } from 'react';
 import UserManagementModal from '@ui/UserForm/UserManagementModal';
 import { deleteUser } from './actions';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import SearchBar from './SearchBar';
 import { rolesLabel, type Role, type UserRoleFilter, type UserSubType } from 'src/types/rbac';
 
@@ -230,7 +231,7 @@ export default function UserListPagination({
             </div>
             <div className="flex gap-2">
               <Button
-                as="link"
+                as={Link}
                 href={`/athlete/${encodeURIComponent(user.id)}`}
                 variant="secondary"
                 size="small"

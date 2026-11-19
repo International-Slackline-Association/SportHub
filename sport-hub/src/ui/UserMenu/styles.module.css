@@ -14,7 +14,7 @@
   transition: background 0.2s;
 }
 .userMenuButton:hover {
-  background: #f3f4f6;
+  background: var(--isa-color-green-600);
 }
 
 .userAvatar {

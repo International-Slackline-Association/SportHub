@@ -6,7 +6,7 @@ import type {
   WorldRecord,
   WorldFirst
 } from '@lib/data-services';
-import { TabGroup } from '@ui/Tab';
+import { Tabs } from '@slacklineinternational/onsight/react';
 import AthleteContestsTable from './AthleteContestsTable';
 import AthleteWorldRecordsTable from './AthleteWorldRecordsTable';
 import AthleteWorldFirstsTable from './AthleteWorldFirstsTable';
@@ -29,11 +29,12 @@ export default function AthleteDataTabs({ contests, worldRecords, worldFirsts }:
   return (
     <>
       <div className="mb-6">
-        <TabGroup
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
+        <Tabs
+          aria-label="Athlete results"
+          onChange={setActiveTab}
           tabs={tabs}
-          variant="secondary"
+          value={activeTab}
+          variant="pill"
         />
       </div>
       {activeTab === 'contests' && (
