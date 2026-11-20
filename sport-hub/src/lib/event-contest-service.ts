@@ -5,7 +5,7 @@
  * Events contain multiple contests as child records using composite key (PK + SK).
  */
 
-import { DISCIPLINE_DATA } from '@utils/consts';
+import { DISCIPLINE_ENUM_VALUES } from '@utils/discipline-enum-values';
 import { dynamodb, EVENTS_TABLE, USERS_TABLE } from './dynamodb';
 import { auth } from '@lib/auth';
 import type {
@@ -14,8 +14,8 @@ import type {
   PendingScoreEditRecord,
   AthleteParticipationRecord,
 } from './relational-types';
-import { ContestFormValues, EventFormValues } from 'src/app/events/submit/types';
-import { EventStatus } from 'src/app/events/my-events/page';
+import type { ContestFormValues, EventFormValues } from 'src/app/events/submit/types';
+import type { EventStatus } from 'src/app/events/my-events/page';
 import { roleHasPermission } from 'src/types/rbac';
 
 /********************************************************************************
@@ -71,6 +71,15 @@ export async function getEvent(eventId: string): Promise<EventMetadataRecord | n
     sortKey: 'Metadata',
   });
   return item as EventMetadataRecord | null;
+}
+
+/**
+ * Results only count (rankings, athlete profiles, public contest lists) once
+ * their event is published. Legacy migrated events carry no status and are
+ * treated as published.
+ */
+export function isPublishedEventStatus(status: unknown): boolean {
+  return status === undefined || status === null || status === 'published';
 }
 
 /**
@@ -249,7 +258,7 @@ export function generateContestId() {
 
 export function getContestSortKey({ discipline, contestId }: ContestFormValues | ContestRecord): string {
   const disciplineEnumValue = Number.isNaN(Number(discipline))
-    ? DISCIPLINE_DATA[discipline as Discipline]?.enumValue
+    ? DISCIPLINE_ENUM_VALUES[discipline as Discipline]
     : discipline;
   
   return `Contest:${disciplineEnumValue}:${contestId}`;
@@ -406,7 +415,12 @@ export async function syncContestParticipationRecords(
 
   const activeUserIds = new Set<string>();
 
-  for (const result of contest.results) {
+  // Results of unpublished events must not count: skip writing, so the
+  // cleanup below removes any Participation:* records left from before.
+  const event = await getEvent(eventId);
+  const countsForRankings = !event || isPublishedEventStatus(event.status);
+
+  for (const result of countsForRankings ? contest.results ?? [] : []) {
     if (!result || typeof result !== 'object') continue;
 
     const userId = typeof result.id === 'string' ? result.id : null;

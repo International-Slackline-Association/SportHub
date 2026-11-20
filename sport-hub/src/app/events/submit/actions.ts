@@ -22,6 +22,7 @@ import {
 } from '@lib/event-contest-service';
 import { EventMetadataRecord, ContestRecord } from '@lib/relational-types';
 import { EventStatus } from '../my-events/page';
+import { calculatePointsForRank } from '@utils/points';
 import { roleHasPermission } from 'src/types/rbac';
 import { notifyEventManagers } from '@lib/events-notifications';
 import { applyOrganizerChange } from '@lib/event-organizer';
@@ -52,11 +53,33 @@ function validatePastEventRequirements(values: EventSubmissionFormValues): strin
   return null;
 }
 
+// Organizers can't set points themselves: recalculate every ranked result's
+// points from rank, contest size and field size (tied ranks get equal points).
+// Admins may override.
+function withServerPoints(contests: ContestFormValues[], isAdmin: boolean): ContestFormValues[] {
+  if (isAdmin) return contests;
+  return contests.map((c) => {
+    const { results, contestSize } = c;
+    if (!results || !contestSize) return c;
+    return {
+      ...c,
+      results: results.map((result) => {
+        const rank = Number(result.rank);
+        return rank > 0
+          ? { ...result, isaPoints: calculatePointsForRank(rank, contestSize, results.length) }
+          : result;
+      }),
+    };
+  });
+}
+
 export async function saveEvent(values: EventSubmissionFormValues) {
   await requireEventSubmitter();
 
   try {
-    const { event, contests } = values;
+    const session = await auth();
+    const { event } = values;
+    const contests = withServerPoints(values.contests, roleHasPermission(session?.user?.roles, 'events:edit'));
 
     // Past-event guard: judges and results required if event date is in the past
     const pastEventError = validatePastEventRequirements(values);
@@ -118,13 +141,14 @@ export async function saveEvent(values: EventSubmissionFormValues) {
  */
 export async function updateEventScores(
   eventId: string,
-  contests: ContestFormValues[],
+  submittedContests: ContestFormValues[],
 ): Promise<{ success: boolean; error?: string; message?: string }> {
   await requireEventSubmitter();
 
   try {
     const session = await auth();
     const isAdmin = roleHasPermission(session?.user?.roles, 'events:edit');
+    const contests = withServerPoints(submittedContests, isAdmin);
     const { success, event } = await getAssembledEvent(eventId);
     
     if (!success || !event) {
@@ -258,10 +282,16 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
       if (!roleHasPermission(session?.user?.roles, 'events:edit') && existingEvent.createdBy !== session?.user?.id) {
         return { success: false, error: 'You do not have permission to edit this event' };
       }
+      // Same rule as the edit page: organizers edit only draft/pending events.
+      // Published results change through updateEventScores, which stages them for review.
+      if (!roleHasPermission(session?.user?.roles, 'events:edit') && existingEvent.status !== 'draft' && existingEvent.status !== 'pending') {
+        return { success: false, error: 'Approved events can no longer be edited. Use "Edit scores" to change judges and results.' };
+      }
     }
 
-    const { event: { organizer, ...event }, contests } = values;
+    const { event: { organizer, ...event } } = values;
     const isAdmin = roleHasPermission(session?.user?.roles, 'events:edit');
+    const contests = withServerPoints(values.contests, isAdmin);
 
     // Strip assembled contests field before writing Metadata record
     const { contests: previousContests = [], ...existingMetadata } = existingEvent;
@@ -430,8 +460,18 @@ export async function updateEventStatus(eventId: string, status: 'draft' | 'publ
 
     await putEventItem(updatedEvent);
 
+    // Results count only while the event is published: add or remove the
+    // athletes' Participation:* records. Legacy contests without a results
+    // array keep their migrated records untouched.
+    await Promise.all(
+      result.event.contests
+        .filter((c) => Array.isArray(c.results))
+        .map((c) => syncContestParticipationRecords(eventId, { ...c, eventId }))
+    );
+
     invalidateContestsCache();
     revalidatePath('/events');
+    revalidatePath('/rankings');
 
     return {
       success: true,
