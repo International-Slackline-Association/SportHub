@@ -1,6 +1,6 @@
 # Requirements: World Records & World Firsts Workflow
 
-Status: **v13**, 2026-11-18. Describes what runs on `main` and on slacklinesport.org.
+Status: **v13**, 2026-11-20. Describes what runs on `main` and on slacklinesport.org.
 Rules source: ISA Sport Commission, *Slackline World Records and World Firsts*, October 2026 v2. Where this
 document and the framework differ, the framework wins; the Sport Commission decides on every record and first.
 Every section states the decisions taken; §9 lists what is still open. Code map for reviewers:
@@ -124,15 +124,18 @@ first succeeds; the second is asked to reload. Imported entries keep whatever th
 
 - Up to 20 items, each a **link** or an **uploaded file** (photos, videos, GPX/KML/FIT/TCX, PDF, CSV, TXT,
   spreadsheets; up to 2 GB), each with a **description** entered before uploading.
-- Every claim gets a **Google Drive folder named after its ID** inside the ISA evidence folder
-  (`RECORDS_EVIDENCE_FOLDER_ID`), created with the first item (a new claim is saved as a draft first). Uploads go
+- Claims get numbered ids (`claim-record-N`, `claim-first-N`). Every claim gets a **Google Drive folder named after
+  its id** inside the ISA evidence folder (`RECORDS_EVIDENCE_FOLDER_ID`, in the ISA "Sport" Shared Drive), created
+  with the first item; a new claim is saved as a draft first, even before a category is chosen. Uploads go
   from the browser straight to Drive and are named after their description; links become `<description>.url`
   files; `_Evidence overview.txt` is rewritten on every save. Removing an item or deleting a draft moves the file or
   folder to the Drive trash; files ISA staff add by hand are left alone.
 - Evidence files are **internal**: public pages show links only, and the folder link goes only to Record Managers.
-- **Setup:** the service account (`GOOGLE_SERVICE_ACCOUNT_EMAIL`) needs the Drive API and Content manager access to
-  a folder on a **Shared Drive** (or `GOOGLE_DRIVE_IMPERSONATE_USER` with domain-wide delegation). Without it,
-  local development keeps files in the temp directory and production accepts links only.
+- **Setup:** a service account with the Drive API enabled and Content manager access to the folder on a Shared
+  Drive: `GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL` / `_PRIVATE_KEY`, falling back to the Sheets account
+  (`GOOGLE_SERVICE_ACCOUNT_EMAIL`); or `GOOGLE_DRIVE_IMPERSONATE_USER` with domain-wide delegation. Uploads are live
+  on production since 2026-11-18. Without these settings, local development keeps files in the temp directory and
+  links still work.
 
 ## 6. Review and administration
 
@@ -140,7 +143,8 @@ first succeeds; the second is asked to reload. Imported entries keep whatever th
   first). The admin pages share a button bar: Review queue, All records and firsts, Modify Records, Modify Categories, Modify Firsts, Import
   review, Export CSV. **Modify Records / Modify Firsts** (`/admin/records-manage/{records|firsts}`) list every
   non-draft entry with search and status filter. **All records and firsts** (`/admin/records-all`) lists every entry
-  of both kinds in any status, drafts and voided entries included, with Kind and Status filters.
+  of both kinds in any status, drafts and voided entries included, with Kind and Status filters. In these lists a
+  click anywhere on a row opens the entry (Cmd/Ctrl-click opens a new tab).
 - **Detail page**: all fields with the history, the current record per list, and the decision buttons grouped with
   the fields they need: **Approve**, **Request changes** (comment required), **Reject** (reason, §6.1) and
   **Modify**. New-category claims show similar categories and the framework's record criteria; the reviewer creates
@@ -190,7 +194,11 @@ Modify instead of rejected.
 PDFs generated on demand per athlete for published and historical entries at
 `/api/certificates/{record|first}/{id}?athlete={n}`, so corrections show immediately. They fill the official ISA
 templates from isa-tools (frame, logo, seal, signatures) with name, category or trick, specs, date and a "Scan to
-verify" QR code that today links back to the live certificate. No certificate while the category is Unchallenged.
+verify" QR code. SportHub signs the certificate statement through isa-tools (`POST /v1/sign` with its own
+`sporthub-service` client, `ISA_TOOLS_CLIENT_ID` / `ISA_TOOLS_CLIENT_SECRET`, 10-year validity) and the QR opens
+verify.slacklineinternational.org, like the old isa-tools certificates; the code is stored per entry and athlete
+and reused until the entry changes. Without both settings, or if isa-tools fails, the QR links to the live
+certificate instead (a half configuration is logged as a warning). No certificate while the category is Unchallenged.
 Linked from "My claims" and the admin detail page only, **not** from public pages or athlete profiles.
 
 ## 7. Notifications
@@ -225,14 +233,12 @@ witnesses per claim.
 3. **Import review on production:** 192 athletes to link to profiles, and a possible duplicate (wr145 / wr146).
    Known wrong or broken emails in the sheet: Anthony/Antony Newton (wr 43–48), "Raphael Bridi" (wr 240), Ando
    Franscini (wr 35), Tancrède Melet (wr 280), Quirin Herterich (wr 229–232).
-4. **Evidence uploads on production:** `RECORDS_EVIDENCE_FOLDER_ID` is not set and the folder is not on a Shared
-   Drive yet (§5.1), so production accepts links only. (Emails are live: SMTP sends as ISA Records from Jonas's
-   Workspace account; switching the sender to records@ needs a new app password.)
-5. **Verifiable certificates** (PR #148, open): sign the QR code through the isa-tools `/sign` service so a scan
-   shows the ISA-signed statement on verify.slacklineinternational.org, like the old certificates. Needs the
-   `ISA_TOOLS_CLIENT_ID` and `ISA_TOOLS_CLIENT_SECRET` Amplify secrets and agreement on a 10-year validity.
-6. **Admin claim tables on phones:** the review queue, Modify and All records tables scroll sideways on a phone; the
+4. **Admin claim tables on phones:** the review queue, Modify and All records tables scroll sideways on a phone; the
    card layout from PR #147 was dropped when the tables moved to the shared `@ui/Table`.
+5. **Certificate signing on production:** confirm `ISA_TOOLS_CLIENT_SECRET` is set next to `ISA_TOOLS_CLIENT_ID`
+   in Amplify's environment variables and that a downloaded certificate's QR opens verify.slacklineinternational.org.
+6. **Email sender:** emails go out as "ISA Records" from Jonas's Workspace account; switching to records@ needs a new
+   app password, `SMTP_USER` / `SMTP_FROM` and a redeploy.
 7. **Athletes with gender "other" or none** can't be on a claim for now.
 8. **Retire the Google Sheet fallback** in `data-services.ts` now that production has data; and remove the
    duplicate `validateForSubmit` (the Yup schema is the single source of form validation).
