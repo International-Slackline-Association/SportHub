@@ -38,6 +38,7 @@ applications:
             - env | grep -e ^ISA_TOOLS_CLIENT_ID= >> .env.production || true
             - env | grep -e ^ISA_TOOLS_CLIENT_SECRET= >> .env.production || true
             - env | grep -e ^ISA_TOOLS_API_URL= >> .env.production || true
+            - env | grep -e ^ISA_USERS_API_URL= >> .env.production || true
             - chmod +x scripts/build_sporthub.sh
             - ./scripts/build_sporthub.sh
       artifacts:
