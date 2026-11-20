@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SkipLink } from "@slacklineinternational/onsight/react";
 import "@ui/globals.css";
 import Footer from "@ui/Footer";
 import Navigation from "@ui/Navigation"
@@ -22,6 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className="min-h-screen flex flex-col" suppressHydrationWarning>
+        <SkipLink />
         <ReactQueryProvider>
           <SessionProvider>
             {isDevMode && (
@@ -39,7 +41,7 @@ export default function RootLayout({
               </div>
             )}
             <Navigation />
-            <main className="flex-1">
+            <main id="main" className="flex-1">
               {children}
             </main>
             <Footer />

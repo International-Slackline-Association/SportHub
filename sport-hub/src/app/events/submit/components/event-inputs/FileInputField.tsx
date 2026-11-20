@@ -5,7 +5,7 @@ import { useRef, useState } from 'react';
 import { EventSubmissionFormValues } from '../../types';
 import formStyles from '@ui/Form/styles.module.css';
 import styles from './styles.module.css';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import { FormikFormField } from '@ui/Form';
 import { cn } from '@utils/cn';
 
@@ -82,13 +82,13 @@ export default function FileInputField() {
           <div className={cn("cluster", "gap-2", "mt-3")}>
             <Button
               onClick={handleButtonClick}
-              variant="default"
+              variant="neutral"
             >
               Change Image
             </Button>
             <Button
               onClick={handleRemove}
-              variant="destructive-secondary"
+              variant="danger-secondary"
             >
               Remove
             </Button>

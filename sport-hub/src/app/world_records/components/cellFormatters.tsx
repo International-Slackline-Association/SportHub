@@ -3,7 +3,8 @@ import type { WorldFirst, WorldRecord } from "@lib/data-services";
 import type { DisplayAthlete } from "@lib/records-service";
 import type { RecordStanding } from "@lib/records-logic";
 import { CellContext, Row } from "@tanstack/react-table";
-import { Badge, Gender } from "@ui/Badge";
+import { Badge } from "@slacklineinternational/onsight/react";
+import { Gender } from "@ui/Badge";
 import { CountryFlag, resolveIso2 } from "@ui/CountryFlag";
 import { COUNTRIES } from "@utils/countries";
 import Link from "next/link";
@@ -70,10 +71,10 @@ export const genderFilterFn = <T extends WorldRecord | WorldFirst>(row: Row<T>, 
 
 /** World Records in yellow, Former and Historical World Records in grey text; Unchallenged achievements have no title. */
 export const TitleBadge = ({ title, standing }: { title: string; standing?: RecordStanding }) => {
-  if (standing === 'unchallenged') return <Badge color="NEUTRAL">Unchallenged</Badge>;
+  if (standing === 'unchallenged') return <Badge color="neutral">Unchallenged</Badge>;
   if (standing === 'former' || standing === 'historical') return <span className="text-xs text-gray-500">{title}</span>;
   if (!title) return <span className="text-xs text-gray-400">History</span>;
-  return <Badge color="YELLOW">{title}</Badge>;
+  return <Badge color="yellow">{title}</Badge>;
 };
 
 const toSortable = (date: string) => date.replace(/^(\d{2})\/(\d{2})\/(\d{4})$/, '$3$2$1');

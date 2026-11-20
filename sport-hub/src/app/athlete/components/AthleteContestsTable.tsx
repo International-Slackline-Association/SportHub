@@ -1,3 +1,4 @@
+import { EmptyState } from '@slacklineinternational/onsight/react';
 import { createColumnHelper } from '@tanstack/react-table';
 import { AthleteContest } from '@lib/data-services';
 import Table from '@ui/Table';
@@ -6,7 +7,6 @@ import { DISCIPLINE_DATA } from '@utils/consts';
 import { eventGenderOptions, ageCategoryOptions } from '@ui/Form/commonOptions';
 import { ContestSize } from '@ui/Badge';
 import { formatDate } from '@utils/dates';
-import { Alert } from '@ui/Alert';
 
 const labelOf = (opts: { value: string; label: string }[], val: string | undefined) =>
   opts.find(o => o.value === val)?.label ?? val ?? '';
@@ -108,7 +108,7 @@ type AthleteContestsTableProps = {
 
 const AthleteContestsTable = ({ contests }: AthleteContestsTableProps) => {
   if (contests.length === 0) {
-    return <Alert variant="info">No contest participations found for this athlete.</Alert>;
+    return <EmptyState title="No contests" plain>This athlete has no recorded contest results.</EmptyState>;
   }
 
   return (

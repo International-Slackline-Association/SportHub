@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import { withdrawClaim } from '../actions';
 
 export default function WithdrawButton({ kind, entryId }: { kind: 'record' | 'first'; entryId: string }) {
@@ -11,7 +11,7 @@ export default function WithdrawButton({ kind, entryId }: { kind: 'record' | 'fi
   return (
     <Button
       type="button"
-      variant="destructive-secondary"
+      variant="danger-secondary"
       size="small"
       disabled={busy}
       onClick={async () => {

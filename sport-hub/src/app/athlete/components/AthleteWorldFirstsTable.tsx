@@ -1,3 +1,4 @@
+import { EmptyState } from '@slacklineinternational/onsight/react';
 import { createColumnHelper } from '@tanstack/react-table';
 import { WorldFirst } from '@lib/data-services';
 import Table from '@ui/Table';
@@ -6,7 +7,6 @@ import {
   genderCellFormatter,
   linkCellFormatter,
 } from 'src/app/world_records/components/cellFormatters';
-import { Alert } from '@ui/Alert';
 import { AdminEditButton, useCanEditRecords } from 'src/app/world_records/components/AdminEditButton';
 
 const columnHelper = createColumnHelper<WorldFirst>();
@@ -51,7 +51,7 @@ type AthleteWorldFirstsTableProps = {
 const AthleteWorldFirstsTable = ({ worldFirsts }: AthleteWorldFirstsTableProps) => {
   const canEditRecords = useCanEditRecords();
   if (worldFirsts.length === 0) {
-    return <Alert variant="info">No world firsts found for this athlete.</Alert>;
+    return <EmptyState title="No world firsts" plain>This athlete has no world firsts.</EmptyState>;
   }
   // Certificates are not listed on the public profile; hide Links when no entry has any.
   const hasLinks = worldFirsts.some(entry => entry.links.some(Boolean));

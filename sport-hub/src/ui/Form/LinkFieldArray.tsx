@@ -1,4 +1,4 @@
-import Button from "@ui/Button";
+import { Button } from '@slacklineinternational/onsight/react';
 import { FormikTextField, TextFieldProps } from "@ui/Form";
 import { cn } from "@utils/cn";
 import { FieldArray, useFormikContext } from "formik";
@@ -24,7 +24,7 @@ const LinkFormikTextField = <FormType,>({ className, id, onRemove, ...props }: T
       />
       <Button
         onClick={onRemove}
-        variant="destructive-secondary"
+        variant="danger-secondary"
         size="small"
         style={{ height: "min-content", marginTop: "8px" }}
       >
@@ -52,7 +52,7 @@ export const LinkFieldArray = <FormType,>({ formKey }: LinkFieldArrayProps) => {
           ))}
           <Button
             onClick={() => push("")}
-            variant="default"
+            variant="neutral"
           >
             Add link
           </Button>

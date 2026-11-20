@@ -2,8 +2,7 @@
 import { useRef, useState } from 'react';
 import { Formik, Form, getIn } from 'formik';
 import Link from 'next/link';
-import { TabGroup } from '@ui/Tab';
-import Button from '@ui/Button';
+import { Alert, Button, Tabs } from '@slacklineinternational/onsight/react';
 import EventForm from './event-inputs/EventForm';
 import {
   initialEventValues,
@@ -15,9 +14,7 @@ import styles from './styles.module.css';
 import { saveEvent } from '../actions';
 import { cn } from '@utils/cn';
 import TabbedContestForms from './contest-inputs/TabbedContestForms';
-import { Alert } from '../../../../ui/Alert';
 import { ReviewEventForm } from './ReviewEventForm';
-import Spinner from '@ui/Spinner';
 
 type Step = "EVENT" | "CONTESTS" | "REVIEW";
 type SubmitIntent = 'draft' | 'pending';
@@ -113,20 +110,22 @@ export default function SubmitEventClient() {
           );
         }
 
-        const submitDisabled = isSubmitting || !isValid || !dirty;
+        const submitDisabled = !isValid || !dirty;
+        const savingDraft = isSubmitting && submitIntentRef.current === 'draft';
+        const submitting = isSubmitting && submitIntentRef.current === 'pending';
 
         return (
           <Form className={cn(styles.formWrapper, "stack")}>
             {/* Form Header */}
-            <TabGroup
-              activeTab={activeTab}
-              className={cn(styles.borderBottom, "mb-2")}
-              onTabChange={(tabId) => {
+            <Tabs
+              aria-label="Submission steps"
+              className="mb-2"
+              onChange={(tabId) => {
                 const newStep = stepOrder.indexOf(tabId as Step);
                 setCurrentStep(newStep);
               }}
               tabs={tabState}
-              variant="primary"
+              value={activeTab}
             />
 
             {/* Form Content */}
@@ -136,11 +135,8 @@ export default function SubmitEventClient() {
 
             {/*  Validation */}
             {hasValidated && !isValid && (
-              <Alert
-                className={cn(styles.borderTop, "justify-end", "gap-1", "pb-4")}
-                size="SM"
-              >
-                Please review errors before proceeding.
+              <Alert variant="danger">
+                Please review the fields marked on this step before continuing.
               </Alert>
             )}
 
@@ -210,20 +206,20 @@ export default function SubmitEventClient() {
                   <Button
                     type="submit"
                     variant="secondary"
-                    disabled={submitDisabled}
+                    loading={savingDraft}
+                    disabled={submitDisabled || submitting}
                     onClick={() => { submitIntentRef.current = 'draft'; }}
                   >
-                    {isSubmitting && submitIntentRef.current === 'draft' && <Spinner size="small" color="white" />}
-                    Save as Draft
+                    {savingDraft ? 'Saving…' : 'Save as Draft'}
                   </Button>
                   <Button
                     type="submit"
                     variant="primary"
-                    disabled={submitDisabled}
+                    loading={submitting}
+                    disabled={submitDisabled || savingDraft}
                     onClick={() => { submitIntentRef.current = 'pending'; }}
                   >
-                    {isSubmitting && submitIntentRef.current === 'pending' && <Spinner size="small" color="white" />}
-                    Submit for Approval
+                    {submitting ? 'Submitting…' : 'Submit for Approval'}
                   </Button>
                 </>
               )}

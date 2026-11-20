@@ -86,7 +86,8 @@ export const emptyClaim = (path: ClaimPath = 'existing'): ClaimFormValues => ({
   similarTricks: '',
   lineDetails: '',
   eventId: '',
-  evidence: [emptyEvidenceLink()],
+  // Links and uploads are equal choices, so a new claim starts with no evidence row
+  evidence: [],
   ethicsConfirmed: false,
 });
 
@@ -115,7 +116,7 @@ export function entryToClaimValues(entry: WorldRecordOrFirstTableItem): ClaimFor
   const common: ClaimFormValues = {
     ...base,
     entryId: entry.entryId,
-    categoryId: proposal ? '' : entry.categoryId,
+    categoryId: proposal ? '' : entry.categoryId ?? '',
     athletes: entry.athletes.length > 0
       ? entry.athletes.map(a => ({ userId: a.userId, name: a.name, pendingUser: a.pendingUser }))
       : base.athletes,
@@ -136,7 +137,7 @@ export function entryToClaimValues(entry: WorldRecordOrFirstTableItem): ClaimFor
         mimeType: e.mimeType,
         size: e.size,
       }))
-      : [emptyEvidenceLink()],
+      : [],
     witnesses,
     ethicsConfirmed: entry.ethicsConfirmed ?? false,
   };

@@ -1,11 +1,9 @@
 'use client';
 
 import ContestSize from '@ui/Badge/ContestSize';
-import { TabGroup } from '@ui/Tab';
-import styles from './styles.module.css';
+import { Tabs, type TabsProps } from '@slacklineinternational/onsight/react';
 import { DISCIPLINE_DATA, MAP_DISCIPLINE_ENUM_TO_NAME } from '@utils/consts';
 import { ContestRecord } from '@lib/relational-types';
-import { TabGroupProps } from '@ui/Tab/TabGroup';
 import { AgeCategory, Gender } from '@ui/Badge';
 
 export type ContestJudge = {
@@ -26,11 +24,12 @@ export type ContestTabData = ContestRecord & {
   results: ContestResult[];
 };
 
-export const ContestTabGroup = ({ contests, ...tabGroupProps }: Omit<TabGroupProps, "tabs"> & { contests: ContestTabData[]; }) => {
+export const ContestTabGroup = ({ contests, ...tabsProps }: Omit<TabsProps, "tabs"> & { contests: ContestTabData[]; }) => {
   return (
-    <TabGroup
-      {...tabGroupProps}
-      className={styles.tabGroup}
+    <Tabs
+      aria-label="Contests"
+      variant="pill"
+      {...tabsProps}
       tabs={contests.map(({ ageCategory, contestSize, discipline, gender }: ContestRecord, idx) => {
         
         let disciplineKey: Discipline ;
@@ -57,7 +56,6 @@ export const ContestTabGroup = ({ contests, ...tabGroupProps }: Omit<TabGroupPro
           ),
         };
       })}
-      variant="secondary"
     />
   );
 };

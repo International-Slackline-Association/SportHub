@@ -2,8 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { FormikHelpers, type FormikProps } from 'formik';
-import Modal from '@ui/Modal';
-import Button from '@ui/Button';
+import { Button, Dialog } from '@slacklineinternational/onsight/react';
 import { UpdateUserForm } from '@ui/UserForm';
 import { ROLES, ROLE_LABELS, rolesLabel, type Role } from 'src/types/rbac';
 
@@ -619,12 +618,20 @@ export default function TestCSRPage() {
       </div>
 
       {/* Edit User Modal */}
-      <Modal
-        isOpen={!!editingUser}
+      <Dialog
+        actions={
+          <>
+            <Button type="button" variant="neutral" onClick={cancelEditing}>
+              Cancel
+            </Button>
+            <Button type="button" variant="primary" onClick={() => formRef.current?.submitForm()}>
+              Save
+            </Button>
+          </>
+        }
         onClose={cancelEditing}
+        open={!!editingUser}
         title="Edit User"
-        formRef={formRef}
-        showDefaultActions={true}
       >
         {editingUser && (
           <UpdateUserForm
@@ -634,14 +641,23 @@ export default function TestCSRPage() {
             formRef={formRef}
           />
         )}
-      </Modal>
+      </Dialog>
 
       {/* Role Management Modal */}
-      <Modal
-        isOpen={!!editingRoleUser}
+      <Dialog
+        actions={
+          <>
+            <Button type="button" variant="neutral" onClick={() => setEditingRoleUser(null)}>
+              Cancel
+            </Button>
+            <Button type="button" variant="primary" loading={loading} onClick={saveRoleChanges}>
+              {loading ? 'Saving…' : 'Save Changes'}
+            </Button>
+          </>
+        }
         onClose={() => setEditingRoleUser(null)}
+        open={!!editingRoleUser}
         title="Manage Roles & Types"
-        showDefaultActions={false}
       >
         {editingRoleUser && (
           <div className="space-y-6">
@@ -739,27 +755,9 @@ export default function TestCSRPage() {
               </p>
             </div>
 
-            {/* Actions */}
-            <div className="flex gap-3 pt-4 border-t">
-              <Button
-                variant="secondary"
-                onClick={() => setEditingRoleUser(null)}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={saveRoleChanges}
-                disabled={loading}
-                className="flex-1"
-              >
-                {loading ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
           </div>
         )}
-      </Modal>
+      </Dialog>
 
       {/* Search */}
       <div className="bg-white p-4 rounded-lg shadow-md mb-6">
@@ -884,7 +882,7 @@ export default function TestCSRPage() {
                       Roles
                     </Button>
                     <Button
-                      variant="destructive"
+                      variant="danger"
                       onClick={() => deleteUser(user.id)}
                     >
                       Delete

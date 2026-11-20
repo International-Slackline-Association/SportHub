@@ -59,11 +59,13 @@ export default function ContestSizeDropdown({
         onClick={() => setIsOpen((open) => !open)}
         type="button"
       >
-        {selectedOption?.label ?? 'Select Size'}
+        {selectedOption?.value === 'ALL' || !selectedOption
+          ? (selectedOption?.label ?? 'Select Size')
+          : <ContestSize value={selectedOption.value as ContestType} />}
       </button>
 
       {isOpen && (
-        <div className={cn(styles.dropdown)}>
+        <div className={cn(styles.dropdown, styles.dropdownWide)}>
           <ul>
             {options.map((option) => (
               <li key={option.value} className={styles.dropdownItem}>
@@ -74,7 +76,7 @@ export default function ContestSizeDropdown({
                 >
                   {option.value === "ALL"
                     ? "All"
-                    : <ContestSize value={option.value as ContestType} variant="normal" />
+                    : <ContestSize value={option.value as ContestType} />
                   }
                 </button>
               </li>

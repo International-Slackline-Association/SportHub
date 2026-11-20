@@ -5,7 +5,7 @@ import styles from "./styles.module.css";
 import TableFilterFields from "./TableFilterFields";
 import { useClientMediaQuery } from "@utils/useClientMediaQuery";
 import { useState } from "react";
-import Button from "@ui/Button";
+import { Button } from '@slacklineinternational/onsight/react';
 import { cn } from "@utils/cn";
 
 const FilterIcon = ({ className = "" }: { className?: string }) => (

@@ -1,4 +1,5 @@
 "use client";
+import { Alert, Spinner, Tooltip } from '@slacklineinternational/onsight/react';
 
 import { createColumnHelper } from '@tanstack/react-table';
 import { AthleteRanking } from '@lib/data-services';
@@ -8,13 +9,10 @@ import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import Link from 'next/link';
 import { getIocCode } from '@utils/countries';
 import { useQuery } from '@tanstack/react-query';
-import Spinner from '@ui/Spinner';
-import { Alert } from '@ui/Alert';
 import tableStyles from '@ui/Table/styles.module.css';
 import { CountryFlag } from '@ui/CountryFlag';
 import { DisciplineDropdown, RankingsGenderDropdown } from '@ui/Form';
 import { DISCIPLINE_DATA, MAP_DISCIPLINE_ENUM_TO_NAME } from '@utils/consts';
-import { Tooltip } from '@ui/Tooltip';
 import { cn } from '@utils/cn';
 import { AthleteParticipationRecord } from '@lib/relational-types';
 import { Gender } from '@ui/Badge';
@@ -94,7 +92,7 @@ const columns = [
     header: 'Gender',
     enableSorting: false,
     cell: info => (
-      <Gender value={info.getValue()} variant="normal" showIcon={false} />
+      <Gender value={info.getValue()} />
     ),
   }),
   columnHelper.accessor((row: AthleteRanking) => getIocCode(row.country), {
@@ -165,12 +163,12 @@ const RankingsTable = ({
     <div className="flex items-center justify-center min-h-64">
       {isLoading && (
         <div className="text-center">
-          <Spinner/>
-          <p>Loading rankings...</p>
+          <Spinner label="Loading rankings" />
+          <p>Loading rankings…</p>
         </div>
       )}
       {isError && (
-        <Alert variant="error">{error?.message}</Alert>
+        <Alert variant="danger">{error?.message}</Alert>
       )}
       {isSuccess && (
         <Table
@@ -207,11 +205,13 @@ const RankingsTable = ({
               ...columns,
               columnHelper.accessor('points', {
                 header: () => (
-                  <div className={cn("flex gap-2", isDesktop ? "flex-row" : "flex-col")}>
+                  <div className={cn("flex items-center gap-2", isDesktop ? "flex-row" : "flex-col")}>
                     Points
                     <Tooltip
-                      content={'Ranking is determined by adding the top two awarded points from the contests athletes have participated in within the defined season.'}
-                      position="bottom"
+                      content="Ranking is determined by adding the top two awarded points from the contests athletes have participated in within the defined season."
+                      label="About ranking points"
+                      placement="bottom"
+                      align="end"
                     />
                   </div>
                 ),

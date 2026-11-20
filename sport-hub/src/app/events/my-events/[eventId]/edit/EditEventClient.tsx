@@ -2,8 +2,7 @@
 import { useState } from 'react';
 import { Formik, Form, getIn } from 'formik';
 import Link from 'next/link';
-import { TabGroup } from '@ui/Tab';
-import Button from '@ui/Button';
+import { Alert, Button, Tabs } from '@slacklineinternational/onsight/react';
 import EventForm from '../../../submit/components/event-inputs/EventForm';
 import {
   initialEventValues,
@@ -14,9 +13,7 @@ import styles from '../../../submit/components/styles.module.css';
 import { updateEvent } from '../../../submit/actions';
 import { cn } from '@utils/cn';
 import TabbedContestForms from '../../../submit/components/contest-inputs/TabbedContestForms';
-import { Alert } from '@ui/Alert';
 import { ReviewEventForm } from '../../../submit/components/ReviewEventForm';
-import Spinner from '@ui/Spinner';
 
 type Step = 'EVENT' | 'CONTESTS' | 'REVIEW';
 const stepOrder: Step[] = ['EVENT', 'CONTESTS', 'REVIEW'];
@@ -90,16 +87,16 @@ export default function EditEventClient({ eventId, initialValues, canEditOrganiz
           { id: 'REVIEW', label: 'Step 3: Review', disabled: isErrorEvent || isErrorContest },
         ];
 
-        const submitDisabled = isSubmitting || !isValid || !dirty;
+        const submitDisabled = !isValid || !dirty;
 
         return (
           <Form className={cn(styles.formWrapper, 'stack')}>
-            <TabGroup
-              activeTab={activeTab}
-              className={cn(styles.borderBottom, 'mb-2')}
-              onTabChange={(tabId) => setCurrentStep(stepOrder.indexOf(tabId as Step))}
+            <Tabs
+              aria-label="Submission steps"
+              className="mb-2"
+              onChange={(tabId) => setCurrentStep(stepOrder.indexOf(tabId as Step))}
               tabs={tabState}
-              variant="primary"
+              value={activeTab}
             />
 
             {activeTab === 'EVENT' && <EventForm canEditOrganizer={canEditOrganizer} />}
@@ -107,11 +104,8 @@ export default function EditEventClient({ eventId, initialValues, canEditOrganiz
             {activeTab === 'REVIEW' && <ReviewEventForm />}
 
             {hasValidated && !isValid && (
-              <Alert
-                className={cn(styles.borderTop, 'justify-end', 'gap-1', 'pb-4')}
-                size="SM"
-              >
-                Please review errors before proceeding.
+              <Alert variant="danger">
+                Please review the fields marked on this step before continuing.
               </Alert>
             )}
 
@@ -166,10 +160,10 @@ export default function EditEventClient({ eventId, initialValues, canEditOrganiz
                 <Button
                   type="submit"
                   variant="primary"
+                  loading={isSubmitting}
                   disabled={submitDisabled}
                 >
-                  {isSubmitting && <Spinner size="small" color="white" />}
-                  Save Changes
+                  {isSubmitting ? 'Saving…' : 'Save Changes'}
                 </Button>
               )}
             </div>

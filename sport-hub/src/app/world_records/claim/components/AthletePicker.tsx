@@ -1,7 +1,7 @@
 'use client';
 
 import { getIn, useFormikContext } from 'formik';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import { FormikSelectField, FormikTextField, countryCodeOptions, userGenderOptions } from '@ui/Form';
 import UserAutocomplete from '@ui/UserAutocomplete';
 import type { ClaimAthleteValue, ClaimFormValues } from '../types';
