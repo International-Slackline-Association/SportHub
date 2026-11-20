@@ -10,7 +10,7 @@
 import { getUser } from './user-service';
 import { normalizeGender } from '@utils/gender';
 import { createUser } from '@ui/UserForm/actions';
-import { getEntriesByCategory, type EntryKind } from './records-service';
+import { getEntriesByCategory, nextClaimNumber, type EntryKind } from './records-service';
 import { comparableValue, parseRecordValue, splitCurrentAndHistory } from './records-logic';
 import { MAX_ATHLETES, MAX_EVIDENCE_ITEMS, witnessProblems } from './records-rules';
 import type { EvidenceItemInput } from './records-evidence';
@@ -32,7 +32,8 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const kindForPath = (path: ClaimFormValues['path']): EntryKind => (path === 'first' ? 'first' : 'record');
 
-export const newEntryId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+/** Readable id for a new claim, numbered per kind: "claim-record-12", "claim-first-3". */
+export const newEntryId = async (kind: EntryKind) => `claim-${kind}-${await nextClaimNumber(kind)}`;
 
 /** Evidence the claimant filled in: links with an address and uploaded files. Empty link rows are dropped. */
 export const evidenceItems = (values: ClaimFormValues): EvidenceItemInput[] =>

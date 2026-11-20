@@ -176,6 +176,9 @@ export async function putEntry(entry: WorldRecordOrFirstTableItem, options: PutE
     statusKey: statusKeyFor(entry.kind, entry.status),
     dateSortKey: dateSortKeyFor(entry.date, entry.entryId),
   };
+  // categoryId is a category-index key, which DynamoDB rejects as an empty string.
+  // A draft saved before its category is chosen (e.g. to upload evidence) leaves it out.
+  if (!item.categoryId) delete (item as Partial<WorldRecordOrFirstTableItem>).categoryId;
   if (!options.expectedStatus) {
     await dynamodb.putItem(RECORDS_TABLE, item as unknown as Record<string, unknown>);
     return;
@@ -335,6 +338,19 @@ export async function getAuditLog(kind: EntryKind, entryId: string): Promise<Rec
 // ============================================================================
 // RATE LIMIT
 // ============================================================================
+
+/** Next number for a new claim's id ("claim-record-12"), from a counter item per kind. */
+export async function nextClaimNumber(kind: EntryKind): Promise<number> {
+  const result = await ddbClient.send(new UpdateCommand({
+    TableName: getTableName(RECORDS_TABLE),
+    Key: { pk: 'Counter', sortKey: `Claim:${kind}` },
+    UpdateExpression: 'ADD #n :one',
+    ExpressionAttributeNames: { '#n': 'n' },
+    ExpressionAttributeValues: { ':one': 1 },
+    ReturnValues: 'UPDATED_NEW',
+  }));
+  return Number(result.Attributes?.n);
+}
 
 /**
  * Counts one claim submission for a user today (UTC) and returns false once

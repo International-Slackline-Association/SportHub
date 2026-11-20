@@ -74,13 +74,20 @@ const FILE_FIELDS = 'id,name,mimeType,size,description,appProperties,webViewLink
 
 const parentFolderId = () => process.env.RECORDS_EVIDENCE_FOLDER_ID ?? '';
 
+/**
+ * Drive can use its own service account (GOOGLE_DRIVE_SERVICE_ACCOUNT_*), e.g. one in a Google Cloud
+ * project with the Drive API enabled; without it, the Sheets service account is used.
+ */
+const driveAccountEmail = () => process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL || process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+const driveAccountKey = () => process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_PRIVATE_KEY || process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
+
 let _driveAuth: InstanceType<typeof auth.GoogleAuth> | null = null;
 const driveAuth = () => {
   if (!_driveAuth) {
     _driveAuth = new auth.GoogleAuth({
       credentials: {
-        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        private_key: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        client_email: driveAccountEmail(),
+        private_key: driveAccountKey()?.replace(/\\n/g, '\n'),
       },
       scopes: ['https://www.googleapis.com/auth/drive'],
       // Optional: upload as an ISA Workspace user (domain-wide delegation) when the folder is not on a Shared Drive
@@ -316,7 +323,7 @@ export async function listLocalFolder(folderId: string) {
 // ============================================================================
 
 const driveConfigured = () =>
-  !!(parentFolderId() && process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY);
+  !!(parentFolderId() && driveAccountEmail() && driveAccountKey());
 
 export const localEvidenceEnabled = () =>
   !driveConfigured() && (process.env.DYNAMODB_LOCAL === 'true' || process.env.NODE_ENV !== 'production');

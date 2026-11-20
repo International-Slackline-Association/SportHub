@@ -32,6 +32,8 @@ const googleSheetsVars = [
   // Evidence uploads on the claim form need these two plus the folder id
   'RECORDS_EVIDENCE_FOLDER_ID',
   'GOOGLE_DRIVE_IMPERSONATE_USER',  // optional
+  'GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL',        // optional: own account for Drive uploads
+  'GOOGLE_DRIVE_SERVICE_ACCOUNT_PRIVATE_KEY',  // optional
 ];
 
 // Unnecessary variables - Amplify provides these or they're not needed

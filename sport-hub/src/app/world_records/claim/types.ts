@@ -116,7 +116,7 @@ export function entryToClaimValues(entry: WorldRecordOrFirstTableItem): ClaimFor
   const common: ClaimFormValues = {
     ...base,
     entryId: entry.entryId,
-    categoryId: proposal ? '' : entry.categoryId,
+    categoryId: proposal ? '' : entry.categoryId ?? '',
     athletes: entry.athletes.length > 0
       ? entry.athletes.map(a => ({ userId: a.userId, name: a.name, pendingUser: a.pendingUser }))
       : base.athletes,
