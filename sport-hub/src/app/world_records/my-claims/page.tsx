@@ -1,8 +1,8 @@
+import Link from 'next/link';
 import { formatISODay } from '@utils/dates';
 import type { Metadata } from 'next';
 import PageLayout from '@ui/PageLayout';
-import Button from '@ui/Button';
-import { Alert } from '@ui/Alert';
+import { Button, Alert } from '@slacklineinternational/onsight/react';
 import { auth } from '@lib/auth';
 import { getRecordCategories } from '@lib/records-service';
 import { entryHasCertificate, formatRecordValue, GENDER_TITLE_LABELS } from '@lib/records-logic';
@@ -10,6 +10,7 @@ import type { ClaimStatus, WorldRecordOrFirstTableItem } from '@lib/relational-t
 import { getMyClaims } from '../actions';
 import { ClaimStatusBadge } from '../components/claimStatus';
 import WithdrawButton from './WithdrawButton';
+import DeleteDraftButton from './DeleteDraftButton';
 import ClaimWorkflow from './ClaimWorkflow';
 
 export const metadata: Metadata = {
@@ -40,7 +41,7 @@ export default async function MyClaimsPage({ searchParams }: Props) {
         </section>
       )}
       <section className="p-4 sm:p-0 flex gap-3 flex-wrap">
-        <Button as="link" href="/world_records/claim" variant="primary">Claim World Record or World First</Button>
+        <Button as={Link} href="/world_records/claim" variant="primary">Claim World Record or World First</Button>
       </section>
       <section className="p-4 sm:p-0">
         <ClaimWorkflow counts={counts} />
@@ -71,13 +72,14 @@ export default async function MyClaimsPage({ searchParams }: Props) {
                     </div>
                     <div className="flex gap-2 flex-wrap items-center">
                       {editable && isClaimant && (
-                        <Button as="link" href={`/world_records/claim?kind=${entry.kind}&id=${entry.entryId}`} variant="secondary" size="small">
+                        <Button as={Link} href={`/world_records/claim?kind=${entry.kind}&id=${entry.entryId}`} variant="secondary" size="small">
                           {entry.status === 'draft' ? 'Edit draft' : 'Make changes'}
                         </Button>
                       )}
+                      {entry.status === 'draft' && isClaimant && <DeleteDraftButton kind={entry.kind} entryId={entry.entryId} />}
                       {entry.status === 'pending' && isClaimant && <WithdrawButton kind={entry.kind} entryId={entry.entryId} />}
                       {entryHasCertificate(entry, entry.kind === 'record' ? categoryById.get(entry.categoryId)?.status : undefined) && entry.athletes.map((a, i) => (
-                        <Button key={i} as="link" href={`/api/certificates/${entry.kind}/${entry.entryId}?athlete=${i}`} variant="secondary" size="small">
+                        <Button key={i} as={Link} href={`/api/certificates/${entry.kind}/${entry.entryId}?athlete=${i}`} variant="secondary" size="small">
                           Certificate{entry.athletes.length > 1 ? ` (${a.name})` : ''}
                         </Button>
                       ))}
@@ -85,7 +87,7 @@ export default async function MyClaimsPage({ searchParams }: Props) {
                     <div className="ml-auto"><ClaimStatusBadge status={entry.status} /></div>
                   </div>
                   {entry.reviewComment && ['changes_requested', 'rejected'].includes(entry.status) && (
-                    <Alert variant={entry.status === 'rejected' ? 'error' : 'warning'} size="SM">ISA: {entry.reviewComment}</Alert>
+                    <Alert variant={entry.status === 'rejected' ? 'danger' : 'warning'}>ISA: {entry.reviewComment}</Alert>
                   )}
                 </div>
               );
@@ -94,7 +96,7 @@ export default async function MyClaimsPage({ searchParams }: Props) {
         )}
       </section>
       <section className="p-4 sm:p-0">
-        <Button as="link" href="/world_records" variant="secondary" size="small">Go to Records &amp; Firsts</Button>
+        <Button as={Link} href="/world_records" variant="secondary" size="small">Go to Records &amp; Firsts</Button>
       </section>
     </PageLayout>
   );

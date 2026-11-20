@@ -5,7 +5,7 @@ import { canEditUser } from '@lib/authorization';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type { UserProfileRecord } from '@lib/relational-types';
-import type { UserSubType } from '../../types/rbac';
+import { rolesOf, type UserSubType } from '../../types/rbac';
 import { clearRoleCache } from '@lib/rbac-service';
 import { getUser, createUser, saveUserProfile } from '@lib/user-service';
 import { updateReferenceUser } from '@lib/reference-db-service';
@@ -156,7 +156,7 @@ export async function getUserProfile(userId: string) {
       success: true,
       user: {
         userId: user.userId,
-        role: user.role,
+        roles: rolesOf(user),
         userSubTypes: user.userSubTypes,
         totalPoints: user.totalPoints,
         contestCount: user.contestCount,

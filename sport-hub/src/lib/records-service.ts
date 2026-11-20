@@ -7,9 +7,10 @@
  * "Record:{id}" / "First:{id}" pointer item under their profile.
  */
 
-import { BatchWriteCommand, PutCommand, QueryCommand, UpdateCommand, type QueryCommandInput } from '@aws-sdk/lib-dynamodb';
+import { PutCommand, QueryCommand, UpdateCommand, type QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 import { formatISODay } from '@utils/dates';
 import { ddbClient, dynamodb, getTableName, RECORDS_TABLE, USERS_TABLE } from './dynamodb';
+import type { StoredSignature } from './certificate-signing';
 import type {
   AthleteRecordOrFirstLinkTableItem,
   ClaimStatus,
@@ -32,6 +33,7 @@ import {
   type RecordStanding,
 } from './records-logic';
 import { getCountryByCode } from '@utils/countries';
+import { getAthleteProfilesBatch } from './user-query-service';
 
 export type EntryKind = 'record' | 'first';
 
@@ -95,6 +97,11 @@ export async function getFirstCategory(categoryId: string): Promise<FirstCategor
 
 export async function putCategory(category: RecordCategoryTableItem | FirstCategoryTableItem): Promise<void> {
   await dynamodb.putItem(RECORDS_TABLE, category as unknown as Record<string, unknown>);
+}
+
+/** Removes a category item. Its audit items stay, so the deletion remains on record. */
+export async function deleteCategory(pk: 'RecordCategory' | 'FirstCategory', categoryId: string): Promise<void> {
+  await dynamodb.deleteItem(RECORDS_TABLE, { pk, sortKey: `${pk}:${categoryId}` });
 }
 
 /** Category changes are logged in the category partition (FR-C5): sortKey "Audit:{categoryId}:{iso}". */
@@ -169,6 +176,9 @@ export async function putEntry(entry: WorldRecordOrFirstTableItem, options: PutE
     statusKey: statusKeyFor(entry.kind, entry.status),
     dateSortKey: dateSortKeyFor(entry.date, entry.entryId),
   };
+  // categoryId is a category-index key, which DynamoDB rejects as an empty string.
+  // A draft saved before its category is chosen (e.g. to upload evidence) leaves it out.
+  if (!item.categoryId) delete (item as Partial<WorldRecordOrFirstTableItem>).categoryId;
   if (!options.expectedStatus) {
     await dynamodb.putItem(RECORDS_TABLE, item as unknown as Record<string, unknown>);
     return;
@@ -329,6 +339,19 @@ export async function getAuditLog(kind: EntryKind, entryId: string): Promise<Rec
 // RATE LIMIT
 // ============================================================================
 
+/** Next number for a new claim's id ("claim-record-12"), from a counter item per kind. */
+export async function nextClaimNumber(kind: EntryKind): Promise<number> {
+  const result = await ddbClient.send(new UpdateCommand({
+    TableName: getTableName(RECORDS_TABLE),
+    Key: { pk: 'Counter', sortKey: `Claim:${kind}` },
+    UpdateExpression: 'ADD #n :one',
+    ExpressionAttributeNames: { '#n': 'n' },
+    ExpressionAttributeValues: { ':one': 1 },
+    ReturnValues: 'UPDATED_NEW',
+  }));
+  return Number(result.Attributes?.n);
+}
+
 /**
  * Counts one claim submission for a user today (UTC) and returns false once
  * `max` is reached. Each submission emails the athletes and witnesses, so this
@@ -450,14 +473,14 @@ export async function getEntriesBatch(kind: EntryKind, entryIds: string[]): Prom
   return results;
 }
 
-/** Deletes items in chunks of 25 (BatchWrite limit). Used by the local import reset. */
+/**
+ * Deletes items one DeleteItem call at a time, 25 in parallel. Not BatchWriteItem:
+ * the prod compute role (rankings-dynamodb-role) is not allowed to call it, and
+ * DeleteItem is what the rest of the app already uses.
+ */
 export async function deleteItems(tableName: string, keys: Record<string, unknown>[]): Promise<void> {
   for (let i = 0; i < keys.length; i += 25) {
-    await ddbClient.send(new BatchWriteCommand({
-      RequestItems: {
-        [getTableName(tableName)]: keys.slice(i, i + 25).map(Key => ({ DeleteRequest: { Key } })),
-      },
-    }));
+    await Promise.all(keys.slice(i, i + 25).map(key => dynamodb.deleteItem(tableName, key)));
   }
 }
 
@@ -505,8 +528,27 @@ export interface WorldFirst {
   links: string[];
 }
 
-const toDisplayAthletes = (entry: WorldRecordOrFirstTableItem): DisplayAthlete[] =>
-  entry.athletes.map(({ userId, name, country, gender }) => ({ userId, name, country, gender }));
+/** Country per linked athlete, read from their SportHub profile. */
+type ProfileCountries = Map<string, string>;
+
+const getProfileCountries = async (entries: WorldRecordOrFirstTableItem[]): Promise<ProfileCountries> => {
+  const userIds = [...new Set(entries.flatMap(e => e.athletes.map(a => a.userId)).filter((id): id is string => !!id))];
+  const profiles = await getAthleteProfilesBatch(userIds);
+  const countries: ProfileCountries = new Map();
+  for (const [userId, profile] of profiles) {
+    if (typeof profile.country === 'string' && profile.country) countries.set(userId, profile.country);
+  }
+  return countries;
+};
+
+/** The athlete's country comes from their profile; athletes without a profile keep the one stored on the entry. */
+const toDisplayAthletes = (entry: WorldRecordOrFirstTableItem, profileCountries: ProfileCountries): DisplayAthlete[] =>
+  entry.athletes.map(({ userId, name, country, gender }) => ({
+    userId,
+    name,
+    country: (userId ? profileCountries.get(userId) : undefined) ?? country,
+    gender,
+  }));
 
 /** Claims store ISO codes, imported rows country names. */
 const countryName = (country?: string) => (country && getCountryByCode(country)?.name) || country;
@@ -517,6 +559,7 @@ const links = (entry: WorldRecordOrFirstTableItem) => entry.evidence.filter(e =>
 const toWorldRecords = (
   categories: RecordCategoryTableItem[],
   entries: WorldRecordTableItem[],
+  profileCountries: ProfileCountries,
 ): WorldRecord[] => {
   const rows: WorldRecord[] = [];
 
@@ -538,7 +581,7 @@ const toWorldRecords = (
         value: formatRecordValue(category, entry.value),
         specs: [entry.value.original, entry.furtherSpecs, entry.setup].filter(Boolean).join(' · '),
         gender: entry.gender,
-        athletes: toDisplayAthletes(entry),
+        athletes: toDisplayAthletes(entry, profileCountries),
         date: formatISODay(entry.date),
         location: [entry.locationName, countryName(entry.locationCountry)].filter(Boolean).join(', '),
         links: links(entry),
@@ -548,7 +591,11 @@ const toWorldRecords = (
   return rows;
 };
 
-const toWorldFirsts = (categories: FirstCategoryTableItem[], entries: WorldFirstTableItem[]): WorldFirst[] => {
+const toWorldFirsts = (
+  categories: FirstCategoryTableItem[],
+  entries: WorldFirstTableItem[],
+  profileCountries: ProfileCountries,
+): WorldFirst[] => {
   const categoryById = new Map(categories.map(c => [c.categoryId, c]));
   return entries.map(entry => ({
     entryId: entry.entryId,
@@ -559,7 +606,7 @@ const toWorldFirsts = (categories: FirstCategoryTableItem[], entries: WorldFirst
     description: entry.description ?? '',
     lineDetails: entry.lineDetails ?? '',
     gender: entry.gender,
-    athletes: toDisplayAthletes(entry),
+    athletes: toDisplayAthletes(entry, profileCountries),
     date: formatISODay(entry.date),
     links: links(entry),
   }));
@@ -583,7 +630,8 @@ export async function getPublicWorldRecords(): Promise<WorldRecord[]> {
     getEntriesByStatus('record', 'published'),
     getEntriesByStatus('record', 'historical'),
   ]);
-  return toWorldRecords(categories, [...published, ...historical]);
+  const entries = [...published, ...historical];
+  return toWorldRecords(categories, entries, await getProfileCountries(entries));
 }
 
 /** Published firsts with computed titles (FR-23b). */
@@ -592,7 +640,7 @@ export async function getPublicWorldFirsts(): Promise<WorldFirst[]> {
     getFirstCategories(),
     getEntriesByStatus('first', 'published'),
   ]);
-  return toWorldFirsts(categories, published);
+  return toWorldFirsts(categories, published, await getProfileCountries(published));
 }
 
 /**
@@ -610,5 +658,27 @@ export async function getPublicEntry(kind: EntryKind, entryId: string): Promise<
   const [category, inCategory] = await Promise.all([getRecordCategory(entry.categoryId), getEntriesByCategory('record', entry.categoryId)]);
   if (!category) return null;
   const visible = inCategory.filter(e => isPublicStatus(e.status));
-  return toWorldRecords([category], visible).find(row => row.entryId === entryId) ?? null;
+  return toWorldRecords([category], visible, await getProfileCountries(visible)).find(row => row.entryId === entryId) ?? null;
+}
+
+// ---- Certificate signatures (signed "Scan to verify" QR codes, see certificate-signing.ts) ----
+
+const certificateSignatureKey = (kind: 'record' | 'first', entryId: string, athleteIndex: number) => ({
+  pk: 'CertificateSignature',
+  sortKey: `CertificateSignature:${kind}:${entryId}:${athleteIndex}`,
+});
+
+/** The stored isa-tools signature for one athlete's certificate, if any. */
+export async function getCertificateSignature(kind: 'record' | 'first', entryId: string, athleteIndex: number): Promise<StoredSignature | undefined> {
+  const item = await dynamodb.getItem(RECORDS_TABLE, certificateSignatureKey(kind, entryId, athleteIndex));
+  if (!item) return undefined;
+  return { statement: String(item.statement ?? ''), verificationUrl: String(item.verificationUrl ?? ''), expiresAt: String(item.expiresAt ?? '') };
+}
+
+export async function saveCertificateSignature(kind: 'record' | 'first', entryId: string, athleteIndex: number, signature: StoredSignature): Promise<void> {
+  await dynamodb.putItem(RECORDS_TABLE, {
+    ...certificateSignatureKey(kind, entryId, athleteIndex),
+    ...signature,
+    signedAt: new Date().toISOString(),
+  });
 }

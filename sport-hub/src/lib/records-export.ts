@@ -126,7 +126,7 @@ async function recordRows(): Promise<Row[]> {
       witnesses: witnessList(entry),
       full_video: !entry.noFullVideoReason,
       no_full_video_reason: entry.noFullVideoReason,
-      proposed_category: proposal ? `${proposal.name} (${proposal.unit}, ${proposal.direction} is better): ${proposal.measurement}` : '',
+      proposed_category: proposal ? `${proposal.name} (${proposal.group ?? 'Other'}; ${proposal.unit}, ${proposal.direction} is better): ${proposal.measurement}` : '',
       ...trailingColumns(entry),
     };
   });

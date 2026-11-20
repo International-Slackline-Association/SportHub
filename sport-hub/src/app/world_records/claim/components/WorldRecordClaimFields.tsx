@@ -1,4 +1,5 @@
 'use client';
+import { Alert } from '@slacklineinternational/onsight/react';
 
 /**
  * The fields of a world record claim (requirements §8.1): a category, or a
@@ -6,15 +7,15 @@
  * Shared by the claimant's form and the admin "Modify" form.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormikContext } from 'formik';
-import { Alert } from '@ui/Alert';
 import { FormikCheckboxField, FormikSelectField, FormikTextAreaField, FormikTextField, countryCodeOptions } from '@ui/Form';
 import { deriveGender, GENDER_TITLE_LABELS, UNIT_SUGGESTIONS, unitKind, valueHint } from '@lib/records-logic';
-import type { RecordCategoryTableItem } from '@lib/relational-types';
+import { RECORD_CATEGORY_GROUPS, type RecordCategoryTableItem } from '@lib/relational-types';
 import { getAthleteGenders, getMarkToBeat } from '../../actions';
 import type { ClaimFormValues } from '../types';
 import type { EnsureClaimSaved } from './EvidenceFields';
+import RecordCategoryPicker from './RecordCategoryPicker';
 import { AthletesSection, EthicsSection, EvidenceSection, Section, WitnessesSection } from './ClaimSections';
 
 export type WorldRecordClaimFieldsProps = {
@@ -62,12 +63,12 @@ function GenderAndMark({ recordCategories }: { recordCategories: RecordCategoryT
   return (
     <div className="stack gap-2">
       {loadedAll && missing.map(a => (
-        <Alert key={a.userId ?? a.name} variant="warning" size="SM">
+        <Alert key={a.userId ?? a.name} variant="warning">
           {a.name || 'An athlete'} has no male or female gender {a.userId ? 'on their profile' : 'set'}. A claim can only be submitted once it is set.
         </Alert>
       ))}
       {gender && (
-        <Alert variant="info" size="SM" showIcon={false}>
+        <Alert variant="info" icon={false}>
           {/* One paragraph, so the text flows inline inside the flex alert */}
           <p>
             This claim counts as a <strong>{GENDER_TITLE_LABELS[gender].toLowerCase()} world record</strong>.
@@ -82,28 +83,28 @@ function GenderAndMark({ recordCategories }: { recordCategories: RecordCategoryT
 
 function CategoryFields({ recordCategories }: { recordCategories: RecordCategoryTableItem[] }) {
   const { values } = useFormikContext<ClaimFormValues>();
-  const category = recordCategories.find(c => c.categoryId === values.categoryId);
-  const categoryOptions = useMemo(
-    () => recordCategories.map(c => ({ value: c.categoryId, label: `${c.group} · ${c.name}${c.status === 'unchallenged' ? ' (unchallenged)' : ''}` })),
-    [recordCategories],
-  );
 
   if (values.path === 'existing') {
     return (
       <Section title="Category">
-        <div className="stack gap-1">
-          <FormikSelectField id="categoryId" name="categoryId" label="Record category" options={categoryOptions} required />
-          {category?.description && <p className="text-sm text-gray-600">{category.description}</p>}
-        </div>
+        <RecordCategoryPicker recordCategories={recordCategories} />
       </Section>
     );
   }
   return (
     <Section title="New category">
-      <Alert variant="info" size="SM" showIcon={false}>
+      <Alert variant="info" icon={false}>
         The ISA checks a new category against the record criteria: measurable, standardisable, breakable, significant and separable from existing categories. It may map your claim to an existing category instead.
       </Alert>
       <FormikTextField id="newCategory.name" name="newCategory.name" label="Category name" required />
+      <FormikSelectField
+        id="newCategory.group"
+        name="newCategory.group"
+        label="Group"
+        options={RECORD_CATEGORY_GROUPS.map(g => ({ value: g, label: g }))}
+        placeholder="Choose a group"
+        required
+      />
       <FormikTextAreaField id="newCategory.measurement" name="newCategory.measurement" label="What is measured and how" required />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="stack gap-1">

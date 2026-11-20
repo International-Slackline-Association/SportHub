@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import PageLayout from '@ui/PageLayout';
-import { requireAdmin } from '@lib/authorization';
+import { requireRecordManager } from '@lib/authorization';
 import { getRecordCategories, getFirstCategories, getEntry } from '@lib/records-service';
 import { evidenceUploadsEnabled } from '@lib/records-evidence';
 import { entryToClaimValues } from 'src/app/world_records/claim/types';
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 type Props = { params: Promise<{ kind: string; id: string }> };
 
 export default async function ModifyEntryPage({ params }: Props) {
-  await requireAdmin();
+  await requireRecordManager();
   const { kind, id } = await params;
   if (kind !== 'record' && kind !== 'first') notFound();
   const entryId = decodeURIComponent(id);

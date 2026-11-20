@@ -1,4 +1,5 @@
 "use client"
+import { Alert, Spinner } from '@slacklineinternational/onsight/react';
 
 import { createColumnHelper } from '@tanstack/react-table';
 import Table, { RowClassContext } from '@ui/Table';
@@ -9,8 +10,6 @@ import { DISCIPLINE_DATA, MAP_CONTEST_GENDER_ENUM_TO_NAME } from '@utils/consts'
 import { CircleFlag } from 'react-circle-flags';
 import { COUNTRIES, getIocCode, getIso2FromIoc } from '@utils/countries';
 import { dateFilterFn } from '@ui/Table/TableFilterFields';
-import Spinner from '@ui/Spinner';
-import { Alert } from '@ui/Alert';
 import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import { CountryFlag } from '@ui/CountryFlag';
 import styles from './styles.module.css';
@@ -115,11 +114,10 @@ const columns = [
                 {disciplineData.name}
               </div>
             )}
-            <Gender variant="normal" value={genderKey} />
+            <Gender value={genderKey} />
             <ContestSize
               singleIcon
               value={contestSize as ContestType}
-              variant="normal"
             />
           </div>
         </div>
@@ -194,10 +192,7 @@ const columns = [
     enableColumnFilter: true,
     header: "Gender",
     cell: info => (
-      <Gender
-        value={info.getValue()}
-        variant="normal"
-      />
+      <Gender value={info.getValue()} />
     ),
     filterFn: (row, columnId, filterValue: string) => row.getValue<string>(columnId) === filterValue,
     meta: { filterVariant: 'contest-gender', filterIncludeAll: true },
@@ -212,7 +207,7 @@ const columns = [
     enableColumnFilter: true,
     header: "Size",
     cell: info => (
-      <ContestSize className="flex-col !items-start" value={info.getValue()} variant="normal" />
+      <ContestSize value={info.getValue()} />
     ),
     meta: { filterVariant: 'contest-size', filterIncludeAll: true },
     size: 120,
@@ -255,12 +250,12 @@ const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
     <div className="flex items-center justify-center min-h-64">
       {isLoading && (
         <div className="text-center">
-          <Spinner/>
-          <p>Loading events...</p>
+          <Spinner label="Loading events" />
+          <p>Loading events…</p>
         </div>
       )}
       {isError && (
-        <Alert>Error loading events: {error?.message}</Alert>
+        <Alert variant="danger">Error loading events: {error?.message}</Alert>
       )}
       {isSuccess && (
         <Table

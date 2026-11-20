@@ -117,6 +117,14 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
     if (existing && existing.status !== 'draft' && existing.status !== 'changes_requested') {
       return { success: false, errors: ['This claim can no longer be edited'] };
     }
+    // A claim sent back for changes keeps its choice of an existing or a new category
+    const isRevision = existing?.status === 'changes_requested';
+    // Firsts have no newCategoryProposal, so the type needs the 'in' check
+    const isNewCategory = !!existing && 'newCategoryProposal' in existing && !!existing.newCategoryProposal;
+    const isSwitchingPath = isNewCategory !== (values.path === 'new_category');
+    if (isRevision && kind === 'record' && isSwitchingPath) {
+      return { success: false, errors: ['A claim sent back for changes cannot switch between an existing and a new category'] };
+    }
 
     const [recordCategory, firstCategory] = await Promise.all([
       kind === 'record' && values.path === 'existing' && values.categoryId ? getRecordCategory(values.categoryId) : null,
@@ -128,7 +136,7 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
     errors.push(...evidenceProblems(values));
     if (submit) errors.push(...validateForSubmit(values, kind, recordCategory, firstCategory, athletes, claimantId));
 
-    const entryId = existing?.entryId ?? newEntryId();
+    const entryId = existing?.entryId ?? await newEntryId(kind);
     const now = Date.now();
     const gender = athletes.length > 0 ? deriveGender(athletes) : 'MEN_ONLY';
     const base = {
@@ -171,7 +179,7 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
         categoryName: isNew ? values.newCategory.name.trim() : recordCategory?.name ?? '',
         value,
         ...recordDetailsFrom(values),
-        newCategoryProposal: isNew ? { ...values.newCategory, name: values.newCategory.name.trim() } : undefined,
+        newCategoryProposal: isNew ? { ...values.newCategory, name: values.newCategory.name.trim(), group: values.newCategory.group || undefined } : undefined,
       };
 
       // The value must beat or equal the current mark on its list (FR-5)
@@ -203,13 +211,14 @@ export async function saveClaim(values: ClaimFormValues, intent: 'draft' | 'subm
     if (submit) {
       // Athletes see a claim from submission on; athletes removed on resubmission lose it
       await syncAthleteLinks(kind, entryId, existing?.athletes ?? [], athletes);
+      const isRevision = existing?.status === 'changes_requested';
       await addAuditEntry(kind, entryId, {
-        action: existing?.status === 'changes_requested' ? 'resubmitted' : 'submitted',
+        action: isRevision ? 'resubmitted' : 'submitted',
         fromStatus: existing?.status ?? 'draft',
         toStatus: 'pending',
         ...actor,
       });
-      await notifyClaimEvent('submitted', entry);
+      await notifyClaimEvent('submitted', entry, { revision: isRevision });
     } else if (!existing) {
       await addAuditEntry(kind, entryId, { action: 'created', toStatus: 'draft', ...actor });
     }

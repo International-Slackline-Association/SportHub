@@ -1,6 +1,6 @@
 /**
  * Emails for record and first claims (requirements §7.7): the athletes and the
- * claimant on every status change, the records team on submission and the
+ * claimant on every status change, every Record Manager on submission and the
  * communication team on approval.
  */
 
@@ -8,6 +8,7 @@ import { formatISODay } from '@utils/dates';
 import { getRecordCategory } from './records-service';
 import { formatRecordValue, GENDER_TITLE_LABELS } from './records-logic';
 import { getUser } from './user-service';
+import { getEmailsByRole } from './user-query-service';
 import { sendMail, siteUrl } from './mailer';
 import { formatFileSize, RECORDS_TEAM_EMAIL } from './records-rules';
 import { evidenceFolderUrl } from './records-evidence';
@@ -21,9 +22,18 @@ export interface ClaimEventContext {
   supersedes?: WorldRecordTableItem[];   // Records this approval made historical
   categoryStatus?: 'active' | 'unchallenged' | 'archived';
   activated?: boolean;                    // The approval challenged an Unchallenged category, now Active
+  revision?: boolean;                     // Resubmitted after the ISA requested changes
 }
 
 const reviewTeam = () => process.env.RECORDS_REVIEW_EMAIL || RECORDS_TEAM_EMAIL;
+/** Every Record Manager reviews new claims; the records team address is the fallback when nobody has the role. */
+async function reviewerEmails(): Promise<string[]> {
+  const managers = await getEmailsByRole(['record_manager']).catch(error => {
+    console.error('[records] Could not look up Record Managers:', error);
+    return [];
+  });
+  return managers.length > 0 ? managers : [reviewTeam()];
+}
 const communicationTeam = () => process.env.RECORDS_COMMUNICATION_EMAIL || 'communication@slacklineinternational.org';
 
 async function athleteEmails(entry: WorldRecordOrFirstTableItem): Promise<string[]> {
@@ -51,6 +61,7 @@ function fullDetails(entry: WorldRecordOrFirstTableItem): string[] {
       const p = entry.newCategoryProposal;
       lines.push('', 'Proposed new category:');
       add('  Name', p.name);
+      add('  Group', p.group);
       add('  What is measured', p.measurement);
       add('  Unit', `${p.unit}, ${p.direction} is better`);
       add('  Why distinct', p.justification);
@@ -136,9 +147,9 @@ export async function notifyClaimEvent(event: ClaimEvent, entry: WorldRecordOrFi
           text: `${entry.claimantName ?? 'An athlete'} submitted this claim to the ISA and named you as a witness. The ISA may contact you to confirm what you saw. If something below is not correct, please write to ${reviewTeam()}.\n\n${all}`,
         });
         mails.push({
-          to: [reviewTeam()],
-          subject: `New claim to review: ${title}`,
-          text: `${entry.claimantName ?? 'Someone'} submitted a claim.\n\n${evidenceFolderLine(entry)}\n\n${all}\n\nReview it: ${siteUrl(`/admin/records-review/${entry.kind}/${entry.entryId}`)}`,
+          to: await reviewerEmails(),
+          subject: `${context.revision ? 'Revised' : 'New'} claim to review: ${title}`,
+          text: `${entry.claimantName ?? 'Someone'} ${context.revision ? 'revised and resubmitted a claim after changes were requested' : 'submitted a claim'}.\n\n${evidenceFolderLine(entry)}\n\n${all}\n\nReview it: ${siteUrl(`/admin/records-review/${entry.kind}/${entry.entryId}`)}`,
         });
         break;
       }
@@ -184,7 +195,7 @@ export async function notifyClaimEvent(event: ClaimEvent, entry: WorldRecordOrFi
       case 'rejected':
         mails.push({
           to: recipients,
-          subject: `Not approved: ${title}`,
+          subject: `Rejected: ${title}`,
           text: `The ISA did not approve this claim.\n\nReason: ${context.comment ?? ''}\n\n${details}\n\nYour claims: ${myClaims}`,
         });
         break;

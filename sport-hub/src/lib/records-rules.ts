@@ -24,8 +24,6 @@ export const FIRST_CRITERIA: { name: string; text: string }[] = [
 export const ETHICS_STATEMENT =
   'I confirm this claim follows the ISA ethics guidelines for records (respect for nature and public spaces, safety, fair play, transparency) and the ISA Code of Conduct.';
 
-export const MIN_WITNESSES = 2;
-
 /** The ISA records team. Emails go to RECORDS_REVIEW_EMAIL when set (FR-30); this is the default and what the form shows. */
 export const RECORDS_TEAM_EMAIL = 'records@slacklineinternational.org';
 
@@ -38,10 +36,12 @@ export const MAX_SUBMISSIONS_PER_DAY = 5;
 export const MAX_WITNESSES = 10;
 export const MAX_ATHLETES = 10;
 
-/** Witness rules for records and firsts alike: 2 to 10, each with a name and an email. */
+/**
+ * Witness rules for records and firsts alike: witnesses are optional, at most
+ * 10, and each witness the claimant adds needs a name and an email.
+ */
 export function witnessProblems(witnesses: { name: string; email: string }[]): string[] {
   const errors: string[] = [];
-  if (witnesses.length < MIN_WITNESSES) errors.push(`Name at least ${MIN_WITNESSES} witnesses`);
   if (witnesses.length > MAX_WITNESSES) errors.push(`Name at most ${MAX_WITNESSES} witnesses`);
   if (witnesses.some(w => !w.name || !w.email)) errors.push('Each witness needs a name and an email');
   if (witnesses.some(w => w.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(w.email))) errors.push('Enter a valid email for each witness');

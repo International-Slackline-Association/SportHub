@@ -3,13 +3,14 @@
 import { FieldArray, getIn, useFormikContext } from 'formik';
 import { useSession } from 'next-auth/react';
 import { cn } from '@utils/cn';
-import Button from '@ui/Button';
+import { Button } from '@slacklineinternational/onsight/react';
 import { TrashIcon } from '@ui/Icons';
 import UserAutocomplete from '@ui/UserAutocomplete';
 import { EventSubmissionFormValues } from '../../types';
 import { FormikNumberField, FormikTextField } from '@ui/Form';
 import PendingUserForm from './PendingUserForm';
 import { calculatePointsForRank } from '@utils/points';
+import { roleHasPermission } from 'src/types/rbac';
 import { ContestResult } from '@lib/relational-types';
 
 type Props = {
@@ -31,7 +32,7 @@ const AthleteListItem = ({
 }: AthleteListItemProps) => {
   const { values, setFieldValue } = useFormikContext<EventSubmissionFormValues>();
   const { data: session } = useSession();
-  const isAdmin = session?.user?.role === 'admin';
+  const isAdmin = roleHasPermission(session?.user?.roles, 'events:edit');
   const formValueUserId = getIn(values, `${athleteFormKey}.id`);
   const currentResults = getIn(values, `${contestKey}.results`) as ContestResult[] | undefined;
   const currentNumContestants = Array.isArray(currentResults) ? currentResults.length : 0;
@@ -74,7 +75,7 @@ const AthleteListItem = ({
         className="self-end"
         onClick={onDelete}
         type="button"
-        variant='destructive-secondary'
+        variant="danger-secondary"
       >
         <TrashIcon/>
       </Button>

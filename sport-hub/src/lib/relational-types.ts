@@ -42,7 +42,7 @@ export interface UserProfileRecord extends UserTableRecord {
   gender?: string;
 
   // RBAC fields
-  role: Role;
+  roles?: Role[];                 // Admin roles; permissions combine. Empty/missing = normal user. Read with rolesOf()
   permissions?: string[];
   roleAssignedAt?: string;
   roleAssignedBy?: string;
@@ -341,6 +341,7 @@ export interface RecordEvidence {
 
 export interface NewCategoryProposal {
   name: string;
+  group?: RecordCategoryGroup;   // Chosen by the claimant; proposals saved before this field default to Other
   measurement: string;           // What is measured and how
   unit: string;                  // Free text. "m", "s" (time), "count" and "°" (coordinates) get dedicated parsing (unitKind)
   direction: 'higher' | 'lower';

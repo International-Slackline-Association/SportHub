@@ -1,16 +1,15 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import Button, { ButtonVariant } from '@ui/Button';
-import Modal from '@ui/Modal';
+import { Button, Dialog, type ButtonVariant } from '@slacklineinternational/onsight/react';
 import UpdateUserForm from '@ui/UserForm/UpdateUserForm';
 import { FormikProps } from 'formik';
 import { UserFormValues, UserData } from '@ui/UserForm/types';
 import { CreateUserForm } from '.';
 import { updateUserRoleAndSubTypes } from './actions';
 import { useQueryClient } from '@tanstack/react-query';
-import type { Role, UserSubType } from 'src/types/rbac';
+import { useSession } from 'next-auth/react';
+import { ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS, isGeneralAdmin, rolesOf, type Role, type UserSubType } from 'src/types/rbac';
 
 const ALL_SUB_TYPES: UserSubType[] = ['athlete', 'judge', 'organizer'];
 
@@ -20,6 +19,8 @@ interface UserManagementModalProps {
   buttonVariant?: ButtonVariant;
   user?: UserData;
   currentUserId?: string;
+  /** UPDATE only: adds a Delete button to the dialog */
+  onDelete?: () => Promise<void>;
 }
 
 const UserManagementModal = ({
@@ -28,21 +29,32 @@ const UserManagementModal = ({
   buttonVariant = "primary",
   user,
   currentUserId,
+  onDelete,
 }: UserManagementModalProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const formRef = useRef<FormikProps<UserFormValues>>(null);
   const queryClient = useQueryClient();
 
   // Role/subtype state (used when action === 'ROLES')
-  const [selectedRole, setSelectedRole] = useState<Role>((user?.role as Role) || 'user');
+  const [selectedRoles, setSelectedRoles] = useState<Role[]>(rolesOf(user));
   const [selectedSubTypes, setSelectedSubTypes] = useState<UserSubType[]>((user?.userSubTypes as UserSubType[]) || []);
   const [primarySubType, setPrimarySubType] = useState<UserSubType | undefined>(user?.primarySubType as UserSubType | undefined);
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const isCurrentUser = user?.id === currentUserId || user?.userId === currentUserId;
+  // Only General admins grant or remove General Admin (dev has no sign-in); User Managers set the other roles
+  const { data: session } = useSession();
+  const canChangeGeneralAdmin = isGeneralAdmin(session?.user?.roles) || process.env.NODE_ENV === 'development';
 
-  const buttonLabel = action === 'CREATE' ? 'Register' : action === 'ROLES' ? 'Roles' : 'Edit';
+  const isGeneralAdminTicked = isGeneralAdmin(selectedRoles);
+
+  const handleRoleToggle = (role: Role) => {
+    setSelectedRoles(prev => prev.includes(role) ? prev.filter(r => r !== role) : ROLES.filter(r => r === role || prev.includes(r)));
+  };
+
+  const buttonLabel = action === 'CREATE' ? 'Register' : action === 'ROLES' ? 'Set Roles' : 'Edit Details';
   const modalTitle = action === 'CREATE' ? 'Add New User' : action === 'ROLES' ? 'Manage Roles & Types' : 'Edit User';
   const resolvedButtonVariant = action === 'ROLES' ? 'secondary' : buttonVariant;
 
@@ -65,7 +77,7 @@ const UserManagementModal = ({
     setIsUpdating(true);
     setMessage(null);
     const userId = user.userId || user.id;
-    const result = await updateUserRoleAndSubTypes(userId, selectedRole, selectedSubTypes, primarySubType);
+    const result = await updateUserRoleAndSubTypes(userId, selectedRoles, selectedSubTypes, primarySubType);
     if (result.success) {
       setMessage({ type: 'success', text: result.message || 'Updated successfully' });
       setTimeout(() => {
@@ -80,13 +92,50 @@ const UserManagementModal = ({
 
   const openModal = () => {
     if (action === 'ROLES') {
-      setSelectedRole((user?.role as Role) || 'user');
+      setSelectedRoles(rolesOf(user));
       setSelectedSubTypes((user?.userSubTypes as UserSubType[]) || []);
       setPrimarySubType(user?.primarySubType as UserSubType | undefined);
       setMessage(null);
     }
     setIsModalOpen(true);
   };
+
+  const handleDelete = async () => {
+    if (!onDelete) return;
+    setIsDeleting(true);
+    try {
+      await onDelete();
+      setIsModalOpen(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const hasDeleteAction = action === 'UPDATE' && !!onDelete;
+  const dialogActions = action === 'ROLES' ? (
+    <>
+      <Button type="button" variant="neutral" onClick={() => setIsModalOpen(false)}>
+        Cancel
+      </Button>
+      <Button type="button" variant="primary" loading={isUpdating} onClick={handleRoleUpdate}>
+        {isUpdating ? 'Saving…' : 'Save Changes'}
+      </Button>
+    </>
+  ) : (
+    <>
+      <Button type="button" variant="neutral" onClick={() => setIsModalOpen(false)}>
+        Cancel
+      </Button>
+      {hasDeleteAction && (
+        <Button type="button" variant="danger" loading={isDeleting} onClick={handleDelete}>
+          {isDeleting ? 'Deleting…' : 'Delete'}
+        </Button>
+      )}
+      <Button type="button" variant="primary" onClick={() => formRef.current?.submitForm()}>
+        Save
+      </Button>
+    </>
+  );
 
   const FormComponentProps = {
     formRef,
@@ -102,14 +151,12 @@ const UserManagementModal = ({
       <Button onClick={openModal} size={buttonSize} variant={resolvedButtonVariant} type="button">
         {buttonLabel}
       </Button>
-      {isModalOpen && typeof document !== 'undefined' && createPortal(
-        <Modal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          title={modalTitle}
-          formRef={action !== 'ROLES' ? formRef : undefined}
-          showDefaultActions={action !== 'ROLES'}
-        >
+      <Dialog
+        actions={dialogActions}
+        onClose={() => setIsModalOpen(false)}
+        open={isModalOpen}
+        title={modalTitle}
+      >
           {action === 'CREATE' && <CreateUserForm {...FormComponentProps} />}
           {action === 'UPDATE' && <UpdateUserForm {...FormComponentProps} user={user} />}
           {action === 'ROLES' && (
@@ -136,34 +183,42 @@ const UserManagementModal = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Role (Authorization)
+                  Admin roles (Authorization)
                 </label>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRole('user')}
-                    className={`flex-1 px-4 py-2 rounded-lg border-2 transition-colors ${
-                      selectedRole === 'user'
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="font-medium">User</div>
-                    <div className="text-xs text-gray-500">Standard access</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRole('admin')}
-                    className={`flex-1 px-4 py-2 rounded-lg border-2 transition-colors ${
-                      selectedRole === 'admin'
-                        ? 'border-purple-500 bg-purple-50 text-purple-700'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="font-medium">Admin</div>
-                    <div className="text-xs text-gray-500">Full access</div>
-                  </button>
+                <p className="text-xs text-gray-500 mb-2">None ticked = normal user. Several roles combine their access. General Admin includes all other roles.</p>
+                <div className="space-y-2">
+                  {ROLES.map(role => {
+                    // While General Admin is ticked the other roles show as ticked and locked; selectedRoles keeps
+                    // their own ticks, so unticking General Admin brings back what was there before
+                    const isIncludedByGeneralAdmin = role !== 'admin' && isGeneralAdminTicked;
+                    const isGeneralAdminLocked = role === 'admin' && !canChangeGeneralAdmin;
+                    const isChecked = isIncludedByGeneralAdmin || selectedRoles.includes(role);
+                    const isLocked = isIncludedByGeneralAdmin || isGeneralAdminLocked;
+                    return (
+                      <label
+                        key={role}
+                        className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                          isChecked ? 'border-purple-300 bg-purple-50' : 'border-gray-200 hover:border-gray-300'
+                        } ${isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          disabled={isLocked}
+                          onChange={() => handleRoleToggle(role)}
+                          className="w-4 h-4 text-purple-600 rounded"
+                        />
+                        <div>
+                          <div className="font-medium">{ROLE_LABELS[role]}</div>
+                          <div className="text-xs text-gray-500">{ROLE_DESCRIPTIONS[role]}</div>
+                        </div>
+                      </label>
+                    );
+                  })}
                 </div>
+                {!canChangeGeneralAdmin && (
+                  <p className="text-xs text-gray-500 mt-1">Only a General Admin can grant or remove General Admin.</p>
+                )}
               </div>
 
               <div>
@@ -210,19 +265,9 @@ const UserManagementModal = ({
                 </p>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t">
-                <Button variant="secondary" onClick={() => setIsModalOpen(false)} className="flex-1">
-                  Cancel
-                </Button>
-                <Button variant="primary" onClick={handleRoleUpdate} disabled={isUpdating} className="flex-1">
-                  {isUpdating ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </div>
             </div>
           )}
-        </Modal>,
-        document.body
-      )}
+      </Dialog>
     </>
   );
 }

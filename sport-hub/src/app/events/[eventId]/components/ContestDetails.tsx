@@ -1,11 +1,11 @@
 'use client';
+import Link from 'next/link';
 
 import { useState } from 'react';
 import ResultsTable from './ResultsTable';
-import { Alert } from '@ui/Alert';
 import { ContestTabGroup, type ContestJudge, type ContestResult, type ContestTabData } from './ContestTabGroup';
 import { ContestAbout } from './ContestAbout';
-import Button from '@ui/Button';
+import { Button, EmptyState } from '@slacklineinternational/onsight/react';
 
 export type { ContestJudge, ContestResult, ContestTabData };
 
@@ -25,10 +25,14 @@ export default function ContestDetails({
   initialTab = 0
 }: ContestDetailsProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
-  const contest = contests[activeTab];
+  const contest = contests[activeTab] ?? contests[0];
 
-  if (!contests.length) {
-    return <Alert variant="info">No contests available for this event.</Alert>;
+  if (!contest) {
+    return (
+      <EmptyState title="No contests for this event">
+        Contests added to this event will show up here.
+      </EmptyState>
+    );
   }
 
   const emailHref = `mailto:info@slacklineinternational.org`
@@ -40,10 +44,9 @@ export default function ContestDetails({
       <div className="bg-gray-50 p-4 rounded-lg mb-4">
         <h3 className="mb-2">Contests</h3>
         <ContestTabGroup
-          activeTab={String(activeTab)}
-          onTabChange={(tabId: string) => setActiveTab(Number(tabId))}
           contests={contests}
-          variant="secondary"
+          onChange={(tabId: string) => setActiveTab(Number(tabId))}
+          value={String(activeTab)}
         />
       </div>
 
@@ -57,16 +60,16 @@ export default function ContestDetails({
         <div className="flex flex-row gap-2 mb-2">
           {isAdmin && (
             <Button
-              as="link"
+              as={Link}
               href={`/events/my-events/${eventId}/edit`}
-              variant="destructive-secondary"
+              variant="danger-secondary"
               size="small"
             >
               Edit Event
             </Button>
           )}
           <Button
-            as="link"
+            as={Link}
             href={emailHref}
             variant="secondary"
             size="small"
@@ -85,7 +88,9 @@ export default function ContestDetails({
           }))}
         />
       ) : (
-        <Alert variant="info">No results available at this time.</Alert>
+        <EmptyState title="No results yet" titleAs="h4" plain>
+          Results show up here once they are recorded.
+        </EmptyState>
       )}
     </section>
   );

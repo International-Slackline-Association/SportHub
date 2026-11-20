@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { requireAdmin, requireEventSubmitter } from '@lib/authorization';
+import { requireEventManager, requireEventSubmitter } from '@lib/authorization';
 import { auth } from '@lib/auth';
 import { EventSubmissionFormValues, ContestFormValues, PendingUserData } from './types';
 import { createUser } from '@ui/UserForm/actions';
@@ -23,10 +23,13 @@ import {
 import { EventMetadataRecord, ContestRecord } from '@lib/relational-types';
 import { EventStatus } from '../my-events/page';
 import { calculatePointsForRank } from '@utils/points';
+import { roleHasPermission } from 'src/types/rbac';
+import { notifyEventManagers } from '@lib/events-notifications';
+import { applyOrganizerChange } from '@lib/event-organizer';
 
 /**
  * Save event to DynamoDB
- * PROTECTED: Requires admin role or organizer sub-type
+ * PROTECTED: Requires Event Manager or General admin role or organizer sub-type
  */
 
 // Returns true if the given date string (YYYY-MM-DD) is strictly in the past
@@ -76,7 +79,7 @@ export async function saveEvent(values: EventSubmissionFormValues) {
   try {
     const session = await auth();
     const { event } = values;
-    const contests = withServerPoints(values.contests, session?.user?.role === 'admin');
+    const contests = withServerPoints(values.contests, roleHasPermission(session?.user?.roles, 'events:edit'));
 
     // Past-event guard: judges and results required if event date is in the past
     const pastEventError = validatePastEventRequirements(values);
@@ -86,10 +89,15 @@ export async function saveEvent(values: EventSubmissionFormValues) {
 
     // Save event metadata used by event profile. 
     // Does not embed contest results; those are saved separately below
-    const { eventId } = await createEventFromForm(event, contests);
+    const { eventId, status, createdByName } = await createEventFromForm(event, contests);
     
     // Save contest results including the per-athlete Participation:* records
     await Promise.all(contests.map((c, idx) => createContestFromForm(eventId, c, idx)));
+
+    // Organizer submissions start as pending: tell the Event Managers
+    if (status === 'pending') {
+      await notifyEventManagers('new', { eventId, eventName: event.eventName, startDate: event.startDate, byName: createdByName });
+    }
     
     console.log(`Event ${eventId} saved successfully`);
 
@@ -129,7 +137,7 @@ export async function saveEvent(values: EventSubmissionFormValues) {
  * requires admin approval before it takes effect, unless the actor is an
  * admin (who bypasses staging entirely, same as elsewhere in this app).
  *
- * PROTECTED: Requires admin role or organizer sub-type; must be event creator (unless admin)
+ * PROTECTED: Requires Event Manager or General admin role or organizer sub-type; must be event creator (unless admin)
  */
 export async function updateEventScores(
   eventId: string,
@@ -139,7 +147,7 @@ export async function updateEventScores(
 
   try {
     const session = await auth();
-    const isAdmin = session?.user?.role === 'admin';
+    const isAdmin = roleHasPermission(session?.user?.roles, 'events:edit');
     const contests = withServerPoints(submittedContests, isAdmin);
     const { success, event } = await getAssembledEvent(eventId);
     
@@ -224,6 +232,10 @@ export async function updateEventScores(
     revalidatePath('/events/my-events');
     revalidatePath('/rankings');
 
+    if (stagedCount > 0) {
+      await notifyEventManagers('results', { eventId, eventName: event.eventName, startDate: event.startDate, byName: session?.user?.name ?? undefined, contestCount: stagedCount });
+    }
+
     const message = stagedCount === 0
       ? 'Judges and scores saved.'
       : appliedCount === 0
@@ -239,7 +251,7 @@ export async function updateEventScores(
 
 /**
  * Update an existing event (preserves eventId, sortKey, createdBy, createdAt, status)
- * PROTECTED: Requires admin role or organizer sub-type; must be event creator (unless admin)
+ * PROTECTED: Requires Event Manager or General admin role or organizer sub-type; must be event creator (unless admin)
  */
 export async function updateEvent(eventId: string, values: EventSubmissionFormValues) {
   await requireEventSubmitter();
@@ -252,7 +264,7 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
 
     if (!existing.success || !existing.event) {
       // No Metadata record (old-format event) — only admins may migrate it to new format
-      if (session?.user?.role !== 'admin') {
+      if (!roleHasPermission(session?.user?.roles, 'events:edit')) {
         return { success: false, error: 'Event not found' };
       }
       existingEvent = {
@@ -267,23 +279,24 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
       isMigration = true;
     } else {
       existingEvent = existing.event;
-      if (session?.user?.role !== 'admin' && existingEvent.createdBy !== session?.user?.id) {
+      if (!roleHasPermission(session?.user?.roles, 'events:edit') && existingEvent.createdBy !== session?.user?.id) {
         return { success: false, error: 'You do not have permission to edit this event' };
       }
       // Same rule as the edit page: organizers edit only draft/pending events.
       // Published results change through updateEventScores, which stages them for review.
-      if (session?.user?.role !== 'admin' && existingEvent.status !== 'draft' && existingEvent.status !== 'pending') {
+      if (!roleHasPermission(session?.user?.roles, 'events:edit') && existingEvent.status !== 'draft' && existingEvent.status !== 'pending') {
         return { success: false, error: 'Approved events can no longer be edited. Use "Edit scores" to change judges and results.' };
       }
     }
 
-    const { event } = values;
-    const contests = withServerPoints(values.contests, session?.user?.role === 'admin');
+    const { event: { organizer, ...event } } = values;
+    const isAdmin = roleHasPermission(session?.user?.roles, 'events:edit');
+    const contests = withServerPoints(values.contests, isAdmin);
 
     // Strip assembled contests field before writing Metadata record
     const { contests: previousContests = [], ...existingMetadata } = existingEvent;
     const updatedEvent = {
-      ...existingMetadata,
+      ...applyOrganizerChange(existingMetadata, organizer, isAdmin),
       ...event,
       disciplines: [...new Set(contests.map(c => c.discipline))],
       updatedAt: new Date().toISOString(),
@@ -310,6 +323,12 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
     invalidateContestsCache();
     revalidatePath('/events');
     revalidatePath('/events/my-events');
+
+    // An organizer changed an event that is waiting for approval
+    const isPendingRevisionByOrganizer = existingEvent.status === 'pending' && !roleHasPermission(session?.user?.roles, 'events:edit');
+    if (isPendingRevisionByOrganizer) {
+      await notifyEventManagers('revised', { eventId, eventName: updatedEvent.eventName, startDate: updatedEvent.startDate, byName: session?.user?.name ?? undefined });
+    }
 
     return { success: true, message: 'Event updated successfully' };
   } catch (error) {
@@ -375,12 +394,12 @@ export async function getAllEvents() {
 
 /**
  * Delete event by ID
- * PROTECTED: Requires admin role
+ * PROTECTED: Requires Event Manager or General admin role
  */
 export async function deleteEvent(eventId: string) {
   try {
     // Require admin authentication
-    await requireAdmin();
+    await requireEventManager();
 
     await deleteEventFromService(eventId);
 
@@ -410,12 +429,12 @@ export async function deleteEvent(eventId: string) {
 
 /**
  * Update event status (draft, published, cancelled)
- * PROTECTED: Requires admin role
+ * PROTECTED: Requires Event Manager or General admin role
  */
 export async function updateEventStatus(eventId: string, status: 'draft' | 'published' | 'cancelled') {
   try {
     // Require admin authentication
-    await requireAdmin();
+    await requireEventManager();
 
     // Get current user for audit trail
     const session = await auth();
@@ -477,7 +496,7 @@ export async function updateEventStatus(eventId: string, status: 'draft' | 'publ
 
 /**
  * Get events submitted by the current user
- * PROTECTED: Requires admin role or organizer sub-type
+ * PROTECTED: Requires Event Manager or General admin role or organizer sub-type
  */
 export async function getMyEvents() {
   await requireEventSubmitter();
@@ -547,10 +566,10 @@ export async function getPublishedEventsByOrganizer(organizerId: string): Promis
 
 /**
  * Get all events with pending status (awaiting admin approval)
- * PROTECTED: Requires admin role
+ * PROTECTED: Requires Event Manager or General admin role
  */
 export async function getPendingEvents() {
-  await requireAdmin();
+  await requireEventManager();
 
   try {
     const result = await getAllEvents();
@@ -576,7 +595,7 @@ export async function getPendingEvents() {
 
 /**
  * Submit an event for admin approval (draft/pending → pending)
- * PROTECTED: Requires admin role or organizer sub-type; must be event creator (unless admin)
+ * PROTECTED: Requires Event Manager or General admin role or organizer sub-type; must be event creator (unless admin)
  */
 export async function submitEventForApproval(eventId: string) {
   await requireEventSubmitter();
@@ -590,7 +609,7 @@ export async function submitEventForApproval(eventId: string) {
     }
 
     // Non-admins can only submit their own events
-    if (session?.user?.role !== 'admin' && event.createdBy !== session?.user?.id) {
+    if (!roleHasPermission(session?.user?.roles, 'events:edit') && event.createdBy !== session?.user?.id) {
       return { success: false, error: 'You do not have permission to submit this event' };
     }
 
@@ -613,6 +632,12 @@ export async function submitEventForApproval(eventId: string) {
     revalidatePath('/events/my-events');
     revalidatePath('/admin/event-approval');
 
+    // Submitted before (then withdrawn or sent back to draft) means this is a revision
+    const wasSubmittedBefore = !!(event as { submittedForApprovalAt?: number }).submittedForApprovalAt;
+    if (event.status !== 'pending') {
+      await notifyEventManagers(wasSubmittedBefore ? 'revised' : 'new', { eventId, eventName: event.eventName, startDate: event.startDate, byName: session?.user?.name ?? undefined });
+    }
+
     return { success: true, message: 'Event submitted for approval' };
   } catch (error) {
     console.error('Error submitting event for approval:', error);
@@ -622,7 +647,7 @@ export async function submitEventForApproval(eventId: string) {
 
 /**
  * Withdraw a pending event back to draft
- * PROTECTED: Requires admin role or organizer sub-type; must be event creator (unless admin)
+ * PROTECTED: Requires Event Manager or General admin role or organizer sub-type; must be event creator (unless admin)
  */
 export async function withdrawEventFromApproval(eventId: string) {
   await requireEventSubmitter();
@@ -635,7 +660,7 @@ export async function withdrawEventFromApproval(eventId: string) {
       return { success: false, error: 'Event not found' };
     }
 
-    if (session?.user?.role !== 'admin' && event.createdBy !== session?.user?.id) {
+    if (!roleHasPermission(session?.user?.roles, 'events:edit') && event.createdBy !== session?.user?.id) {
       return { success: false, error: 'You do not have permission to withdraw this event' };
     }
 
@@ -659,7 +684,7 @@ export async function withdrawEventFromApproval(eventId: string) {
 
 /**
  * Create a pending user from event data and link them to their contest entry.
- * PROTECTED: Requires admin role.
+ * PROTECTED: Requires Event Manager or General admin role.
  * Called from the admin event-approval page for each unregistered judge/athlete.
  */
 export async function createPendingUserFromEvent(
@@ -668,7 +693,7 @@ export async function createPendingUserFromEvent(
   entryType: 'judge' | 'athlete',
   entryIdx: number,
 ): Promise<void> {
-  await requireAdmin();
+  await requireEventManager();
 
   try {
     const { success, event } = await getAssembledEvent(eventId);

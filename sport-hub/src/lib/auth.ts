@@ -1,6 +1,6 @@
 import NextAuth from "next-auth"
 import Cognito from "next-auth/providers/cognito"
-import { getUserRole, getUserPermissions, getUserSubTypes } from './rbac-service'
+import { getUserAccess, getUserSubTypes } from './rbac-service'
 import { ensureUserExists, enrichUserFromReferenceDb } from './onboarding'
 import { getUserByEmail } from './user-service'
 import type { Role, Permission, UserSubType } from '../types/rbac'
@@ -41,6 +41,14 @@ const cognitoConfigured = !!(
   process.env.COGNITO_REGION &&
   process.env.COGNITO_USER_POOL_ID
 )
+
+/**
+ * Version of the roles stored in the session token. Sessions with another
+ * (or no) version reload their roles once, without signing out.
+ * TRANSITION: version 2 also repairs sessions from the multi-role rollout
+ * that stored an empty roles list after a failed lookup.
+ */
+const ROLES_VERSION = 2
 
 export const { handlers, signIn, signOut, auth, unstable_update } = NextAuth({
   basePath: "/api/auth",
@@ -116,31 +124,28 @@ export const { handlers, signIn, signOut, auth, unstable_update } = NextAuth({
             }
           } catch (error) {
             console.error('Error in user lookup/onboarding:', error);
-            // Continue without custom ID - role lookup will return default 'user'
+            // Continue without custom ID - role lookup returns no roles
           }
         }
 
-        // Load RBAC from sporthub-users using the SportHub user ID
-        if (token.sportHubUserId) {
-          try {
-            const role = await getUserRole(token.sportHubUserId as string)
-            const permissions = await getUserPermissions(token.sportHubUserId as string)
-            const userSubTypes = await getUserSubTypes(token.sportHubUserId as string)
-            token.role = role
-            token.permissions = permissions
-            token.userSubTypes = userSubTypes
-          } catch (error) {
-            console.error('Error loading user role:', error)
-            // Fail-safe: default to user role
-            token.role = 'user'
-            token.permissions = []
-            token.userSubTypes = []
-          }
-        } else {
-          // No SportHub ID — onboarding failed, default to base role
-          token.role = 'user'
-          token.permissions = []
-          token.userSubTypes = []
+        // Roles are loaded below; no SportHub ID (onboarding failed) means no roles
+        token.roles = []
+        token.permissions = []
+        token.userSubTypes = []
+        token.rolesVersion = undefined
+      }
+
+      // Load roles from sporthub-users on sign-in, and once for sessions whose
+      // roles were stored with an older ROLES_VERSION.
+      // A failed lookup is not stored, so it is retried on the next request
+      // instead of leaving the user without roles until they sign in again.
+      if (token.rolesVersion !== ROLES_VERSION && token.sportHubUserId) {
+        const access = await getUserAccess(token.sportHubUserId as string)
+        if (access) {
+          token.roles = access.roles
+          token.permissions = access.permissions
+          token.userSubTypes = access.userSubTypes
+          token.rolesVersion = ROLES_VERSION
         }
       }
       return token
@@ -157,8 +162,8 @@ export const { handlers, signIn, signOut, auth, unstable_update } = NextAuth({
         session.accessToken = token.accessToken as string
         session.idToken = token.idToken as string
 
-        // Pass role, permissions, and sub-types to session
-        session.user.role = (token.role as Role) || 'user'
+        // Pass roles, permissions, and sub-types to session
+        session.user.roles = (token.roles as Role[] | undefined) ?? []
         session.user.permissions = (token.permissions as Permission[]) || []
         session.user.userSubTypes = (token.userSubTypes as UserSubType[]) || []
       }

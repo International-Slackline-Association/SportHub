@@ -1,5 +1,5 @@
 import type { PendingUserData } from 'src/app/events/submit/types';
-import type { RecordWitness, WorldRecordOrFirstTableItem } from '@lib/relational-types';
+import type { RecordCategoryGroup, RecordWitness, WorldRecordOrFirstTableItem } from '@lib/relational-types';
 
 /** The three paths of the claim form (FR-4). */
 export type ClaimPath = 'existing' | 'new_category' | 'first';
@@ -30,6 +30,7 @@ export interface ClaimFormValues {
   categoryId: string;              // Record category (path a) or first category (path c)
   newCategory: {
     name: string;
+    group: RecordCategoryGroup | '';
     measurement: string;
     unit: string;
     direction: 'higher' | 'lower';
@@ -66,7 +67,7 @@ export interface ClaimFormValues {
 export const emptyClaim = (path: ClaimPath = 'existing'): ClaimFormValues => ({
   path,
   categoryId: '',
-  newCategory: { name: '', measurement: '', unit: 'm', direction: 'higher', justification: '' },
+  newCategory: { name: '', group: '', measurement: '', unit: 'm', direction: 'higher', justification: '' },
   athletes: [{ name: '' }],
   jointConfirmed: false,
   consentConfirmed: false,
@@ -76,7 +77,7 @@ export const emptyClaim = (path: ClaimPath = 'existing'): ClaimFormValues => ({
   locationCountry: '',
   setup: '',
   furtherSpecs: '',
-  witnesses: [{ name: '', email: '', phone: '' }, { name: '', email: '', phone: '' }],
+  witnesses: [{ name: '', email: '', phone: '' }],
   fullVideo: true,
   noFullVideoReason: '',
   trickName: '',
@@ -85,7 +86,8 @@ export const emptyClaim = (path: ClaimPath = 'existing'): ClaimFormValues => ({
   similarTricks: '',
   lineDetails: '',
   eventId: '',
-  evidence: [emptyEvidenceLink()],
+  // Links and uploads are equal choices, so a new claim starts with no evidence row
+  evidence: [],
   ethicsConfirmed: false,
 });
 
@@ -108,13 +110,13 @@ const witnessFields = (w: RecordWitness): RecordWitness => {
 /** Loads a saved claim back into the form (edit a draft or a claim with changes requested). */
 export function entryToClaimValues(entry: WorldRecordOrFirstTableItem): ClaimFormValues {
   const witnesses = (entry.witnesses ?? []).map(witnessFields);
-  while (witnesses.length < 2) witnesses.push({ name: '', email: '', phone: '' });
+  if (witnesses.length === 0) witnesses.push({ name: '', email: '', phone: '' });
   const proposal = entry.kind === 'record' ? entry.newCategoryProposal : undefined;
   const base = emptyClaim(entry.kind === 'first' ? 'first' : proposal ? 'new_category' : 'existing');
   const common: ClaimFormValues = {
     ...base,
     entryId: entry.entryId,
-    categoryId: proposal ? '' : entry.categoryId,
+    categoryId: proposal ? '' : entry.categoryId ?? '',
     athletes: entry.athletes.length > 0
       ? entry.athletes.map(a => ({ userId: a.userId, name: a.name, pendingUser: a.pendingUser }))
       : base.athletes,
@@ -135,7 +137,7 @@ export function entryToClaimValues(entry: WorldRecordOrFirstTableItem): ClaimFor
         mimeType: e.mimeType,
         size: e.size,
       }))
-      : [emptyEvidenceLink()],
+      : [],
     witnesses,
     ethicsConfirmed: entry.ethicsConfirmed ?? false,
   };
@@ -151,7 +153,7 @@ export function entryToClaimValues(entry: WorldRecordOrFirstTableItem): ClaimFor
   }
   return {
     ...common,
-    newCategory: entry.newCategoryProposal ? { ...entry.newCategoryProposal } : base.newCategory,
+    newCategory: entry.newCategoryProposal ? { ...entry.newCategoryProposal, group: entry.newCategoryProposal.group ?? '' } : base.newCategory,
     valueText: entry.value.original ?? '',
     setup: entry.setup ?? '',
     furtherSpecs: entry.furtherSpecs ?? '',

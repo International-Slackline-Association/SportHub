@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: sport-hub
+    env:
+      # Dummy values: the build and the checks never contact Cognito or AWS.
+      AUTH_SECRET: ci-only-secret
+      COGNITO_CLIENT_ID: ci
+      COGNITO_CLIENT_SECRET: ci
+      COGNITO_REGION: eu-central-1
+      COGNITO_USER_POOL_ID: ci
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: sport-hub/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Unit tests
+        run: pnpm test
+      - name: Build
+        run: pnpm build
+      - name: Cache safety (no cacheable page sets a cookie)
+        run: pnpm check:cache-safety

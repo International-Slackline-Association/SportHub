@@ -71,7 +71,6 @@ const Page = () => {
       heroImage={randomS3Image(discipline)}
       title="Rankings"
     >
-      <FeaturedAthleteSection discipline={discipline} season={season} gender={gender} />
       <section className="p-4 sm:p-0">
         <RankingsTable
           discipline={discipline}
@@ -82,6 +81,7 @@ const Page = () => {
           onChangeGender={handleChangeGender}
         />
       </section>
+      <FeaturedAthleteSection discipline={discipline} season={season} gender={gender} />
     </PageLayout>
   );
 }

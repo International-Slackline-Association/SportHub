@@ -4,6 +4,8 @@ import { useState } from 'react';
 import ProfileEditForm from './ProfileEditForm';
 import { getCountryByName } from '@utils/countries';
 import { CircleFlag } from 'react-circle-flags';
+import { rolesLabel, type Role } from 'src/types/rbac';
+import { Button } from '@slacklineinternational/onsight/react';
 
 interface ProfileSectionProps {
   userId: string;
@@ -16,7 +18,7 @@ interface ProfileSectionProps {
   birthdate?: string;
   gender?: string;
   links?: string[];
-  role: string;
+  roles: Role[];
 }
 
 export default function ProfileSection({
@@ -30,7 +32,7 @@ export default function ProfileSection({
   birthdate,
   gender,
   links,
-  role,
+  roles,
 }: ProfileSectionProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -49,35 +51,22 @@ export default function ProfileSection({
 
   if (isEditing) {
     return (
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-2xl font-bold mb-4">Edit Profile</h2>
-        <ProfileEditForm
-          userId={userId}
-          initialData={{ name, surname, email, country, city, birthdate, gender, links }}
-          onCancel={() => setIsEditing(false)}
-          onSuccess={handleSuccess}
-        />
-      </div>
+      <ProfileEditForm
+        userId={userId}
+        initialData={{ name, surname, email, country, city, birthdate, gender, links }}
+        onCancel={() => setIsEditing(false)}
+        onSuccess={handleSuccess}
+      />
     );
   }
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
+    <div>
       {showSuccess && (
         <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
           Profile updated successfully!
         </div>
       )}
-
-      <div className="flex justify-between items-start mb-4">
-        <h2 className="text-2xl font-bold">Profile</h2>
-        <button
-          onClick={() => setIsEditing(true)}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-        >
-          Edit Profile
-        </button>
-      </div>
 
       <div className="space-y-4">
         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -115,16 +104,16 @@ export default function ProfileSection({
             <dd className="mt-1 text-sm text-gray-900 capitalize">{gender || 'Not specified'}</dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-gray-500">Role</dt>
+            <dt className="text-sm font-medium text-gray-500">Roles</dt>
             <dd className="mt-1">
               <span
                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  role === 'admin'
+                  roles.length > 0
                     ? 'bg-purple-100 text-purple-800'
                     : 'bg-gray-100 text-gray-800'
                 }`}
               >
-                {role}
+                {rolesLabel(roles)}
               </span>
             </dd>
           </div>
@@ -160,6 +149,14 @@ export default function ProfileSection({
           )}
         </dl>
       </div>
+
+      <Button
+        className="mt-4"
+        variant="neutral"
+        onClick={() => setIsEditing(true)}
+      >
+        Edit
+      </Button>
     </div>
   );
 }

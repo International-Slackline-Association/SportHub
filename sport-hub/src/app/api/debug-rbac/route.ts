@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@lib/auth';
 import { getUser } from '@lib/user-service';
 import { clearRoleCache, getCacheStats } from '@lib/rbac-service';
+import { isGeneralAdmin, rolesLabel, rolesOf } from 'src/types/rbac';
 
 /**
  * GET /api/debug-rbac
@@ -26,22 +27,22 @@ export async function GET() {
       return NextResponse.json({
         error: 'User not found in database',
         userId: session.user.id,
-        sessionRole: session.user.role,
+        sessionRoles: session.user.roles,
         help: 'Your user record does not exist in DynamoDB. Visit /dashboard to create it.'
       }, { status: 404 });
     }
 
     // Check access (dev mode OR admin in session OR admin in DB)
     const isDev = process.env.NODE_ENV === 'development';
-    const hasAdminInSession = session.user.role === 'admin';
-    const hasAdminInDB = user.role === 'admin';
+    const hasAdminInSession = isGeneralAdmin(session.user.roles);
+    const hasAdminInDB = isGeneralAdmin(rolesOf(user));
 
     if (!isDev && !hasAdminInSession && !hasAdminInDB) {
       return NextResponse.json({
         error: 'Admin access required',
-        help: 'This endpoint requires admin role in either your session or database',
-        sessionRole: session.user.role,
-        databaseRole: user.role
+        help: 'This endpoint requires General Admin in either your session or database',
+        sessionRoles: session.user.roles,
+        databaseRoles: rolesOf(user)
       }, { status: 403 });
     }
 
@@ -49,32 +50,32 @@ export async function GET() {
     const cacheStats = getCacheStats();
 
     // Detect mismatch
-    const sessionRole = session.user.role;
-    const databaseRole = user.role;
-    const mismatch = sessionRole !== databaseRole;
+    const sessionRoles = rolesLabel(session.user.roles);
+    const databaseRoles = rolesLabel(rolesOf(user));
+    const mismatch = sessionRoles !== databaseRoles;
 
     // Build response
     const response: Record<string, unknown> = {
       userId: session.user.id,
       userName: session.user.name,
       userEmail: session.user.email,
-      sessionRole,
-      databaseRole,
+      sessionRoles,
+      databaseRoles,
       mismatch,
       cacheStats,
       timestamp: new Date().toISOString(),
     };
 
     if (mismatch) {
-      response.explanation = `Your database role is '${databaseRole}' but your session role is '${sessionRole}'. This happens when your role was changed in the database after your JWT was created. The role may have been cached for up to 5 minutes.`;
+      response.explanation = `Your database roles are '${databaseRoles}' but your session roles are '${sessionRoles}'. This happens when your roles were changed in the database after your JWT was created. Roles may have been cached for up to 5 minutes.`;
       response.fixInstructions = [
         '1. Call POST /api/debug-rbac/clear-cache to clear your role cache',
         '2. Sign out completely from the application',
         '3. Sign back in to get a fresh JWT token',
-        `4. Your session will now show '${databaseRole}' role`,
+        `4. Your session will now show '${databaseRoles}'`,
       ];
     } else {
-      response.message = 'Your session role matches your database role. No action needed.';
+      response.message = 'Your session roles match your database roles. No action needed.';
     }
 
     return NextResponse.json(response);
@@ -118,13 +119,13 @@ export async function POST() {
 
     // Check access (dev mode OR admin in session OR admin in DB)
     const isDev = process.env.NODE_ENV === 'development';
-    const hasAdminInSession = session.user.role === 'admin';
-    const hasAdminInDB = user.role === 'admin';
+    const hasAdminInSession = isGeneralAdmin(session.user.roles);
+    const hasAdminInDB = isGeneralAdmin(rolesOf(user));
 
     if (!isDev && !hasAdminInSession && !hasAdminInDB) {
       return NextResponse.json({
         error: 'Admin access required',
-        help: 'This endpoint requires admin role in either your session or database'
+        help: 'This endpoint requires General Admin in either your session or database'
       }, { status: 403 });
     }
 
@@ -140,7 +141,7 @@ export async function POST() {
       nextSteps: [
         '1. Sign out from the application (visit /api/auth/signout)',
         '2. Sign back in',
-        '3. Your session will reflect your database role',
+        '3. Your session will reflect your database roles',
         '4. Visit /api/debug-rbac to verify the fix',
       ],
     });

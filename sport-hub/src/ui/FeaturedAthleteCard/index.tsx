@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 import { AthleteRanking } from "@lib/data-services";
 import { Avatar } from '@ui/Avatar';
@@ -9,10 +10,8 @@ import { Discipline } from '@ui/Badge';
 import { getCountryByCode } from '@utils/countries';
 import { StackedMediaCard } from '@ui/StackedMediaCard';
 import pageStyles from '../../app/page.module.css';
-import Button from "@ui/Button";
+import { Alert, Button, EmptyState, Spinner } from '@slacklineinternational/onsight/react';
 import { useQuery } from "@tanstack/react-query";
-import Spinner from "@ui/Spinner";
-import { Alert } from "@ui/Alert";
 
 export interface FeaturedAthleteCardProps {
   athlete: AthleteRanking;
@@ -68,7 +67,7 @@ export const FeaturedAthleteCard = ({ athlete }: FeaturedAthleteCardProps) => {
           ))}
         </div>
         <Button
-          as="link"
+          as={Link}
           variant="secondary"
           href={href}
         >
@@ -114,13 +113,15 @@ export const FeaturedAthleteSection = ({
   return (
     <section className={pageStyles.section}>
       <h2 className={pageStyles.sectionTitle}>
-        Featured Athletes {isLoading && <Spinner className="ml-4" />}
+        Featured Athletes {isLoading && <Spinner size="small" label="Loading featured athletes" className="ml-4" />}
       </h2>
       {isError && (
-        <Alert variant="error">{error?.message}</Alert>
+        <Alert variant="danger">{error?.message}</Alert>
       )}
       {isSuccess && !athletes.length && (
-        <Alert variant="error">No featured athletes found</Alert>
+        <EmptyState title="No featured athletes" plain>
+          No athletes match this season and category.
+        </EmptyState>
       )}
       {isSuccess && athletes.length && (
         <CardGrid columns={athletes.length}>

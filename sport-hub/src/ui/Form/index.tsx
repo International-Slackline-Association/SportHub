@@ -1,9 +1,7 @@
 import React, { PropsWithChildren, ReactNode } from 'react';
 import { Field, useField, useFormikContext, type FieldInputProps, type FieldMetaProps, type FormikHelpers } from 'formik';
 import styles from './styles.module.css';
-import Button from '@ui/Button';
-import Spinner from '@ui/Spinner';
-import { Tooltip } from '@ui/Tooltip';
+import { Button, Tooltip } from '@slacklineinternational/onsight/react';
 import { cn } from '@utils/cn';
 import { pascalCaseToTitleCase } from '@utils/strings';
 export * from './commonOptions';
@@ -16,9 +14,8 @@ export const FormikSubmitButton = ({ children }: PropsWithChildren) => {
   const { isSubmitting, isValid, dirty } = useFormikContext();
 
   return (
-    <Button type="submit" variant="primary" disabled={isSubmitting || !isValid || !dirty}>
-      {isSubmitting && <Spinner color="white" size="small" />}
-      {!isSubmitting && (children || "Submit Form")}
+    <Button type="submit" variant="primary" loading={isSubmitting} disabled={!isSubmitting && (!isValid || !dirty)}>
+      {isSubmitting ? 'Saving…' : (children || 'Submit Form')}
     </Button>
   );
 };
@@ -51,7 +48,14 @@ export const FormikFormField = (props: PropsWithChildren<TextFieldProps | Select
           <label htmlFor={id} className={styles.label}>
             {displayLabel}
           </label>
-          {tooltip && <Tooltip content={tooltip} />}
+          {tooltip && (
+            <Tooltip
+              content={tooltip}
+              label={typeof displayLabel === 'string' && displayLabel
+                ? `About ${displayLabel.replace(/\*$/, '')}`
+                : 'More information'}
+            />
+          )}
         </div>
         {caption && captionPlacement === "top" && (<small className={styles.caption}>{caption}</small>)}
       </div>

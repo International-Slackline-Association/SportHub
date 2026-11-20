@@ -22,16 +22,29 @@ export async function toEntryRows(entries: WorldRecordOrFirstTableItem[]): Promi
       gender: e.gender,
       claimant: e.claimantName ?? (e.source === 'import' ? 'Imported' : ''),
       newCategory: e.kind === 'record' && !!e.newCategoryProposal && !category,
+      voided: e.voidedAt !== undefined,
     };
   });
 }
 
+const STATUSES_BY_KIND: Record<'record' | 'first', ClaimStatus[]> = {
+  record: ['pending', 'changes_requested', 'published', 'historical', 'rejected'],
+  first: ['pending', 'changes_requested', 'published', 'rejected'],
+};
+
+const newestFirst = (a: WorldRecordOrFirstTableItem, b: WorldRecordOrFirstTableItem) => (b.date || '').localeCompare(a.date || '');
+
 /** Every entry of one kind except private drafts, newest first. */
 export async function getAllEntries(kind: 'record' | 'first'): Promise<WorldRecordOrFirstTableItem[]> {
   await requireRecordsPermission('records:manage');
-  const statuses: ClaimStatus[] = kind === 'record'
-    ? ['pending', 'changes_requested', 'published', 'historical', 'rejected']
-    : ['pending', 'changes_requested', 'published', 'rejected'];
-  const lists = await Promise.all(statuses.map(s => getEntriesByStatus(kind, s)));
-  return lists.flat().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const lists = await Promise.all(STATUSES_BY_KIND[kind].map(s => getEntriesByStatus(kind, s)));
+  return lists.flat().sort(newestFirst);
+}
+
+/** Every record and first in the workflow, drafts included, newest first. */
+export async function getEveryEntry(): Promise<WorldRecordOrFirstTableItem[]> {
+  await requireRecordsPermission('records:manage');
+  const queries = (['record', 'first'] as const).flatMap(kind =>
+    (['draft', ...STATUSES_BY_KIND[kind]] as ClaimStatus[]).map(s => getEntriesByStatus(kind, s)));
+  return (await Promise.all(queries)).flat().sort(newestFirst);
 }

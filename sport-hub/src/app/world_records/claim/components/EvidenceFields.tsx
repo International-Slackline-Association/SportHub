@@ -9,9 +9,9 @@
 
 import { useRef, useState } from 'react';
 import { FieldArray, useFormikContext } from 'formik';
-import Button from '@ui/Button';
-import { Alert } from '@ui/Alert';
-import { FormikTextField } from '@ui/Form';
+import { Button, Alert } from '@slacklineinternational/onsight/react';
+import { FormikFormField, FormikTextField } from '@ui/Form';
+import formStyles from '@ui/Form/styles.module.css';
 import { EVIDENCE_FILE_ACCEPT, evidenceFileProblem, formatFileSize, MAX_EVIDENCE_FILE_LABEL, MAX_EVIDENCE_ITEMS } from '@lib/records-rules';
 import { startEvidenceUpload } from '../../actions';
 import { emptyEvidenceLink, type ClaimEvidenceValue, type ClaimFormValues } from '../types';
@@ -74,20 +74,30 @@ function FileUpload({ ensureSaved, onUploaded, onClose }: { ensureSaved: EnsureC
   };
 
   const uploading = progress !== null;
+  // Same layout as a link row: description on the left, the file picker where the link field would be
   return (
-    <div className="stack gap-2 border border-gray-200 rounded p-3">
-      <div className="stack gap-2">
-        <label htmlFor="evidence-upload-description" className="text-sm font-medium text-gray-600">Description*</label>
-        <input
-          id="evidence-upload-description"
-          className="border border-gray-300 rounded px-3 py-2 text-sm"
-          placeholder="e.g. Full video of the attempt, Laser measurement anchor A, GPS track"
-          value={description}
-          disabled={uploading}
-          onChange={e => setDescription(e.target.value)}
-        />
+    <div className="stack gap-2 border-l-2 border-gray-200 pl-3">
+      <div className="flex gap-2 items-end flex-wrap">
+        <FormikFormField className="flex-1 min-w-[12rem]" id="evidence-upload-description" label="Description" required>
+          <input
+            id="evidence-upload-description"
+            className={formStyles.input}
+            placeholder="e.g. Full video of the attempt, Laser measurement anchor A, GPS track"
+            value={description}
+            disabled={uploading}
+            onChange={e => setDescription(e.target.value)}
+          />
+        </FormikFormField>
+        <FormikFormField className="flex-1 min-w-[12rem]" id="evidence-upload-file" label="File" required>
+          <div className="flex gap-2 items-center min-h-[2.5rem]">
+            <input id="evidence-upload-file" ref={input} type="file" accept={EVIDENCE_FILE_ACCEPT} disabled={uploading} onChange={e => setFile(e.target.files?.[0] ?? null)} className="hidden" />
+            <Button type="button" variant="secondary" size="small" disabled={uploading} onClick={() => input.current?.click()}>
+              {file ? 'Change file' : 'Choose file'}
+            </Button>
+            <span className="text-sm break-all text-gray-600">{file ? `${file.name} (${formatFileSize(file.size)})` : 'No file chosen'}</span>
+          </div>
+        </FormikFormField>
       </div>
-      <input ref={input} type="file" accept={EVIDENCE_FILE_ACCEPT} disabled={uploading} onChange={e => setFile(e.target.files?.[0] ?? null)} className="text-sm" />
       <small className="text-xs text-gray-600">Photos, videos, GPX/KML/FIT/TCX tracks, PDF, CSV, TXT or spreadsheets, up to {MAX_EVIDENCE_FILE_LABEL}. The file is named after its description.</small>
       {uploading && (
         <div className="stack gap-1">
@@ -95,7 +105,7 @@ function FileUpload({ ensureSaved, onUploaded, onClose }: { ensureSaved: EnsureC
           <small className="text-xs">Uploading… {Math.round((progress ?? 0) * 100)}%. Keep this page open.</small>
         </div>
       )}
-      {error && <Alert variant="error">{error}</Alert>}
+      {error && <Alert variant="danger">{error}</Alert>}
       <div className="flex gap-2">
         <Button type="button" variant="primary" size="small" disabled={uploading} onClick={upload}>Upload</Button>
         <Button type="button" variant="secondary" size="small" disabled={uploading} onClick={onClose}>Cancel</Button>
@@ -138,9 +148,6 @@ export default function EvidenceFields({ ensureSaved, uploadsEnabled }: Props) {
               ensureSaved={ensureSaved}
               onClose={() => setUploadOpen(false)}
               onUploaded={item => {
-                // Replace the empty link row a new claim starts with
-                const emptyRow = values.evidence.findIndex(e => e.type === 'link' && !e.url.trim() && !e.description.trim());
-                if (emptyRow >= 0) remove(emptyRow);
                 push(item);
                 setUploadOpen(false);
               }}

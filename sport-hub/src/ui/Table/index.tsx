@@ -21,11 +21,13 @@ import { TableFilters } from "./TableFilters";
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface ColumnMeta<TData extends RowData, TValue> {
-    filterVariant?: "text" | "select" | "date-range" | "autocomplete" | "country" | "discipline" | "contest-gender" | "contest-size" | "record-gender";
+    filterVariant?: "text" | "select" | "date-range" | "autocomplete" | "country" | "discipline" | "contest-gender" | "contest-size" | "record-gender" | "multi-select";
     /** Explicit options for select filters. When provided, overrides data-derived options. */
     filterOptions?: { value: string; label: string }[];
     /** Custom placeholder text for text filters. */
     filterPlaceholder?: string;
+    /** multi-select only: summary shown when nothing is selected. Defaults to "All". */
+    filterEmptyLabel?: string;
     /** When true, includes the "All" option in select filters. */
     filterIncludeAll?: boolean;
     /** When true, renders toggle to filter for future dates */
@@ -46,9 +48,23 @@ type TableProps<TData,> = {
   options: Partial<TableOptions<TData>>;
   title?: string;
   rowClassName?: (context: RowClassContext<TData>) => string | undefined;
+  /**
+   * Makes each row clickable (mouse, Enter or Space), e.g. to pick or open a row.
+   * Clicks on links, buttons and form fields inside the row keep their own behaviour.
+   */
+  onRowClick?: (row: Row<TData>, event: React.MouseEvent | React.KeyboardEvent) => void;
 };
 
-const Table = <TData,>({ extraFilters, options, title, rowClassName }: TableProps<TData>) => {
+/** Elements inside a clickable row that handle clicks themselves. */
+const INTERACTIVE_SELECTOR = 'a, button, input, select, textarea, label, [role="button"]';
+
+const isFromInteractiveChild = (event: React.SyntheticEvent) => {
+  const target = event.target as HTMLElement;
+  const interactive = target.closest(INTERACTIVE_SELECTOR);
+  return interactive !== null && event.currentTarget.contains(interactive);
+};
+
+const Table = <TData,>({ extraFilters, options, title, rowClassName, onRowClick }: TableProps<TData>) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
     options?.initialState?.columnFilters ?? []
   );
@@ -71,6 +87,11 @@ const Table = <TData,>({ extraFilters, options, title, rowClassName }: TableProp
   const table = useReactTable({
     defaultColumn: {
       enableColumnFilter: false,
+      // Empty values show a dash
+      cell: info => {
+        const value = info.renderValue();
+        return value === null || value === undefined || value === '' ? '—' : String(value);
+      },
       size: undefined,
     },
     initialState: {
@@ -139,7 +160,23 @@ const Table = <TData,>({ extraFilters, options, title, rowClassName }: TableProp
           </thead>
           <tbody>
             {visibleRows.map((row, index, rows) => (
-                <tr key={row.id} className={rowClassName?.({ row, index, rows, allRows, globalIndex: allRows.findIndex(r => r.id === row.id) })}>
+                <tr
+                  key={row.id}
+                  className={[
+                    rowClassName?.({ row, index, rows, allRows, globalIndex: allRows.findIndex(r => r.id === row.id) }),
+                    onRowClick && styles.clickableRow,
+                  ].filter(Boolean).join(' ') || undefined}
+                  {...(onRowClick && {
+                    onClick: (e: React.MouseEvent) => {
+                      if (!isFromInteractiveChild(e)) onRowClick(row, e);
+                    },
+                    onKeyDown: (e: React.KeyboardEvent) => {
+                      const isRowActivation = e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ');
+                      if (isRowActivation) { e.preventDefault(); onRowClick(row, e); }
+                    },
+                    tabIndex: 0,
+                  })}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}

@@ -1,3 +1,4 @@
+import { Alert } from '@slacklineinternational/onsight/react';
 import { notFound, permanentRedirect } from 'next/navigation';
 import Link from 'next/link';
 import { getUserIdByAthleteSlug } from '@lib/user-query-service';
@@ -6,7 +7,6 @@ import AthleteDataTabs from '../components/AthleteDataTabs';
 import { getPublishedEventsByOrganizer } from '../../events/submit/actions';
 import { COUNTRIES } from '@utils/countries';
 import { getAthletePageData } from './actions';
-import { Alert } from '@ui/Alert';
 
 interface AthleteProfilePageProps {
   params: Promise<{ identifier: string }>;
@@ -36,7 +36,7 @@ export default async function AthleteProfilePage({ params }: AthleteProfilePageP
 
   if (!success) {
     return (
-      <Alert variant="error">Error fetching athlete data</Alert>
+      <Alert variant="danger">Error fetching athlete data</Alert>
     );
   }
 
@@ -66,7 +66,6 @@ export default async function AthleteProfilePage({ params }: AthleteProfilePageP
           contests={contests}
           worldRecords={worldRecords}
           worldFirsts={worldFirsts}
-          athleteId={userId}
         />
       </section>
       {isOrganizer && organizedEvents.length > 0 && (

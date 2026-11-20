@@ -72,3 +72,15 @@ export const formatDate = (dateStr: string | Date) =>{
  * midnight, so the day doesn't shift with the time zone like `new Date('yyyy-mm-dd')` (UTC) would.
  */
 export const formatISODay = (isoDay: string) => (isoDay ? formatDate(`${isoDay}T00:00:00`) : '');
+
+/**
+ * Formats a day stored as DD/MM/YYYY (or DD.MM.YYYY) as "5 September 2023", e.g. for the statement on
+ * signed certificates. Parsed as local midnight so the day doesn't shift; anything else is returned trimmed.
+ */
+export const formatLongDay = (day: string): string => {
+  const match = /^(\d{1,2})[/.](\d{1,2})[/.](\d{4})$/.exec(day.trim());
+  if (!match) return day.trim();
+  const date = new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+  if (date.getDate() !== Number(match[1])) return day.trim();
+  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+};

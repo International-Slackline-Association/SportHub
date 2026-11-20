@@ -5,8 +5,7 @@ import { Form, Formik } from 'formik';
 import UserAutocomplete from '@ui/UserAutocomplete';
 import { AthleteProfileCard } from '../../athlete/components/AthleteProfileCard';
 import { fetchUserProfileAndRecords, mergeDuplicateAccounts, UserProfileAndRecords } from './actions';
-import Button from '@ui/Button';
-import { Alert, AlertProps } from '@ui/Alert';
+import { Alert, Button, type AlertProps } from '@slacklineinternational/onsight/react';
 import { FormikCheckboxField } from '@ui/Form';
 import { ResultEntryList } from './ResultEntryList';
 
@@ -85,7 +84,7 @@ export default function DuplicateAccountsLookup() {
       setHasReviewedResults(true);
     } catch (error) {
       setAlertMessage(error instanceof Error ? error.message : 'Unable to compare the selected accounts.');
-      setAlertStatus('error');
+      setAlertStatus('danger');
       setPrimaryUserProfileAndRecords(null);
       setSecondaryUserProfileAndRecords(null);
     } finally {
@@ -129,7 +128,7 @@ export default function DuplicateAccountsLookup() {
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Unable to merge duplicate accounts.';
           setAlertMessage(message);
-          setAlertStatus('error');
+          setAlertStatus('danger');
         } finally {
           setSubmitting(false);
           setPrimaryUserProfileAndRecords(null);
@@ -220,7 +219,7 @@ export default function DuplicateAccountsLookup() {
                 <Button
                   disabled={isSubmitting || !isLookUpValid || !hasReviewedResults}
                   type="submit"
-                  variant="destructive"
+                  variant="danger"
                 >
                   {isSubmitting ? 'Merging…' : 'Merge accounts'}
                 </Button>

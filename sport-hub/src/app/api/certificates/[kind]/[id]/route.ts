@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getPublicEntry } from '@lib/records-service';
+import { getCertificateSignature, getPublicEntry, saveCertificateSignature, type WorldFirst, type WorldRecord } from '@lib/records-service';
+import { certificateStatement, certificateVerifyUrl, signConfigFromEnv } from '@lib/certificate-signing';
 import { buildCertificatePdf } from '@lib/records-certificates';
 import { hasCertificate } from '@lib/records-logic';
+import { siteUrl } from '@lib/mailer';
 
 /**
  * GET /api/certificates/{record|first}/{entryId}?athlete={index}
@@ -22,7 +24,23 @@ export async function GET(req: Request, { params }: { params: Promise<{ kind: st
     const athlete = entry.athletes[index];
     if (!athlete) return NextResponse.json({ error: 'Athlete not found' }, { status: 404 });
 
-    const pdf = await buildCertificatePdf(kind, entry, athlete);
+    // The QR code carries an ISA signature from isa-tools (verify.slacklineinternational.org);
+    // without signing set up it links back to this live certificate instead
+    const liveUrl = siteUrl(`/api/certificates/${kind}/${encodeURIComponent(id)}?athlete=${index}`);
+    const statement = certificateStatement({
+      kind,
+      athleteName: athlete.name,
+      otherAthletes: entry.athletes.filter(a => a !== athlete).map(a => a.name),
+      title: kind === 'record' ? (entry as WorldRecord).categoryName : (entry as WorldFirst).trickName,
+      detail: kind === 'record' ? (entry as WorldRecord).value : (entry as WorldFirst).categoryName,
+      date: entry.date,
+    });
+    const verifyUrl = await certificateVerifyUrl(athlete.name, statement, liveUrl, {
+      config: signConfigFromEnv(),
+      load: () => getCertificateSignature(kind, id, index),
+      save: signature => saveCertificateSignature(kind, id, index, signature),
+    });
+    const pdf = await buildCertificatePdf(kind, entry, athlete, verifyUrl);
     const filename = `ISA-${kind === 'first' ? 'World-First' : 'World-Record'}-${athlete.name}`.normalize('NFKD').replace(/[^A-Za-z0-9-]+/g, '-');
     return new NextResponse(Buffer.from(pdf), {
       headers: {

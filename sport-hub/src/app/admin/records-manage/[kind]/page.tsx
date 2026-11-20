@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import PageLayout from '@ui/PageLayout';
-import { requireAdmin } from '@lib/authorization';
+import { requireRecordManager } from '@lib/authorization';
 import AdminNav from '../../records-review/components/AdminNav';
 import EntryTable from '../../records-review/components/EntryTable';
 import { getAllEntries, toEntryRows } from '../../records-review/components/rows';
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 type Props = { params: Promise<{ kind: string }> };
 
 export default async function ManageEntriesPage({ params }: Props) {
-  await requireAdmin();
+  await requireRecordManager();
   const { kind: segment } = await params;
   const kind = segment === 'records' ? 'record' : segment === 'firsts' ? 'first' : null;
   if (!kind) notFound();
@@ -26,7 +26,7 @@ export default async function ManageEntriesPage({ params }: Props) {
     >
       <AdminNav current={`/admin/records-manage/${segment}`} />
       <section className="p-4 sm:p-0">
-        <EntryTable rows={rows} showStatus filterable emptyText="No entries." />
+        <EntryTable rows={rows} showStatus filterable />
       </section>
     </PageLayout>
   );

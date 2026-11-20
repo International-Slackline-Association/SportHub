@@ -1,9 +1,10 @@
+import Link from 'next/link';
 import { Metadata } from "next";
 import { headers } from "next/headers";
 import { userAgent } from "next/server";
 import PageLayout from "@ui/PageLayout";
 import { getMyEvents } from "../submit/actions";
-import Button from "@ui/Button";
+import { Button } from '@slacklineinternational/onsight/react';
 import { MyEventsTable } from "./components/MyEventsTable";
 import { MyEventsList } from "./components/MyEventsList";
 
@@ -31,7 +32,7 @@ export default async function MyEventsPage() {
           : <MyEventsTable events={events} />
         }
         <div className="flex justify-end mt-4">
-          <Button as="link" href="/events/submit">
+          <Button as={Link} href="/events/submit">
             New Event
           </Button>
         </div>

@@ -7,6 +7,7 @@
 
 import { auth } from './auth';
 import type { Role, Permission, UserSubType, AuthorizationResult } from '../types/rbac';
+import { isGeneralAdmin, roleHasPermission } from '../types/rbac';
 import { redirect } from 'next/navigation';
 
 /**
@@ -44,9 +45,9 @@ export async function hasRole(requiredRole: Role): Promise<boolean> {
   if (!session?.user) return false;
 
   // Admin has access to everything
-  if (session.user.role === 'admin') return true;
+  if (isGeneralAdmin(session.user.roles)) return true;
 
-  return session.user.role === requiredRole;
+  return session.user.roles.includes(requiredRole);
 }
 
 /**
@@ -59,7 +60,7 @@ export async function hasAnyRole(roles: Role[]): Promise<boolean> {
   const session = await auth();
   if (!session?.user) return false;
 
-  return roles.includes(session.user.role);
+  return roles.some(r => session.user.roles.includes(r));
 }
 
 /**
@@ -70,9 +71,7 @@ export async function hasAnyRole(roles: Role[]): Promise<boolean> {
  */
 export async function hasPermission(permission: Permission): Promise<boolean> {
   const session = await auth();
-  if (!session?.user?.permissions) return false;
-
-  return session.user.permissions.includes(permission);
+  return roleHasPermission(session?.user?.roles, permission);
 }
 
 /**
@@ -83,9 +82,7 @@ export async function hasPermission(permission: Permission): Promise<boolean> {
  */
 export async function hasAllPermissions(permissions: Permission[]): Promise<boolean> {
   const session = await auth();
-  if (!session?.user?.permissions) return false;
-
-  return permissions.every(p => session.user.permissions!.includes(p));
+  return permissions.every(p => roleHasPermission(session?.user?.roles, p));
 }
 
 /**
@@ -105,28 +102,95 @@ export async function requireRole(
   }
 
   // Admins can access everything
-  if (session.user.role === 'admin') {
+  if (isGeneralAdmin(session.user.roles)) {
     return;
   }
 
-  if (session.user.role !== requiredRole) {
+  if (!session.user.roles.includes(requiredRole)) {
     redirect(`${redirectUrl}?required=${requiredRole}`);
   }
 }
 
 /**
- * Require admin role - redirect if not admin
+ * Require a permission - redirect if the user's role does not grant it.
+ * General admins always pass.
+ */
+export async function requirePermission(
+  permission: Permission,
+  redirectUrl: string = '/unauthorized'
+): Promise<void> {
+  const session = await auth();
+
+  if (!session) {
+    redirect('/auth/signin?error=SessionRequired');
+  }
+
+  if (!roleHasPermission(session.user.roles, permission)) {
+    redirect(`${redirectUrl}?required=${permission}`);
+  }
+}
+
+/** Event Manager or General admin (events, competitions, results). */
+export async function requireEventManager(): Promise<void> {
+  await requirePermission('events:edit');
+}
+
+/** Record Manager or General admin (records, firsts, categories). */
+export async function requireRecordManager(): Promise<void> {
+  await requirePermission('records:manage');
+}
+
+/** User Manager or General admin (user accounts, duplicates). */
+export async function requireUserManager(): Promise<void> {
+  await requirePermission('users:manage');
+}
+
+/**
+ * For user-management server actions: throws unless the user may manage users.
+ * Skipped in development, where sign-in is disabled (same rule as the test pages).
+ * Pass extra permissions that are also accepted (e.g. events:edit for creating
+ * pending athletes during event approval).
+ */
+export async function assertCanManageUsers(...alsoAllowed: Permission[]): Promise<void> {
+  if (process.env.NODE_ENV === 'development') return;
+  const session = await auth();
+  if (!session) throw new Error('Unauthorized: sign in required');
+  const allowed = ['users:manage' as const, ...alsoAllowed].some(p => roleHasPermission(session.user.roles, p));
+  if (!allowed) throw new Error('Unauthorized: User Manager or General admin required');
+}
+
+/**
+ * Who may set a user's roles and types. General admins may set anything.
+ * User Managers may set user types and grant or remove Event, Record and User
+ * Manager, but may not grant or remove General Admin.
+ * Returns an error message, or null when allowed. Development allows everything.
+ */
+export function roleChangeError(
+  actorRoles: readonly Role[] | undefined,
+  currentRoles: readonly Role[],
+  newRoles: readonly Role[],
+): string | null {
+  if (process.env.NODE_ENV === 'development') return null;
+  if (isGeneralAdmin(actorRoles)) return null;
+  if (!roleHasPermission(actorRoles, 'users:manage')) return 'User Manager or General admin required';
+  if (isGeneralAdmin(currentRoles) !== isGeneralAdmin(newRoles)) return 'Only a General admin can grant or remove General Admin';
+  return null;
+}
+
+/**
+ * Require General admin role - redirect if not admin
  *
- * Shorthand for requireRole('admin')
+ * Shorthand for requireRole('admin'). Use requireEventManager /
+ * requireRecordManager for pages the narrower roles may open.
  */
 export async function requireAdmin(): Promise<void> {
   await requireRole('admin');
 }
 
 /**
- * Require admin role OR organizer sub-type - redirect if neither
+ * Require an event role (Event Manager / General admin) OR organizer sub-type - redirect if neither
  *
- * Used for event submission, which is accessible to both admins and organizers.
+ * Used for event submission, which is accessible to event admins and organizers.
  */
 export async function requireEventSubmitter(): Promise<void> {
   const session = await auth();
@@ -136,7 +200,7 @@ export async function requireEventSubmitter(): Promise<void> {
   }
 
   if (
-    session.user.role === 'admin' ||
+    roleHasPermission(session.user.roles, 'events:create') ||
     (session.user.userSubTypes as UserSubType[] | undefined)?.includes('organizer')
   ) {
     return;
@@ -163,12 +227,12 @@ export async function canEditUser(targetUserId: string): Promise<AuthorizationRe
     };
   }
 
-  // Admins can edit anyone
-  if (session.user.role === 'admin') {
+  // User Managers and General admins can edit anyone
+  if (roleHasPermission(session.user.roles, 'users:manage')) {
     return {
       authorized: true,
       userId: session.user.id,
-      role: session.user.role,
+      roles: session.user.roles,
     };
   }
 
@@ -177,7 +241,7 @@ export async function canEditUser(targetUserId: string): Promise<AuthorizationRe
     return {
       authorized: true,
       userId: session.user.id,
-      role: session.user.role,
+      roles: session.user.roles,
     };
   }
 
@@ -185,7 +249,7 @@ export async function canEditUser(targetUserId: string): Promise<AuthorizationRe
     authorized: false,
     reason: 'Insufficient permissions - you can only edit your own profile',
     userId: session.user.id,
-    role: session.user.role,
+    roles: session.user.roles,
   };
 }
 
@@ -212,7 +276,7 @@ export async function authorizeOrThrow(
  */
 export async function isAdmin(): Promise<boolean> {
   const session = await auth();
-  return session?.user?.role === 'admin';
+  return isGeneralAdmin(session?.user?.roles);
 }
 
 /**

@@ -1,11 +1,10 @@
 import { formatISODay } from '@utils/dates';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Button from '@ui/Button';
+import { Button, Alert } from '@slacklineinternational/onsight/react';
 import { notFound } from 'next/navigation';
 import PageLayout from '@ui/PageLayout';
-import { Alert } from '@ui/Alert';
-import { requireAdmin } from '@lib/authorization';
+import { requireRecordManager } from '@lib/authorization';
 import { entryHasCertificate, formatRecordValue, GENDER_LABELS, GENDER_TITLE_LABELS, RECORD_GENDERS } from '@lib/records-logic';
 import { FIRST_CRITERIA, formatFileSize, isNewCategoryClaim, RECORD_CRITERIA, rejectionCaseOf } from '@lib/records-rules';
 import { evidenceFolderUrl } from '@lib/records-evidence';
@@ -35,7 +34,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 export default async function ReviewClaimPage({ params }: Props) {
-  await requireAdmin();
+  await requireRecordManager();
   const { kind, id } = await params;
   if (kind !== 'record' && kind !== 'first') notFound();
   const context = await getReviewContext(kind, id);
@@ -52,7 +51,7 @@ export default async function ReviewClaimPage({ params }: Props) {
   return (
     <PageLayout title={entry.kind === 'first' ? `First: ${entry.trickName}` : `Record: ${entry.categoryName}`}>
       <section className="p-4 sm:p-0 flex gap-3 items-center flex-wrap">
-        <Button as="link" href="/admin/records-review" variant="secondary" size="small">Back to the review queue</Button>
+        <Button as={Link} href="/admin/records-review" variant="secondary" size="small">Back to the review queue</Button>
         <Link href={`/admin/records-manage/${entry.kind === 'first' ? 'firsts' : 'records'}`} className="text-blue-600 hover:underline text-sm">All {entry.kind === 'first' ? 'firsts' : 'records'}</Link>
         <ClaimStatusBadge status={entry.status} />
         <span className="text-sm text-gray-600">Gender: {GENDER_LABELS[entry.gender]}</span>
@@ -72,6 +71,7 @@ export default async function ReviewClaimPage({ params }: Props) {
             <Row label="Category">{isNewCategory && '[New category] '}{entry.categoryName}</Row>
             {entry.kind === 'record' && entry.newCategoryProposal && (
               <>
+                <Row label="Group">{entry.newCategoryProposal.group ?? 'Other (not chosen)'}</Row>
                 <Row label="What is measured">{entry.newCategoryProposal.measurement}</Row>
                 <Row label="Unit and direction">{`${entry.newCategoryProposal.unit}, ${entry.newCategoryProposal.direction} is better`}</Row>
                 <Row label="Why distinct">{entry.newCategoryProposal.justification}</Row>
@@ -110,7 +110,7 @@ export default async function ReviewClaimPage({ params }: Props) {
               </>
             )}
             <Row label="Witnesses">
-              {entry.witnesses?.length ? entry.witnesses.map((w, i) => <span key={i} className="block">{[w.name, w.email, w.phone, w.contact, w.role].filter(Boolean).join(' · ')}</span>) : undefined}
+              {entry.witnesses?.length ? entry.witnesses.map((w, i) => <span key={i} className="block">{[w.name, w.email, w.phone, w.contact, w.role].filter(Boolean).join(' · ')}</span>) : <span className="text-gray-500">None named</span>}
             </Row>
             <Row label="Evidence folder">
               {folderUrl ? <a href={folderUrl} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">Open in Google Drive</a> : undefined}

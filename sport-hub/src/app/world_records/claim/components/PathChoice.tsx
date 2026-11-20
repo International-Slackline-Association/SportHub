@@ -1,9 +1,9 @@
 'use client';
+import { Alert } from '@slacklineinternational/onsight/react';
 
 /** "What are you claiming?": a record in an existing or a new category, or a first. */
 
 import formStyles from '@ui/Form/styles.module.css';
-import { Alert } from '@ui/Alert';
 import { RECORDS_TEAM_EMAIL } from '@lib/records-rules';
 import type { ClaimPath } from '../types';
 import { Section } from './ClaimSections';
@@ -47,7 +47,7 @@ export default function PathChoice({ path, onChange, locked, showAttemptHint = t
       </div>
       {/* FR-1: attempts are announced by email, not in the app (v1) */}
       {showAttemptHint && path !== 'first' && (
-        <Alert variant="info" size="SM" showIcon={false}>
+        <Alert variant="info" icon={false}>
           <p>
             Planning a record attempt? As the ISA framework asks, email <a href={`mailto:${RECORDS_TEAM_EMAIL}`} className="underline">{RECORDS_TEAM_EMAIL}</a> before the attempt, so the definitions can be agreed in advance.
           </p>

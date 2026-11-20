@@ -15,6 +15,7 @@ import {
 } from '@utils/consts';
 import EditEventClient from './EditEventClient';
 import { EventMetadataRecord } from '@lib/relational-types';
+import { roleHasPermission } from 'src/types/rbac';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,7 +54,7 @@ export default async function EditEventPage({ params }: Props) {
   const { eventId: rawEventId } = await params;
   const eventId = decodeURIComponent(rawEventId);
   const session = await auth();
-  const isAdmin = session?.user?.role === 'admin';
+  const isAdmin = roleHasPermission(session?.user?.roles, 'events:edit');
 
   const result = await getEvent(eventId);
 
@@ -82,6 +83,7 @@ export default async function EditEventPage({ params }: Props) {
         eventName: eventData?.name || eventData?.eventName,
         website,
         city: event.city || "",
+        organizer: { id: event.createdBy || '', name: event.createdByName || '' },
       },
       contests: contests.map(c => ({
         ...c,
@@ -126,7 +128,7 @@ export default async function EditEventPage({ params }: Props) {
 
   return (
     <PageLayout title="Edit Event">
-      <EditEventClient eventId={eventId} initialValues={initialValues} />
+      <EditEventClient eventId={eventId} initialValues={initialValues} canEditOrganizer={isAdmin} />
     </PageLayout>
   );
 }
