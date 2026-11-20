@@ -4,7 +4,7 @@
  * Signing goes through the isa-tools API (github.com/International-Slackline-Association/isa-tools),
  * the same service that signed ISA certificates before SportHub: POST {ISA_TOOLS_API_URL}/v1/sign
  * with an OAuth client-credentials token of SportHub's own `sporthub-service` client in the ISA
- * user pool, which only has the `isa-tools/documents.sign` scope (see "How apps reach ISA services",
+ * user pool, requested for the `isa-tools/documents.sign` scope via isa-oauth.ts (see "How apps reach ISA services",
  * docs/engineering/app-access.md in the ISA monorepo). isa-tools signs the statement as an RS256 JWT with
  * the ISA key, stores it under an 8-character code and returns
  * https://verify.slacklineinternational.org/?token=<code>, which shows the signed statement.
@@ -19,11 +19,11 @@
  */
 
 import { formatLongDay } from '../utils/dates';
+import { DEFAULT_ISA_TOKEN_URL, clearIsaTokenCache, isaAccessToken } from './isa-oauth';
 
 export type CertificateKind = 'record' | 'first';
 
 export const DEFAULT_ISA_TOOLS_API_URL = 'https://tools-api.slacklineinternational.org';
-export const DEFAULT_ISA_TOKEN_URL = 'https://auth.slacklineinternational.org/oauth2/token';
 export const SIGN_SCOPE = 'isa-tools/documents.sign';
 /** A certificate states a historical fact, so its signature should outlive any printed copy. */
 export const SIGNATURE_VALIDITY_SECONDS = 10 * 365 * 24 * 60 * 60;
@@ -97,31 +97,9 @@ export function signConfigFromEnv(env: Record<string, string | undefined> = proc
   };
 }
 
-let cachedToken: { clientId: string; value: string; expiresAt: number } | undefined;
-
 /** For tests: forget the cached access token. */
 export function clearTokenCache() {
-  cachedToken = undefined;
-}
-
-/** Client-credentials access token for the sign scope, cached until a minute before it expires. */
-async function accessToken(config: SignConfig, fetchImpl: typeof fetch): Promise<string> {
-  if (cachedToken && cachedToken.clientId === config.clientId && cachedToken.expiresAt > Date.now() + 60_000) {
-    return cachedToken.value;
-  }
-  const credentials = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64');
-  const res = await fetchImpl(config.tokenUrl, {
-    method: 'POST',
-    headers: { Authorization: `Basic ${credentials}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ grant_type: 'client_credentials', scope: SIGN_SCOPE }).toString(),
-    signal: AbortSignal.timeout(SIGN_TIMEOUT_MS),
-  });
-  if (!res.ok) throw new Error(`ISA token request returned ${res.status}`);
-  const body = await res.json() as { access_token?: unknown; expires_in?: unknown };
-  if (typeof body.access_token !== 'string') throw new Error('ISA token request returned no access token');
-  const expiresIn = typeof body.expires_in === 'number' ? body.expires_in : 3600;
-  cachedToken = { clientId: config.clientId, value: body.access_token, expiresAt: Date.now() + expiresIn * 1000 };
-  return cachedToken.value;
+  clearIsaTokenCache();
 }
 
 /** Signs one statement with isa-tools and returns its verification URL and expiry. */
@@ -131,14 +109,14 @@ export async function signWithIsaTools(
   statement: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<StoredSignature> {
-  const token = await accessToken(config, fetchImpl);
+  const token = await isaAccessToken(config, SIGN_SCOPE, fetchImpl);
   const res = await fetchImpl(`${config.apiUrl}/v1/sign`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ subject, content: statement, expiresInSeconds: SIGNATURE_VALIDITY_SECONDS, createHash: true }),
     signal: AbortSignal.timeout(SIGN_TIMEOUT_MS),
   });
-  if (res.status === 401 || res.status === 403) cachedToken = undefined;
+  if (res.status === 401 || res.status === 403) clearIsaTokenCache(config, SIGN_SCOPE);
   if (!res.ok) throw new Error(`isa-tools /v1/sign returned ${res.status}`);
   const body = await res.json() as { verificationUrl?: unknown; expiresAt?: unknown };
   if (typeof body.verificationUrl !== 'string' || !/^https:\/\//.test(body.verificationUrl)) {

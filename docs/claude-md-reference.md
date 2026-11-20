@@ -114,7 +114,7 @@ sport-hub/
 │   │   ├── isa-rankings-service.ts
 │   │   ├── onboarding.ts       # User onboarding flow
 │   │   ├── rbac-service.ts     # Role-based access control
-│   │   ├── reference-db-service.ts  # isa-users identity table
+│   │   ├── isa-users-api.ts    # isa-users API client (identity, read-only)
 │   │   ├── relational-types.ts
 │   │   ├── user-query-service.ts
 │   │   ├── user-service.ts
@@ -252,8 +252,8 @@ Sort key patterns:
 - `Metadata` — event-level info (name, location, dates)
 - `Contest:{discipline}:{contestId}` — contest with embedded participants
 
-### Reference DB (`isa-users`, eu-central-1)
-Centralized user identity (name, email, country). Accessed via `reference-db-service.ts`. Kept separate from application data — app table stores only app-specific fields (points, rankings) and links via `isaUsersId`.
+### Reference DB (`isa-users`)
+Centralized user identity (name, email, country). Read through the isa-users API (`GET /v1/users?ids=`) via `isa-users-api.ts`, never its table. Kept separate from application data — app table stores only app-specific fields (points, rankings) and links via `isaUsersId`.
 
 ## Authentication & RBAC
 
@@ -290,8 +290,8 @@ AUTH_SECRET=your_nextauth_secret
 NEXTAUTH_URL=https://your-app.com
 REVALIDATE_SECRET=your_revalidation_secret
 NEXT_PUBLIC_URL=https://your-app.com
-REFERENCE_DB_TABLE=isa-users
-REFERENCE_DB_REGION=eu-central-1
+ISA_TOOLS_CLIENT_ID=sporthub_service_client_id
+ISA_TOOLS_CLIENT_SECRET=sporthub_service_client_secret
 GOOGLE_SERVICE_ACCOUNT_EMAIL=your_sa@project.iam.gserviceaccount.com
 GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n..."
 ```

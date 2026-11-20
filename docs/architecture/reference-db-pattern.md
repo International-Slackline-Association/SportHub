@@ -1,5 +1,12 @@
 # Reference Database Pattern
 
+> **Update (issue #153):** SportHub no longer reads the isa-users table. Identity is read through the
+> isa-users API (`GET https://account-api.slacklineinternational.org/v1/users?ids=…`, scope
+> `isa-users/users.get`) in `src/lib/isa-users-api.ts`, and the ISA id of a signed-in user is derived
+> from their Cognito username. `reference-db-service.ts`, lookups by email and the profile sync back to
+> isa-users are gone. The table layout and code samples below describe the old direct access and are
+> kept as background only.
+
 ## Overview
 
 SportHub uses a **reference database separation pattern** to manage user identity data. This architectural pattern separates user identity (name, email, phone, country) from application-specific data (points, rankings, contest participations).

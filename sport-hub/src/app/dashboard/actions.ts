@@ -8,7 +8,6 @@ import type { UserProfileRecord } from '@lib/relational-types';
 import { rolesOf, type UserSubType } from '../../types/rbac';
 import { clearRoleCache } from '@lib/rbac-service';
 import { getUser, createUser, saveUserProfile } from '@lib/user-service';
-import { updateReferenceUser } from '@lib/reference-db-service';
 
 export interface ProfileUpdateData {
   name?: string;
@@ -101,24 +100,8 @@ export async function updateProfile(userId: string, data?: ProfileUpdateData) {
 
     await saveUserProfile(updatedUser);
 
-    // Sync identity changes to reference DB (isa-users), guarded so a failure
-    // there doesn't break the dashboard save.
-    // NOTE: Requires isa-users table write permissions on AWS — verify before enabling in production.
-    if (updatedUser.isaUsersId) {
-      try {
-        await updateReferenceUser(updatedUser.isaUsersId, {
-          name: updatedUser.name,
-          surname: updatedUser.surname,
-          email: updatedUser.email,
-          country: updatedUser.country,
-          city: updatedUser.city,
-          birthDate: updatedUser.birthdate,
-          gender: updatedUser.gender,
-        });
-      } catch (err) {
-        console.warn('[updateProfile] Reference DB sync failed (non-fatal):', err);
-      }
-    }
+    // isa-users is not written from SportHub: its API is read-only for apps (issue #153), so profile
+    // edits stay in sporthub-users. Users change their ISA account at account.slacklineinternational.org.
 
     // Revalidate dashboard to show updated data
     revalidatePath('/dashboard');

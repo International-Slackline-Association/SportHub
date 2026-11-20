@@ -1,7 +1,7 @@
 import NextAuth from "next-auth"
 import Cognito from "next-auth/providers/cognito"
 import { getUserAccess, getUserSubTypes } from './rbac-service'
-import { ensureUserExists, enrichUserFromReferenceDb } from './onboarding'
+import { ensureUserExists, enrichUserFromIsaUsers } from './onboarding'
 import { getUserByEmail } from './user-service'
 import type { Role, Permission, UserSubType } from '../types/rbac'
 
@@ -89,7 +89,9 @@ export const { handlers, signIn, signOut, auth, unstable_update } = NextAuth({
         // Link Cognito user to sporthub-users record
         // Check by email first (covers migrated users and previously onboarded users)
         // If not found, create a new sporthub record via ensureUserExists
-        if (token.sub && token.email) {
+        // isa-users derives the ISA id from the Cognito username (usually the same as sub)
+        const cognitoUsername = (typeof profile['cognito:username'] === 'string' && profile['cognito:username']) || token.sub
+        if (token.sub && token.email && cognitoUsername) {
           try {
             // First, check if user already exists in sporthub-users by email
             const existingUser = await getUserByEmail(token.email as string);
@@ -100,25 +102,21 @@ export const { handlers, signIn, signOut, auth, unstable_update } = NextAuth({
               token.name = existingUser.name;
               console.log(`[Auth] Found existing user by email: ${existingUser.userId}`);
 
-              // Back-fill any missing reference DB fields (isaUsersId, name, country, etc.)
-              // on every login until all fields are populated. enrichUserFromReferenceDb
+              // Back-fill any missing isa-users fields (isaUsersId, name, country, etc.)
+              // on every login until all fields are populated. enrichUserFromIsaUsers
               // is a no-op when nothing is missing. Must be awaited — fire-and-forget is
               // killed before completion in serverless runtimes.
               const needsEnrichment = !existingUser.isaUsersId || !existingUser.name
                 || !existingUser.country || !existingUser.gender || !existingUser.birthdate
                 || !existingUser.athleteSlug;
               if (needsEnrichment) {
-                await enrichUserFromReferenceDb(existingUser, token.email as string).catch(err =>
+                await enrichUserFromIsaUsers(existingUser, cognitoUsername).catch(err =>
                   console.warn('[Auth] Non-fatal: could not enrich user from isa-users:', err)
                 );
               }
             } else {
               // New user — create sporthub record, returns SportHubID:xxx
-              const sportHubUserId = await ensureUserExists(
-                token.sub,
-                token.email as string,
-                token.email as string  // Use email as name fallback
-              );
+              const sportHubUserId = await ensureUserExists(cognitoUsername, token.email as string);
               token.sportHubUserId = sportHubUserId;
               console.log(`[Auth] Created new user via onboarding: ${sportHubUserId}`);
             }

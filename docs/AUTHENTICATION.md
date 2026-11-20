@@ -20,9 +20,9 @@ SportHub uses **AWS Cognito** for authentication via **NextAuth v5 (Beta)** with
          │ sportHubUserId (SportHubID:xxx)
          ▼
 ┌────────────────────────────────────────────────┐
-│  isa-users  (eu-central-1)   READ-ONLY         │
+│  isa-users API   GET /v1/users?ids=   READ-ONLY│
 │  ISA athlete identity: name, email, country    │
-│  Primary key: user:{ISA_xxx} / userDetails     │
+│  (never its table; see isa-users-api.ts)       │
 └────────────────────────────────────────────────┘
          │ ISA_xxx ID
          ▼
@@ -53,16 +53,18 @@ Every login runs through `src/lib/auth.ts` → `jwt()` callback:
 1. getUserByEmail(email)        → sporthub-users scan
    Found? → use existing userId (migrated or previously onboarded user)
 
-2. Not found → ensureUserExists(cognitoSub, email)  [onboarding.ts]
-   a. getReferenceUserByEmail(email) → isa-users (READ-ONLY, guaranteed to find user)
-   b. userExists(ISA_xxx)            → sporthub-users check
-   c. If not exists: createUser(ISA_xxx, { email }) → create Profile record
+   Missing isaUsersId/name/etc.? → enrichUserFromIsaUsers() back-fills them from the isa-users API
+
+2. Not found → ensureUserExists(cognitoUsername, email)  [onboarding.ts]
+   a. isaIdFromCognitoUsername(cognito:username) → ISA_xxx (same derivation as isa-users)
+   b. getIsaUser(ISA_xxx)            → isa-users API GET /v1/users (READ-ONLY)
+   c. createUser(SportHubID:xxx, { email, isaUsersId: ISA_xxx }) → create Profile record
 
 3. Load RBAC: getUserRole() + getUserPermissions() + getUserSubTypes()
    → stored in JWT token → passed to session
 ```
 
-**isa-users is never written to.** All Cognito users are guaranteed to have an isa-users entry before they ever log in.
+**isa-users is never written to, and its table is never read.** SportHub calls its API with the `sporthub-service` client (scope `isa-users/users.get`, issue #153). All Cognito users are guaranteed to have an isa-users entry before they ever log in.
 
 ---
 
@@ -186,7 +188,8 @@ src/
 │   ├── authorization.ts       # requireAuth, requireAdmin, canEditUser, getCurrentUser
 │   ├── onboarding.ts          # ensureUserExists — creates sporthub-users on first login
 │   ├── rbac-service.ts        # getUserRole, getUserPermissions (with 5-min cache)
-│   ├── reference-db-service.ts # READ-ONLY isa-users access (identity lookup)
+│   ├── isa-users-api.ts       # READ-ONLY isa-users API client (identity lookup)
+│   ├── isa-oauth.ts           # client-credentials tokens for ISA services
 │   └── user-service.ts        # createUser, getUserByEmail, updateUserProfile
 ├── types/
 │   ├── auth.ts                # NextAuth type extensions (sportHubUserId, role, etc.)
@@ -205,9 +208,8 @@ src/
 | `COGNITO_REGION` | Cognito region (e.g. `eu-central-1`) |
 | `COGNITO_USER_POOL_ID` | Cognito user pool ID |
 | `AUTH_SECRET` | NextAuth secret |
-| `REFERENCE_DB_TABLE` | isa-users table name (default: `isa-users`) |
-| `REFERENCE_DB_REGION` | isa-users region (default: `eu-central-1`) |
-| `LOCAL_REFERENCE_DB` | `true` = use local DynamoDB for reference DB (dev only) |
+| `ISA_TOOLS_CLIENT_ID` / `ISA_TOOLS_CLIENT_SECRET` | SportHub's `sporthub-service` client; also used for the isa-users API |
+| `ISA_USERS_API_URL` | isa-users API base URL (default: `https://account-api.slacklineinternational.org`) |
 
 ---
 
@@ -215,7 +217,7 @@ src/
 
 **Role mismatch after update**: Sign out and sign back in to refresh JWT.
 
-**New user has no sporthub account after login**: Check server logs for `[Onboarding]` errors. The isa-users lookup by email may be failing — verify `REFERENCE_DB_TABLE` and `REFERENCE_DB_REGION` env vars, and that the `GSI` index exists on isa-users.
+**New user has no sporthub account after login**: Check server logs for `[Onboarding]` errors. The isa-users API call may be failing — verify `ISA_TOOLS_CLIENT_ID` / `ISA_TOOLS_CLIENT_SECRET` are set as Amplify environment variables and that the client holds the `isa-users/users.get` scope.
 
 **`session.user.role` is undefined**: User may not have a sporthub-users Profile record. Check `getUserByEmail` returns a result for their email.
 
