@@ -36,6 +36,7 @@ export default function WorldRecordClaimForm({ initialValues, onSubmit, path, re
   const { claimantId, admin } = fieldProps;
   const validationSchema = useMemo(() => worldRecordClaimSchema({ claimantId, admin }), [claimantId, admin]);
 
+  // noValidate: the browser would stop at the first required field. Yup marks every invalid field.
   return (
     <Formik
       initialValues={initialValues}
@@ -43,7 +44,7 @@ export default function WorldRecordClaimForm({ initialValues, onSubmit, path, re
       onSubmit={onSubmit}
     >
       {form => (
-        <Form className="stack gap-8">
+        <Form className="stack gap-8" noValidate>
           <PathSync path={path} />
           <ValuesObserver onChange={onValuesChange} />
           <WorldRecordClaimFields {...fieldProps} />

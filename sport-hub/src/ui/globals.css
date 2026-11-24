@@ -164,6 +164,21 @@ p {
   line-height: 1.6;
 }
 
+/* This rule is unlayered, so it beats Onsight's error color, which lives in
+   the components layer. Field errors have to stay red. */
+p.isa-error {
+  color: var(--isa-color-text-danger);
+  font-weight: var(--isa-font-weight-semibold);
+  font-size: var(--isa-font-size-sm);
+  line-height: var(--isa-font-line-height-normal);
+}
+
+.isa-input[aria-invalid="true"],
+.isa-select > select[aria-invalid="true"] {
+  border-color: var(--isa-color-field-border-invalid);
+  box-shadow: inset 0 0 0 1px var(--isa-color-field-border-invalid);
+}
+
 figcaption {
   color: var(--color-neutral-600);
   display: block;

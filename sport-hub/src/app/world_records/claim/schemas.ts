@@ -18,7 +18,11 @@ type SchemaOptions = {
 
 const REQUIRED = 'Required';
 
-const today = () => new Date().toISOString().slice(0, 10);
+/** yyyy-mm-dd in the local calendar, which is what a date input uses. */
+export const localISODate = (now = new Date()) => {
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 10);
+};
 
 const isFilledWitness = (w: { name?: string; email?: string; phone?: string }) =>
   !!(w.name?.trim() || w.email?.trim() || w.phone?.trim());
@@ -62,7 +66,7 @@ const evidenceSchema = Yup.object({
 function commonFields({ claimantId, admin }: SchemaOptions, evidenceRequired: (fullVideo: boolean) => boolean, evidenceMessage: string) {
   return {
     athletes: Yup.array(athleteSchema(admin)).min(1, 'Add at least one athlete').max(MAX_ATHLETES, `At most ${MAX_ATHLETES} athletes`),
-    date: Yup.string().required(REQUIRED).test('not-future', 'The date cannot be in the future', d => !d || d <= today()),
+    date: Yup.string().required(REQUIRED).test('not-future', 'The date cannot be in the future', d => !d || d <= localISODate()),
     // Witnesses are optional; each one added needs a name and an email (witnessSchema)
     witnesses: admin
       ? Yup.array(witnessSchema)

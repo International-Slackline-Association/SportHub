@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { useFormikContext } from 'formik';
 import { FormikCheckboxField, FormikSelectField, FormikTextAreaField, FormikTextField, countryCodeOptions } from '@ui/Form';
 import { deriveGender, GENDER_TITLE_LABELS, UNIT_SUGGESTIONS, unitKind, valueHint } from '@lib/records-logic';
+import { localISODate } from '../schemas';
 import { RECORD_CATEGORY_GROUPS, type RecordCategoryTableItem } from '@lib/relational-types';
 import { getAthleteGenders, getMarkToBeat } from '../../actions';
 import type { ClaimFormValues } from '../types';
@@ -149,7 +150,7 @@ export default function WorldRecordClaimFields({ recordCategories, claimantId, a
           required
         />
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <FormikTextField id="date" name="date" type="date" label="Date" required />
+          <FormikTextField id="date" name="date" type="date" label="Date" required max={localISODate()} />
           <FormikTextField id="locationName" name="locationName" label="Location" required={!admin} />
           <FormikSelectField id="locationCountry" name="locationCountry" label="Country" options={countryCodeOptions} required={!admin} />
         </div>

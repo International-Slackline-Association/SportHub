@@ -36,6 +36,24 @@ const dateTransform = (value: unknown, originalValue: unknown) => {
   return new Date(originalValue + 'T00:00:00')
 }
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Local midnight for a typed day, or the Date Yup already cast the sibling to. */
+const dayTime = (value: unknown): number | undefined => {
+  if (typeof value === 'string' && ISO_DATE.test(value)) return new Date(`${value}T00:00:00`).getTime();
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.getTime();
+  return undefined;
+};
+
+/** Same calendar day is allowed. Skipped until both dates are filled in. */
+const dateOrderTest = (side: 'start' | 'end') =>
+  function (this: Yup.TestContext) {
+    const start = dayTime(side === 'start' ? this.originalValue : this.parent?.startDate);
+    const end = dayTime(side === 'end' ? this.originalValue : this.parent?.endDate);
+    if (start == null || end == null) return true;
+    return start <= end;
+  };
+
 
 export const eventValidationSchema = Yup.object({
   // Assets
@@ -56,11 +74,13 @@ export const eventValidationSchema = Yup.object({
   startDate: Yup.date()
     .transform(dateTransform)
     .typeError('Invalid date (expected YYYY-MM-DD)')
-    .required("Date is required"),
+    .required("Date is required")
+    .test('start-before-end', 'Start date must be on or before the end date', dateOrderTest('start')),
   endDate: Yup.date()
     .transform(dateTransform)
     .typeError('Invalid date (expected YYYY-MM-DD)')
-    .required("Date is required"),
+    .required("Date is required")
+    .test('end-after-start', 'End date must be on or after the start date', dateOrderTest('end')),
   website: Yup.string()
     .url('Please enter a valid URL (e.g., https://example.com)')
     .nullable(),
@@ -113,11 +133,13 @@ export const contestValidationSchema = Yup.object({
   startDate: Yup.date()
     .transform(dateTransform)
     .typeError('Invalid date (expected YYYY-MM-DD)')
-    .required('Start date is required'),
+    .required('Start date is required')
+    .test('start-before-end', 'Start date must be on or before the end date', dateOrderTest('start')),
   endDate: Yup.date()
     .transform(dateTransform)
     .typeError('Invalid date (expected YYYY-MM-DD)')
-    .required('End date is required'),
+    .required('End date is required')
+    .test('end-after-start', 'End date must be on or after the start date', dateOrderTest('end')),
   gender: Yup.string()
     .required('Gender category is required'),
   discipline: Yup.string()

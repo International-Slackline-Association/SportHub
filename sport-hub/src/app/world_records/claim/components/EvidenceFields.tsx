@@ -9,9 +9,8 @@
 
 import { useRef, useState } from 'react';
 import { FieldArray, useFormikContext } from 'formik';
-import { Button, Alert } from '@slacklineinternational/onsight/react';
+import { Button, Alert, TextField } from '@slacklineinternational/onsight/react';
 import { FormikFormField, FormikTextField } from '@ui/Form';
-import formStyles from '@ui/Form/styles.module.css';
 import { EVIDENCE_FILE_ACCEPT, evidenceFileProblem, formatFileSize, MAX_EVIDENCE_FILE_LABEL, MAX_EVIDENCE_ITEMS } from '@lib/records-rules';
 import { startEvidenceUpload } from '../../actions';
 import { emptyEvidenceLink, type ClaimEvidenceValue, type ClaimFormValues } from '../types';
@@ -78,17 +77,17 @@ function FileUpload({ ensureSaved, onUploaded, onClose }: { ensureSaved: EnsureC
   return (
     <div className="stack gap-2 border-l-2 border-gray-200 pl-3">
       <div className="flex gap-2 items-end flex-wrap">
-        <FormikFormField className="flex-1 min-w-[12rem]" id="evidence-upload-description" label="Description" required>
-          <input
-            id="evidence-upload-description"
-            className={formStyles.input}
-            placeholder="e.g. Full video of the attempt, Laser measurement anchor A, GPS track"
-            value={description}
-            disabled={uploading}
-            onChange={e => setDescription(e.target.value)}
-          />
-        </FormikFormField>
-        <FormikFormField className="flex-1 min-w-[12rem]" id="evidence-upload-file" label="File" required>
+        <TextField
+          className="flex-1 min-w-[12rem]"
+          id="evidence-upload-description"
+          label="Description"
+          placeholder="e.g. Full video of the attempt, Laser measurement anchor A, GPS track"
+          value={description}
+          disabled={uploading}
+          required
+          onChange={e => setDescription(e.target.value)}
+        />
+        <FormikFormField className="flex-1 min-w-[12rem]" id="evidence-upload-file" label="File">
           <div className="flex gap-2 items-center min-h-[2.5rem]">
             <input id="evidence-upload-file" ref={input} type="file" accept={EVIDENCE_FILE_ACCEPT} disabled={uploading} onChange={e => setFile(e.target.files?.[0] ?? null)} className="hidden" />
             <Button type="button" variant="secondary" size="small" disabled={uploading} onClick={() => input.current?.click()}>

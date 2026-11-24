@@ -7,6 +7,7 @@
  */
 
 import { FormikSelectField, FormikTextAreaField, FormikTextField } from '@ui/Form';
+import { localISODate } from '../schemas';
 import type { FirstCategoryTableItem } from '@lib/relational-types';
 import type { EnsureClaimSaved } from './EvidenceFields';
 import { AthletesSection, EthicsSection, EvidenceSection, Section, WitnessesSection } from './ClaimSections';
@@ -38,7 +39,7 @@ export default function WorldFirstClaimFields({ firstCategories, claimantId, adm
         <FormikTextAreaField id="similarTricks" name="similarTricks" label="Similar tricks" caption="Tricks that come close, so the ISA can tell them apart." />
         <FormikTextField id="lineDetails" name="lineDetails" label="Line details" caption="Line type, length, height, tension" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <FormikTextField id="date" name="date" type="date" label="Date of the landing" required />
+          <FormikTextField id="date" name="date" type="date" label="Date of the landing" required max={localISODate()} />
           <FormikTextField id="locationName" name="locationName" label="Location" />
         </div>
       </Section>

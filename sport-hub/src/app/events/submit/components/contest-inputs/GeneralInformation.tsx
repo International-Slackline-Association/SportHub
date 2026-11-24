@@ -1,5 +1,6 @@
 'use client';
 
+import { getIn, useFormikContext } from 'formik';
 import {
   FormikSelectField,
   disciplineOptions,
@@ -11,6 +12,7 @@ import {
   FormikNumberField,
   FormikTextField,
 } from '@ui/Form';
+import type { EventSubmissionFormValues } from '../../types';
 import styles from './styles.module.css';
 
 type Props = {
@@ -18,6 +20,10 @@ type Props = {
 }
 
 export const GeneralInformation = ({ contestKey }: Props) => {
+  const { values } = useFormikContext<EventSubmissionFormValues>();
+  const startDate = getIn(values, `${contestKey}.startDate`) as string | undefined;
+  const endDate = getIn(values, `${contestKey}.endDate`) as string | undefined;
+
   return (
     <>
       <h4>General Information</h4>
@@ -29,6 +35,7 @@ export const GeneralInformation = ({ contestKey }: Props) => {
           name={`${contestKey}.startDate`}
           placeholder="YYYY-MM-DD"
           type="date"
+          max={endDate || undefined}
           />
         <FormikTextField
           className="grow"
@@ -38,6 +45,7 @@ export const GeneralInformation = ({ contestKey }: Props) => {
           placeholder="YYYY-MM-DD"
           tooltip="Date of the final round"
           type="date"
+          min={startDate || undefined}
           />
       </div>
       <FormikRadioGroup

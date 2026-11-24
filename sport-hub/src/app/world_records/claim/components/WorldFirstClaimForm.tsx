@@ -23,10 +23,11 @@ export default function WorldFirstClaimForm({ initialValues, onSubmit, renderAct
   const { claimantId, admin } = fieldProps;
   const validationSchema = useMemo(() => worldFirstClaimSchema({ claimantId, admin }), [claimantId, admin]);
 
+  // noValidate: the browser would stop at the first required field. Yup marks every invalid field.
   return (
     <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={onSubmit}>
       {form => (
-        <Form className="stack gap-8">
+        <Form className="stack gap-8" noValidate>
           <ValuesObserver onChange={onValuesChange} />
           <WorldFirstClaimFields {...fieldProps} />
           <ValidationSummary />

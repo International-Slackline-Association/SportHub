@@ -105,6 +105,7 @@ export default function EventForm({ canEditOrganizer = false }: { canEditOrganiz
             placeholder="YYYY-MM-DD"
             type="date"
             required
+            max={values.event.endDate || undefined}
           />
           <FormikTextField
             id="event.endDate"
@@ -113,6 +114,7 @@ export default function EventForm({ canEditOrganizer = false }: { canEditOrganiz
             placeholder="YYYY-MM-DD"
             type="date"
             required
+            min={values.event.startDate || undefined}
           />
         </div>
       </CollapsibleSection>
