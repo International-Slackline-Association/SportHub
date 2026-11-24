@@ -2,7 +2,8 @@
 import { Alert, Spinner } from '@slacklineinternational/onsight/react';
 
 import { createColumnHelper } from '@tanstack/react-table';
-import Table, { RowClassContext } from '@ui/Table';
+import Table, { type RowClassContext } from '@ui/Table';
+import styles from './styles.module.css';
 import { ContestData } from "@lib/data-services";
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
@@ -12,7 +13,6 @@ import { COUNTRIES, getIocCode, getIso2FromIoc } from '@utils/countries';
 import { dateFilterFn } from '@ui/Table/TableFilterFields';
 import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import { CountryFlag } from '@ui/CountryFlag';
-import styles from './styles.module.css';
 import { formatDateRange } from '@utils/dates';
 import { kebabCaseToTitleCase } from '@utils/strings';
 import { ContestSize, Gender } from '@ui/Badge';
@@ -43,6 +43,8 @@ const buildContestGroupKey = (contest: ContestData) => {
   return `${eventName}|${country}|${date}`;
 };
 
+// Contests of one competition stay in one visual group. Onsight Table has no
+// row class, so this table opts into the isa-table markup that can take one.
 const getRowClassName = ({ row, allRows, globalIndex }: RowClassContext<ContestData>) => {
   const currentKey = buildContestGroupKey(row.original);
   const previousKey = globalIndex > 0 ? buildContestGroupKey(allRows[globalIndex - 1].original) : '';
@@ -51,13 +53,9 @@ const getRowClassName = ({ row, allRows, globalIndex }: RowClassContext<ContestD
   const hasSiblingInGroup = previousKey === currentKey || nextKey === currentKey;
   if (!hasSiblingInGroup) return undefined;
 
-  const isGroupStart = previousKey !== currentKey;
   const isGroupEnd = nextKey !== currentKey;
-  return [
-    styles.groupedContestRow,
-    isGroupStart ? styles.groupStart : styles.groupMiddle,
-    isGroupEnd ? styles.groupEnd : '',
-  ].filter(Boolean).join(' ');
+  if (isGroupEnd) return undefined;
+  return styles.groupedContestRow;
 };
 
 const CountryFlagWithName = ({ iocCode, defaultValue="N/A" }: { iocCode: string, defaultValue?: string }) => {
@@ -259,6 +257,7 @@ const ContestsTable = ({ initialData }: { initialData?: ContestData[] }) => {
       )}
       {isSuccess && (
         <Table
+          label="Competitions"
           rowClassName={getRowClassName}
           options={{
             columns,

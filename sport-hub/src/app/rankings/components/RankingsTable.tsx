@@ -1,5 +1,5 @@
 "use client";
-import { Alert, Spinner, Tooltip } from '@slacklineinternational/onsight/react';
+import { Alert, SelectField, Spinner, Tooltip } from '@slacklineinternational/onsight/react';
 
 import { createColumnHelper } from '@tanstack/react-table';
 import { AthleteRanking } from '@lib/data-services';
@@ -9,7 +9,6 @@ import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import Link from 'next/link';
 import { getIocCode } from '@utils/countries';
 import { useQuery } from '@tanstack/react-query';
-import tableStyles from '@ui/Table/styles.module.css';
 import { CountryFlag } from '@ui/CountryFlag';
 import { DisciplineDropdown, RankingsGenderDropdown } from '@ui/Form';
 import { DISCIPLINE_DATA, MAP_DISCIPLINE_ENUM_TO_NAME } from '@utils/consts';
@@ -174,26 +173,22 @@ const RankingsTable = ({
         <Table
           extraFilters={
             <>
-              <div className={tableStyles.columnFilter}>
-                <label htmlFor="rankings-season">Season</label>
-                <select
-                  id="rankings-season"
-                  value={season}
-                  onChange={e => onChangeSeason(e.target.value)}
-                >
-                  {YEAR_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
+              <SelectField
+                id="rankings-season"
+                label="Season"
+                value={season}
+                onChange={e => onChangeSeason(e.target.value)}
+              >
+                {YEAR_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </SelectField>
               <DisciplineDropdown
-                className={tableStyles.columnFilter}
                 id="rankings-discipline"
                 initialValue={String(disciplineEnumValue)}
                 onChange={handleChangeDiscipline}
               />
               <RankingsGenderDropdown
-                className={tableStyles.columnFilter}
                 id="rankings-gender"
                 initialValue={gender}
                 onChange={value => onChangeGender(value as Gender)}

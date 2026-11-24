@@ -1,0 +1,61 @@
+/* Competitions is the only table with an "Upcoming only" checkbox. It hangs
+   under the two date fields so it does not take a slot on the filter line,
+   and Reset stays beside those fields. The extra row gap and margin keep it
+   off the next row and the table. */
+.dateGroup {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--isa-space-2);
+  width: 100%;
+}
+
+.dates {
+  display: flex;
+  flex-direction: column;
+  gap: var(--isa-space-2);
+}
+
+.trigger {
+  padding-right: var(--isa-space-10);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu :global(.isa-check) {
+  min-height: 0;
+  padding-block: var(--isa-space-2);
+}
+
+@media (min-width: 40rem) {
+  .withUpcoming {
+    margin-bottom: 2.75rem;
+  }
+
+  .withUpcoming :global(.isa-filters__fields) {
+    row-gap: 3.25rem;
+  }
+
+  :global(.isa-filters__fields) > .dateGroup {
+    flex: 1 1 22rem;
+    width: auto;
+    max-width: calc(var(--isa-size-filter-max) * 2 + var(--isa-space-4));
+  }
+
+  .dates {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+
+  .dates > :global(.isa-field) {
+    flex: 1 1 var(--isa-size-filter-min);
+    max-width: var(--isa-size-filter-max);
+  }
+
+  .upcoming {
+    position: absolute;
+    top: calc(100% + var(--isa-space-1));
+    left: 0;
+  }
+}

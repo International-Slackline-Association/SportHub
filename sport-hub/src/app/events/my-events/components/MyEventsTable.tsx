@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { submitEventForApproval, withdrawEventFromApproval } from "../../submit/actions";
 import { COUNTRIES } from "@utils/countries";
-import tableStyles from '@ui/Table/styles.module.css';
 import { formatDate, formatDateRangeShort } from "@utils/dates";
-import { Badge, Button, EmptyState, type BadgeCategoryColor, type BadgeStatusColor } from '@slacklineinternational/onsight/react';
+import { Badge, Button, EmptyState, Table, type BadgeCategoryColor, type BadgeStatusColor } from '@slacklineinternational/onsight/react';
 import { Discipline } from "@ui/Badge";
 import { EventStatus } from "../page";
 
@@ -85,68 +84,73 @@ export const MyEventsTable = ({ events }: {events: Record<string, unknown>[]}) =
     );
   }
   return (
-    <div className={tableStyles.tableContainer}>
-      <div className={tableStyles.tableWrapper}>
-        <table>
-          <thead>
-            <tr>
-              <th>Event</th>
-              <th>Dates</th>
-              <th>Location</th>
-              <th>Disciplines</th>
-              <th className="w-[80px]">Contests</th>
-              <th className="w-[80px]">Status</th>
-              <th className="w-[100px]">Submitted</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {events.map((event) => {
-  
-              const eventId = String(event.eventId ?? "");
-              const status = (event.status as EventStatus) ?? "published";
-              const countryCode = String(event.country ?? "");
-              const countryName = COUNTRIES.find(c => c.code === countryCode)?.name ?? countryCode;
-              const disciplines = (event.disciplines as string[] | undefined) ?? [];
-              const contests = (event.contests as unknown[] | undefined) ?? [];
-              const formattedCreatedAt = event.createdAt
-                ? formatDate(new Date(Number(event.createdAt)).toISOString())
-                : "—";
-              const formattedEventName = String(event.eventName ?? "—");
-              const formattedDateRange = formatDateRangeShort(new Date(event?.startDate as string), new Date(event.endDate as string));
-              const formattedLocation = `${event.city}, ${countryName}`;
-
-              return (
-                <tr key={eventId}>
-                  <td>
-                    {status === "published" 
-                      ? (
-                        <Link href={`/events/${eventId}`} className="text-blue-600 hover:underline">
-                          {formattedEventName}
-                        </Link>
-                      ) 
-                      : formattedEventName
-                    }
-                  </td>
-                  <td>{formattedDateRange}</td>
-                  <td>{formattedLocation}</td>
-                  <td className="space-x-1">{disciplines.map(d => <Discipline key={d} variant={d} />)}</td>
-                  <td>{contests.length}</td>
-                  <td>
-                    <Badge color={statusColor[status]}>
-                      {status}
-                    </Badge>
-                  </td>
-                  <td>{formattedCreatedAt}</td>
-                  <td>
-                    <MyEventActions eventId={eventId} status={status} />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <Table
+      aria-label="My events"
+      stickyFirst
+      rowKey={(event) => String(event.eventId ?? "")}
+      rows={events}
+      columns={[
+        {
+          key: "event",
+          header: "Event",
+          rowHeader: true,
+          render: (event) => {
+            const eventId = String(event.eventId ?? "");
+            const status = (event.status as EventStatus) ?? "published";
+            const name = String(event.eventName ?? "—");
+            return status === "published"
+              ? <Link href={`/events/${eventId}`} className="underline">{name}</Link>
+              : name;
+          },
+        },
+        {
+          key: "dates",
+          header: "Dates",
+          render: (event) => formatDateRangeShort(new Date(event.startDate as string), new Date(event.endDate as string)),
+        },
+        {
+          key: "location",
+          header: "Location",
+          render: (event) => {
+            const countryCode = String(event.country ?? "");
+            const countryName = COUNTRIES.find(c => c.code === countryCode)?.name ?? countryCode;
+            return `${event.city}, ${countryName}`;
+          },
+        },
+        {
+          key: "disciplines",
+          header: "Disciplines",
+          render: (event) => {
+            const disciplines = (event.disciplines as string[] | undefined) ?? [];
+            return <span className="space-x-1">{disciplines.map(d => <Discipline key={d} variant={d} />)}</span>;
+          },
+        },
+        {
+          key: "contests",
+          header: "Contests",
+          render: (event) => ((event.contests as unknown[] | undefined) ?? []).length,
+        },
+        {
+          key: "status",
+          header: "Status",
+          render: (event) => {
+            const status = (event.status as EventStatus) ?? "published";
+            return <Badge color={statusColor[status]}>{status}</Badge>;
+          },
+        },
+        {
+          key: "submitted",
+          header: "Submitted",
+          render: (event) => event.createdAt ? formatDate(new Date(Number(event.createdAt)).toISOString()) : "—",
+        },
+        {
+          key: "actions",
+          header: "Actions",
+          render: (event) => (
+            <MyEventActions eventId={String(event.eventId ?? "")} status={(event.status as EventStatus) ?? "published"} />
+          ),
+        },
+      ]}
+    />
   );
 }
