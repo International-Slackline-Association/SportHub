@@ -35,7 +35,7 @@ export const MyEventActions = ({ eventId, status }: { eventId: string, status: E
           size="small"
           variant="secondary"
         >
-          Edit
+          Edit Event
         </Button>
       </>
     )}
@@ -57,6 +57,7 @@ export const MyEventActions = ({ eventId, status }: { eventId: string, status: E
           as={Link}
           href={`/events/my-events/${eventId}/edit`}
           size="small"
+          variant="secondary"
         >
           Edit
         </Button>

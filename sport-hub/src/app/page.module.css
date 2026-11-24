@@ -20,10 +20,6 @@
   }
 }
 
-.trophyIcon {
-  color: var(--color-red-600);
-}
-
 .sectionTitle {
   font-family: var(--font-metropolis);
   font-size: 1.75rem;
@@ -41,15 +37,3 @@
   }
 }
 
-.ctaGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-  padding: 0 1rem;
-
-  @media (min-width: 40rem) {
-    grid-template-columns: repeat(2, 1fr);
-    padding: 0;
-    gap: 1.5rem;
-  }
-}

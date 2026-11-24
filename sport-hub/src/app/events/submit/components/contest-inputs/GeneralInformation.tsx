@@ -13,7 +13,6 @@ import {
   FormikTextField,
 } from '@ui/Form';
 import type { EventSubmissionFormValues } from '../../types';
-import styles from './styles.module.css';
 
 type Props = {
   contestKey: string;
@@ -49,7 +48,6 @@ export const GeneralInformation = ({ contestKey }: Props) => {
           />
       </div>
       <FormikRadioGroup
-        className={styles.formBox}
         direction="row"
         id={`${contestKey}.gender`}
         label="Gender"
@@ -59,7 +57,6 @@ export const GeneralInformation = ({ contestKey }: Props) => {
         required
       />
       <FormikRadioGroup
-        className={styles.formBox}
         direction="row"
         id={`${contestKey}.discipline`}
         label="Discipline"
@@ -77,7 +74,6 @@ export const GeneralInformation = ({ contestKey }: Props) => {
         placeholder="Select judging system"
       />
       <FormikRadioGroup
-        className={styles.formBox}
         direction="row"
         id={`${contestKey}.ageCategory`}
         label="Age Category"
@@ -95,7 +91,6 @@ export const GeneralInformation = ({ contestKey }: Props) => {
         min="0"
       />
       <FormikRadioGroup
-        className={styles.formBox}
         caption="Contest Size proposed by organiser in coordination with ISA sportcom, might be revised after competition."
         direction="row"
         id={`${contestKey}.contestSize`}
