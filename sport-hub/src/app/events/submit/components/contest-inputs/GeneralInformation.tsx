@@ -1,5 +1,6 @@
 'use client';
 
+import { getIn, useFormikContext } from 'formik';
 import {
   FormikSelectField,
   disciplineOptions,
@@ -11,13 +12,17 @@ import {
   FormikNumberField,
   FormikTextField,
 } from '@ui/Form';
-import styles from './styles.module.css';
+import type { EventSubmissionFormValues } from '../../types';
 
 type Props = {
   contestKey: string;
 }
 
 export const GeneralInformation = ({ contestKey }: Props) => {
+  const { values } = useFormikContext<EventSubmissionFormValues>();
+  const startDate = getIn(values, `${contestKey}.startDate`) as string | undefined;
+  const endDate = getIn(values, `${contestKey}.endDate`) as string | undefined;
+
   return (
     <>
       <h4>General Information</h4>
@@ -29,6 +34,7 @@ export const GeneralInformation = ({ contestKey }: Props) => {
           name={`${contestKey}.startDate`}
           placeholder="YYYY-MM-DD"
           type="date"
+          max={endDate || undefined}
           />
         <FormikTextField
           className="grow"
@@ -38,10 +44,10 @@ export const GeneralInformation = ({ contestKey }: Props) => {
           placeholder="YYYY-MM-DD"
           tooltip="Date of the final round"
           type="date"
+          min={startDate || undefined}
           />
       </div>
       <FormikRadioGroup
-        className={styles.formBox}
         direction="row"
         id={`${contestKey}.gender`}
         label="Gender"
@@ -51,7 +57,6 @@ export const GeneralInformation = ({ contestKey }: Props) => {
         required
       />
       <FormikRadioGroup
-        className={styles.formBox}
         direction="row"
         id={`${contestKey}.discipline`}
         label="Discipline"
@@ -69,7 +74,6 @@ export const GeneralInformation = ({ contestKey }: Props) => {
         placeholder="Select judging system"
       />
       <FormikRadioGroup
-        className={styles.formBox}
         direction="row"
         id={`${contestKey}.ageCategory`}
         label="Age Category"
@@ -87,7 +91,6 @@ export const GeneralInformation = ({ contestKey }: Props) => {
         min="0"
       />
       <FormikRadioGroup
-        className={styles.formBox}
         caption="Contest Size proposed by organiser in coordination with ISA sportcom, might be revised after competition."
         direction="row"
         id={`${contestKey}.contestSize`}

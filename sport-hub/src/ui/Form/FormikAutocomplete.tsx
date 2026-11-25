@@ -1,12 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { FormikFieldProps, FormikFormField } from ".";
+import { useField, useFormikContext } from 'formik';
+import { Autocomplete, Spinner } from '@slacklineinternational/onsight/react';
 import { BaseFormFieldProps } from '@ui/Form';
-import { Field } from 'formik';
-import styles from './styles.module.css';
-import React from 'react';
-import { Spinner } from '@slacklineinternational/onsight/react';
+import { pascalCaseToTitleCase } from '@utils/strings';
 
 export interface FormikAutocompleteProps extends BaseFormFieldProps<HTMLInputElement> {
   hideErrorMessage?: boolean;
@@ -14,30 +11,25 @@ export interface FormikAutocompleteProps extends BaseFormFieldProps<HTMLInputEle
   isLoading?: boolean;
   options: Option[];
   onSelectOption?: (option: Option) => void;
-  // If true (default), the field value is updated on select using mapOptionToValue
+  /** When true (default), picking an option writes mapOptionToValue into the field. */
   setFieldOnSelect?: boolean;
-  // Maps an Option to the value stored in the form field. Defaults to option.value
+  /** Maps an Option to the value stored in the form field. Defaults to option.value. */
   mapOptionToValue?: (option: Option) => unknown;
-  // Computes the input display string from the current field value
-  // Defaults to: match option by value -> label; else if string, use it; otherwise empty
+  /**
+   * Input text for the current field value.
+   * Defaults to the matching option's label, or the value when it is a string.
+   */
   getDisplayValue?: (value: unknown, options: Option[]) => string;
 }
 
-const highlightMatch = (text: string, query: string) => {
-  if (!query) return text;
-  const parts = text.split(new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'));
-  return parts.map((part, index) =>
-    part.toLowerCase() === query.toLowerCase() ? (
-      <mark key={index} className={styles.highlight}>{part}</mark>
-    ) : (
-      part
-    )
-  );
-};
+// Onsight only displays a value that is one of `options`. Free text (a name
+// the person typed, before or without a pick) is passed as this extra option
+// so the field can show it. It is not a real choice.
+const ECHO = '\u0000';
 
 /**
- * Autocomplete connected to Formik form state.
- * Capable of handling string or complex field value types.
+ * Autocomplete connected to Formik. The field stores either an option value
+ * or, while the person is typing, the text itself.
  */
 export default function FormikAutocomplete({
   caption,
@@ -54,118 +46,51 @@ export default function FormikAutocomplete({
   mapOptionToValue,
   getDisplayValue,
   required,
+  tooltip,
   ...inputProps
 }: FormikAutocompleteProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  // The Formik field; defaults to the id. Pass a name when several forms on a page use the same field
   const fieldName = name ?? id;
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [field, meta, helpers] = useField(fieldName);
+  const toFormValue = mapOptionToValue ?? ((option: Option) => option.value);
+  const toDisplay = getDisplayValue ?? ((value: unknown, opts: Option[]) => {
+    const match = opts.find((option) => option.value === value);
+    if (match) return match.label;
+    return typeof value === 'string' ? value : '';
+  });
 
-  // close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const display = toDisplay(field.value, options);
+  const matched = options.find((option) => option.value === field.value || toFormValue(option) === field.value);
+  const echo = !matched && display ? [{ value: `${ECHO}${display}`, label: display }] : [];
+  const widgetValue = matched ? matched.value : display ? `${ECHO}${display}` : '';
+  const { submitCount } = useFormikContext();
+  const fieldError = !hideErrorMessage && (meta.touched || submitCount > 0) && typeof meta.error === 'string' ? meta.error : undefined;
 
   return (
-    <div className={styles.autocompleteContainer} ref={containerRef}>
-      <FormikFormField
-        caption={caption}
-        className={className}
-        id={id}
-        label={
-          <div>
-            {isLoading && <Spinner size="small" label="Loading options" className="inline-block mr-2" />}
-            {label}
-          </div>
-        }
-        required={required}
-      >
-        <Field name={fieldName}>
-          {({ field, meta, form }: FormikFieldProps<unknown>) => {
-            const toFormValue = mapOptionToValue || ((opt: Option) => opt.value);
-            const toDisplay =
-              getDisplayValue ||
-              ((value: unknown, opts: Option[]) => {
-                const match = opts.find((o) => o.value === (value as string)?.trim());
-                if (match) return match.label;
-                return typeof value === 'string' ? value : '';
-              });
-
-            const inputText = toDisplay(field.value, options);
-            const filteredOptions = options.filter(({ label }) =>
-              label.toLowerCase().includes((inputText || "").toLowerCase())
-            );
-            const hasError = isError || (meta.touched && Boolean(meta.error));
-            const errorText = typeof meta.error === 'string' ? meta.error : undefined;
-
-            return (
-              <div>
-                <input
-                  // Keep Formik wiring for name/id, but control value via computed display
-                  name={fieldName}
-                  {...inputProps}
-                  className={`
-                    ${styles.input}
-                    ${meta.touched && meta.error && !hideErrorMessage ? styles.error : ''}
-                  `}
-                  id={id}
-                  type="text"
-                  value={inputText}
-                  onChange={(e) => {
-                    // Let users type to filter; store the raw text in the field for simple string flows
-                    form.setFieldValue(fieldName, e.target.value);
-                    form.setFieldTouched(fieldName, true, false);
-                  }}
-                  onFocus={() => setIsOpen(true)}
-                />
-                {isOpen && filteredOptions.length > 0 && (
-                  <div className={styles.dropdown}>
-                    <ul className={styles.dropdownList}>
-                      {isLoading && <div className={styles.dropdownMessage}>Loading…</div>}
-                      {isError && <div className={styles.dropdownMessage}>Error loading options</div>}
-                      {!isLoading && !isError && (
-                        filteredOptions.map(({ label, value }: Option) => (
-                          <React.Fragment key={`${label}-${value}`}>
-                            <li className={styles.dropdownItem}>
-                              <button
-                                className={styles.dropdownButton}
-                                onClick={() => {
-                                  const option = { label, value };
-                                  if (setFieldOnSelect) {
-                                    const newValue = toFormValue(option);
-                                    form.setFieldValue(fieldName, newValue, true);
-                                    form.setFieldTouched(fieldName, true, false);
-                                  }
-                                  onSelectOption?.(option);
-                                  setIsOpen(false);
-                                }}
-                                type="button"
-                              >
-                                {highlightMatch(label, inputText)}
-                              </button>
-                            </li>
-                          </React.Fragment>
-                        ))
-                      )}
-                    </ul>
-                  </div>
-                )}
-                {!hideErrorMessage && hasError && errorText && (
-                  <div className={styles.errorMessage}>
-                    {errorText}
-                  </div>
-                )}
-              </div>
-            );
-          }}
-        </Field>
-      </FormikFormField>
-    </div>
+    <Autocomplete
+      {...inputProps}
+      id={id}
+      className={className}
+      label={
+        isLoading
+          ? <span className="inline-flex items-center gap-2"><Spinner size="small" label="Loading options" />{label ?? pascalCaseToTitleCase(id)}</span>
+          : (label ?? pascalCaseToTitleCase(id))
+      }
+      help={caption ?? tooltip}
+      error={isError ? 'Could not load options' : fieldError}
+      required={required}
+      options={[...echo, ...options]}
+      value={widgetValue}
+      noResultsText={isLoading ? 'Loading…' : 'No matches'}
+      onInputChange={(text) => {
+        helpers.setValue(text);
+        helpers.setTouched(true, false);
+      }}
+      onChange={(value, option) => {
+        if (!option || value.startsWith(ECHO)) return;
+        if (setFieldOnSelect) helpers.setValue(toFormValue(option));
+        helpers.setTouched(true, false);
+        onSelectOption?.(option);
+      }}
+    />
   );
 }

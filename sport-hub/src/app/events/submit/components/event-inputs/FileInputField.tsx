@@ -3,7 +3,6 @@ import { getIn, useFormikContext } from 'formik';
 import Image from 'next/image';
 import { useRef, useState } from 'react';
 import { EventSubmissionFormValues } from '../../types';
-import formStyles from '@ui/Form/styles.module.css';
 import styles from './styles.module.css';
 import { Button } from '@slacklineinternational/onsight/react';
 import { FormikFormField } from '@ui/Form';
@@ -59,6 +58,7 @@ export default function FileInputField() {
     <FormikFormField
       id="event.profileUrl"
       label="Profile Image"
+      error={uploadError || (typeof formError === 'string' ? formError : undefined)}
     >
       <input
         accept="image/*"
@@ -108,9 +108,6 @@ export default function FileInputField() {
         </div>
       )}
 
-      {(uploadError || formError) && (
-        <div className={formStyles.errorMessage}>{uploadError || formError}</div>
-      )}
     </FormikFormField>
   );
 }

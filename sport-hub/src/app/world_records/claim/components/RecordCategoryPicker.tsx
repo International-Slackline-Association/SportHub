@@ -2,11 +2,11 @@
 
 /**
  * Picks the record category of a claim from a searchable table (group, name,
- * status): a click on a row picks it. Once a category is chosen the table
+ * status). Select on a row picks it. Once a category is chosen the table
  * collapses to the choice, with a button to pick another one.
  */
 
-import { useMemo, useState, type KeyboardEvent } from 'react';
+import { useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useField } from 'formik';
 import { createColumnHelper } from '@tanstack/react-table';
 import { Button } from '@slacklineinternational/onsight/react';
@@ -26,6 +26,8 @@ type Props = {
 
 export default function RecordCategoryPicker({ recordCategories, name = 'categoryId' }: Props) {
   const [field, meta, helpers] = useField<string>(name);
+  const helpersRef = useRef(helpers);
+  helpersRef.current = helpers;
   const selected = recordCategories.find(c => c.categoryId === field.value);
   const [browsing, setBrowsing] = useState(!selected);
   const showTable = browsing || !selected;
@@ -36,6 +38,27 @@ export default function RecordCategoryPicker({ recordCategories, name = 'categor
   );
 
   const columns = useMemo(() => [
+    columnHelper.display({
+      id: 'pick',
+      header: 'Choose',
+      cell: info => {
+        const isSelected = info.row.original.categoryId === field.value;
+        return (
+          <Button
+            type="button"
+            size="small"
+            variant={isSelected ? 'primary' : 'secondary'}
+            onClick={() => {
+              helpersRef.current.setValue(info.row.original.categoryId);
+              setBrowsing(false);
+            }}
+          >
+            {isSelected ? 'Selected' : 'Select'}
+          </Button>
+        );
+      },
+      size: 40,
+    }),
     columnHelper.accessor('group', {
       header: 'Group',
       enableColumnFilter: true,
@@ -62,7 +85,7 @@ export default function RecordCategoryPicker({ recordCategories, name = 'categor
       cell: info => statusLabel(info.getValue()),
       size: 60,
     }),
-  ], [statusOptions]);
+  ], [field.value, statusOptions]);
 
   // Enter in the search field filters the table; it must not submit the claim form
   const preventEnterSubmit = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -91,12 +114,8 @@ export default function RecordCategoryPicker({ recordCategories, name = 'categor
       {showTable && (
         <div onKeyDown={preventEnterSubmit}>
           <Table
+            label="Record categories"
             options={{ columns, data: recordCategories }}
-            rowClassName={({ row }) => (row.original.categoryId === field.value ? 'bg-blue-50 font-semibold' : undefined)}
-            onRowClick={row => {
-              helpers.setValue(row.original.categoryId);
-              setBrowsing(false);
-            }}
           />
         </div>
       )}

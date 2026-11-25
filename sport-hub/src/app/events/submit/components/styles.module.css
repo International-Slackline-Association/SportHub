@@ -1,12 +1,4 @@
 
-.borderBottom {
-  border-bottom: 2px solid #ECEEF3; /* Neutral/100 */
-}
-
-.borderTop {
-  border-top: 2px solid #ECEEF3; /* Neutral/100 */
-}
-
 .formActions {
   display: flex;
   gap: 16px;

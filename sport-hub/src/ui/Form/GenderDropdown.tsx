@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import styles from './styles.module.css';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '@utils/cn';
 import { Gender } from '@ui/Badge';
 
@@ -47,36 +46,35 @@ const GenderDropdown = ({
   const selectedOption = options.find((option) => option.value === value) ?? options[0];
 
   return (
-    <div className={cn(className, 'min-w-28')} ref={containerRef}>
-      <label htmlFor={id} className={styles.label}>
-        Gender
-      </label>
-      <button
-        className={cn(styles.input, styles.dropdownTrigger, 'text-base')}
-        id={id}
-        onClick={() => setIsOpen((open) => !open)}
-        type="button"
-      >
-        {selectedOption ? <Gender value={selectedOption.value} /> : 'Select Gender'}
-      </button>
-
-      {isOpen && (
-        <div className={cn(styles.dropdown)}>
-          <ul>
-            {options.map((option) => (
-              <li key={option.value} className={styles.dropdownItem}>
-                <button
-                  type="button"
-                  className={cn(styles.dropdownButton)}
-                  onClick={() => handleSelect(option)}
-                >
-                  <Gender value={option.value} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+    <div className={cn('isa-field min-w-28', className)}>
+      <label htmlFor={id} className="isa-label">Gender</label>
+      <div className="isa-autocomplete" ref={containerRef}>
+        <span className="isa-select">
+          <button
+            aria-expanded={isOpen}
+            aria-haspopup="listbox"
+            className="isa-input text-left pr-10"
+            id={id}
+            onClick={() => setIsOpen((open) => !open)}
+            type="button"
+          >
+            {selectedOption ? <Gender value={selectedOption.value} /> : 'Select gender'}
+          </button>
+        </span>
+        <ul className="isa-autocomplete__list" hidden={!isOpen} role="listbox" style={{ width: 'max-content', minWidth: '100%', right: 'auto' }}>
+          {options.map((option) => (
+            <li key={option.value} role="presentation">
+              <button
+                type="button"
+                className="isa-autocomplete__option w-full text-left"
+                onClick={() => handleSelect(option)}
+              >
+                <Gender value={option.value} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };

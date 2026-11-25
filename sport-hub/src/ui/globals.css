@@ -35,13 +35,6 @@
 }
 
 :root {
-  /* Responsive breakpoints - mobile-first approach */
-  --breakpoint-xs: 20rem;    /* 320px - Small phones */
-  --breakpoint-sm: 40rem;    /* 640px - Large phones / Small tablets */
-  --breakpoint-md: 48rem;    /* 768px - Tablets */
-  --breakpoint-lg: 64rem;    /* 1024px - Small laptops */
-  --breakpoint-xl: 80rem;    /* 1280px - Desktops */
-
   --color-primary: #009F9A; /* ISA Green */
   --color-primary-dark: #0A6564;
   --color-neutral-50: #FBFBFB;
@@ -98,24 +91,7 @@
   --font-metropolis: "Metropolis", sans-serif;
 
   --font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-
-  /* Navigation and button shared styles */
-  --nav-font-size: 1.2rem;
-  --nav-font-weight: 500;
-  --nav-padding: 0.5rem 1rem;
-  --nav-border-radius: 8px;
-  --nav-gap: 1rem;
-
-  /* Fluid spacing scale - responsive without media queries */
-  --space-xs: clamp(0.5rem, 1vw, 0.75rem);
-  --space-sm: clamp(1rem, 2vw, 1.5rem);
-  --space-md: clamp(1.5rem, 3vw, 2.5rem);
-  --space-lg: clamp(2rem, 5vw, 4rem);
-  --space-xl: clamp(3rem, 8vw, 6rem);
 }
-
-/* Also covers tablets in portrait and landscape mode */
-@custom-variant desktop (@media (width >= theme(--breakpoint-sm)));
 
 html {
   height: 100%;
@@ -164,6 +140,28 @@ p {
   line-height: 1.6;
 }
 
+/* This rule is unlayered, so it beats Onsight's error color, which lives in
+   the components layer. Field errors have to stay red. */
+p.isa-error {
+  color: var(--isa-color-text-danger);
+  font-weight: var(--isa-font-weight-semibold);
+  font-size: var(--isa-font-size-sm);
+  line-height: var(--isa-font-line-height-normal);
+}
+
+.isa-input[aria-invalid="true"],
+.isa-select > select[aria-invalid="true"] {
+  border-color: var(--isa-color-field-border-invalid);
+  box-shadow: inset 0 0 0 1px var(--isa-color-field-border-invalid);
+}
+
+/* Onsight lays each suggestion out as a flex row, so the matched <mark>
+   becomes its own column beside the rest of the label. List options are the
+   Onsight widget; the icon menus use a button and stay a row. */
+li.isa-autocomplete__option {
+  display: block;
+}
+
 figcaption {
   color: var(--color-neutral-600);
   display: block;
@@ -182,26 +180,6 @@ figcaption {
   flex-direction: row;
 }
 
-.card {
-  background-color: var(--color-neutral-50);
-  border-radius: 8px;
-}
-
-.heroImage {
-  display: block;
-  object-fit: contain;
-  /* overflow: hidden;
-  position: relative; */
-  height: auto;
-  max-height: 300px;
-  width: 100%;
-
-  @media (min-width: 40rem) {  /* --breakpoint-sm: Large phones/tablets */
-    border-radius: 8px;
-    max-height: 542px;
-  }
-}
-
 main {
   padding: 0;
   margin: 0;
@@ -214,19 +192,4 @@ main {
     min-width: stretch;
     padding: 2.5rem 2.5rem 3.75rem; /* Convert to rem units */
   }
-}
-
-/* Utility classes for modern layouts */
-.section-spacing {
-  padding-block: var(--space-lg);
-}
-
-.content-gap {
-  gap: var(--space-md);
-}
-
-.grid-auto-fit {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
-  gap: var(--space-md);
 }

@@ -1,9 +1,8 @@
 'use client';
-import { Alert } from '@slacklineinternational/onsight/react';
+import { Alert, Fieldset, Radio } from '@slacklineinternational/onsight/react';
 
 /** "What are you claiming?": a record in an existing or a new category, or a first. */
 
-import formStyles from '@ui/Form/styles.module.css';
 import { RECORDS_TEAM_EMAIL } from '@lib/records-rules';
 import type { ClaimPath } from '../types';
 import { Section } from './ClaimSections';
@@ -29,22 +28,19 @@ export default function PathChoice({ path, onChange, locked, showAttemptHint = t
   const options = locked ? PATH_OPTIONS.filter(o => kindOf(o.value) === kindOf(path)) : PATH_OPTIONS;
   return (
     <Section title="What are you claiming?">
-      <div className={formStyles.verticalGroup}>
+      <Fieldset legend={<span className="isa-visually-hidden">What are you claiming?</span>}>
         {options.map(option => (
-          <div className={formStyles.checkboxField} key={option.value}>
-            <label htmlFor={`path-${option.value}`} className={formStyles.label}>{option.label}</label>
-            <input
-              className={formStyles.checkbox}
-              checked={path === option.value}
-              id={`path-${option.value}`}
-              name="path"
-              type="radio"
-              value={option.value}
-              onChange={() => onChange(option.value)}
-            />
-          </div>
+          <Radio
+            key={option.value}
+            checked={path === option.value}
+            id={`path-${option.value}`}
+            name="path"
+            label={option.label}
+            value={option.value}
+            onChange={() => onChange(option.value)}
+          />
         ))}
-      </div>
+      </Fieldset>
       {/* FR-1: attempts are announced by email, not in the app (v1) */}
       {showAttemptHint && path !== 'first' && (
         <Alert variant="info" icon={false}>

@@ -1,12 +1,9 @@
 import { Column, Row } from "@tanstack/react-table";
-import styles from "./styles.module.css";
-import Autocomplete from "@ui/Form/Autocomplete";
+import { Autocomplete, Checkbox, SelectField, TextField } from "@slacklineinternational/onsight/react";
 import { COUNTRIES } from "@utils/countries";
 import { ContestsGenderDropdown, ContestSizeDropdown, DisciplineDropdown, RecordsGenderDropdown } from "@ui/Form";
 import { useEffect, useRef, useState } from "react";
-import formStyles from "@ui/Form/styles.module.css";
-import { cn } from "@utils/cn";
-import { useClientMediaQuery } from "@utils/useClientMediaQuery";
+import styles from "./filters.module.css";
 
 type DateRangeFilterValue = { startDate?: string; endDate?: string } | undefined;
 type DateRangeRowValue = { startDate?: string; endDate?: string };
@@ -15,6 +12,11 @@ type TableFilterProps<TData,> = {
   column: Column<TData, unknown>;
   rows: Row<TData>[];
 }
+
+const columnLabel = <TData,>(column: Column<TData, unknown>) => {
+  const header = column.columnDef.header;
+  return typeof header === "string" && header ? header : column.id;
+};
 
 export const ageCategoryFilterFn = <TData,>(
   row: Row<TData>,
@@ -59,53 +61,45 @@ export function dateFilterFn<TData>(
 }
 
 const TextTableFilter = <TData,>({ column }: TableFilterProps<TData>) => {
-  const id = column.id;
-  const columnName = column.columnDef?.header?.toString() || "";
-  const placeholder = column.columnDef.meta?.filterPlaceholder ?? `Enter ${columnName.toLowerCase()}`;
+  const placeholder = column.columnDef.meta?.filterPlaceholder ?? `Enter ${columnLabel(column).toLowerCase()}`;
 
   return (
-    <div className={styles.columnFilter} key={`column-filter-${id}`}>
-      <label htmlFor={id}>{columnName}</label>
-      <input
-        id={id}
-        name={columnName}
-        onChange={e => column.setFilterValue(e.target.value || undefined)}
-        placeholder={placeholder}
-        value={String(column.getFilterValue() || "")}
-        type="text"
-      />
-    </div>
+    <TextField
+      id={column.id}
+      label={columnLabel(column)}
+      name={column.id}
+      onChange={e => column.setFilterValue(e.target.value || undefined)}
+      placeholder={placeholder}
+      value={String(column.getFilterValue() || "")}
+      type="text"
+    />
   );
 };
 
+const uniqueOptions = <TData,>(column: Column<TData, unknown>, rows: Row<TData>[]) => {
+  const explicit = column.columnDef.meta?.filterOptions;
+  if (explicit) return explicit;
+  return [...new Set(rows.flatMap(row => {
+    const value = row.getValue(column.id);
+    return Array.isArray(value) ? value.map(String) : [String(value)];
+  }).filter(Boolean))].sort().map(value => ({ value, label: value }));
+};
+
 const SelectTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
-  const id = column.id;
-  const columnName = column.columnDef.header?.toString();
-  const explicitOptions = column.columnDef.meta?.filterOptions;
-
-  // Use explicit options when provided (e.g. full discipline/size lists from consts).
-  // Otherwise derive unique values from the current data rows (each item of an array value counts on its own).
-  const options: { value: string; label: string }[] = explicitOptions
-    ?? [...new Set(rows.flatMap(row => {
-      const value = row.getValue(column.id);
-      return Array.isArray(value) ? value.map(String) : [String(value)];
-    }))].sort().map(v => ({ value: v, label: v }));
-
+  const options = uniqueOptions(column, rows);
   const includeAll = column.columnDef.meta?.filterIncludeAll;
 
   return (
-    <div className={styles.columnFilter} key={`column-filter-${id}`}>
-      <label htmlFor={id}>{columnName}</label>
-      <select
-        id={id}
-        name={columnName}
-        onChange={e => column.setFilterValue(e.target.value || undefined)}
-        value={String(column.getFilterValue() ?? '')}
-      >
-        {includeAll && <option value={""}>All</option>}
-        {options.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
-      </select>
-    </div>
+    <SelectField
+      id={column.id}
+      label={columnLabel(column)}
+      name={column.id}
+      onChange={e => column.setFilterValue(e.target.value || undefined)}
+      value={String(column.getFilterValue() ?? '')}
+    >
+      {includeAll && <option value="">All</option>}
+      {options.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
+    </SelectField>
   );
 };
 
@@ -118,34 +112,27 @@ export const multiSelectFilterFn = <TData,>(
 multiSelectFilterFn.autoRemove = (val: unknown) => !Array.isArray(val) || val.length === 0;
 
 const MultiSelectTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
-  const id = column.id;
-  const columnName = column.columnDef.header?.toString();
   const explicitOptions = column.columnDef.meta?.filterOptions;
   const emptyLabel = column.columnDef.meta?.filterEmptyLabel ?? "All";
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const options: { value: string; label: string }[] = explicitOptions
-    ?? [...new Set(rows.map(row => String(row.getValue(column.id))))].sort().map(v => ({ value: v, label: v }));
-
+  const options = explicitOptions
+    ?? [...new Set(rows.map(row => String(row.getValue(column.id))))].sort().map(value => ({ value, label: value }));
   const selected = (column.getFilterValue() as string[] | undefined) ?? [];
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const label = columnLabel(column);
+  const labelId = `${column.id}-label`;
   const summary = selected.length === 0 || selected.length === options.length
     ? emptyLabel
-    : options.filter(o => selected.includes(o.value)).map(o => o.label).join(", ");
+    : options.filter((option) => selected.includes(option.value)).map((option) => option.label).join(", ");
 
-  const toggle = (value: string) => {
-    const next = selected.includes(value) ? selected.filter(v => v !== value) : [...selected, value];
-    // Keep the options' order so the summary reads the same way as the list
-    column.setFilterValue(options.map(o => o.value).filter(v => next.includes(v)));
-  };
-
-  // Close when clicking outside or pressing Escape
   useEffect(() => {
     if (!open) return;
-    const onPointerDown = (e: PointerEvent) => {
-      if (!containerRef.current?.contains(e.target as Node)) setOpen(false);
+    const onPointerDown = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
     };
-    const onKeyDown = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
     document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
     return () => {
@@ -154,70 +141,65 @@ const MultiSelectTableFilter = <TData,>({ column, rows }: TableFilterProps<TData
     };
   }, [open]);
 
+  const toggle = (value: string) => {
+    const next = selected.includes(value) ? selected.filter(item => item !== value) : [...selected, value];
+    // Keep the options' order so the selection reads the same way as the list
+    column.setFilterValue(options.map(option => option.value).filter(item => next.includes(item)));
+  };
+
   return (
-    <div className={styles.columnFilter} key={`column-filter-${id}`} ref={containerRef}>
-      <label htmlFor={id}>{columnName}</label>
-      <button
-        aria-expanded={open}
-        aria-haspopup="listbox"
-        className={styles.multiSelectButton}
-        id={id}
-        onClick={() => setOpen(!open)}
-        title={summary}
-        type="button"
-      >
-        {summary}
-      </button>
-      {open && (
-        <div aria-multiselectable="true" className={styles.multiSelectMenu} role="listbox">
-          {options.map(({ value, label }) => (
-            <label className={styles.multiSelectOption} key={value}>
-              <input
-                checked={selected.includes(value)}
-                className={formStyles.checkbox}
-                onChange={() => toggle(value)}
-                type="checkbox"
-              />
-              <span>{label}</span>
-            </label>
+    <div className="isa-field" ref={rootRef}>
+      <span className="isa-label" id={labelId}>{label}</span>
+      <div className="isa-autocomplete">
+        <span className="isa-select">
+          <button
+            aria-expanded={open}
+            aria-haspopup="true"
+            aria-labelledby={labelId}
+            className={`isa-input text-left ${styles.trigger}`}
+            id={column.id}
+            onClick={() => setOpen((current) => !current)}
+            title={summary}
+            type="button"
+          >
+            <span className="block truncate">{summary}</span>
+          </button>
+        </span>
+        <div className={`isa-autocomplete__list ${styles.menu}`} hidden={!open} role="group" aria-label={label}>
+          {options.map(({ value, label: optionLabel }) => (
+            <Checkbox
+              key={value}
+              checked={selected.includes(value)}
+              label={optionLabel}
+              onChange={() => toggle(value)}
+            />
           ))}
         </div>
-      )}
+      </div>
     </div>
   );
 };
 
 const CountryTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
-  const id = column.id;
-  const columnName = column.columnDef.header?.toString();
-
-  const options: { value: string; label: string }[] = 
-    [...new Set(rows.map(row => String(row.getValue(column.id))))]
+  const options: Option[] = [...new Set(rows.map(row => String(row.getValue(column.id))))]
     .reduce((acc, countryIoc) => {
       const { ioc, name } = COUNTRIES.find(c => c.ioc === countryIoc) || {};
-      if (ioc && name) {
-        acc.push({
-          value: ioc,
-          label: name,
-        });
-      }
+      if (ioc && name) acc.push({ value: ioc, label: name });
       return acc;
     }, [] as Option[])
     .sort((a, b) => a.label.localeCompare(b.label));
 
   return (
-    <div className={styles.columnFilter} key={`column-filter-${id}`}>
-      <label htmlFor={id}>{columnName}</label>
-      <select
-        id={id}
-        name={columnName}
-        onChange={e => column.setFilterValue(e.target.value || undefined)}
-        value={String(column.getFilterValue() ?? '')}
-      >
-        <option value={""}>All</option>
-        {options.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
-      </select>
-    </div>
+    <SelectField
+      id={column.id}
+      label={columnLabel(column)}
+      name={column.id}
+      onChange={e => column.setFilterValue(e.target.value || undefined)}
+      value={String(column.getFilterValue() ?? '')}
+    >
+      <option value="">All</option>
+      {options.map(({ value, label }) => (<option key={value} value={value}>{label}</option>))}
+    </SelectField>
   );
 };
 
@@ -225,9 +207,8 @@ const DateRangeTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>)
   const id = column.id;
   const filterValue = (column.getFilterValue() as DateRangeFilterValue) ?? {};
   const { dateFilterShowUpcomingToggle } = column.columnDef?.meta || {};
-  const { isDesktop } = useClientMediaQuery();
   const [showUpcomingOnly, setShowUpcomingOnly] = useState(false);
-  
+
   const minDate = [...rows]
     .map(row => {
       const rowValue = row.getValue<DateRangeRowValue>(column.id);
@@ -249,197 +230,131 @@ const DateRangeTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>)
       column.setFilterValue(cleaned);
     }
 
-    // Sync toggle state with date range
     if (dateFilterShowUpcomingToggle) {
       const dateToday = new Date();
       const isStartDateInTheFuture = new Date(cleaned.startDate || "") >= dateToday;
       const isEndDateInTheFuture = !cleaned.endDate || new Date(cleaned.endDate || "") >= dateToday;
-      const isDateRangeInTheFuture = isStartDateInTheFuture && isEndDateInTheFuture;
-      setShowUpcomingOnly(isDateRangeInTheFuture);
+      setShowUpcomingOnly(isStartDateInTheFuture && isEndDateInTheFuture);
     }
   };
 
+  const startField = (
+    <TextField
+      id={`${id}-start`}
+      label="Start date"
+      min={minDate}
+      onChange={e => update({ startDate: e.target.value || undefined })}
+      type="date"
+      value={filterValue.startDate ?? ''}
+    />
+  );
+  const endField = (
+    <TextField
+      id={`${id}-end`}
+      label="End date"
+      min={minDate}
+      onChange={e => update({ endDate: e.target.value || undefined })}
+      type="date"
+      value={filterValue.endDate ?? ''}
+    />
+  );
+
+  if (!dateFilterShowUpcomingToggle) {
+    return (
+      <>
+        {startField}
+        {endField}
+      </>
+    );
+  }
+
   return (
-    <div
-      className={cn(styles.columnFilter, "gap-2")}
-      key={`column-filter-${id}`}
-      style={isDesktop ? {} : {
-        marginBottom: '3rem',
-      }}
-    >
-      <div className="cluster gap-2">
-        <div className="stack">
-          <label htmlFor={`${id}-start`}>Start Date</label>
-          <input
-            id={`${id}-start`}
-            min={minDate}
-            onChange={e => update({ startDate: e.target.value || undefined })}
-            type="date"
-            value={filterValue.startDate ?? ''}
-          />
-        </div>
-        <div className="stack">
-          <label htmlFor={`${id}-end`}>End Date</label>
-          <input
-            id={`${id}-end`}
-            min={minDate}
-            onChange={e => update({ endDate: e.target.value || undefined })}
-            type="date"
-            value={filterValue.endDate ?? ''}
-          />
-        </div>
+    <div className={styles.dateGroup}>
+      <div className={styles.dates}>
+        {startField}
+        {endField}
       </div>
-      {dateFilterShowUpcomingToggle && (
-        <div className={cn(styles.filterUpcomingDatesOnly, "cluster gap-2")}> 
-          <input
-            className={formStyles.checkbox}
-            checked={showUpcomingOnly}
-            id="upcoming-filter"
-            onChange={() => {
-              const dateToday = (new Date()).toISOString().split("T")[0];
-              if (showUpcomingOnly) {
-                update({ startDate: undefined, endDate: undefined });
-              } else {
-                update({ startDate: dateToday, endDate: undefined });
-              }
-              setShowUpcomingOnly(!showUpcomingOnly);
-            }}
-            role="switch"
-            type="checkbox"
-          />
-          <label 
-            className={formStyles.label}
-            htmlFor="upcoming-filter"
-          >
-            Upcoming Only
-          </label>
-        </div>
-      )}
+      <div className={styles.upcoming}>
+        <Checkbox
+          checked={showUpcomingOnly}
+          id={`${id}-upcoming`}
+          label="Upcoming only"
+          onChange={() => {
+            const dateToday = (new Date()).toISOString().split("T")[0];
+            if (showUpcomingOnly) {
+              update({ startDate: undefined, endDate: undefined });
+            } else {
+              update({ startDate: dateToday, endDate: undefined });
+            }
+            setShowUpcomingOnly(!showUpcomingOnly);
+          }}
+        />
+      </div>
     </div>
   );
 };
 
 const AutocompleteTableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
-  const id = column.id;
-  const columnName = column.columnDef.header?.toString();
-  const explicitOptions = column.columnDef.meta?.filterOptions;
-
-  // A column whose value is a list (e.g. several athletes) offers each item on its own
-  const values = rows.flatMap(row => {
-    const value = row.getValue(column.id);
-    return Array.isArray(value) ? value.map(String) : [String(value)];
-  });
-  const options: { value: string; label: string }[] = explicitOptions
-    ?? [...new Set(values.filter(Boolean))].sort().map(v => ({ value: v, label: v }));
+  const options = uniqueOptions(column, rows);
 
   return (
-    <div className={styles.columnFilter} key={`column-filter-${id}`}>
-      <label htmlFor={id}>{columnName}</label>
-      <Autocomplete
-        id={id}
-        value={String(column.getFilterValue() ?? '')}
-        onChange={(v) => column.setFilterValue(v || undefined)}
-        options={options}
-        placeholder="All"
-      />
-    </div>
-  );
-};
-
-const DisciplineTableFilter = <TData,>({ column }: TableFilterProps<TData>) => {
-  return (
-    <DisciplineDropdown
-      className={styles.columnFilter}
+    <Autocomplete
       id={column.id}
-      includeAll={column.columnDef.meta?.filterIncludeAll}
-      onChange={(discipline: string) => {
-        if (discipline === "0") {
-          column.setFilterValue(undefined);
-        } else {
-          column.setFilterValue(discipline || undefined);
-        }
-      }}
+      label={columnLabel(column)}
+      value={String(column.getFilterValue() ?? '')}
+      onChange={(value) => column.setFilterValue(value || undefined)}
+      options={options}
+      placeholder="All"
     />
   );
 };
 
-const ContestGenderTableFilter = <TData,>({ column }: TableFilterProps<TData>) => {
-  return (
-    <ContestsGenderDropdown
-      className={styles.columnFilter}
-      id={column.id}
-      value={(column.getFilterValue() as string | undefined) ?? "All"}
-      onChange={value => column.setFilterValue(
-        value === "All" ? undefined : value as ContestGender
-      )}
-    />
-  );
-};
+const DisciplineTableFilter = <TData,>({ column }: TableFilterProps<TData>) => (
+  <DisciplineDropdown
+    id={column.id}
+    includeAll={column.columnDef.meta?.filterIncludeAll}
+    onChange={(discipline: string) => {
+      column.setFilterValue(!discipline || discipline === "0" ? undefined : discipline);
+    }}
+  />
+);
 
-const RecordGenderTableFilter = <TData,>({ column }: TableFilterProps<TData>) => {
-  return (
-    <RecordsGenderDropdown
-      className={styles.columnFilter}
-      id={column.id}
-      value={(column.getFilterValue() as string | undefined) ?? "All"}
-      onChange={value => column.setFilterValue(
-        value === "All" ? undefined : value as ContestGender
-      )}
-    />
-  );
-};
+const ContestGenderTableFilter = <TData,>({ column }: TableFilterProps<TData>) => (
+  <ContestsGenderDropdown
+    id={column.id}
+    value={(column.getFilterValue() as string | undefined) ?? "All"}
+    onChange={value => column.setFilterValue(value === "All" ? undefined : value as ContestGender)}
+  />
+);
 
-const ContestSizeTableFilter = <TData,>({ column }: TableFilterProps<TData>) => {
-  return (
-    <ContestSizeDropdown
-      className={styles.columnFilter}
-      id={column.id}
-      includeAll={column.columnDef.meta?.filterIncludeAll}
-      onChange={value => column.setFilterValue(
-        value === "ALL" ? undefined : value as ContestType
-      )}
-    />
-  );
-};
+const RecordGenderTableFilter = <TData,>({ column }: TableFilterProps<TData>) => (
+  <RecordsGenderDropdown
+    id={column.id}
+    value={(column.getFilterValue() as string | undefined) ?? "All"}
+    onChange={value => column.setFilterValue(value === "All" ? undefined : value as ContestGender)}
+  />
+);
+
+const ContestSizeTableFilter = <TData,>({ column }: TableFilterProps<TData>) => (
+  <ContestSizeDropdown
+    id={column.id}
+    includeAll={column.columnDef.meta?.filterIncludeAll}
+    onChange={value => column.setFilterValue(value === "ALL" ? undefined : value as ContestType)}
+  />
+);
 
 const TableFilter = <TData,>({ column, rows }: TableFilterProps<TData>) => {
   const filterVariant = column.columnDef?.meta?.filterVariant;
 
-  if (filterVariant === "text") {
-    return <TextTableFilter column={column} rows={rows} />;
-  }
-
-  if (filterVariant === "date-range") {
-    return <DateRangeTableFilter column={column} rows={rows} />;
-  }
-
-  if (filterVariant === "autocomplete") {
-    return <AutocompleteTableFilter column={column} rows={rows} />;
-  }
-
-  if (filterVariant === "country") {
-    return <CountryTableFilter column={column} rows={rows} />;
-  }
-
-  if (filterVariant === "discipline") {
-    return <DisciplineTableFilter column={column} rows={rows} />;
-  }
-
-  if (filterVariant === "contest-gender") {
-    return <ContestGenderTableFilter column={column} rows={rows} />;
-  }
-
-  if (filterVariant === "contest-size") {
-    return <ContestSizeTableFilter column={column} rows={rows} />;
-  }
-
-  if (filterVariant === "multi-select") {
-    return <MultiSelectTableFilter column={column} rows={rows} />;
-  }
-
-  if (filterVariant === "record-gender") {
-    return <RecordGenderTableFilter column={column} rows={rows} />;
-  }
+  if (filterVariant === "text") return <TextTableFilter column={column} rows={rows} />;
+  if (filterVariant === "date-range") return <DateRangeTableFilter column={column} rows={rows} />;
+  if (filterVariant === "autocomplete") return <AutocompleteTableFilter column={column} rows={rows} />;
+  if (filterVariant === "country") return <CountryTableFilter column={column} rows={rows} />;
+  if (filterVariant === "discipline") return <DisciplineTableFilter column={column} rows={rows} />;
+  if (filterVariant === "contest-gender") return <ContestGenderTableFilter column={column} rows={rows} />;
+  if (filterVariant === "contest-size") return <ContestSizeTableFilter column={column} rows={rows} />;
+  if (filterVariant === "multi-select") return <MultiSelectTableFilter column={column} rows={rows} />;
+  if (filterVariant === "record-gender") return <RecordGenderTableFilter column={column} rows={rows} />;
 
   return <SelectTableFilter column={column} rows={rows} />;
 };

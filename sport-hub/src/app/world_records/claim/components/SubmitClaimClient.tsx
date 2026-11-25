@@ -70,13 +70,21 @@ export default function SubmitClaimClient({ recordCategories, firstCategories, i
     router.replace(claimUrl(result.kind, result.entryId), { scroll: false });
   };
 
-  const submit = async (values: ClaimFormValues, { setSubmitting }: FormikHelpers<ClaimFormValues>) => {
+  const submit = async (values: ClaimFormValues, { setSubmitting, setFieldTouched, setFieldError }: FormikHelpers<ClaimFormValues>) => {
     setIntent('submit');
     setErrors([]);
     setMessage(null);
     const result = await saveClaim(values, 'submit');
     setSubmitting(false);
-    if (!result.success) { showErrors(result.errors); return; }
+    if (!result.success) {
+      const futureDate = result.errors.find((error) => error === 'The date cannot be in the future');
+      if (futureDate) {
+        setFieldTouched('date', true, false);
+        setFieldError('date', futureDate);
+      }
+      showErrors(result.errors);
+      return;
+    }
     router.push(`/world_records/my-claims?submitted=${result.kind}:${result.entryId}`);
   };
 

@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
 import { WorldRecord } from '@lib/data-services';
+import { SelectField } from '@slacklineinternational/onsight/react';
 import Table from '@ui/Table';
-import tableStyles from '@ui/Table/styles.module.css';
 import { BREAKPOINT_LG, useClientMediaQuery } from '@utils/useClientMediaQuery';
 import Link from 'next/link';
 import {
@@ -168,19 +168,17 @@ const WorldRecordsTable = ({ data }: WorldRecordsTableProps) => {
   return (
     <Table
       extraFilters={
-        <div className={tableStyles.columnFilter}>
-          <label htmlFor="wr-group">Group</label>
-          <select
-            id="wr-group"
-            value={selectedGroup}
-            onChange={e => setSelectedGroup(e.target.value)}
-          >
-            <option value="">All</option>
-            {groupOptions.map(g => (
-              <option key={g} value={g}>{g}</option>
-            ))}
-          </select>
-        </div>
+        <SelectField
+          id="wr-group"
+          label="Group"
+          value={selectedGroup}
+          onChange={e => setSelectedGroup(e.target.value)}
+        >
+          <option value="">All</option>
+          {groupOptions.map(g => (
+            <option key={g} value={g}>{g}</option>
+          ))}
+        </SelectField>
       }
       options={{
         columns,
