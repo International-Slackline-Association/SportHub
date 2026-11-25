@@ -36,19 +36,19 @@ export default async function MyClaimsPage({ searchParams }: Props) {
   return (
     <PageLayout title="My claims" description="World record and world first claims you submitted or are an athlete on.">
       {submitted && (
-        <section className="p-4 sm:p-0">
+        <section>
           <Alert variant="success">Your claim was sent to the ISA for review. You get an email when it is decided.</Alert>
         </section>
       )}
-      <section className="p-4 sm:p-0 flex gap-3 flex-wrap">
+      <section className="flex gap-3 flex-wrap">
         <Button as={Link} href="/world_records/claim" variant="primary">Claim World Record or World First</Button>
       </section>
-      <section className="p-4 sm:p-0">
+      <section>
         <ClaimWorkflow counts={counts} />
       </section>
-      <section className="p-4 sm:p-0">
+      <section>
         {sorted.length === 0 ? (
-          <p className="text-gray-600">You have no claims yet.</p>
+          <p className="text-default">You have no claims yet.</p>
         ) : (
           <div className="stack gap-2">
             {sorted.map(entry => {
@@ -56,14 +56,14 @@ export default async function MyClaimsPage({ searchParams }: Props) {
               // Athletes see claims made for them, but only the claimant can change or withdraw them
               const isClaimant = entry.claimantUserId === session?.user?.id;
               return (
-                <div key={`${entry.kind}-${entry.entryId}`} className="border border-gray-200 rounded-lg px-4 py-3 stack gap-2">
+                <div key={`${entry.kind}-${entry.entryId}`} className="border border-default rounded-lg px-4 py-3 stack gap-2">
                   <div className="flex flex-wrap gap-x-6 gap-y-2 items-center">
                     <div className="stack min-w-0">
                       <span className="font-semibold">
                         {entry.kind === 'record' && entry.newCategoryProposal ? '[New category] ' : ''}{entry.categoryName || 'No category chosen'}
                         {valueOf(entry) && <span className="font-normal"> · {valueOf(entry)}</span>}
                       </span>
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-default">
                         {entry.kind === 'first' ? 'World first' : 'World record'} · {GENDER_TITLE_LABELS[entry.gender]}
                         {' · '}{entry.athletes.map(a => a.name).join(', ') || 'No athletes yet'}
                         {entry.date && ` · ${formatISODay(entry.date)}`}
@@ -95,7 +95,7 @@ export default async function MyClaimsPage({ searchParams }: Props) {
           </div>
         )}
       </section>
-      <section className="p-4 sm:p-0">
+      <section>
         <Button as={Link} href="/world_records" variant="secondary" size="small">Go to Records &amp; Firsts</Button>
       </section>
     </PageLayout>

@@ -8,7 +8,7 @@ import { RECORD_CATEGORY_GROUPS } from '@lib/relational-types';
 import type { FirstCategoryTableItem, RecordCategoryTableItem } from '@lib/relational-types';
 import { categoryHref, statusLabel, RECORD_STATUS_OPTIONS } from './statusOptions';
 
-const nameLinkClass = 'font-medium text-blue-700 hover:underline';
+const nameLinkClass = 'font-medium text-link hover:underline';
 
 const recordColumnHelper = createColumnHelper<RecordCategoryTableItem>();
 
@@ -23,7 +23,7 @@ export function RecordCategoriesTable({ categories }: { categories: RecordCatego
       cell: info => (
         <div className="stack">
           <Link href={categoryHref('record', info.row.original.categoryId)} className={nameLinkClass}>{info.getValue()}</Link>
-          {info.row.original.description && <span className="text-xs text-gray-700">{info.row.original.description}</span>}
+          {info.row.original.description && <span className="text-xs text-default">{info.row.original.description}</span>}
         </div>
       ),
       size: 220,
@@ -71,7 +71,7 @@ export function FirstCategoriesTable({ categories }: { categories: FirstCategory
       cell: info => (
         <div className="stack">
           <Link href={categoryHref('first', info.row.original.categoryId)} className={nameLinkClass}>{info.getValue()}</Link>
-          {info.row.original.terminationRule && <span className="text-xs text-gray-700">{info.row.original.terminationRule}</span>}
+          {info.row.original.terminationRule && <span className="text-xs text-default">{info.row.original.terminationRule}</span>}
         </div>
       ),
       size: 220,

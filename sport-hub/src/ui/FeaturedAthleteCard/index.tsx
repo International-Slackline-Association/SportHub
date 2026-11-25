@@ -3,13 +3,13 @@ import Link from 'next/link';
 
 import { AthleteRanking } from "@lib/data-services";
 import { Avatar } from '@ui/Avatar';
-import { CardGrid } from '@ui/Card';
+import { FeaturedCardGrid } from '@ui/FeaturedCardGrid';
 import { CircleFlag } from 'react-circle-flags';
 import { cn } from '@utils/cn';
 import { Discipline } from '@ui/Badge';
 import { getCountryByCode } from '@utils/countries';
 import { StackedMediaCard } from '@ui/StackedMediaCard';
-import pageStyles from '../../app/page.module.css';
+import sectionStyles from '@ui/featuredSections.module.css';
 import { Alert, Button, EmptyState, Spinner } from '@slacklineinternational/onsight/react';
 import { useQuery } from "@tanstack/react-query";
 
@@ -111,8 +111,8 @@ export const FeaturedAthleteSection = ({
   });
 
   return (
-    <section className={pageStyles.section}>
-      <h2 className={pageStyles.sectionTitle}>
+    <section className={sectionStyles.section}>
+      <h2 className={sectionStyles.sectionTitle}>
         Featured Athletes {isLoading && <Spinner size="small" label="Loading featured athletes" className="ml-4" />}
       </h2>
       {isError && (
@@ -124,11 +124,11 @@ export const FeaturedAthleteSection = ({
         </EmptyState>
       )}
       {isSuccess && athletes.length && (
-        <CardGrid columns={athletes.length}>
+        <FeaturedCardGrid>
           {athletes?.map((athlete: AthleteRanking) => (
             <FeaturedAthleteCard key={athlete.userId} athlete={athlete} />
           ))}
-        </CardGrid>
+        </FeaturedCardGrid>
       )}
     </section>
   );

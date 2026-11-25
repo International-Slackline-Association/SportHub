@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button, Alert } from '@slacklineinternational/onsight/react';
 import { deleteCategory } from '../actions';
 
-const inputClass = 'w-full border border-gray-300 rounded px-3 py-2 text-sm';
+const inputClass = 'w-full border border-default rounded px-3 py-2 text-sm';
 
 type Props = {
   pk: 'RecordCategory' | 'FirstCategory';

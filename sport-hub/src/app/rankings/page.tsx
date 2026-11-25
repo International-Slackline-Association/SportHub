@@ -71,7 +71,7 @@ const Page = () => {
       heroImage={randomS3Image(discipline)}
       title="Rankings"
     >
-      <section className="p-4 sm:p-0">
+      <section>
         <RankingsTable
           discipline={discipline}
           onChangeDiscipline={handleChangeDiscipline}

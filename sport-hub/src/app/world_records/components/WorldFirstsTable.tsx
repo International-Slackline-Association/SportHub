@@ -66,12 +66,12 @@ const columns = [
       return (
         <div className="stack">
           <div className="cluster items-center justify-between">
-            <span className="text-xs text-gray-400">{date}</span>
+            <span className="text-xs text-muted">{date}</span>
             <Gender value={gender} variant="normal" />
           </div>
           <div className="cluster items-center justify-between">
             <span className="font-medium">{trickName}</span>
-            <span className="text-sm text-gray-500">{lineDetails || categoryName}</span>
+            <span className="text-sm text-muted">{lineDetails || categoryName}</span>
           </div>
           <AthleteNames athletes={athletes} />
           <div className="cluster gap-2 text-xs">

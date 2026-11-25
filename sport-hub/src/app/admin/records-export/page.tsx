@@ -20,9 +20,9 @@ export default async function RecordsExportPage() {
       description="Download the data as CSV files, e.g. for Excel or Google Sheets. All entries except drafts are included. The files contain witness and athlete contact details: keep them within the ISA."
     >
       <AdminNav current="/admin/records-export" />
-      <section className="p-4 sm:p-0 stack gap-3">
+      <section className="stack gap-3">
         {datasets.map(([dataset, label]) => (
-          <div key={dataset} className="flex flex-wrap items-center gap-3 border border-gray-200 rounded-lg px-4 py-3">
+          <div key={dataset} className="flex flex-wrap items-center gap-3 border border-default rounded-lg px-4 py-3">
             <span className="text-sm flex-1 min-w-48">{label}</span>
             <Button as={Link} href={`/api/admin/records-export/${dataset}`} variant="secondary" size="small">
               Download {dataset}.csv

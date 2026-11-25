@@ -107,7 +107,7 @@ export default function RecordCategoryForm({ category }: Props) {
           </div>
           {category && <FormikTextField id="comment" name="comment" label="Reason for the change" placeholder="Optional, shown in the history" />}
           {category && unitKind(values.unit) !== unitKind(category.unit) && (
-            <span className="text-xs text-amber-700">Changing the unit type re-reads the values of all entries in this category.</span>
+            <span className="text-xs text-status-warning-fg">Changing the unit type re-reads the values of all entries in this category.</span>
           )}
           {error && <Alert variant="danger">{error}</Alert>}
           {saved && <Alert variant="success">Saved.</Alert>}

@@ -3,14 +3,11 @@ export const dynamic = 'force-dynamic';
 import PageLayout from '@ui/PageLayout';
 import { FeaturedAthleteCard } from '@ui/FeaturedAthleteCard';
 import FeaturedContestCard from './components/FeaturedContestCard';
-import { CardGrid } from '@ui/Card';
-import styles from './page.module.css';
+import styles from '@ui/featuredSections.module.css';
+import { FeaturedCardGrid } from '@ui/FeaturedCardGrid';
 import { DisciplineHeroSection } from './components/DisciplineHeroSection';
 import { ContestData, getContestsData, getFeaturedAthletes } from '@lib/data-services';
 
-
-const NUM_FEATURED_EVENTS = 3;
-const NUM_FEATURED_ATHLETES = 3;
 
 const getFeaturedContests = async () => {
   const allEvents = await getContestsData();
@@ -75,42 +72,25 @@ export default async function Home() {
           </p>
         </div>
 
-        <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory sm:hidden">
+        <FeaturedCardGrid>
           {featuredContestsData.map(contest => (
-            <div key={contest.contestId || `${contest.eventId}-${contest.discipline}-${contest.gender}`} className="min-w-72 shrink-0 snap-start">
-              <FeaturedContestCard contest={contest} />
-            </div>
+            <FeaturedContestCard
+              key={contest.contestId || `${contest.eventId}-${contest.discipline}-${contest.gender}`}
+              contest={contest}
+            />
           ))}
-        </div>
-
-        <div className="hidden sm:block">
-          <CardGrid columns={NUM_FEATURED_EVENTS}>
-            {featuredContestsData.map(contest => (
-              <FeaturedContestCard key={contest.contestId || `${contest.eventId}-${contest.discipline}-${contest.gender}`} contest={contest} />
-            ))}
-          </CardGrid>
-        </div>
+        </FeaturedCardGrid>
       </section>
 
       {/* Featured Athletes Section */}
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Featured Athletes</h2>
 
-        <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory sm:hidden">
+        <FeaturedCardGrid>
           {featuredAthletesData.slice(0, 3).map(athlete => (
-            <div key={athlete.userId} className="min-w-72 shrink-0 snap-start">
-              <FeaturedAthleteCard athlete={athlete} />
-            </div>
+            <FeaturedAthleteCard key={athlete.userId} athlete={athlete} />
           ))}
-        </div>
-
-        <div className="hidden sm:block">
-          <CardGrid columns={NUM_FEATURED_ATHLETES}>
-            {featuredAthletesData.slice(0, 3).map(athlete => (
-              <FeaturedAthleteCard key={athlete.userId} athlete={athlete}/>
-            ))}
-          </CardGrid>
-        </div>
+        </FeaturedCardGrid>
       </section>
     </PageLayout>
   );

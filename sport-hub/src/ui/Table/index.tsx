@@ -34,6 +34,8 @@ declare module "@tanstack/react-table" {
     filterIncludeAll?: boolean;
     /** When true, renders a checkbox to filter for future dates. */
     dateFilterShowUpcomingToggle?: boolean;
+    /** Optional class on the filter control (e.g. flex grow for a text filter). */
+    filterClassName?: string;
   }
 }
 

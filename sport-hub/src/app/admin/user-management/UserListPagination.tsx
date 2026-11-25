@@ -198,36 +198,36 @@ export default function UserListPagination({
 
       {/* User List */}
       {isSearching ? (
-        <div className="p-6 text-center text-gray-500">
+        <div className="p-6 text-center text-muted">
           Searching...
         </div>
       ) : users.length === 0 ? (
-        <div className="p-6 text-center text-gray-500">
+        <div className="p-6 text-center text-muted">
           {isFiltered ? 'No users found matching the search.' : 'No users found.'}
         </div>
       ) : (
         users.map((user) => (
           <div
             key={user.id}
-            className={`px-4 py-3 flex flex-wrap justify-between items-center gap-2 hover:bg-gray-50 ${
-              user.id === currentUserId ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+            className={`px-4 py-3 flex flex-wrap justify-between items-center gap-2 hover:bg-subtle ${
+              user.id === currentUserId ? 'bg-status-info-bg border-l-4 border-focus' : ''
             }`}
           >
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-semibold text-lg">{`${user.name} ${user.surname || ''}`.trim()}</h3>
                 {user.id === currentUserId && (
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">You</span>
+                  <span className="text-xs bg-status-info-bg text-link px-2 py-0.5 rounded">You</span>
                 )}
                 <span className={`text-xs px-2 py-0.5 rounded ${
                   user.roles?.length
-                    ? 'bg-purple-100 text-purple-800'
-                    : 'bg-gray-100 text-gray-600'
+                    ? 'bg-category-purple-bg text-category-purple-fg'
+                    : 'bg-muted text-default'
                 }`}>
                   {rolesLabel(user.roles)}
                 </span>
               </div>
-              <p className="text-gray-600 truncate">{user.email}</p>
+              <p className="text-default truncate">{user.email}</p>
             </div>
             <div className="flex gap-2">
               <Button
@@ -251,19 +251,19 @@ export default function UserListPagination({
       )}
       <div className="p-4 border-t">
         <div className="flex flex-col items-center gap-3">
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-muted">
             Showing {users.length} / {totalCount} users
             {isFiltered && ` (filtered)`}
           </span>
           {hasMore && (
             <>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Load:</span>
+                <span className="text-sm text-default">Load:</span>
                 <div className="flex items-center border rounded-md overflow-hidden">
                   <button
                     onClick={decrementPageSize}
                     disabled={loading || pageSize === PAGE_SIZE_OPTIONS[0]}
-                    className="px-2 py-1 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed border-r"
+                    className="px-2 py-1 bg-muted hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed border-r"
                     title="Decrease batch size"
                   >
                     ◀
@@ -272,7 +272,7 @@ export default function UserListPagination({
                     value={pageSize}
                     onChange={(e) => setPageSize(Number(e.target.value))}
                     disabled={loading}
-                    className="px-3 py-1 bg-white text-center appearance-none cursor-pointer disabled:opacity-50"
+                    className="px-3 py-1 bg-default text-center appearance-none cursor-pointer disabled:opacity-50"
                   >
                     {PAGE_SIZE_OPTIONS.map(size => (
                       <option key={size} value={size}>{size}</option>
@@ -281,7 +281,7 @@ export default function UserListPagination({
                   <button
                     onClick={incrementPageSize}
                     disabled={loading || pageSize === PAGE_SIZE_OPTIONS[PAGE_SIZE_OPTIONS.length - 1]}
-                    className="px-2 py-1 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed border-l"
+                    className="px-2 py-1 bg-muted hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed border-l"
                     title="Increase batch size"
                   >
                     ▶
@@ -290,7 +290,7 @@ export default function UserListPagination({
                 <button
                   onClick={() => loadMore()}
                   disabled={loading}
-                  className="bg-blue-500 text-white px-4 py-1 rounded-md hover:bg-blue-600 disabled:opacity-50 transition-colors"
+                  className="bg-action-primary-bg text-inverse px-4 py-1 rounded-md hover:bg-action-primary-bg disabled:opacity-50 transition-colors"
                 >
                   {loading ? 'Loading...' : 'Load More'}
                 </button>
@@ -301,7 +301,7 @@ export default function UserListPagination({
                     key={size}
                     onClick={() => loadMore(size)}
                     disabled={loading}
-                    className="text-xs px-2 py-1 bg-gray-50 text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50 transition-colors"
+                    className="text-xs px-2 py-1 bg-subtle text-default rounded hover:bg-muted disabled:opacity-50 transition-colors"
                   >
                     +{size}
                   </button>

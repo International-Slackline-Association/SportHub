@@ -31,7 +31,7 @@ type Props = {
   trickLinkOptions: { id: string; label: string }[];
 };
 
-const inputClass = 'w-full border border-gray-300 rounded px-3 py-2 text-sm';
+const inputClass = 'w-full border border-default rounded px-3 py-2 text-sm';
 
 export default function ReviewActions(props: Props) {
   const { kind, entryId, status } = props;
@@ -93,9 +93,9 @@ export default function ReviewActions(props: Props) {
 
       {status === 'pending' && (
         <>
-          <div className="stack gap-3 border border-gray-200 rounded-lg p-4">
+          <div className="stack gap-3 border border-default rounded-lg p-4">
             <h3 className="font-semibold">Approve</h3>
-            <p className="text-sm text-gray-600">Publish the claim and notify the claimant and athletes.</p>
+            <p className="text-sm text-default">Publish the claim and notify the claimant and athletes.</p>
             {props.isNewCategory && (
               <div className="stack gap-2 text-sm">
                 <span className="font-medium">Proposed category: {props.proposedName}</span>
@@ -122,7 +122,7 @@ export default function ReviewActions(props: Props) {
                   <option value="">Not the same trick as an existing first</option>
                   {props.trickLinkOptions.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
                 </select>
-                <small className="text-gray-500">For reference only: titles follow the gender (Men&apos;s / Women&apos;s / Mixed World First).</small>
+                <small className="text-muted">For reference only: titles follow the gender (Men&apos;s / Women&apos;s / Mixed World First).</small>
               </div>
             )}
             <textarea
@@ -149,9 +149,9 @@ export default function ReviewActions(props: Props) {
             </div>
           </div>
 
-          <div className="stack gap-3 border border-gray-200 rounded-lg p-4">
+          <div className="stack gap-3 border border-default rounded-lg p-4">
             <h3 className="font-semibold">Request changes</h3>
-            <p className="text-sm text-gray-600">Send the claim back to the claimant with what to fix.</p>
+            <p className="text-sm text-default">Send the claim back to the claimant with what to fix.</p>
             <textarea
               className={inputClass}
               rows={3}
@@ -167,7 +167,7 @@ export default function ReviewActions(props: Props) {
             </div>
           </div>
 
-          <div className="stack gap-3 border border-gray-200 rounded-lg p-4">
+          <div className="stack gap-3 border border-default rounded-lg p-4">
             <h3 className="font-semibold">Reject</h3>
             <div className="stack gap-1 text-sm">
               <label className="font-medium" htmlFor="reject-reason">Reason for rejection</label>
@@ -208,9 +208,9 @@ export default function ReviewActions(props: Props) {
       )}
 
       {(status === 'published' || status === 'historical') && (
-        <div className="stack gap-2 border border-gray-200 rounded-lg p-4">
+        <div className="stack gap-2 border border-default rounded-lg p-4">
           <h3 className="font-semibold">Void this entry</h3>
-          <p className="text-sm text-gray-600">For example a fair-play violation found after publication. The entry is removed from the public lists.</p>
+          <p className="text-sm text-default">For example a fair-play violation found after publication. The entry is removed from the public lists.</p>
           <textarea className={inputClass} rows={2} placeholder="Reason (required)" value={comment} onChange={e => setComment(e.target.value)} />
           <div>
             <Button variant="danger" disabled={busy || !comment.trim()} onClick={() => run(() => setPublicEntryStatus(kind, entryId, 'rejected', comment))}>
@@ -220,7 +220,7 @@ export default function ReviewActions(props: Props) {
         </div>
       )}
       {status === 'rejected' && props.voided && (
-        <div className="stack gap-2 border border-gray-200 rounded-lg p-4">
+        <div className="stack gap-2 border border-default rounded-lg p-4">
           <h3 className="font-semibold">Restore</h3>
           <textarea className={inputClass} rows={2} placeholder="Reason (required)" value={comment} onChange={e => setComment(e.target.value)} />
           <div>
@@ -231,17 +231,17 @@ export default function ReviewActions(props: Props) {
         </div>
       )}
 
-      <div className="stack gap-2 border border-gray-200 rounded-lg p-4">
+      <div className="stack gap-2 border border-default rounded-lg p-4">
         <h3 className="font-semibold">Modify</h3>
-        <p className="text-sm text-gray-600">Edit every detail: category, value or trick, athletes, date, location, witnesses and links.</p>
+        <p className="text-sm text-default">Edit every detail: category, value or trick, athletes, date, location, witnesses and links.</p>
         <div>
           <Button as={Link} href={`/admin/records-review/${kind}/${encodeURIComponent(entryId)}/edit`} variant="secondary">Modify</Button>
         </div>
       </div>
 
-      <div className="stack gap-2 border border-red-200 rounded-lg p-4">
+      <div className="stack gap-2 border border-danger rounded-lg p-4">
         <h3 className="font-semibold">Delete permanently</h3>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-default">
           Only for entries that should never have been in the database, such as a test entry, a duplicate or an import
           mistake. This can&apos;t be undone: the entry, its history and the links on athlete profiles are removed. To take
           a real record or first off the public lists, use Void instead.

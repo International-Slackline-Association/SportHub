@@ -1,9 +1,65 @@
+/* Rankings discipline cards on the home page */
+.disciplineCard {
+  color: var(--isa-color-text-muted);
+}
+
+.disciplineIcon {
+  display: flex;
+  justify-content: center;
+  color: var(--isa-color-text-muted);
+}
+
+.disciplineName {
+  display: block;
+  font-weight: 700;
+  color: var(--isa-color-text-muted);
+}
+
+.disciplineDescription {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--isa-color-text-muted);
+}
+
+.disciplineActionRow {
+  border-top: 1px solid var(--isa-color-border-default);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+  margin-top: auto;
+}
+
+.disciplineActionButton {
+  border-radius: 0;
+  border: 0;
+  color: var(--isa-color-gray-400);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  min-height: 100%;
+  padding: 0.5rem 0.25rem;
+  text-align: center;
+  width: 100%;
+}
+
+.disciplineActionButton:hover {
+  color: var(--isa-color-text-link);
+}
+
+.disciplineActionButtonPrimary {
+  border-right: 1px solid var(--isa-color-border-default);
+}
+
+.disciplineActionButtonSecondary {
+  border-left: 1px solid var(--isa-color-border-default);
+}
+
 /* Featured Contest Card Styles */
 .imageWrapper {
   position: relative;
   width: 160px;
   height: 160px;
-  background: var(--color-neutral-100);
+  background: var(--isa-color-surface-muted);
   flex-shrink: 0;
 
   @media (min-width: 40rem) {
@@ -27,10 +83,10 @@
 }
 
 .name {
-  font-family: var(--font-metropolis);
+  font-family: var(--isa-font-family-heading);
   font-weight: 600;
   font-size: 1rem;
-  color: var(--color-neutral-800);
+  color: var(--isa-color-text-default);
   margin: 0;
   line-height: 1.3;
 }
@@ -40,11 +96,11 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.8125rem;
-  color: var(--color-neutral-600);
+  color: var(--isa-color-text-default);
 
   svg {
     flex-shrink: 0;
-    color: var(--color-neutral-400);
+    color: var(--isa-color-text-muted);
   }
 }
 
@@ -56,7 +112,7 @@
 }
 
 .actionRow {
-  border-top: 1px solid var(--color-neutral-400);
+  border-top: 1px solid var(--isa-color-text-muted);
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   overflow: hidden;
@@ -67,7 +123,7 @@
 .actionButtonSecondary {
   border-radius: 0;
   border: 0;
-  color: var(--color-neutral-400);
+  color: var(--isa-color-text-muted);
   font-size: var(--text-sm);
   font-weight: bold;
   min-height: 100%;
@@ -77,13 +133,13 @@
 
 .actionButtonPrimary:hover,
 .actionButtonSecondary:hover {
-  color: var(--color-primary);
+  color: var(--isa-color-text-link);
 }
 
 .actionButtonPrimary {
-  border-right: 1px solid var(--color-neutral-400);
+  border-right: 1px solid var(--isa-color-text-muted);
 }
 
 .actionButtonSecondary {
-  border-left: 1px solid var(--color-neutral-400);
+  border-left: 1px solid var(--isa-color-text-muted);
 }

@@ -11,7 +11,7 @@ const NameLink = (user: (ContestJudge | EventOrganizer) & { isPending?: boolean;
 
   if (isPending) {
     return (
-      <span className="border-amber-300 bg-amber-50 text-amber-800 italic">
+      <span className="border-strong bg-status-warning-bg text-status-warning-fg italic">
         {name} (Pending)
       </span>
     );
@@ -19,7 +19,7 @@ const NameLink = (user: (ContestJudge | EventOrganizer) & { isPending?: boolean;
 
   if (id) {
     return (
-      <Link href={`/athlete/${id}`} className="text-blue-600 hover:underline">
+      <Link href={`/athlete/${id}`} className="text-link hover:underline">
         {name}
       </Link>
     );

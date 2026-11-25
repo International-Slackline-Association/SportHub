@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import { ContestData } from "@lib/data-services";
 import Image from 'next/image';
-import { CardGrid } from '@ui/Card';
+import { FeaturedCardGrid } from '@ui/FeaturedCardGrid';
 import { Discipline } from '@ui/Badge';
 import { CircleFlag } from 'react-circle-flags';
 import { cn } from '@utils/cn';
 import { getCountryByCode } from '@utils/countries';
 import { StackedMediaCard } from '@ui/StackedMediaCard';
-import pageStyles from '../../app/page.module.css';
+import sectionStyles from '@ui/featuredSections.module.css';
 import { Button } from '@slacklineinternational/onsight/react';
 import styles from '../../app/components/styles.module.css';
 export interface FeaturedEventCardProps {
@@ -64,13 +64,13 @@ export const FeaturedEventCard = ({ event }: FeaturedEventCardProps) => {
 
 export const FeaturedEventSection = ({ events }: { events: ContestData[] }) => {
   return (
-    <section className={pageStyles.section}>
-      <h2 className={pageStyles.sectionTitle}>Featured Competitions</h2>
-      <CardGrid columns={events.length}>
+    <section className={sectionStyles.section}>
+      <h2 className={sectionStyles.sectionTitle}>Featured Competitions</h2>
+      <FeaturedCardGrid>
         {events.map(event => (
           <FeaturedEventCard key={event.contestId || `${event.eventId}-${event.discipline}-${event.gender}`} event={event} />
         ))}
-      </CardGrid>
+      </FeaturedCardGrid>
     </section>
   );
 };

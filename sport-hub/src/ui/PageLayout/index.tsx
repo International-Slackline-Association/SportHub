@@ -1,75 +1,48 @@
-import { PropsWithChildren } from "react";
-import Image from "next/image";
-import styles from "./styles.module.css";
-import { cn } from "@utils/cn";
-import type { HeroImage } from "@utils/images";
+import { PropsWithChildren } from 'react';
+import Image from 'next/image';
+import { Hero, PageTitle } from '@slacklineinternational/onsight/react';
+import type { HeroImage } from '@utils/images';
 
 export type PageLayoutProps = PropsWithChildren<{
   title?: string;
   description?: string | React.ReactNode;
   heroImage?: HeroImage;
-  overlayText?: boolean;
 }>;
 
+const heroCaption = (hero: HeroImage) => {
+  if (hero.caption) return hero.caption;
+  if (hero.credit) return `Photo: ${hero.credit}`;
+  return undefined;
+};
+
 /**
- * Standardized page layout component for consistent width and spacing across all pages.
- *
- * Usage:
- * <PageLayout title="Page Title" description="Page description">
- *   <section className="p-4 sm:p-0">
- *     // Your content sections here
- *   </section>
- * </PageLayout>
- *
- * Each content section should use className="p-4 sm:p-0" for consistent responsive padding.
+ * Title, optional photo, then the page sections. Width and padding come from
+ * the Onsight main in the root layout.
  */
-export const PageLayout = ({ children, title, description, heroImage, overlayText=false }: PageLayoutProps) => {
+export const PageLayout = ({ children, title, description, heroImage }: PageLayoutProps) => {
   return (
-    <div className="stack gap-4 flex-1 min-h-0">
+    <>
       {(title || description) && (
-        <section className={cn(styles.pageHeader, overlayText && styles.overlayTextOnImage)}>
-          {title && <h1>{title}</h1>}
-          {description && <p>{description}</p>}
-        </section>
+        <PageTitle title={title || ''}>{description}</PageTitle>
       )}
-
       {heroImage && (
-        <>
-          <figure className={styles.heroFigure}>
-            {heroImage.blurredBackground && (
-              <div className={styles.heroBackgroundWrapper} aria-hidden="true">
-                <Image
-                  src={heroImage.src}
-                  alt=""
-                  fill
-                  sizes="100vw"
-                  className={styles.heroBackgroundImage}
-                  style={{
-                    objectPosition: heroImage.objectPosition ?? 'center',
-                  }}
-                  priority
-                />
-              </div>
-            )}
-            <Image
-              src={heroImage.src}
-              alt={heroImage.alt}
-              fill
-              sizes="100vw"
-              className={styles.heroForegroundImage}
-              style={{
-                objectPosition: heroImage.objectPosition ?? 'center',
-                objectFit: heroImage.blurredBackground ? 'contain' : 'cover'
-              }}
-              priority
-            />
-          </figure>
-          {heroImage.caption && <figcaption>{heroImage.caption}</figcaption>}
-        </>
+        <Hero
+          alt={heroImage.alt}
+          caption={heroCaption(heroImage)}
+          contain={Boolean(heroImage.blurredBackground)}
+          imgAs={Image}
+          imgProps={{
+            height: 640,
+            priority: true,
+            sizes: '100vw',
+            style: { objectPosition: heroImage.objectPosition ?? 'center' },
+            width: 1600,
+          }}
+          src={heroImage.src}
+        />
       )}
-
       {children}
-    </div>
+    </>
   );
 };
 

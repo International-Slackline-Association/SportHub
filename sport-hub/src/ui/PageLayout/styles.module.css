@@ -48,22 +48,22 @@
   }
 
   h1 {
-    color: var(--color-neutral-50);
+    color: var(--isa-color-surface-subtle);
     font-size: 1.5rem;
     font-weight: 800;
     margin-bottom: 0.25rem;
 
     @media (min-width: 40rem) {  /* --breakpoint-sm: 640px */
-      color: var(--color-neutral-700);
+      color: var(--isa-color-text-default);
       font-size: 2.25rem;
     }
   }
 
   p {
-    color: var(--color-neutral-50);
+    color: var(--isa-color-surface-subtle);
     font-size: 0.5rem;
     @media (min-width: 40rem) {  /* --breakpoint-sm: 640px */
-      color: var(--color-neutral-700);
+      color: var(--isa-color-text-default);
       font-size: 1rem;
     }
   }

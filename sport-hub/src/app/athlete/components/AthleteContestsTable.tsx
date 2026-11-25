@@ -39,7 +39,7 @@ const columns = [
     },
     filterFn: "includesString",
     cell: (info) => (
-      <Link href={`/events/${info.row.original.eventId}`} className="text-blue-600 hover:underline">
+      <Link href={`/events/${info.row.original.eventId}`} className="text-link hover:underline">
         {info.getValue()}
       </Link>
     ),
@@ -52,7 +52,7 @@ const columns = [
       return (
         <Link
           href={`/events/${row.eventId}?contest=${row.contestId}`}
-          className="text-blue-600 hover:underline"
+          className="text-link hover:underline"
         >
           {info.getValue()}
         </Link>

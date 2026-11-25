@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 type Props = { params: Promise<{ kind: string; id: string }> };
 
 const BackToList = () => (
-  <section className="p-4 sm:p-0">
+  <section>
     <Button as={Link} href="/admin/records-categories" variant="secondary" size="small">Back to all categories</Button>
   </section>
 );
@@ -34,7 +34,7 @@ export default async function CategoryPage({ params }: Props) {
     return (
       <PageLayout title={kind === 'record' ? 'New record category' : 'New first discipline'}>
         <BackToList />
-        <section className="p-4 sm:p-0">
+        <section>
           {kind === 'record' ? <RecordCategoryForm /> : <FirstCategoryForm />}
         </section>
       </PageLayout>
@@ -61,7 +61,7 @@ export default async function CategoryPage({ params }: Props) {
     >
       <BackToList />
 
-      <section className="p-4 sm:p-0 grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
+      <section className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
         <div className="stack gap-3">
           <h3 className="text-lg font-semibold">Details</h3>
           {recordCategory ? <RecordCategoryForm category={recordCategory} /> : firstCategory && <FirstCategoryForm category={firstCategory} />}
@@ -70,11 +70,11 @@ export default async function CategoryPage({ params }: Props) {
         <div className="stack gap-6">
           <div className="stack gap-2">
             <h3 className="text-lg font-semibold">History</h3>
-            {audit.length === 0 ? <p className="text-sm text-gray-500">No changes logged.</p> : (
+            {audit.length === 0 ? <p className="text-sm text-muted">No changes logged.</p> : (
               <ul className="text-sm stack gap-1">
                 {audit.map(a => (
                   <li key={a.sortKey}>
-                    <span className="text-gray-500">{formatDate(new Date(a.at))}</span>{' '}
+                    <span className="text-muted">{formatDate(new Date(a.at))}</span>{' '}
                     <strong>{a.action.replace(/_/g, ' ')}</strong>{a.byName && ` by ${a.byName}`}{a.comment && `: ${a.comment}`}
                   </li>
                 ))}
@@ -82,15 +82,15 @@ export default async function CategoryPage({ params }: Props) {
             )}
           </div>
 
-          <div className="stack gap-2 border border-red-200 rounded-lg p-4">
+          <div className="stack gap-2 border border-danger rounded-lg p-4">
             <h3 className="text-lg font-semibold">Delete permanently</h3>
             {entryCount > 0 ? (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-default">
                 This {kind === 'record' ? 'category' : 'discipline'} has {entriesText}, so it can&apos;t be deleted. Set its status to Archived to close it for new claims.
               </p>
             ) : (
               <>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-default">
                   No record or claim uses this {kind === 'record' ? 'category' : 'discipline'}, so it can be deleted, for example
                   a test or a duplicate. This can&apos;t be undone. To close it for new claims instead, set its status to Archived.
                 </p>

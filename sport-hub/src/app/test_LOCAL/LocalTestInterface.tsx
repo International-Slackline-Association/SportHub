@@ -174,12 +174,12 @@ export default function LocalTestInterface({ envReady, initialStats }: LocalTest
 
   if (!isHydrated) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow-md">
+      <div className="bg-default p-6 rounded-lg shadow-md">
         <div className="animate-pulse space-y-4">
-          <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-6 bg-muted rounded w-1/4"></div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-10 bg-gray-200 rounded"></div>
+              <div key={i} className="h-10 bg-muted rounded"></div>
             ))}
           </div>
         </div>
@@ -190,34 +190,34 @@ export default function LocalTestInterface({ envReady, initialStats }: LocalTest
   return (
     <div className="space-y-6">
       {/* Control Panel */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
+      <div className="bg-default p-6 rounded-lg shadow-md">
         <h2 className="text-xl font-semibold mb-4">Seed Database from JSON</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <button
             onClick={setupEnvironment}
             disabled={loading}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 disabled:opacity-50 transition-colors"
+            className="bg-action-primary-bg text-inverse px-4 py-2 rounded-md hover:bg-action-primary-bg disabled:opacity-50 transition-colors"
           >
             {loading ? 'Working...' : 'Setup Tables'}
           </button>
           <button
             onClick={seedDatabase}
             disabled={loading}
-            className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 disabled:opacity-50 transition-colors"
+            className="bg-action-primary-bg text-inverse px-4 py-2 rounded-md hover:bg-action-primary-bg disabled:opacity-50 transition-colors"
           >
             {loading ? 'Working...' : 'Seed Data'}
           </button>
           <button
             onClick={resetDatabase}
             disabled={loading}
-            className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 disabled:opacity-50 transition-colors"
+            className="bg-status-warning-bg text-inverse px-4 py-2 rounded-md hover:bg-status-warning-bg disabled:opacity-50 transition-colors"
           >
             {loading ? 'Working...' : 'Reset & Seed'}
           </button>
           <button
             onClick={clearTestData}
             disabled={loading}
-            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 disabled:opacity-50 transition-colors"
+            className="bg-action-danger-bg text-inverse px-4 py-2 rounded-md hover:bg-action-danger-bg-hover disabled:opacity-50 transition-colors"
           >
             {loading ? 'Working...' : 'Clear Test Data'}
           </button>
@@ -226,7 +226,7 @@ export default function LocalTestInterface({ envReady, initialStats }: LocalTest
           <button
             onClick={refreshStats}
             disabled={loading}
-            className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 disabled:opacity-50 transition-colors"
+            className="bg-inverse text-inverse px-4 py-2 rounded-md hover:bg-inverse disabled:opacity-50 transition-colors"
           >
             {loading ? 'Refreshing...' : '🔄 Refresh Stats'}
           </button>
@@ -235,23 +235,23 @@ export default function LocalTestInterface({ envReady, initialStats }: LocalTest
 
       {/* ISA-Rankings Migration */}
       {envReady && (
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-default p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-2">ISA-Rankings Migration</h2>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-default mb-4">
             Migrate data from ISA-Rankings table into SportHub schema (athletes, rankings, events, contests).
           </p>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <button
               onClick={() => runMigration(true)}
               disabled={loading}
-              className="bg-indigo-500 text-white px-4 py-2 rounded-md hover:bg-indigo-600 disabled:opacity-50 transition-colors"
+              className="bg-category-violet-fg text-inverse px-4 py-2 rounded-md hover:bg-category-violet-fg disabled:opacity-50 transition-colors"
             >
               {loading ? 'Working...' : 'Dry Run'}
             </button>
             <button
               onClick={() => runMigration(false)}
               disabled={loading}
-              className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 disabled:opacity-50 transition-colors"
+              className="bg-category-orange-fg text-inverse px-4 py-2 rounded-md hover:bg-category-orange-fg disabled:opacity-50 transition-colors"
             >
               {loading ? 'Working...' : 'Execute Migration'}
             </button>
@@ -261,24 +261,24 @@ export default function LocalTestInterface({ envReady, initialStats }: LocalTest
 
       {/* Quick Actions */}
       {envReady && (
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-default p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <a
               href="/admin/user-management"
-              className="block bg-indigo-100 p-4 rounded-lg hover:bg-indigo-200 transition-colors"
+              className="block bg-category-violet-bg p-4 rounded-lg hover:bg-category-violet-bg transition-colors"
             >
               <h3 className="font-semibold">User Management</h3>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-default mt-1">
                 List, edit and set roles of users
               </p>
             </a>
             <a
               href="/test_CSR"
-              className="block bg-purple-100 p-4 rounded-lg hover:bg-purple-200 transition-colors"
+              className="block bg-category-purple-bg p-4 rounded-lg hover:bg-category-purple-bg transition-colors"
             >
               <h3 className="font-semibold">Client-Side Testing</h3>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-default mt-1">
                 Test DynamoDB operations with API routes
               </p>
             </a>
@@ -287,11 +287,11 @@ export default function LocalTestInterface({ envReady, initialStats }: LocalTest
       )}
 
       {/* Activity Log */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
+      <div className="bg-default p-6 rounded-lg shadow-md">
         <h2 className="text-xl font-semibold mb-4">Activity Log</h2>
-        <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm max-h-48 overflow-y-auto">
+        <div className="bg-inverse text-success p-4 rounded-lg font-mono text-sm max-h-48 overflow-y-auto">
           {logs.length === 0 ? (
-            <div className="text-gray-500">No activity yet...</div>
+            <div className="text-muted">No activity yet...</div>
           ) : (
             logs.map((log, index) => (
               <div key={index} className="mb-1">
@@ -303,25 +303,25 @@ export default function LocalTestInterface({ envReady, initialStats }: LocalTest
       </div>
 
       {/* Environment Info */}
-      <div className="bg-gray-50 p-6 rounded-lg">
+      <div className="bg-subtle p-6 rounded-lg">
         <h2 className="text-xl font-semibold mb-4">Environment Information</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
             <h3 className="font-semibold mb-2">Configuration</h3>
             <div className="space-y-1">
-              <div>DynamoDB Local: <code className="bg-white px-1 rounded">localhost:8000</code></div>
-              <div>Environment: <code className="bg-white px-1 rounded">local</code></div>
-              <div>Table Prefix: <code className="bg-white px-1 rounded">local-*</code></div>
+              <div>DynamoDB Local: <code className="bg-default px-1 rounded">localhost:8000</code></div>
+              <div>Environment: <code className="bg-default px-1 rounded">local</code></div>
+              <div>Table Prefix: <code className="bg-default px-1 rounded">local-*</code></div>
             </div>
           </div>
           <div>
             <h3 className="font-semibold mb-2">Current Stats</h3>
             <div className="space-y-1">
-              <div>Profiles: <code className="bg-white px-1 rounded">{stats.tables['users-profiles'] || 0}</code></div>
-              <div>Rankings: <code className="bg-white px-1 rounded">{stats.tables['users-rankings'] || 0}</code></div>
-              <div>Participations: <code className="bg-white px-1 rounded">{stats.tables['users-participations'] || 0}</code></div>
-              <div>Events: <code className="bg-white px-1 rounded">{stats.tables['events-metadata'] || 0}</code></div>
-              <div>Contests: <code className="bg-white px-1 rounded">{stats.tables['events-contests'] || 0}</code></div>
+              <div>Profiles: <code className="bg-default px-1 rounded">{stats.tables['users-profiles'] || 0}</code></div>
+              <div>Rankings: <code className="bg-default px-1 rounded">{stats.tables['users-rankings'] || 0}</code></div>
+              <div>Participations: <code className="bg-default px-1 rounded">{stats.tables['users-participations'] || 0}</code></div>
+              <div>Events: <code className="bg-default px-1 rounded">{stats.tables['events-metadata'] || 0}</code></div>
+              <div>Contests: <code className="bg-default px-1 rounded">{stats.tables['events-contests'] || 0}</code></div>
             </div>
           </div>
         </div>

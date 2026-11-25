@@ -19,7 +19,7 @@ export default async function AllRecordsAndFirstsPage() {
       description="Every record and first in the workflow, whatever its status, drafts included. Click a line to see all details."
     >
       <AdminNav current="/admin/records-all" />
-      <section className="p-4 sm:p-0">
+      <section>
         <EntryTable rows={rows} showKind showStatus filterable />
       </section>
     </PageLayout>

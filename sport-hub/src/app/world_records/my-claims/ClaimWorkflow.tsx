@@ -48,10 +48,10 @@ function Arrow({ d, label, lx, ly, anchor = 'middle' }: { d: string; label: stri
  */
 export default function ClaimWorkflow({ counts }: { counts: Partial<Record<ClaimStatus, number>> }) {
   return (
-    <div className="border border-gray-200 rounded-lg p-4 stack gap-2">
+    <div className="border border-default rounded-lg p-4 stack gap-2">
       <div className="stack gap-1">
         <h3 className="font-semibold">How a claim works</h3>
-        <p className="text-sm text-gray-600">The highlighted steps show where your claims are now, with how many are in each step.</p>
+        <p className="text-sm text-default">The highlighted steps show where your claims are now, with how many are in each step.</p>
       </div>
       <div className="overflow-x-auto">
         <svg viewBox="0 0 930 190" className="w-full max-w-3xl min-w-[560px]" role="img" aria-label="Claim workflow: draft, under review, published, former world record; under review can lead to changes requested, rejected, or back to draft">
@@ -103,12 +103,12 @@ export default function ClaimWorkflow({ counts }: { counts: Partial<Record<Claim
         </svg>
       </div>
       <details className="text-sm">
-        <summary className="cursor-pointer text-gray-700 font-medium">What each step means</summary>
+        <summary className="cursor-pointer text-default font-medium">What each step means</summary>
         <dl className="mt-2 grid grid-cols-1 sm:grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
           {STEPS.map(s => (
             <div key={s.status} className="contents">
               <dt className="font-medium" style={{ color: COLORS[s.status].text }}>{CLAIM_STATUS_LABELS[s.status]}</dt>
-              <dd className="text-gray-600 mb-1 sm:mb-0">{s.text}</dd>
+              <dd className="text-default mb-1 sm:mb-0">{s.text}</dd>
             </div>
           ))}
         </dl>

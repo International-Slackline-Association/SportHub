@@ -1,3 +1,22 @@
+/* Keep filter fields on one row inside isa-main. Onsight defaults to wrap,
+   which overflows when season/discipline/gender sit beside column filters. */
+.filterRow {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (min-width: 40rem) {
+  .filterRow :global(.isa-filters__fields) {
+    flex-wrap: nowrap;
+  }
+
+  .filterRow :global(.isa-filters__fields) > :global(.isa-field) {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: none;
+  }
+}
+
 /* Competitions is the only table with an "Upcoming only" checkbox. It hangs
    under the two date fields so it does not take a slot on the filter line,
    and Reset stays beside those fields. The extra row gap and margin keep it
@@ -38,9 +57,9 @@
   }
 
   :global(.isa-filters__fields) > .dateGroup {
-    flex: 1 1 22rem;
+    flex: 0 0 auto;
     width: auto;
-    max-width: calc(var(--isa-size-filter-max) * 2 + var(--isa-space-4));
+    max-width: none;
   }
 
   .dates {
@@ -48,9 +67,17 @@
     align-items: flex-end;
   }
 
+  /* Native date inputs only need ~9–10rem; freeing width for competition name. */
   .dates > :global(.isa-field) {
-    flex: 1 1 var(--isa-size-filter-min);
-    max-width: var(--isa-size-filter-max);
+    flex: 0 0 auto;
+    width: 9.5rem;
+    min-width: 9rem;
+    max-width: 9.5rem;
+  }
+
+  .withUpcoming :global(.isa-filters__fields) > .competitionNameFilter:global(.isa-field) {
+    flex: 2 1 0;
+    min-width: 0;
   }
 
   .upcoming {

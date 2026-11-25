@@ -14,7 +14,7 @@ const LINKS = [
 /** Admin shortcuts. The link to the page you are on is left out. */
 export default function AdminNav({ current }: { current?: string }) {
   return (
-    <section className="p-4 sm:p-0 flex gap-3 flex-wrap">
+    <section className="flex gap-3 flex-wrap">
       {LINKS.filter(l => l.href !== current).map(l => (
         <Button key={l.href} as={Link} href={l.href} variant={l.variant} size="small">{l.label}</Button>
       ))}

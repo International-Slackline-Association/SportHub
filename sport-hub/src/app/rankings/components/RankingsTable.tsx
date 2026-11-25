@@ -18,7 +18,7 @@ import { Gender } from '@ui/Badge';
 import { normalizeGender } from '@utils/gender';
 import { textToTitleCase } from '@utils/strings';
 
-const linkClassName = 'text-blue-600 hover:text-blue-800 hover:underline font-medium';
+const linkClassName = 'text-link hover:text-link-hover hover:underline font-medium';
 
 const columnHelper = createColumnHelper<AthleteRanking>();
 
@@ -55,11 +55,11 @@ const columns = [
         <div className="stack gap-2">
           <div className="cluster gap-2 items-center">
             <NameCell athlete={info.row.original} />
-            <span className="text-xs text-gray-400">{age ?? '—'}</span>
+            <span className="text-xs text-muted">{age ?? '—'}</span>
           </div>
           <div className="cluster gap-2 items-center">
             <CountryFlag country={country} defaultValue="" />
-            <span className="text-sm text-gray-400">{displayGender}</span>
+            <span className="text-sm text-muted">{displayGender}</span>
           </div>
         </div>
       );
@@ -159,9 +159,9 @@ const RankingsTable = ({
   });
 
   return (
-    <div className="flex items-center justify-center min-h-64">
+    <div className="w-full min-w-0 min-h-64">
       {isLoading && (
-        <div className="text-center">
+        <div className="flex flex-col items-center justify-center py-16 text-center">
           <Spinner label="Loading rankings" />
           <p>Loading rankings…</p>
         </div>

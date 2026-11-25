@@ -17,16 +17,16 @@ export default async function RecordsReviewPage() {
   return (
     <PageLayout title="Records and firsts review" description="Claims waiting for a decision, oldest first. Click a line to see all details.">
       <AdminNav current="/admin/records-review" />
-      <section className="p-4 sm:p-0 stack gap-2">
+      <section className="stack gap-2">
         <h3 className="text-lg font-semibold">World records</h3>
         <EntryTable rows={rows.filter(r => r.kind === 'record' && !r.newCategory)} />
       </section>
-      <section className="p-4 sm:p-0 stack gap-2">
+      <section className="stack gap-2">
         <h3 className="text-lg font-semibold">World records in a new category</h3>
-        <p className="text-sm text-gray-600">Approving creates the category (as Unchallenged) or maps the claim to an existing one.</p>
+        <p className="text-sm text-default">Approving creates the category (as Unchallenged) or maps the claim to an existing one.</p>
         <EntryTable rows={rows.filter(r => r.newCategory)} />
       </section>
-      <section className="p-4 sm:p-0 stack gap-2">
+      <section className="stack gap-2">
         <h3 className="text-lg font-semibold">World firsts</h3>
         <EntryTable rows={rows.filter(r => r.kind === 'first')} />
       </section>

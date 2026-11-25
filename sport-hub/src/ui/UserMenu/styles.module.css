@@ -36,7 +36,7 @@
 
 @media (min-width: 40rem) {  /* --breakpoint-sm: 640px */
   .userMenuText {
-    color: var(--color-neutral-50);
+    color: var(--isa-color-surface-subtle);
     display: block;
     text-align: left;
   }

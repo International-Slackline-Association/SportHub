@@ -24,7 +24,7 @@ export default async function RecordCategoriesPage() {
       description="Click a category to see its details and modify or delete it. Active: the best performance is the World Record. Unchallenged: one achievement nobody has equalled or beaten yet, not a World Record; an approved claim that equals or beats it makes the category Active automatically. Archived: no new claims; the best performance is a Historical World Record."
     >
       <AdminNav current="/admin/records-categories" />
-      <section className="p-4 sm:p-0 stack gap-6">
+      <section className="stack gap-6">
         <div className="stack gap-3">
           <h3 className="text-lg font-semibold">World record categories</h3>
           <div><Button as={Link} href={categoryHref('record', 'new')} variant="secondary">Add a record category</Button></div>

@@ -12,7 +12,7 @@
   align-items: center;
   gap: 0.5rem;
   background: #FFF;
-  border: 1px solid var(--color-neutral-300);
+  border: 1px solid var(--isa-color-border-strong);
   border-radius: 8px;
   padding: 0.5rem 0.75rem;
 }
@@ -38,9 +38,9 @@
 
 .dragging {
   opacity: 0.6;
-  outline: 2px dashed var(--color-primary-500, #6aa3ff);
+  outline: 2px dashed var(--isa-color-border-focus);
 }
 
 .over {
-  box-shadow: 0 0 0 2px var(--color-primary-500, #6aa3ff) inset;
+  box-shadow: 0 0 0 2px var(--isa-color-border-focus) inset;
 }

@@ -48,7 +48,7 @@ export default function Page() {
       title="Component Library"
       description="A space to view all our components for testing purposes"
     >
-      <section className="p-4 sm:p-0">
+      <section>
         <h2>Buttons</h2>
         <div className="flex flex-row gap-4">
           <Button variant="primary">Primary Button</Button>
@@ -59,7 +59,7 @@ export default function Page() {
           <Button variant="ghost">Ghost Button</Button>
         </div>
       </section>
-      <section className="p-4 sm:p-0">
+      <section>
         <h2>Badges</h2>
         <div className="flex flex-row gap-4">
           <div className="stack gap-4">
@@ -185,12 +185,12 @@ export default function Page() {
           </div>
         </div>
       </section>
-      <section className="p-4 sm:p-0">
+      <section>
         <div className="stack gap-4">
           <DisciplineDropdown />
         </div>
       </section>
-      <section className="p-4 sm:p-0">
+      <section>
         <h2>Form Fields</h2>
         <div className="max-w-2xl">
           <Formik

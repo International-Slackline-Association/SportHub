@@ -13,13 +13,15 @@ const footerLinks = [
 
 const Footer = () => {
   return (
-    <SiteFooter linkAs={Link} links={footerLinks} navLabel="Footer">
-      <Image
-        alt="ISA Sport"
-        height={93}
-        src="/static/images/sport-hub-logo.png"
-        width={160}
-      />
+    <SiteFooter className="sport-hub-footer" linkAs={Link} links={footerLinks} navLabel="Footer">
+      <div className="sport-hub-footer__brand">
+        <Image
+          alt="ISA Sport"
+          height={70}
+          src="/static/images/sport-hub-logo.png"
+          width={120}
+        />
+      </div>
     </SiteFooter>
   )
 }

@@ -4,29 +4,29 @@ import { cn } from "@utils/cn";
 
 const colorStyles = {
   blue: {
-    surface: "bg-blue-50 border-blue-200",
-    hover: "hover:bg-blue-100",
-    title: "text-blue-900",
+    surface: "bg-status-info-bg border-default",
+    hover: "hover:bg-status-info-bg",
+    title: "text-link",
   },
   amber: {
-    surface: "bg-amber-50 border-amber-200",
-    hover: "hover:bg-amber-100",
-    title: "text-amber-900",
+    surface: "bg-status-warning-bg border-strong",
+    hover: "hover:bg-status-warning-bg",
+    title: "text-status-warning-fg",
   },
   red: {
-    surface: "bg-red-50 border-red-200",
-    hover: "hover:bg-red-100",
-    title: "text-red-900",
+    surface: "bg-status-danger-bg border-danger",
+    hover: "hover:bg-status-danger-bg",
+    title: "text-danger",
   },
   green: {
-    surface: "bg-green-50 border-green-200",
-    hover: "hover:bg-green-100",
-    title: "text-green-900",
+    surface: "bg-status-success-bg border-default",
+    hover: "hover:bg-status-success-bg",
+    title: "text-success",
   },
   gray: {
-    surface: "bg-gray-50 border-gray-200",
-    hover: "hover:bg-gray-100",
-    title: "text-gray-900",
+    surface: "bg-subtle border-default",
+    hover: "hover:bg-muted",
+    title: "text-default",
   },
 } as const;
 
@@ -55,7 +55,7 @@ export function GridSection({
   const body = (
     <>
       <h3 className={cn("text-lg font-semibold mb-2", styles.title)}>{title}</h3>
-      <div className="text-sm text-gray-700">{content}</div>
+      <div className="text-sm text-default">{content}</div>
     </>
   );
 
