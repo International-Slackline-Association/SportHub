@@ -156,10 +156,6 @@ export interface EventMetadataRecord extends EventTableRecord {
 
   disciplines?: string[];  // Optional list of disciplines for the event (not used in queries)
 
-  // Optional embedded contests for convenience (not used in queries)
-  // Currently no records have these values, but they could in the future
-  contests?: ContestRecord[];  
-
   // Old format
   name?: string;
 }

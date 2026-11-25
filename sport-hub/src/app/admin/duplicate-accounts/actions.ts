@@ -37,19 +37,12 @@ export async function fetchUserProfileAndRecords(userId: string): Promise<UserPr
   const eventIdsFromParticipationRecords = new Set(participationRecords.participations.map((p) => p.eventId));
   const eventIdsFromContestRecords = new Set(contestRecordsWithUserResults.map((c) => c.eventId));
 
-  const eventHasUserInEmbeddedContestResults = (event: EventMetadataRecord) =>
-    event.contests?.some((contest) =>
-      contest.results.some((result) => result.id === userId)
-    );
-
-  // Event metadata usually doesn't have embedded contests. We still want them to dervice the event
-  // name and date for the results list
+  // Event metadata gives the event name and date for the results list
   const eventRecords = eventItemsRaw
     .filter((item) => item.sortKey === 'Metadata')
     .map((item) => item as unknown as EventMetadataRecord)
     .filter((event) =>
-      eventHasUserInEmbeddedContestResults(event)
-      || eventIdsFromParticipationRecords.has(event.eventId)
+      eventIdsFromParticipationRecords.has(event.eventId)
       || eventIdsFromContestRecords.has(event.eventId)
     );
 
@@ -130,7 +123,7 @@ export async function mergeDuplicateAccounts(options: {
   mergeUserProfile?: boolean; 
   dryRun?: boolean 
   verbose?: boolean 
-}): Promise<{ participationRecordsMoved: number; contestRecordsUpdated: number; metadataRecordsUpdated: number; profileUpdated: boolean }> {
+}): Promise<{ participationRecordsMoved: number; contestRecordsUpdated: number; profileUpdated: boolean }> {
   await requireUserManager();
   const { dryRun = true, verbose = true } = options;
   const {
@@ -141,7 +134,6 @@ export async function mergeDuplicateAccounts(options: {
     profile: secondaryProfile,
     participationRecords: secondaryParticipations,
     contestRecords: secondaryContests,
-    eventRecords: secondaryEvents,
   } = options.secondaryUserProfileAndRecords;
 
   const primaryUserId = primaryProfile?.userId;
@@ -197,33 +189,6 @@ export async function mergeDuplicateAccounts(options: {
     }
   }
 
-  // Update embedded contest results in event metadata records to replace secondaryUserId with primaryUserId
-  let metadataRecordsUpdated = 0;
-  for (const eventMetadata of secondaryEvents) {
-      let contestRowsChanged = false;
-      const updatedMetadataContests = (eventMetadata?.contests || []).map((contest) => { 
-        const { updatedResults, didUpdate } = updateContestResults(contest, secondaryProfile, primaryProfile);        
-        if (didUpdate) {
-          contestRowsChanged = true;
-        }
-        return {
-          ...contest,
-          results: updatedResults,
-        };
-      });
-
-      if (contestRowsChanged) {
-        console.log("Updating metadata record for event", eventMetadata.eventId, "with new contest results", verbose ? updatedMetadataContests : '');
-        if (!dryRun) {
-          await dynamodb.putItem(EVENTS_TABLE, {
-            ...eventMetadata,
-            contests: updatedMetadataContests,
-          });
-        }
-        metadataRecordsUpdated += 1;
-      }
-  }
-
   // Update primary user profile with missing details from secondary profile, if mergeUserProfile option is true
   const updatedProfile = getUpdatedProfile(primaryProfile, secondaryProfile);
   if (primaryProfile?.userId && updatedProfile) {
@@ -251,7 +216,6 @@ export async function mergeDuplicateAccounts(options: {
   return {
     participationRecordsMoved,
     contestRecordsUpdated,
-    metadataRecordsUpdated,
     profileUpdated: !!updatedProfile,
   };
 }
