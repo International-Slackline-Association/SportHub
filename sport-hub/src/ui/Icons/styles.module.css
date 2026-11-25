@@ -9,19 +9,19 @@
 }
 
 .chevronLight {
-  color: var(--color-neutral-50);
+  color: var(--isa-color-surface-subtle);
 }
 
 .chevronDark {
-  color: var(--color-neutral-700);
+  color: var(--isa-color-text-default);
 }
 
 .infoIcon {
-  color: var(--color-neutral-500);
+  color: var(--isa-color-text-muted);
   cursor: help;
   transition: color 0.2s ease;
 }
 
 .infoIcon:hover {
-  color: var(--color-primary);
+  color: var(--isa-color-text-link);
 }

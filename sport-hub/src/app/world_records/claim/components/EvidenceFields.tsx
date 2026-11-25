@@ -75,7 +75,7 @@ function FileUpload({ ensureSaved, onUploaded, onClose }: { ensureSaved: EnsureC
   const uploading = progress !== null;
   // Same layout as a link row: description on the left, the file picker where the link field would be
   return (
-    <div className="stack gap-2 border-l-2 border-gray-200 pl-3">
+    <div className="stack gap-2 border-l-2 border-default pl-3">
       <div className="flex gap-2 items-end flex-wrap">
         <TextField
           className="flex-1 min-w-[12rem]"
@@ -93,14 +93,14 @@ function FileUpload({ ensureSaved, onUploaded, onClose }: { ensureSaved: EnsureC
             <Button type="button" variant="secondary" size="small" disabled={uploading} onClick={() => input.current?.click()}>
               {file ? 'Change file' : 'Choose file'}
             </Button>
-            <span className="text-sm break-all text-gray-600">{file ? `${file.name} (${formatFileSize(file.size)})` : 'No file chosen'}</span>
+            <span className="text-sm break-all text-default">{file ? `${file.name} (${formatFileSize(file.size)})` : 'No file chosen'}</span>
           </div>
         </FormikFormField>
       </div>
-      <small className="text-xs text-gray-600">Photos, videos, GPX/KML/FIT/TCX tracks, PDF, CSV, TXT or spreadsheets, up to {MAX_EVIDENCE_FILE_LABEL}. The file is named after its description.</small>
+      <small className="text-xs text-default">Photos, videos, GPX/KML/FIT/TCX tracks, PDF, CSV, TXT or spreadsheets, up to {MAX_EVIDENCE_FILE_LABEL}. The file is named after its description.</small>
       {uploading && (
         <div className="stack gap-1">
-          <div className="h-2 bg-gray-200 rounded"><div className="h-2 bg-blue-600 rounded" style={{ width: `${Math.round((progress ?? 0) * 100)}%` }} /></div>
+          <div className="h-2 bg-muted rounded"><div className="h-2 bg-action-primary-bg rounded" style={{ width: `${Math.round((progress ?? 0) * 100)}%` }} /></div>
           <small className="text-xs">Uploading… {Math.round((progress ?? 0) * 100)}%. Keep this page open.</small>
         </div>
       )}
@@ -123,23 +123,23 @@ export default function EvidenceFields({ ensureSaved, uploadsEnabled }: Props) {
       {({ push, remove }) => (
         <div className="stack gap-3">
           {values.evidence.map((item, i) => (
-            <div key={item.driveFileId ?? `row-${i}`} className="stack gap-2 border-l-2 border-gray-200 pl-3">
+            <div key={item.driveFileId ?? `row-${i}`} className="stack gap-2 border-l-2 border-default pl-3">
               <div className="flex gap-2 items-end flex-wrap">
                 <FormikTextField className="flex-1 min-w-[12rem]" id={`evidence.${i}.description`} name={`evidence.${i}.description`} label="Description" placeholder="e.g. Full video of the attempt" required />
                 {item.type === 'link' ? (
                   <FormikTextField className="flex-1 min-w-[12rem]" id={`evidence.${i}.url`} name={`evidence.${i}.url`} label="Link" placeholder="https://" required />
                 ) : (
                   <div className="flex-1 min-w-[12rem] stack gap-1 pb-2">
-                    <span className="text-sm font-medium text-gray-600">File</span>
-                    <span className="text-sm break-all">{item.originalFileName ?? item.fileName} <span className="text-gray-500">({formatFileSize(item.size)}, uploaded)</span></span>
+                    <span className="text-sm font-medium text-default">File</span>
+                    <span className="text-sm break-all">{item.originalFileName ?? item.fileName} <span className="text-muted">({formatFileSize(item.size)}, uploaded)</span></span>
                   </div>
                 )}
-                <button type="button" className="text-xs text-red-600 underline pb-2" onClick={() => remove(i)}>Remove</button>
+                <button type="button" className="text-xs text-danger underline pb-2" onClick={() => remove(i)}>Remove</button>
               </div>
             </div>
           ))}
           {values.evidence.some(e => e.type === 'file') && (
-            <small className="text-xs text-gray-600">Removed files are deleted from the evidence folder when you save the claim.</small>
+            <small className="text-xs text-default">Removed files are deleted from the evidence folder when you save the claim.</small>
           )}
 
           {uploadOpen && (

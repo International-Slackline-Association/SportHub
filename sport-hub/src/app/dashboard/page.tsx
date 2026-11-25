@@ -38,7 +38,7 @@ export default async function DashboardPage() {
       description="Manage your profile and access your personal information."
     >
       {/* Info message if user not in database */}
-      <div className="p-4 sm:p-0 stack gap-4">
+      <div className="stack gap-4">
         {!profileResult.success && (
           <Alert variant="info">
             <p className="font-medium">Complete your profile</p>
@@ -137,7 +137,7 @@ export default async function DashboardPage() {
               <details>
                 <summary className="cursor-pointer font-medium">View session JSON</summary>
                 <p className="mt-4 mb-2">You are authenticated with AWS Cognito via OIDC.</p>
-                <pre className="bg-gray-900 text-gray-100 p-3 rounded overflow-auto text-xs">
+                <pre className="bg-inverse text-inverse p-3 rounded overflow-auto text-xs">
                   {JSON.stringify(session, null, 2)}
                 </pre>
               </details>

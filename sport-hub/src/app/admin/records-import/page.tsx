@@ -20,7 +20,7 @@ export default async function RecordsImportPage() {
       description="Rows from the certificates sheet that need a decision. Rows without a category or a readable value were not imported; the others were imported and only need checking."
     >
       <AdminNav current="/admin/records-import" />
-      <section className="p-4 sm:p-0">
+      <section>
         <ImportIssueList
           issues={issues}
           recordCategories={recordCategories.sort((a, b) => a.order - b.order).map(c => ({ categoryId: c.categoryId, label: `${c.group} · ${c.name}${c.status === 'archived' ? ' (archived)' : ''}` }))}

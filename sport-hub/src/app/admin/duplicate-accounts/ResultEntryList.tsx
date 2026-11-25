@@ -39,7 +39,7 @@ const ResultEntryListItem = ({
 }) => {
 
   return (
-    <li className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+    <li className="rounded-lg border border-default bg-subtle p-3">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p>{eventName || "Unknown event name"}</p>
@@ -89,7 +89,7 @@ export const ResultEntryList = ({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h4 className="font-semibold">{title}</h4>
-        <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium">
+        <span className="rounded-full bg-muted px-2 py-1 text-xs font-medium">
           {sortedParticipations.length + sortedContests.length + sortedEmbeddedContests.length}
         </span>
       </div>

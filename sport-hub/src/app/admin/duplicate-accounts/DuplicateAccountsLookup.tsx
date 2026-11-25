@@ -43,7 +43,7 @@ const AthletePreview = ({
         {...profile}
         disciplines={[...new Set(participationRecords.map((p) => p.discipline).filter(Boolean))] as Discipline[]}
       />
-      <div className="space-y-1 text-sm text-gray-600">
+      <div className="space-y-1 text-sm text-default">
         <p>User ID: {profile.userId}</p>
         <p>ISA ID: {profile.isaUsersId || 'None'}</p>
         <p>Email: {profile.email || 'None'}</p>
@@ -141,7 +141,7 @@ export default function DuplicateAccountsLookup() {
         const isLookUpValid = values.primaryUser.id && values.secondaryUser.id && values.primaryUser.id !== values.secondaryUser.id;
         return (
           <Form className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-gray-200 rounded-lg p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-default rounded-lg p-4">
               <div className="space-y-2">
                 <h3>Primary account</h3>
                 <UserAutocomplete formKey="primaryUser" />
@@ -152,7 +152,7 @@ export default function DuplicateAccountsLookup() {
               </div>
             </div>
 
-            <div className="flex flex-wrap justify-between gap-3 items-center border border-gray-200 rounded-lg p-4">
+            <div className="flex flex-wrap justify-between gap-3 items-center border border-default rounded-lg p-4">
               <div>
                 <p>Compare selected accounts</p>
                 <p>Review the contest results before changing ownership.</p>
@@ -166,17 +166,17 @@ export default function DuplicateAccountsLookup() {
             </div>
 
             {primaryUserProfileAndRecords && secondaryUserProfileAndRecords && (
-              <div className="border border-gray-200 rounded-lg p-4 space-y-4">
-                <div className="flex items-center justify-center gap-3 text-sm font-medium text-gray-700">
-                  <span className="rounded-full bg-blue-50 px-2 py-1 text-blue-700">Primary account</span>
-                  <span className="text-2xl text-blue-500">←</span>
-                  <span className="rounded-full bg-amber-50 px-2 py-1 text-amber-700">Secondary</span>
+              <div className="border border-default rounded-lg p-4 space-y-4">
+                <div className="flex items-center justify-center gap-3 text-sm font-medium text-default">
+                  <span className="rounded-full bg-status-info-bg px-2 py-1 text-link">Primary account</span>
+                  <span className="text-2xl text-link">←</span>
+                  <span className="rounded-full bg-status-warning-bg px-2 py-1 text-status-warning-fg">Secondary</span>
                 </div>
 
                 <div className="grid grid-cols-1 xl:grid-cols-[1fr_auto_1fr] gap-5 items-start">
                   <AthletePreview profileAndRecords={primaryUserProfileAndRecords} variant="primary" />
                   <div className="hidden xl:flex h-full min-h-[200px] items-center justify-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-3xl text-blue-600">←</div>
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-status-info-bg text-3xl text-link">←</div>
                   </div>
                   <AthletePreview profileAndRecords={secondaryUserProfileAndRecords} variant="secondary" />
                 </div>
@@ -187,7 +187,7 @@ export default function DuplicateAccountsLookup() {
               <Alert variant={alertStatus}>{alert}</Alert>
             )}
 
-            <div className="border border-gray-200 rounded-lg p-4 space-y-4">
+            <div className="border border-default rounded-lg p-4 space-y-4">
               <div>
                 <p>Review before merging</p>
                 <p>

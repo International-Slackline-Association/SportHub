@@ -17,19 +17,19 @@ function SignInContent() {
 
   return (
     <PageLayout title="Sign In" description="Sign in to SportHub">
-      <div className="flex items-center justify-center p-4 sm:p-0">
+      <div className="flex items-center justify-center">
         <div className="w-full max-w-md space-y-8">
-          <div className="bg-white shadow-lg rounded-lg p-8">
+          <div className="bg-default shadow-lg rounded-lg p-8">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900">Welcome to SportHub</h2>
-              <p className="mt-2 text-sm text-gray-600">
+              <h2 className="text-3xl font-bold text-default">Welcome to SportHub</h2>
+              <p className="mt-2 text-sm text-default">
                 Sign in with your ISA Slackline account
               </p>
             </div>
 
             {error && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-sm text-red-600">
+              <div className="mb-4 p-4 bg-status-danger-bg border border-danger rounded-md">
+                <p className="text-sm text-danger">
                   {error === "OAuthSignin" && "Error occurred during sign in. Please try again."}
                   {error === "OAuthCallback" && "Error occurred during authentication callback."}
                   {error === "OAuthCreateAccount" && "Could not create user account."}
@@ -47,7 +47,7 @@ function SignInContent() {
             <div className="space-y-4">
               <button
                 onClick={handleSignIn}
-                className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-transparent text-base font-medium rounded-md text-inverse bg-action-primary-bg hover:bg-action-primary-bg-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-border-focus transition-colors"
               >
                 <svg
                   className="h-5 w-5"
@@ -65,7 +65,7 @@ function SignInContent() {
                 Sign in with AWS Cognito
               </button>
 
-              <p className="text-xs text-center text-gray-500">
+              <p className="text-xs text-center text-muted">
                 By signing in, you agree to our Terms of Service and Privacy Policy
               </p>
             </div>
@@ -73,7 +73,7 @@ function SignInContent() {
             <div className="mt-6 text-center">
               <Link
                 href="/"
-                className="text-sm text-blue-600 hover:text-blue-800"
+                className="text-sm text-link hover:text-link-hover"
               >
                 ← Back to home
               </Link>
@@ -90,7 +90,7 @@ export default function SignInPage() {
     <Suspense fallback={
       <PageLayout title="Sign In" description="Sign in to SportHub">
         <div className="flex items-center justify-center p-4">
-          <div className="animate-pulse text-gray-500">Loading...</div>
+          <div className="animate-pulse text-muted">Loading...</div>
         </div>
       </PageLayout>
     }>

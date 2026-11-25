@@ -16,9 +16,9 @@ import EvidenceFields, { type EnsureClaimSaved } from './EvidenceFields';
 
 export function Section({ title, children, description }: { title: string; description?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section className="p-4 sm:p-0 stack gap-3">
+    <section className="stack gap-3">
       <h3 className="text-lg font-semibold">{title}</h3>
-      {description && <div className="text-sm text-gray-600">{description}</div>}
+      {description && <div className="text-sm text-default">{description}</div>}
       {children}
     </section>
   );
@@ -29,7 +29,7 @@ export function ListError({ name }: { name: string }) {
   const { errors, submitCount } = useFormikContext<ClaimFormValues>();
   const error = getIn(errors, name);
   if (submitCount === 0 || typeof error !== 'string') return null;
-  return <p className="text-sm text-red-600">{error}</p>;
+  return <p className="text-sm text-danger">{error}</p>;
 }
 
 type AthletesProps = {
@@ -103,7 +103,7 @@ export function WitnessesSection({ isFirst }: { isFirst: boolean }) {
                 <FormikTextField id={`witnesses.${i}.name`} name={`witnesses.${i}.name`} label="Name" />
                 <FormikTextField id={`witnesses.${i}.email`} name={`witnesses.${i}.email`} type="email" label="Email" />
                 <FormikTextField id={`witnesses.${i}.phone`} name={`witnesses.${i}.phone`} type="tel" label="Phone" />
-                <button type="button" className="text-xs text-red-600 underline pb-2" onClick={() => remove(i)}>Remove</button>
+                <button type="button" className="text-xs text-danger underline pb-2" onClick={() => remove(i)}>Remove</button>
               </div>
             ))}
             {values.witnesses.length < MAX_WITNESSES && (
@@ -153,7 +153,7 @@ export function ValidationSummary() {
   const { submitCount, isValid } = useFormikContext<ClaimFormValues>();
   if (submitCount === 0 || isValid) return null;
   return (
-    <section className="p-4 sm:p-0">
+    <section>
       <Alert variant="danger">Some fields need attention. They are marked above.</Alert>
     </section>
   );

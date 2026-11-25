@@ -25,7 +25,7 @@ export default async function ManageEntriesPage({ params }: Props) {
       description="All entries except drafts. Click a line to see all details and modify, approve, reject or void it."
     >
       <AdminNav current={`/admin/records-manage/${segment}`} />
-      <section className="p-4 sm:p-0">
+      <section>
         <EntryTable rows={rows} showStatus filterable />
       </section>
     </PageLayout>

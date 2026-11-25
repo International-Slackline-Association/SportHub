@@ -22,12 +22,12 @@ export default async function Page() {
     <PageLayout title="Records & Firsts" heroImage={randomS3Image('WORLD_RECORDS')}>
       {/* Claiming needs an account */}
       {session?.user && (
-        <section className="p-4 sm:p-0 flex gap-3 flex-wrap items-center">
+        <section className="flex gap-3 flex-wrap items-center">
           <Button as={Link} href="/world_records/claim" variant="primary">Claim World Record or World First</Button>
           <Button as={Link} href="/world_records/my-claims" variant="secondary">My Claims</Button>
         </section>
       )}
-      <section className="p-4 sm:p-0">
+      <section>
         <WorldRecordsPageContent worldRecords={worldRecords} worldFirsts={worldFirsts} />
       </section>
     </PageLayout>

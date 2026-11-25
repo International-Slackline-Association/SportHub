@@ -32,12 +32,12 @@ export const MyEventsList = ({ events }: {events: Record<string, unknown>[]}) =>
         const formattedLocation = `${event.city}, ${countryName}`;
 
         return (
-          <li className="stack gap-1 border border-neutral-300 p-2" key={eventId}>
+          <li className="stack gap-1 border border-default p-2" key={eventId}>
             <div className="cluster justify-between">
               <div className="font-bold">
                 {status === "published" 
                   ? (
-                    <Link href={`/events/${eventId}`} className="text-blue-600 hover:underline">
+                    <Link href={`/events/${eventId}`} className="text-link hover:underline">
                       {formattedEventName}
                     </Link>
                   ) 
@@ -58,7 +58,7 @@ export const MyEventsList = ({ events }: {events: Record<string, unknown>[]}) =>
               <div>Contests: {contests.length}</div>
               <div>{disciplines.map(d => <Discipline key={d} variant={d} />)}</div>
             </div>
-            <div className="cluster justify-between text-gray-400">
+            <div className="cluster justify-between text-muted">
               <div>Created At: {formattedCreatedAt}</div>
             </div>
             <MyEventActions eventId={eventId} status={status} />

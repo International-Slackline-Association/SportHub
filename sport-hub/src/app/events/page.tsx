@@ -49,7 +49,7 @@ export default async function Page() {
       description="View the latest events and competitions across all disciplines."
       heroImage={randomS3Image('EVENTS')}
     >
-      <section className="p-4 sm:p-0">
+      <section>
         <ContestsTable initialData={contestsData} />
       </section>
 

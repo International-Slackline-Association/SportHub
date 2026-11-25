@@ -9,7 +9,7 @@ import { CountryFlag, resolveIso2 } from "@ui/CountryFlag";
 import { COUNTRIES } from "@utils/countries";
 import Link from "next/link";
 
-export const linkClassName = "underline text-blue-600 hover:text-blue-800 visited:text-purple-600";
+export const linkClassName = "underline text-link hover:text-link-hover visited:text-category-purple-fg";
 
 // Generic formatters that infer the table row type `T` so they can be reused
 // across tables typed with `WorldRecord` or `WorldFirst` (or a union).
@@ -72,8 +72,8 @@ export const genderFilterFn = <T extends WorldRecord | WorldFirst>(row: Row<T>, 
 /** World Records in yellow, Former and Historical World Records in grey text; Unchallenged achievements have no title. */
 export const TitleBadge = ({ title, standing }: { title: string; standing?: RecordStanding }) => {
   if (standing === 'unchallenged') return <Badge color="neutral">Unchallenged</Badge>;
-  if (standing === 'former' || standing === 'historical') return <span className="text-xs text-gray-500">{title}</span>;
-  if (!title) return <span className="text-xs text-gray-400">History</span>;
+  if (standing === 'former' || standing === 'historical') return <span className="text-xs text-muted">{title}</span>;
+  if (!title) return <span className="text-xs text-muted">History</span>;
   return <Badge color="yellow">{title}</Badge>;
 };
 

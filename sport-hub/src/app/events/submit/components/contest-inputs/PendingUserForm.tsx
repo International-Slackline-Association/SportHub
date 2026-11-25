@@ -60,19 +60,19 @@ export default function PendingUserForm({ formKey }: Props) {
   if (isConfirmed && !isOpen) {
     return (
       <div className="flex items-center gap-2 mt-1 flex-wrap">
-        <span className="inline-flex items-center text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
+        <span className="inline-flex items-center text-xs font-medium text-status-warning-fg bg-status-warning-bg border border-strong px-2 py-0.5 rounded">
           New: {pendingUser!.name} {pendingUser!.surname}
         </span>
         <button
           type="button"
-          className="text-xs text-gray-500 underline hover:text-gray-700"
+          className="text-xs text-muted underline hover:text-default"
           onClick={handleOpen}
         >
           Edit
         </button>
         <button
           type="button"
-          className="text-xs text-red-500 underline hover:text-red-700"
+          className="text-xs text-danger underline hover:text-danger"
           onClick={handleRemove}
         >
           Remove
@@ -84,12 +84,12 @@ export default function PendingUserForm({ formKey }: Props) {
   // Inline form card
   if (isOpen) {
     return (
-      <div className="border border-blue-200 rounded-lg p-4 bg-blue-50 stack gap-3 mt-2 w-full">
+      <div className="border border-default rounded-lg p-4 bg-status-info-bg stack gap-3 mt-2 w-full">
         <div className="flex justify-between items-center">
-          <h5 className="font-medium text-sm text-blue-900">New User Details</h5>
+          <h5 className="font-medium text-sm text-link">New User Details</h5>
           <button
             type="button"
-            className="text-gray-400 hover:text-gray-600 text-xs leading-none"
+            className="text-muted hover:text-default text-xs leading-none"
             onClick={handleCancel}
             aria-label="Close"
           >

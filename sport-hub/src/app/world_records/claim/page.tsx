@@ -31,7 +31,7 @@ export default async function ClaimPage({ searchParams }: Props) {
     if (!isClaimEditable) {
       return (
         <PageLayout title="Claim a World Record or First">
-          <section className="p-4 sm:p-0 stack gap-2">
+          <section className="stack gap-2">
             <Alert variant="danger">This claim cannot be edited. It may be under review or already decided.</Alert>
             <Button as={Link} href="/world_records/my-claims" variant="secondary" size="small">Back to my claims</Button>
           </section>

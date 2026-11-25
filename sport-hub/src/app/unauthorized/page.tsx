@@ -16,11 +16,11 @@ export default async function UnauthorizedPage({
       title=""
       description=""
     >
-      <div className="p-4 sm:p-0">
-        <div className="max-w-2xl mx-auto bg-white shadow rounded-lg p-8 text-center">
+      <div>
+        <div className="max-w-2xl mx-auto bg-default shadow rounded-lg p-8 text-center">
           <div className="mb-6">
             <svg
-              className="mx-auto h-24 w-24 text-red-500"
+              className="mx-auto h-24 w-24 text-danger"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -34,27 +34,27 @@ export default async function UnauthorizedPage({
             </svg>
           </div>
 
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+          <h1 className="text-3xl font-bold text-default mb-4">
             Access Denied
           </h1>
 
-          <p className="text-gray-600 mb-6">
+          <p className="text-default mb-6">
             You don&apos;t have the required permissions to access this page.
           </p>
 
           {requiredRole && (
-            <p className="text-sm text-gray-500 mb-6">
-              Required role: <code className="bg-gray-100 px-2 py-1 rounded">{requiredRole}</code>
+            <p className="text-sm text-muted mb-6">
+              Required role: <code className="bg-muted px-2 py-1 rounded">{requiredRole}</code>
             </p>
           )}
 
           {session && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <p className="text-sm text-blue-800">
+            <div className="bg-status-info-bg border border-default rounded-lg p-4 mb-6">
+              <p className="text-sm text-link">
                 You are currently signed in as: <strong>{session.user.email}</strong>
               </p>
-              <p className="text-sm text-blue-600">
-                Role: <code className="bg-blue-100 px-2 py-1 rounded">{rolesLabel(session.user.roles)}</code>
+              <p className="text-sm text-link">
+                Role: <code className="bg-status-info-bg px-2 py-1 rounded">{rolesLabel(session.user.roles)}</code>
               </p>
             </div>
           )}
@@ -62,13 +62,13 @@ export default async function UnauthorizedPage({
           <div className="space-x-4">
             <Link
               href="/dashboard"
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-inverse bg-action-primary-bg hover:bg-action-primary-bg-hover"
             >
               Go to Dashboard
             </Link>
             <Link
               href="/"
-              className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              className="inline-flex items-center px-6 py-3 border border-default text-base font-medium rounded-md text-default bg-default hover:bg-subtle"
             >
               Back to Home
             </Link>

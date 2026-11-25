@@ -46,17 +46,17 @@ export const CountryFlag = ({
   iconOnly?: boolean;
   size?: number;
 }) => {
-  if (!country) return <span className="text-gray-500">{defaultValue}</span>;
+  if (!country) return <span className="text-muted">{defaultValue}</span>;
 
   const iso2 = resolveIso2(country);
-  if (!iso2) return <span className="text-sm text-gray-600">{country}</span>;
+  if (!iso2) return <span className="text-sm text-default">{country}</span>;
 
   const countryName = COUNTRIES.find(c => c.code === iso2)?.name ?? country;
 
   return (
     <div className="flex items-center gap-2" title={countryName}>
       <CircleFlag countryCode={iso2} height={size} width={size} />
-      {!iconOnly && <span className="text-sm text-gray-600">{countryName}</span>}
+      {!iconOnly && <span className="text-sm text-default">{countryName}</span>}
     </div>
   );
 };
@@ -73,7 +73,7 @@ export const CountryFlagFromIoc = ({
   defaultValue?: string;
 }) => {
   if (!iocCode || iocCode === 'N/A') {
-    return <span className="text-gray-500">{defaultValue}</span>;
+    return <span className="text-muted">{defaultValue}</span>;
   }
 
   const iso2 = getIso2FromIoc(iocCode);
@@ -81,7 +81,7 @@ export const CountryFlagFromIoc = ({
   return (
     <div className="flex items-center gap-2" title={iocCode}>
       <CircleFlag countryCode={iso2} height={22} width={22} />
-      <span className="text-sm text-gray-600">{iocCode}</span>
+      <span className="text-sm text-default">{iocCode}</span>
     </div>
   );
 };

@@ -62,9 +62,11 @@ export function dateFilterFn<TData>(
 
 const TextTableFilter = <TData,>({ column }: TableFilterProps<TData>) => {
   const placeholder = column.columnDef.meta?.filterPlaceholder ?? `Enter ${columnLabel(column).toLowerCase()}`;
+  const filterClassName = column.columnDef.meta?.filterClassName;
 
   return (
     <TextField
+      className={filterClassName}
       id={column.id}
       label={columnLabel(column)}
       name={column.id}

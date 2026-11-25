@@ -52,10 +52,10 @@ export default function EditEventClient({ eventId, initialValues, canEditOrganiz
 
   if (saved) {
     return (
-      <div className={cn(styles.formWrapper, 'stack gap-6 items-start p-4 sm:p-0')}>
+      <div className="stack gap-6 items-start">
         <div className="stack gap-2">
           <h2 className="text-xl font-semibold">Changes saved</h2>
-          <p className="text-sm text-gray-600">Your event has been updated.</p>
+          <p className="text-sm text-default">Your event has been updated.</p>
         </div>
         <div className="flex gap-3">
           <Link href="/events/my-events">
@@ -90,7 +90,7 @@ export default function EditEventClient({ eventId, initialValues, canEditOrganiz
         const submitDisabled = !isValid || !dirty;
 
         return (
-          <Form className={cn(styles.formWrapper, 'stack')}>
+          <Form className="stack">
             <Tabs
               aria-label="Submission steps"
               className="mb-2"

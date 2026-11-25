@@ -45,9 +45,9 @@ export default async function EventApprovalPage() {
       title="Event Approval"
       description="Review and approve events submitted by organizers."
     >
-      <section className="p-4 sm:p-0">
+      <section>
         {events.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-muted">
             No events pending approval.
           </div>
         ) : (
@@ -69,26 +69,26 @@ export default async function EventApprovalPage() {
               const hasPendingUsers = pendingUsers.length > 0;
 
               return (
-                <div key={eventId} className="border border-gray-200 rounded-lg overflow-hidden">
+                <div key={eventId} className="border border-default rounded-lg overflow-hidden">
                   {/* Event header row */}
-                  <div className="flex flex-wrap gap-4 items-start justify-between p-4 bg-white">
+                  <div className="flex flex-wrap gap-4 items-start justify-between p-4 bg-default">
                     <div className="stack gap-1">
-                      <Link href={`/events/${eventId}`} className="font-semibold text-blue-700 hover:underline">
+                      <Link href={`/events/${eventId}`} className="font-semibold text-link hover:underline">
                         {String(event.eventName ?? "—")}
                       </Link>
-                      <div className="text-xs text-gray-500 flex gap-3 flex-wrap">
+                      <div className="text-xs text-muted flex gap-3 flex-wrap">
                         <span>
                           By{" "}
                           {event.createdBy ? (
                             <Link
                               href={`/athlete/${event.createdBy}`}
-                              className="text-blue-600 hover:underline"
+                              className="text-link hover:underline"
                             >
                               {String(event.createdByName ?? event.createdBy)}
                             </Link>
                           ) : "—"}
                           {!!event.createdBy && (
-                            <span className="ml-1 text-gray-400">({String(event.createdBy)})</span>
+                            <span className="ml-1 text-muted">({String(event.createdBy)})</span>
                           )}
                         </span>
                         <span>{dates}</span>
@@ -99,19 +99,19 @@ export default async function EventApprovalPage() {
                     </div>
                     <div className="flex gap-2 items-center flex-wrap">
                       {hasPendingUsers && (
-                        <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded font-medium">
+                        <span className="text-xs text-status-warning-fg bg-status-warning-bg border border-strong px-2 py-1 rounded font-medium">
                           ⚠ {pendingUsers.length} new user{pendingUsers.length !== 1 ? "s" : ""} to create
                         </span>
                       )}
                       <Link
                         href={`/events/${eventId}`}
-                        className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50"
+                        className="px-3 py-1 text-xs border border-default rounded hover:bg-subtle"
                       >
                         View Details
                       </Link>
                       <Link
                         href={`/events/my-events/${encodeURIComponent(eventId)}/edit`}
-                        className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50"
+                        className="px-3 py-1 text-xs border border-default rounded hover:bg-subtle"
                       >
                         Edit Event Details
                       </Link>
@@ -122,7 +122,7 @@ export default async function EventApprovalPage() {
                         <button
                           type="submit"
                           disabled={hasPendingUsers}
-                          className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                          className="px-3 py-1 text-xs bg-action-primary-bg text-inverse rounded hover:bg-action-primary-bg-hover disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                           title={hasPendingUsers ? "Create all new users before approving" : undefined}
                         >
                           Approve
@@ -134,7 +134,7 @@ export default async function EventApprovalPage() {
                       }}>
                         <button
                           type="submit"
-                          className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 cursor-pointer"
+                          className="px-3 py-1 text-xs border border-default rounded hover:bg-subtle cursor-pointer"
                         >
                           Reject
                         </button>
@@ -144,8 +144,8 @@ export default async function EventApprovalPage() {
 
                   {/* Pending users sub-section */}
                   {hasPendingUsers && (
-                    <div className="border-t border-amber-100 bg-amber-50 p-4 stack gap-3">
-                      <h4 className="text-xs font-semibold text-amber-800 uppercase tracking-wide">
+                    <div className="border-t border-strong bg-status-warning-bg p-4 stack gap-3">
+                      <h4 className="text-xs font-semibold text-status-warning-fg uppercase tracking-wide">
                         New Users — must be created before approving
                       </h4>
                       <div className="stack gap-2">
@@ -158,24 +158,24 @@ export default async function EventApprovalPage() {
                             entry.entryIdx,
                           );
                           return (
-                            <div key={i} className="flex flex-wrap items-center gap-3 bg-white border border-amber-200 rounded px-3 py-2 text-sm">
+                            <div key={i} className="flex flex-wrap items-center gap-3 bg-default border border-strong rounded px-3 py-2 text-sm">
                               <div className="stack gap-0.5 flex-1 min-w-0">
                                 <span className="font-medium">
                                   {entry.pendingUser.name} {entry.pendingUser.surname}
                                 </span>
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs text-muted">
                                   {entry.pendingUser.email}
                                   {entry.pendingUser.gender && ` · ${entry.pendingUser.gender}`}
                                   {entry.pendingUser.country && ` · ${entry.pendingUser.country}`}
                                 </span>
                               </div>
-                              <span className="text-xs text-gray-400 capitalize shrink-0">
+                              <span className="text-xs text-muted capitalize shrink-0">
                                 {entry.contestLabel} · {entry.entryType}
                               </span>
                               <form action={createAction}>
                                 <button
                                   type="submit"
-                                  className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 shrink-0 cursor-pointer"
+                                  className="px-3 py-1 text-xs bg-action-primary-bg text-inverse rounded hover:bg-action-primary-bg-hover shrink-0 cursor-pointer"
                                 >
                                   Create User
                                 </button>

@@ -41,7 +41,7 @@ export default function ContestDetails({
 
   return (
     <section>
-      <div className="bg-gray-50 p-4 rounded-lg mb-4">
+      <div className="bg-subtle p-4 rounded-lg mb-4">
         <h3 className="mb-2">Contests</h3>
         <ContestTabGroup
           contests={contests}
@@ -50,7 +50,7 @@ export default function ContestDetails({
         />
       </div>
 
-      <div className="bg-gray-50 p-4 rounded-lg mb-4">
+      <div className="bg-subtle p-4 rounded-lg mb-4">
         <h3 className="mb-2">About</h3>
         <ContestAbout contest={contest} />
       </div>

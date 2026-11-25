@@ -116,7 +116,7 @@ export default function SubmitClaimClient({ recordCategories, firstCategories, i
     const busy = form.isSubmitting || saving;
     const isSavedDraft = !!form.values.entryId && (status ?? 'draft') === 'draft';
     return (
-      <section className="p-4 sm:p-0 flex gap-3 flex-wrap">
+      <section className="flex gap-3 flex-wrap">
         <Button type="button" variant="secondary" loading={saving} disabled={busy && !saving} onClick={() => saveDraft(form)}>
           {saving ? 'Saving…' : 'Save draft'}
         </Button>
@@ -147,18 +147,18 @@ export default function SubmitClaimClient({ recordCategories, firstCategories, i
   return (
     <div className="stack gap-8">
       {reviewComment && (
-        <section className="p-4 sm:p-0">
+        <section>
           <Alert variant="warning">The ISA asked for changes: {reviewComment}</Alert>
         </section>
       )}
       {errors.length > 0 && (
-        <section className="p-4 sm:p-0">
+        <section>
           <Alert variant="danger" title={`The claim could not be ${intent === 'submit' ? 'submitted' : 'saved'}`}>
             <ul className="list-disc pl-5">{errors.map(e => <li key={e}>{e}</li>)}</ul>
           </Alert>
         </section>
       )}
-      {message && <section className="p-4 sm:p-0"><Alert variant="success">{message}</Alert></section>}
+      {message && <section><Alert variant="success">{message}</Alert></section>}
 
       {/* A claim sent back for changes keeps what it claims, so the choice is not shown */}
       {status !== 'changes_requested' && (

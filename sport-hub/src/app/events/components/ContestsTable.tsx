@@ -11,6 +11,7 @@ import { DISCIPLINE_DATA, MAP_CONTEST_GENDER_ENUM_TO_NAME } from '@utils/consts'
 import { CircleFlag } from 'react-circle-flags';
 import { COUNTRIES, getIocCode, getIso2FromIoc } from '@utils/countries';
 import { dateFilterFn } from '@ui/Table/TableFilterFields';
+import filterStyles from '@ui/Table/filters.module.css';
 import { useClientMediaQuery } from '@utils/useClientMediaQuery';
 import { CountryFlag } from '@ui/CountryFlag';
 import { formatDateRange } from '@utils/dates';
@@ -60,7 +61,7 @@ const getRowClassName = ({ row, allRows, globalIndex }: RowClassContext<ContestD
 
 const CountryFlagWithName = ({ iocCode, defaultValue="N/A" }: { iocCode: string, defaultValue?: string }) => {
   if (iocCode === 'N/A' || !iocCode) {
-    return <span className="text-gray-500">{defaultValue}</span>;
+    return <span className="text-muted">{defaultValue}</span>;
   }
 
   const iso2 = getIso2FromIoc(iocCode);
@@ -70,7 +71,7 @@ const CountryFlagWithName = ({ iocCode, defaultValue="N/A" }: { iocCode: string,
   return (
     <div className="flex items-center gap-2" title={countryName}>
       <CircleFlag countryCode={iso2} height={22} width={22} />
-      <span className="text-sm text-gray-600">{countryName}</span>
+      <span className="text-sm text-default">{countryName}</span>
     </div>
   );
 };
@@ -93,14 +94,14 @@ const columns = [
         <div className="grid grid-flow-row grid-cols-6">
           <span className="text-sm col-span-2 self-center">{formattedDate}</span>
           {winner && (
-            <Link href={`/athlete/${winner?.userId}`} className="text-blue-600 hover:underline col-span-4 text-sm justify-self-end">
+            <Link href={`/athlete/${winner?.userId}`} className="text-link hover:underline col-span-4 text-sm justify-self-end">
               {kebabCaseToTitleCase(winner.name)}
             </Link>
           )}
 
           <div className='col-span-6 self-center flex flex-row items-center gap-2'>
             <CountryFlag country={country} size={16} iconOnly />
-            <Link href={`/events/${eventId}`} className="text-blue-600 hover:underline font-medium col-span-5">
+            <Link href={`/events/${eventId}`} className="text-link hover:underline font-medium col-span-5">
               {name}
             </Link>
           </div>
@@ -127,10 +128,11 @@ const columns = [
     header: "Competition Name",
     meta: {
       filterVariant: "text",
+      filterClassName: filterStyles.competitionNameFilter,
     },
     filterFn: "includesString",
     cell: (info) => (
-      <Link href={`/events/${info.row.original.eventId}`} className="text-blue-600 hover:underline">
+      <Link href={`/events/${info.row.original.eventId}`} className="text-link hover:underline">
         {info.getValue()}
       </Link>
     ),
@@ -224,7 +226,7 @@ const columns = [
       return (
         <Link
           href={`/athlete/${winner.userId}`}
-          className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+          className="text-link hover:text-link-hover hover:underline font-medium"
         >
           {displayName}
         </Link>

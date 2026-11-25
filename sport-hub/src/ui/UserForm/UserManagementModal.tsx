@@ -164,8 +164,8 @@ const UserManagementModal = ({
               {message && (
                 <div className={`px-4 py-3 rounded ${
                   message.type === 'success'
-                    ? 'bg-green-50 border border-green-200 text-green-700'
-                    : 'bg-red-50 border border-red-200 text-red-700'
+                    ? 'bg-status-success-bg border border-default text-success'
+                    : 'bg-status-danger-bg border border-danger text-danger'
                 }`}>
                   {message.text}
                 </div>
@@ -173,19 +173,19 @@ const UserManagementModal = ({
 
               <div className="pb-4 border-b">
                 <p className="font-medium">{`${user?.name || ''} ${user?.surname || ''}`.trim()}</p>
-                <p className="text-sm text-gray-500">{user?.email}</p>
+                <p className="text-sm text-muted">{user?.email}</p>
                 {isCurrentUser && (
-                  <p className="text-xs text-blue-600 mt-1">
+                  <p className="text-xs text-link mt-1">
                     This is your account. Role changes require re-login.
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-default mb-2">
                   Admin roles (Authorization)
                 </label>
-                <p className="text-xs text-gray-500 mb-2">None ticked = normal user. Several roles combine their access. General Admin includes all other roles.</p>
+                <p className="text-xs text-muted mb-2">None ticked = normal user. Several roles combine their access. General Admin includes all other roles.</p>
                 <div className="space-y-2">
                   {ROLES.map(role => {
                     // While General Admin is ticked the other roles show as ticked and locked; selectedRoles keeps
@@ -198,7 +198,7 @@ const UserManagementModal = ({
                       <label
                         key={role}
                         className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                          isChecked ? 'border-purple-300 bg-purple-50' : 'border-gray-200 hover:border-gray-300'
+                          isChecked ? 'border-default bg-category-purple-bg' : 'border-default hover:border-strong'
                         } ${isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                       >
                         <input
@@ -206,23 +206,23 @@ const UserManagementModal = ({
                           checked={isChecked}
                           disabled={isLocked}
                           onChange={() => handleRoleToggle(role)}
-                          className="w-4 h-4 text-purple-600 rounded"
+                          className="w-4 h-4 text-category-purple-fg rounded"
                         />
                         <div>
                           <div className="font-medium">{ROLE_LABELS[role]}</div>
-                          <div className="text-xs text-gray-500">{ROLE_DESCRIPTIONS[role]}</div>
+                          <div className="text-xs text-muted">{ROLE_DESCRIPTIONS[role]}</div>
                         </div>
                       </label>
                     );
                   })}
                 </div>
                 {!canChangeGeneralAdmin && (
-                  <p className="text-xs text-gray-500 mt-1">Only a General Admin can grant or remove General Admin.</p>
+                  <p className="text-xs text-muted mt-1">Only a General Admin can grant or remove General Admin.</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-default mb-2">
                   User Types (Classification)
                 </label>
                 <div className="space-y-2">
@@ -231,8 +231,8 @@ const UserManagementModal = ({
                       key={subType}
                       className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
                         selectedSubTypes.includes(subType)
-                          ? 'border-green-300 bg-green-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-default bg-status-success-bg'
+                          : 'border-default hover:border-strong'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -240,7 +240,7 @@ const UserManagementModal = ({
                           type="checkbox"
                           checked={selectedSubTypes.includes(subType)}
                           onChange={() => handleSubTypeToggle(subType)}
-                          className="w-4 h-4 text-green-600 rounded"
+                          className="w-4 h-4 text-success rounded"
                         />
                         <span className="capitalize font-medium">{subType}</span>
                       </div>
@@ -250,8 +250,8 @@ const UserManagementModal = ({
                           onClick={(e) => { e.preventDefault(); setPrimarySubType(subType); }}
                           className={`text-xs px-2 py-1 rounded ${
                             primarySubType === subType
-                              ? 'bg-green-600 text-white'
-                              : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                              ? 'bg-action-primary-bg text-inverse'
+                              : 'bg-muted text-default hover:bg-muted'
                           }`}
                         >
                           {primarySubType === subType ? 'Primary' : 'Set Primary'}
@@ -260,7 +260,7 @@ const UserManagementModal = ({
                     </label>
                   ))}
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-muted mt-2">
                   Sub-types are for classification only, not authorization.
                 </p>
               </div>

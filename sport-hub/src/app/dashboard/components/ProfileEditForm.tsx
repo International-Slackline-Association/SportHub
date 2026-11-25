@@ -42,7 +42,7 @@ function CountryDropdown({ value, onChange, disabled }: CountryDropdownProps) {
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-left flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full px-3 py-2 border border-default rounded-md focus:outline-none focus:ring-2 focus:ring-border-focus bg-default text-left flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <div className="flex items-center gap-2">
           {selectedCountry ? (
@@ -51,23 +51,23 @@ function CountryDropdown({ value, onChange, disabled }: CountryDropdownProps) {
               <span className="text-sm">{selectedCountry.name}</span>
             </>
           ) : (
-            <span className="text-sm text-gray-500">Select a country</span>
+            <span className="text-sm text-muted">Select a country</span>
           )}
         </div>
-        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
       {isOpen && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-hidden">
-          <div className="p-2 border-b border-gray-200">
+        <div className="absolute z-10 w-full mt-1 bg-default border border-default rounded-md shadow-lg max-h-60 overflow-hidden">
+          <div className="p-2 border-b border-default">
             <input
               type="text"
               placeholder="Search countries..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-1.5 text-sm border border-default rounded focus:outline-none focus:ring-2 focus:ring-border-focus"
               autoFocus
             />
           </div>
@@ -79,7 +79,7 @@ function CountryDropdown({ value, onChange, disabled }: CountryDropdownProps) {
                 setIsOpen(false);
                 setSearchTerm('');
               }}
-              className="w-full px-3 py-2 text-left text-sm text-gray-500 hover:bg-gray-100"
+              className="w-full px-3 py-2 text-left text-sm text-muted hover:bg-muted"
             >
               Clear selection
             </button>
@@ -92,8 +92,8 @@ function CountryDropdown({ value, onChange, disabled }: CountryDropdownProps) {
                   setIsOpen(false);
                   setSearchTerm('');
                 }}
-                className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2 ${
-                  country.code === value ? 'bg-blue-50' : ''
+                className={`w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 ${
+                  country.code === value ? 'bg-status-info-bg' : ''
                 }`}
               >
                 <CircleFlag countryCode={country.code} height={22} width={22} />
@@ -197,7 +197,7 @@ export default function ProfileEditForm({
       {({ values, setFieldValue, isSubmitting }) => (
         <Form className="space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div className="bg-status-danger-bg border border-danger text-danger px-4 py-3 rounded">
               {error}
             </div>
           )}
@@ -220,13 +220,13 @@ export default function ProfileEditForm({
               type="email"
               required
             />
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-muted">
               Note: Changing email may require re-authentication
             </p>
           </div>
 
           <div>
-            <label htmlFor="countryCode" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="countryCode" className="block text-sm font-medium text-default mb-1">
               Country
             </label>
             <CountryDropdown
@@ -249,7 +249,7 @@ export default function ProfileEditForm({
           />
 
           <div>
-            <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="gender" className="block text-sm font-medium text-default mb-1">
               Gender
             </label>
             <select
@@ -257,7 +257,7 @@ export default function ProfileEditForm({
               name="gender"
               value={values.gender}
               onChange={(event) => setFieldValue('gender', event.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-default rounded-md focus:outline-none focus:ring-2 focus:ring-border-focus"
               disabled={isSubmitting}
             >
               <option value="">Select gender</option>
@@ -267,8 +267,8 @@ export default function ProfileEditForm({
             </select>
           </div>
 
-          <fieldset className="border border-gray-200 rounded-md p-4 space-y-4">
-            <legend className="text-sm font-medium text-gray-700 px-1">Links</legend>
+          <fieldset className="border border-default rounded-md p-4 space-y-4">
+            <legend className="text-sm font-medium text-default px-1">Links</legend>
             <LinkFieldArray formKey="links" />
           </fieldset>
 

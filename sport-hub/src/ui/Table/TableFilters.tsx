@@ -3,6 +3,7 @@
 import { Table } from "@tanstack/react-table";
 import { Filters } from '@slacklineinternational/onsight/react';
 import TableFilterFields from "./TableFilterFields";
+import { cn } from "@utils/cn";
 import styles from "./filters.module.css";
 
 type TableFiltersProps<TData,> = {
@@ -22,7 +23,7 @@ export const TableFilters = <TData,>({ extraFilters, table, label = "Filter the 
 
   return (
     <Filters
-      className={reserveUpcoming ? styles.withUpcoming : undefined}
+      className={cn(styles.filterRow, reserveUpcoming && styles.withUpcoming)}
       label={label}
       activeCount={table.getState().columnFilters.length}
       onReset={() => table.resetColumnFilters()}

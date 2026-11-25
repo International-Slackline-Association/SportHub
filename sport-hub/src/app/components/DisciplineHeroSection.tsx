@@ -2,9 +2,9 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { CardGrid } from '@ui/Card';
 import { S3_IMAGES, randomS3Image, type HeroImage } from '@utils/images';
-import styles from '../page.module.css';
+import styles from '@ui/featuredSections.module.css';
+import { FeaturedCardGrid } from '@ui/FeaturedCardGrid';
 import DisciplineCard from './DisciplineCard';
 
 const DISCIPLINES: Discipline[] = [
@@ -24,54 +24,23 @@ type HeroImageLayerProps = {
 
 function HeroImage({ hero, opacity, zIndex, priority = false }: HeroImageLayerProps) {
   return (
-    <div
+    <Image
+      alt=""
       aria-hidden="true"
+      fill
+      priority={priority}
+      sizes="100vw"
+      src={hero.src}
       style={{
-        position: 'absolute',
-        inset: 0,
+        objectFit: 'cover',
+        objectPosition: hero.objectPosition ?? 'center',
         opacity,
+        pointerEvents: 'none',
         transition: 'opacity 0.5s ease',
         zIndex,
-        overflow: 'hidden',
-        backgroundColor: '#fff',
-        pointerEvents: 'none',
       }}
-    >
-      {hero.blurredBackground && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            overflow: 'hidden',
-          }}
-        >
-          <Image
-            src={hero.src}
-            alt=""
-            fill
-            sizes="100vw"
-            priority={priority}
-            style={{
-              objectFit: 'cover',
-              objectPosition: hero.objectPosition ?? 'center',
-              filter: 'blur(24px)',
-            }}
-          />
-        </div>
-      )}
-      <Image
-        suppressHydrationWarning
-        src={hero.src}
-        alt={hero.alt}
-        fill
-        sizes="100vw"
-        priority={priority}
-        style={{
-          objectFit: hero.blurredBackground ? 'contain' : 'cover',
-          objectPosition: hero.objectPosition ?? 'center',
-        }}
-      />
-    </div>
+      suppressHydrationWarning
+    />
   );
 }
 
@@ -143,70 +112,41 @@ export function DisciplineHeroSection() {
 
   return (
     <>
-      {/* Hero figure — same dimensions as PageLayout's heroFigure */}
-      <figure
-        style={{
-          height: '40vw',
-          margin: 0,
-          maxHeight: 520,
-          minHeight: 200,
-          overflow: 'hidden',
-          position: 'relative',
-          width: '100%',
-          backgroundColor: '#000',
-        }}
-      >
-        <HeroImage
-          key={`current-hero-${currentHero.src}`}
-          hero={currentHero}
-          opacity={isTransitioning ? 0 : 1}
-          zIndex={1}
-          priority
-        />
-        {nextHero && (
+      {/* Onsight's Hero is one picture. This one crossfades when a discipline is hovered. */}
+      <figure className="isa-hero">
+        <div className="relative h-[40vw] min-h-[var(--isa-size-hero-min)] max-h-[var(--isa-size-hero-max)] overflow-hidden rounded-lg bg-muted">
           <HeroImage
-            key={`next-hero-${nextHero.src}`}
-            hero={nextHero}
-            opacity={isTransitioning ? 1 : 0}
-            zIndex={2}
+            key={`current-hero-${currentHero.src}`}
+            hero={currentHero}
+            opacity={isTransitioning ? 0 : 1}
+            zIndex={1}
             priority
           />
-        )}
-        {currentHero?.credit && (
-          <figcaption className="absolute bottom-[10px] right-2 z-10 text-xs text-right text-white">
-            Photo by: {currentHero?.credit}
-          </figcaption>
-        )}
+          {nextHero && (
+            <HeroImage
+              key={`next-hero-${nextHero.src}`}
+              hero={nextHero}
+              opacity={isTransitioning ? 1 : 0}
+              zIndex={2}
+              priority
+            />
+          )}
+        </div>
+        {currentHero?.credit && <figcaption>Photo: {currentHero.credit}</figcaption>}
       </figure>
 
       {/* Rankings / Disciplines Section */}
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Rankings</h2>
-        <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory sm:hidden">
+        <FeaturedCardGrid columns={5} itemMinWidth="min-w-64">
           {DISCIPLINES.map(discipline => (
-            <div
+            <DisciplineCard
               key={discipline}
-              className="min-w-64 shrink-0 snap-start"
-            >
-              <DisciplineCard
-                discipline={discipline}
-                onMouseEnter={() => handleMouseEnter(discipline)}
-              />
-            </div>
+              discipline={discipline}
+              onMouseEnter={() => handleMouseEnter(discipline)}
+            />
           ))}
-        </div>
-
-        <div className="hidden sm:block">
-          <CardGrid columns={5}>
-            {DISCIPLINES.map(discipline => (
-              <DisciplineCard
-                key={discipline}
-                discipline={discipline}
-                onMouseEnter={() => handleMouseEnter(discipline)}
-              />
-            ))}
-          </CardGrid>
-        </div>
+        </FeaturedCardGrid>
       </section>
     </>
   );

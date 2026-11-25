@@ -41,11 +41,11 @@ export default function AdminEditForm({ kind, entryId, initialValues, recordCate
 
   const renderActions = ({ isSubmitting }: FormikProps<ClaimFormValues>) => (
     <>
-      <section className="p-4 sm:p-0 stack gap-2">
-        <label htmlFor="modify-comment" className="text-sm font-medium text-gray-600">Reason for the change (shown in the history)</label>
-        <input id="modify-comment" className="border border-gray-300 rounded px-3 py-2 text-sm" value={comment} onChange={e => setComment(e.target.value)} />
+      <section className="stack gap-2">
+        <label htmlFor="modify-comment" className="text-sm font-medium text-default">Reason for the change (shown in the history)</label>
+        <input id="modify-comment" className="border border-default rounded px-3 py-2 text-sm" value={comment} onChange={e => setComment(e.target.value)} />
       </section>
-      <section className="p-4 sm:p-0 flex gap-3">
+      <section className="flex gap-3">
         <Button type="submit" variant="primary" loading={isSubmitting}>
           {isSubmitting ? 'Saving…' : 'Save changes'}
         </Button>
@@ -67,7 +67,7 @@ export default function AdminEditForm({ kind, entryId, initialValues, recordCate
   return (
     <div className="stack gap-8">
       {errors.length > 0 && (
-        <section className="p-4 sm:p-0">
+        <section>
           <Alert variant="danger" title="The changes could not be saved">
             <ul className="list-disc pl-5">{errors.map(e => <li key={e}>{e}</li>)}</ul>
           </Alert>

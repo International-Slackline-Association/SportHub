@@ -22,10 +22,10 @@ const DisciplineCard = ({
 
   return (
     <StackedMediaCard
-      className="h-54 overflow-hidden"
+      className={`h-54 overflow-hidden bg-subtle border-border-default ${styles.disciplineCard}`}
       desktopDirection="vertical"
       hoverable
-      media={<Icon />}
+      media={<span className={styles.disciplineIcon}><Icon /></span>}
       mobileDirection="vertical"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
@@ -33,18 +33,18 @@ const DisciplineCard = ({
     >
       <div className="flex h-full w-full flex-col justify-between">
         <div className="py-3">
-          <span className="font-bold block">{name}</span>
-          <span className="font-normal text-sm">{description}</span>
+          <span className={styles.disciplineName}>{name}</span>
+          <span className={styles.disciplineDescription}>{description}</span>
         </div>
-        <div className={styles.actionRow}>
+        <div className={styles.disciplineActionRow}>
           <Link
-            className={styles.actionButtonPrimary}
+            className={`${styles.disciplineActionButton} ${styles.disciplineActionButtonPrimary}`}
             href={`/rankings?discipline=${discipline}&gender=MEN`}
           >
             Men
           </Link>
           <Link
-            className={styles.actionButtonSecondary}
+            className={`${styles.disciplineActionButton} ${styles.disciplineActionButtonSecondary}`}
             href={`/rankings?discipline=${discipline}&gender=WOMEN`}
           >
             Women

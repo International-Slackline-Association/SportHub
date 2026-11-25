@@ -144,23 +144,23 @@ export default async function AboutPage() {
     <div className="container mx-auto p-4 max-w-4xl">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">User Management</h1>
-        <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+        <span className="text-xs bg-status-warning-bg text-status-warning-fg px-2 py-1 rounded">
           {process.env.NODE_ENV === 'development' ? 'Dev Mode' : 'Admin Only'}
         </span>
       </div>
 
       {/* Add User Form */}
-      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+      <div className="bg-default p-6 rounded-lg shadow-md mb-6">
         <h2 className="text-xl font-semibold mb-4">Add New User</h2>
         <CreateUserForm />
       </div>
 
       {/* Users List */}
-      <div className="bg-white rounded-lg shadow-md">
+      <div className="bg-default rounded-lg shadow-md">
         <div className="p-6 border-b">
           <h2 className="text-xl font-semibold">Users List</h2>
         </div>
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-default">
           <UserListPagination
             initialUsers={users}
             initialCursor={nextCursor}
