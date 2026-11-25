@@ -162,15 +162,13 @@ Quick reference:
 - `getAthleteParticipations(userId, limit?)` - Get contest history
 - `getAthleteProfilesBatch(userIds)` - Batch get profiles
 
-## Reference DB Services
+## isa-users API (`src/lib/isa-users-api.ts`)
 
-See [`reference-db-service.md`](reference-db-service.md) for complete reference database API.
-
-Quick reference:
-- `getReferenceUserById(isaUsersId)` - Get identity by ISA ID (`ISA_XXXXXXXX`)
-- `getReferenceUserByEmail(email)` - Get identity by email (used in onboarding)
-- `getReferenceUsersBatch(isaUserIds)` - Batch get identities
-- ~~`createReferenceUser`~~ — removed; isa-users is READ-ONLY
+isa-users is read through its API, never its table (issue #153):
+- `getIsaUser(isaUsersId)` - Get identity by ISA ID (`ISA_XXXXXXXX`)
+- `getIsaUsers(isaUserIds)` - Get identities, 100 ids per call
+- `isaIdFromCognitoUsername(username)` - ISA id of a signed-in user (used in onboarding)
+- No writes: isa-users is READ-ONLY for SportHub
 
 ## Caching
 

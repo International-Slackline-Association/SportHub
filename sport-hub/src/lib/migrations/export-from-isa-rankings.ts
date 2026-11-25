@@ -13,7 +13,6 @@
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, ScanCommand, QueryCommand, ScanCommandInput, QueryCommandInput } from "@aws-sdk/lib-dynamodb";
-import { getReferenceUserByEmail } from '../reference-db-service';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
 
@@ -150,6 +149,22 @@ function isFakeEmail(email: string): boolean {
 }
 
 /**
+ * ISA id for an email, from the local copy of the isa-users table (this one-off script only runs
+ * against local DynamoDB; the app itself reads isa-users through its API, see isa-users-api.ts).
+ */
+async function findIsaUserIdByEmail(email: string): Promise<string | undefined> {
+  const response = await referenceDdb.send(new QueryCommand({
+    TableName: REFERENCE_TABLE,
+    IndexName: 'GSI',
+    KeyConditionExpression: 'SK_GSI = :skGsi AND GSI_SK = :gsiSk',
+    ExpressionAttributeValues: { ':skGsi': 'userDetails', ':gsiSk': `email:${email}` },
+    Limit: 1,
+  }));
+  const pk = response.Items?.[0]?.PK as string | undefined;
+  return pk?.replace(/^user:/, '');
+}
+
+/**
  * Scan isa-users table and build normalized name → userId map for fallback matching
  */
 async function buildNameLookupMap(): Promise<Map<string, string>> {
@@ -268,9 +283,9 @@ async function matchWithISAUsers(athletes: Map<string, ISAAthleteDetails>): Prom
     // STEP 1: Try email match (if email exists and not fake)
     if (athlete.email && !isFakeEmail(athlete.email)) {
       try {
-        const isaUser = await getReferenceUserByEmail(athlete.email);
-        if (isaUser) {
-          athlete.isaUsersId = isaUser.userId;  // Link to isa-users account
+        const isaUserId = await findIsaUserIdByEmail(athlete.email);
+        if (isaUserId) {
+          athlete.isaUsersId = isaUserId;  // Link to isa-users account
           emailMatches++;
           matched = true;
 
