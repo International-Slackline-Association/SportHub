@@ -5,7 +5,7 @@ import { cn } from '@utils/cn';
 import { Button } from '@slacklineinternational/onsight/react';
 import { TrashIcon } from '@ui/Icons';
 import UserAutocomplete from '@ui/UserAutocomplete';
-import PendingUserForm from './PendingUserForm';
+import NewAthlete from '@ui/NewAthlete';
 import { EventSubmissionFormValues } from '../../types';
 
 type Props = {
@@ -32,7 +32,7 @@ export const Judges = ({ contestKey, judges }: Props) => {
                   <li key={idx} className="pb-4">
                     <div className={cn("cluster", "items-end", "gap-4")}>
                       <UserAutocomplete formKey={judgeFormKey} readOnlyIfSet={!!judge.id} isJudge />
-                      <PendingUserForm formKey={judgeFormKey} />
+                      {!judge.id && <NewAthlete formKey={judgeFormKey} typedName={judge.name ?? ''} personLabel="judge" />}
                       <Button
                         onClick={() => remove(idx)}
                         variant="danger-secondary"

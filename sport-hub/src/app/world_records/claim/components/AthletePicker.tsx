@@ -1,9 +1,8 @@
 'use client';
 
 import { getIn, useFormikContext } from 'formik';
-import { Button } from '@slacklineinternational/onsight/react';
-import { FormikSelectField, FormikTextField, countryCodeOptions, userGenderOptions } from '@ui/Form';
 import UserAutocomplete from '@ui/UserAutocomplete';
+import NewAthlete from '@ui/NewAthlete';
 import type { ClaimAthleteValue, ClaimFormValues } from '../types';
 
 /**
@@ -17,14 +16,6 @@ export default function AthletePicker({ index, onRemove }: { index: number; onRe
   const typedName = athlete.name?.trim() ?? '';
   const error = getIn(errors, key);
   const showError = typeof error === 'string' && (submitCount > 0 || !!getIn(touched, key));
-
-  const addNew = () => {
-    const parts = typedName.split(/\s+/);
-    setFieldValue(key, {
-      name: typedName,
-      pendingUser: { name: parts[0] ?? '', surname: parts.slice(1).join(' '), email: '', gender: '', country: '', city: '', birthdate: '' },
-    });
-  };
 
   const clear = () => setFieldValue(key, { name: '' });
 
@@ -45,39 +36,21 @@ export default function AthletePicker({ index, onRemove }: { index: number; onRe
         </div>
       )}
 
-      {athlete.pendingUser && (
-        <div className="stack gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">New athlete</span>
-            <span className="text-xs text-gray-500">Their SportHub profile is created when the claim is approved.</span>
-            <button type="button" className="text-xs text-gray-500 underline" onClick={clear}>Cancel</button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <FormikTextField id={`${key}.pendingUser.name`} name={`${key}.pendingUser.name`} label="First name" required />
-            <FormikTextField id={`${key}.pendingUser.surname`} name={`${key}.pendingUser.surname`} label="Last name" required />
-            <FormikTextField id={`${key}.pendingUser.email`} name={`${key}.pendingUser.email`} label="Email" required />
-            <FormikSelectField id={`${key}.pendingUser.gender`} name={`${key}.pendingUser.gender`} label="Gender" options={userGenderOptions} required />
-            <FormikSelectField id={`${key}.pendingUser.country`} name={`${key}.pendingUser.country`} label="Country" options={countryCodeOptions} />
-          </div>
-        </div>
-      )}
-
       {!athlete.userId && !athlete.pendingUser && (
-        <div className="stack gap-2">
-          <UserAutocomplete
-            formKey={key}
-            label="SportHub profile"
-            // Athletes on a claim store the profile as userId
-            onSelectOption={option => setFieldValue(key, { userId: option.value, name: option.label.split('|')[0].trim() })}
-          />
-          {typedName && (
-            <div>
-              <Button type="button" variant="secondary" size="small" onClick={addNew}>
-                Not on SportHub? Add &quot;{typedName}&quot; as a new athlete
-              </Button>
-            </div>
-          )}
-        </div>
+        <UserAutocomplete
+          formKey={key}
+          label="SportHub profile"
+          // Athletes on a claim store the profile as userId
+          onSelectOption={option => setFieldValue(key, { userId: option.value, name: option.label.split('|')[0].trim() })}
+        />
+      )}
+      {!athlete.userId && (
+        <NewAthlete
+          formKey={key}
+          typedName={typedName}
+          hint="Their SportHub profile is created when the claim is approved."
+          onRemove={clear}
+        />
       )}
       {showError && <p className="text-sm text-red-600">{error}</p>}
     </div>
