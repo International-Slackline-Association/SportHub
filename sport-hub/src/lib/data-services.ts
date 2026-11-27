@@ -429,11 +429,6 @@ export async function getContestsData(): Promise<ContestData[]> {
       }
     });
 
-    // Track which events have separate Contest:* records.
-    // For these events, Contest:* records are authoritative (more up-to-date than
-    // the embedded snapshot in Metadata written by updateEventStatus).
-    const eventIdsWithContestRecords = new Set(contestRecords.map(c => c.eventId));
-
     // Map all Contest:* records of published events — handles both old-format
     // (athletes) and new-format (results). Draft, pending or cancelled events stay hidden.
     const publishedContestRecords = contestRecords.filter(contest =>
@@ -525,47 +520,7 @@ export async function getContestsData(): Promise<ContestData[]> {
       };
     });
 
-    // Map published events that only have embedded contests in Metadata
-    // (no separate Contest:* records). Skip events that already have Contest:* records
-    // above — those are authoritative and more up-to-date.
-    const submittedContests: ContestData[] = [];
-    eventRecords.forEach((rawMeta) => {
-      const meta = rawMeta as unknown as Record<string, unknown>;
-      if (meta.status !== 'published') return;
-      if (eventIdsWithContestRecords.has(String(meta.eventId ?? ''))) return;
-      const embeddedContests = (meta.contests as Record<string, unknown>[] | undefined) ?? [];
-      embeddedContests.forEach(contest => {
-        const results = (contest.results as Record<string, unknown>[] | undefined) ?? [];
-        const athletes = results
-          .slice()
-          .sort((a, b) => Number(a.rank ?? 999) - Number(b.rank ?? 999))
-          .map(r => ({
-            userId: String(r.id ?? ''),
-            name: String(r.name ?? ''),
-            surname: '',
-            place: String(r.rank ?? ''),
-            points: Number(r.isaPoints ?? 0),
-          }));
-        submittedContests.push({
-          eventId: String(meta.eventId ?? ''),
-          contestId: String(contest.contestId ?? ''),
-          name: String(meta.name ?? ''),
-          startDate: String(meta.startDate ?? ''),
-          endDate: String(meta.endDate ?? ''),
-          country: String(meta.country ?? 'N/A'),
-          city: String(meta.city ?? ''),
-          discipline: String(contest.discipline ?? ''),
-          prize: Number(contest.totalPrizeValue ?? 0),
-          gender: CONTEST_GENDER_NAME_TO_ENUM[String(contest.gender ?? '')] ?? 0,
-          ageCategory: String(contest.ageCategory ?? ''),
-          contestSize: String(contest.contestSize ?? ''),
-          verified: false,
-          athletes,
-        });
-      });
-    });
-
-    const sortedContests = [...contests, ...submittedContests].sort(sortByDateRangeDesc);
+    const sortedContests = [...contests].sort(sortByDateRangeDesc);
 
     // Cache the results (10 min TTL to reduce scan frequency)
     cache.set(cacheKey, sortedContests, 600000); // Cache for 10 minutes (was 3 min)

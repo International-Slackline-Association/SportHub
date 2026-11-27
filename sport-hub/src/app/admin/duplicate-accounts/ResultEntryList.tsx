@@ -10,12 +10,6 @@ const formatDiscipline = (disciplineEnum: string) => {
   return disciplineData.name;
 };
 
-const sortByStartDate = (a: EventMetadataRecord, b: EventMetadataRecord) => {
-  const aDate = new Date(a.startDate).getTime();
-  const bDate = new Date(b.startDate).getTime();
-  return bDate - aDate;
-};
-
 const sortByContestDate = (a: AthleteParticipationRecord | ContestRecord, b: AthleteParticipationRecord | ContestRecord) => {
   const aDate = a.contestDate ? new Date(a.contestDate).getTime() : 0;
   const bDate = b.contestDate ? new Date(b.contestDate).getTime() : 0;
@@ -71,13 +65,7 @@ export const ResultEntryList = ({
   const userId = sortedParticipations[0]?.userId;
 
   const sortedContests = contests.sort(sortByContestDate).filter(c => c.results?.length > 0);
-  const sortedEmbeddedContests = 
-    events
-      .sort(sortByStartDate)
-      .flatMap(e => e.contests)
-      .filter(c => c && c.results?.length > 0);
-
-  if (!sortedParticipations.length && !sortedContests.length && !sortedEmbeddedContests.length) {
+  if (!sortedParticipations.length && !sortedContests.length) {
     return (
       <EmptyState title={`No ${title.toLowerCase()}`} plain>
         Nothing is recorded for this account.
@@ -90,32 +78,10 @@ export const ResultEntryList = ({
       <div className="flex items-center justify-between">
         <h4 className="font-semibold">{title}</h4>
         <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium">
-          {sortedParticipations.length + sortedContests.length + sortedEmbeddedContests.length}
+          {sortedParticipations.length + sortedContests.length}
         </span>
       </div>
       <ul className="space-y-2">
-        <li>Event Metadata Records</li>
-        {sortedEmbeddedContests.map((contest) => {
-          if (!contest) return null;
-          const {
-            eventName,
-            name,
-          } = events.find((e) => e.eventId === contest.eventId) || {};
-
-          const resultEntry = contest.results?.find(r => r.id === userId);
-          
-          return (
-            <ResultEntryListItem
-              key={contest.contestId}
-              contestSize={contest.contestSize || ""}
-              date={contest.contestDate}
-              discipline={contest.discipline}
-              eventName={eventName || name}
-              points={resultEntry?.isaPoints}
-              rank={resultEntry?.rank}
-            />
-          );
-        })}
         <li>Contest Records</li>
         {sortedContests.map((contest) => {
           const {

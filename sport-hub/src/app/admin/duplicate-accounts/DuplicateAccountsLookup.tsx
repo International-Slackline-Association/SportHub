@@ -119,8 +119,7 @@ export default function DuplicateAccountsLookup() {
   
           setAlertMessage(
             `Moved ${result.participationRecordsMoved} participation records,`
-            + ` updated ${result.contestRecordsUpdated} contest records`
-            + ` and ${result.metadataRecordsUpdated} metadata records.`
+            + ` updated ${result.contestRecordsUpdated} contest records.`
             + (result.profileUpdated ? ' Primary profile updated.' : '')
             + ' Please review changes.'
           );

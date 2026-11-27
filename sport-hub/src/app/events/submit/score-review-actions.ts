@@ -10,7 +10,6 @@ import {
   deletePendingScoreEdit,
   listPendingScoreEdits,
   syncContestParticipationRecords,
-  getEvent,
 } from '@lib/event-contest-service';
 import { PendingScoreEditRecord } from '@lib/relational-types';
 
@@ -61,19 +60,6 @@ export async function approveScoreEdit(
       judges: edit.proposedJudges,
       results: edit.proposedResults,
     };
-
-    const eventRecord = await getEvent(eventId);
-    const hasEmbeddedContests = Array.isArray(eventRecord?.contests);
-    if (hasEmbeddedContests) {
-      const updatedEventRecord = {
-        ...eventRecord,
-        contests: eventRecord?.contests?.map((c) =>
-          c.sortKey === contestSortKey ? updatedContestRecord : c
-        ) || [],
-      };
-      await putEventItem(updatedEventRecord);
-      console.log(`[approveScoreEdit] Updated embedded contests for event ${eventId}`, updatedContestRecord);
-    }
 
     await putEventItem(updatedContestRecord);
     console.log(`[approveScoreEdit] Updated contest record ${updatedContestRecord.contestId}`);

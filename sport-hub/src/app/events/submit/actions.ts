@@ -18,9 +18,9 @@ import {
   createContestFromForm,
   createEventFromForm,
   getContestSortKey,
-  transformContestFormToRecord,
 } from '@lib/event-contest-service';
-import { EventMetadataRecord, ContestRecord } from '@lib/relational-types';
+import { ContestRecord } from '@lib/relational-types';
+import type { AssembledEvent } from '@lib/event-contest-service';
 import { EventStatus } from '../my-events/page';
 import { calculatePointsForRank } from '@utils/points';
 import { roleHasPermission } from 'src/types/rbac';
@@ -164,20 +164,7 @@ export async function updateEventScores(
     let appliedCount = 0;
     let stagedCount = 0;
 
-    const hasEmbeddedContests = Array.isArray(event.contests) && event.contests.length > 0;
-    if (hasEmbeddedContests && isAdmin) {
-      console.log(`[updateEventScores] Updated embedded contests for event ${eventId} (admin bypass)`);
-      const updatedEventRecord = {
-        ...event,
-        contests: contests.map((c, idx) => transformContestFormToRecord(c, eventId, idx))
-      };
-
-      await putEventItem(updatedEventRecord as unknown as Record<string, unknown>);
-    }
-
-    // Merge updated judges/results into individual Contest records.
-    // For old-format events the embedded contest objects lack eventId/sortKey,
-    // so we supply them here (effectively migrating to separate Contest:* records).
+    // Merge updated judges/results into the Contest:* records.
     await Promise.all(
       event.contests.map(async (ec, idx) => {
         const sortKey = (ec.sortKey as string) || getContestSortKey(ec);
@@ -259,7 +246,7 @@ export async function updateEvent(eventId: string, values: EventSubmissionFormVa
   try {
     const session = await auth();
     const existing = await getAssembledEvent(eventId);
-    let existingEvent: Partial<EventMetadataRecord>;
+    let existingEvent: Partial<AssembledEvent>;
     let isMigration = false;
 
     if (!existing.success || !existing.event) {
@@ -349,13 +336,10 @@ export async function getEvent(eventId: string) {
  * Group Contest:* records by eventId from a full table scan, sorted by
  * contestIndex.
  *
- * getAllEvents()'s raw Metadata records never carry a populated `contests`
- * field (it's only ever written as an empty/stale snapshot by
- * updateEventStatus, never by saveEvent/updateEvent), even though multiple
- * callers (My Events list/table, admin event-approval's contest count and
- * pending-user detection) read `event.contests` expecting it. Derive the
- * real, current list from the Contest:* records already present in this
- * same scan instead.
+ * Metadata records don't carry contests, but several callers (My Events
+ * list/table, admin event-approval's contest count and pending-user
+ * detection) read `event.contests`. Derive the list from the Contest:*
+ * records already present in this same scan.
  */
 function groupContestsByEventId(allItems: Record<string, unknown>[]): Map<string, Record<string, unknown>[]> {
   const contestsByEventId = new Map<string, Record<string, unknown>[]>();
@@ -449,9 +433,12 @@ export async function updateEventStatus(eventId: string, status: 'draft' | 'publ
       };
     }
 
-    // Update with new status
+    // Update with new status. Contests live in their own Contest:* records,
+    // so they are not written onto the Metadata item.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { contests: _contests, ...metadata } = result.event;
     const updatedEvent = {
-      ...result.event,
+      ...metadata,
       status,
       updatedAt: new Date().toISOString(),
       lastModifiedBy: session?.user?.id,

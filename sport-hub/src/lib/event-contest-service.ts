@@ -175,29 +175,22 @@ export async function getAssembledEvent(
       return { success: false, event: null };
     }
 
-    let contests: ContestRecord[] = [];
-    const { contests: embeddedContests, ...metadataOnly } = metadata;
-
-    const hasEmbeddedContests = Array.isArray(embeddedContests) && embeddedContests.length > 0;
-    // If the event has embedded contests (new format), use those;
-    // otherwise, use the separate Contest:* records
-    if (hasEmbeddedContests) {
-      contests = embeddedContests;
-    } else {
-      const allContests = await getEventContests(eventId);
-      // Legacy migrated events derive eventId from date alone (`Event:YYYY-MM-DD[:city]`),
-      // so two distinct events can share a partition — city is used to disambiguate.
-      // New-format events (`event-<timestamp>-<rand>`, see generateEventId()) have a
-      // collision-proof eventId, so no disambiguation is needed — and their Contest:*
-      // records never carry a city field anyway, so filtering on it here would drop
-      // every contest.
-      const isLegacyEventId = eventId.startsWith('Event:');
-      contests = isLegacyEventId
-        ? allContests.filter((c) => c.city?.toLowerCase() === metadata.city?.toLowerCase())
-        : allContests;
-    }
-
-    contests = contests.sort(
+    // Contest:* records are the only source of contests. Strip any leftover
+    // embedded `contests` attribute from older Metadata items.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { contests: _embeddedContests, ...metadataOnly } = metadata as EventMetadataRecord & { contests?: unknown };
+    const allContests = await getEventContests(eventId);
+    // Legacy migrated events derive eventId from date alone (`Event:YYYY-MM-DD[:city]`),
+    // so two distinct events can share a partition — city is used to disambiguate.
+    // New-format events (`event-<timestamp>-<rand>`, see generateEventId()) have a
+    // collision-proof eventId, so no disambiguation is needed — and their Contest:*
+    // records never carry a city field anyway, so filtering on it here would drop
+    // every contest.
+    const isLegacyEventId = eventId.startsWith('Event:');
+    const contests = (isLegacyEventId
+      ? allContests.filter((c) => c.city?.toLowerCase() === metadata.city?.toLowerCase())
+      : allContests
+    ).sort(
       (a, b) => (a.contestIndex || 0) - (b.contestIndex || 0)
     );
 
