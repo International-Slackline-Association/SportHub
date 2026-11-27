@@ -9,6 +9,7 @@ import { isValidUrl, INVALID_URL_MESSAGE } from '@utils/urls';
 import { RECORD_CATEGORY_GROUPS } from '@lib/relational-types';
 import { MAX_ATHLETES, MAX_EVIDENCE_ITEMS, MAX_WITNESSES } from '@lib/records-rules';
 import type { ClaimAthleteValue, ClaimEvidenceValue } from './types';
+import { pendingUserSchema } from '@ui/NewAthlete/schema';
 
 type SchemaOptions = {
   claimantId: string;
@@ -33,12 +34,7 @@ const isFilledEvidence = (e: Partial<ClaimEvidenceValue>) => (e.type === 'link' 
 const athleteSchema = (admin?: boolean) => Yup.object({
   name: Yup.string(),
   userId: Yup.string(),
-  pendingUser: Yup.object({
-    name: Yup.string().trim().required(REQUIRED),
-    surname: Yup.string().trim().required(REQUIRED),
-    email: Yup.string().trim().email('Enter a valid email').required(REQUIRED),
-    gender: Yup.string().required(REQUIRED),
-  }).default(undefined),
+  pendingUser: pendingUserSchema.default(undefined),
 }).test(
   'athlete-chosen',
   'Choose a SportHub profile or add a new athlete',

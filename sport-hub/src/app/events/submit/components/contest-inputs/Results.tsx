@@ -8,7 +8,7 @@ import { TrashIcon } from '@ui/Icons';
 import UserAutocomplete from '@ui/UserAutocomplete';
 import { EventSubmissionFormValues } from '../../types';
 import { FormikNumberField, FormikTextField } from '@ui/Form';
-import PendingUserForm from './PendingUserForm';
+import NewAthlete from '@ui/NewAthlete';
 import { calculatePointsForRank } from '@utils/points';
 import { roleHasPermission } from 'src/types/rbac';
 import { ContestResult } from '@lib/relational-types';
@@ -70,7 +70,7 @@ const AthleteListItem = ({
         name={`${athleteFormKey}.stats`}
         tooltip="Data relevant to placement. Varies by discipline e.g. line length, time, etc."
       />
-      <PendingUserForm formKey={athleteFormKey} />
+      {!formValueUserId && <NewAthlete formKey={athleteFormKey} typedName={getIn(values, `${athleteFormKey}.name`) ?? ''} />}
       <Button
         className="self-end"
         onClick={onDelete}
