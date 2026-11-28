@@ -34,8 +34,8 @@ export default async function ModifyEntryPage({ params }: Props) {
 
   return (
     <PageLayout title={entry.kind === 'first' ? `Modify first: ${entry.trickName}` : `Modify record: ${entry.categoryName}`}>
-      <section className="p-4 sm:p-0">
-        <Link href={`/admin/records-review/${kind}/${encodeURIComponent(entryId)}`} className="text-blue-600 hover:underline text-sm">Back to the details</Link>
+      <section>
+        <Link href={`/admin/records-review/${kind}/${encodeURIComponent(entryId)}`} className="text-link hover:underline text-sm">Back to the details</Link>
       </section>
       <AdminEditForm
         kind={kind}

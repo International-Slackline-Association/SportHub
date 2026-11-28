@@ -108,11 +108,11 @@ export default async function EventPage({ params, searchParams }: EventPageProps
         <div className="space-y-6">
           <EventDetailsCard event={eventLike} />
           {organizerId && (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted">
               Organized by{' '}
               <Link
                 href={`/athlete/${encodeURIComponent(organizerId)}`}
-                className="text-blue-600 hover:underline font-medium"
+                className="text-link hover:underline font-medium"
               >
                 {organizerName ?? String(event.createdByName ?? organizerId)}
               </Link>
@@ -148,7 +148,7 @@ export default async function EventPage({ params, searchParams }: EventPageProps
             <div className="flex justify-end">
               <Link
                 href={`/events/my-events/${eventId}/edit`}
-                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                className="px-4 py-2 text-sm bg-action-primary-bg text-inverse rounded-lg hover:bg-action-primary-bg-hover font-medium"
               >
                 Edit Event
               </Link>
@@ -160,7 +160,7 @@ export default async function EventPage({ params, searchParams }: EventPageProps
             endDate: oldEvent.endDate || "",
             gender: String(oldEvent?.gender),
           }} />
-          <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="bg-default p-6 rounded-lg shadow-md">
             <h2 className="text-2xl font-bold mb-4">Results</h2>
             {sortedParticipants.length > 0 ? (
               <div className="overflow-x-auto">
@@ -174,12 +174,12 @@ export default async function EventPage({ params, searchParams }: EventPageProps
                   </thead>
                   <tbody>
                     {sortedParticipants.map((participant, index) => (
-                      <tr key={index} className="border-b hover:bg-gray-50">
+                      <tr key={index} className="border-b hover:bg-subtle">
                         <td className="p-3 font-semibold">{participant.place}</td>
                         <td className="p-3">
                           <Link
                             href={`/athlete/${participant.userId}`}
-                            className="text-blue-600 hover:underline"
+                            className="text-link hover:underline"
                           >
                             {participant.name}
                           </Link>
@@ -195,7 +195,7 @@ export default async function EventPage({ params, searchParams }: EventPageProps
                 </table>
               </div>
             ) : (
-              <p className="text-gray-500">No results available</p>
+              <p className="text-muted">No results available</p>
             )}
           </div>
         </div>

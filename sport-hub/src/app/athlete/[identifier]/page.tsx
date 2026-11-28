@@ -61,7 +61,7 @@ export default async function AthleteProfilePage({ params }: AthleteProfilePageP
         {...profile}
         disciplines={disciplines}
       />
-      <section className="p-4 sm:p-0">
+      <section>
         <AthleteDataTabs
           contests={contests}
           worldRecords={worldRecords}
@@ -69,7 +69,7 @@ export default async function AthleteProfilePage({ params }: AthleteProfilePageP
         />
       </section>
       {isOrganizer && organizedEvents.length > 0 && (
-        <section className="p-4 sm:p-0">
+        <section>
           <h3 className="text-xl font-bold mb-4">Organized Events</h3>
           <div className="space-y-3">
             {organizedEvents.map((event) => {
@@ -88,14 +88,14 @@ export default async function AthleteProfilePage({ params }: AthleteProfilePageP
                 <Link
                   key={eventId}
                   href={`/events/${encodeURIComponent(eventId)}`}
-                  className="block bg-white rounded-lg border border-gray-200 p-4 hover:border-blue-300 hover:shadow-sm transition-all"
+                  className="block bg-default rounded-lg border border-default p-4 hover:border-focus hover:shadow-sm transition-all"
                 >
                   <div className="flex justify-between items-start gap-4 flex-wrap">
                     <div className="stack gap-1">
-                      <p className="font-semibold text-blue-700">{String(event.eventName ?? '—')}</p>
-                      <p className="text-sm text-gray-500">{location}</p>
+                      <p className="font-semibold text-link">{String(event.eventName ?? '—')}</p>
+                      <p className="text-sm text-muted">{location}</p>
                     </div>
-                    <div className="text-right text-sm text-gray-500 shrink-0">
+                    <div className="text-right text-sm text-muted shrink-0">
                       <p>{dates}</p>
                       {contestCount > 0 && (
                         <p>{contestCount} contest{contestCount !== 1 ? 's' : ''}</p>

@@ -72,7 +72,7 @@ export default function EntryTable({ rows, showStatus = false, showKind = false,
       columnHelper.accessor('claim', {
         header: showKind ? 'Record / Trick' : rows[0]?.kind === 'first' ? 'Trick' : 'Record',
         cell: info => (
-          <Link href={detailHref(info.row.original)} className="font-medium text-blue-700 hover:underline">
+          <Link href={detailHref(info.row.original)} className="font-medium text-link hover:underline">
             {info.getValue() || '—'}
           </Link>
         ),
@@ -94,14 +94,14 @@ export default function EntryTable({ rows, showStatus = false, showKind = false,
         cell: info => (
           <span className="whitespace-nowrap">
             <ClaimStatusBadge status={info.row.original.status} />
-            {info.row.original.voided && <span className="ml-1 text-xs text-red-700">(voided)</span>}
+            {info.row.original.voided && <span className="ml-1 text-xs text-danger">(voided)</span>}
           </span>
         ),
       })] : []),
     ];
   }, [rows, showKind, showStatus, filterable]);
 
-  if (rows.length === 0) return <p className="text-gray-600 text-sm">No entries.</p>;
+  if (rows.length === 0) return <p className="text-default text-sm">No entries.</p>;
 
   return (
     <Table

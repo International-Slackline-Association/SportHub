@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 export default async function Page() {
   return (
     <PageLayout title="Contact">
-      <section className="p-4 sm:p-0">
+      <section>
         <p>Contact information will be implemented here.</p>
       </section>
     </PageLayout>

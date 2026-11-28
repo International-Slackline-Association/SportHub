@@ -50,8 +50,8 @@ export const CreateUserForm = ({
           <Form>
             <UserFormFields />
             {showSubmitButton && <FormikSubmitButton />}
-            {(apiError && !dirty) && <div className="text-red-600 mt-2">{apiError}</div>}
-            {(apiSuccess && !dirty) && <div className="text-green-600 mt-2">User created successfully!</div>}
+            {(apiError && !dirty) && <div className="text-danger mt-2">{apiError}</div>}
+            {(apiSuccess && !dirty) && <div className="text-success mt-2">User created successfully!</div>}
           </Form>
         );
       }}

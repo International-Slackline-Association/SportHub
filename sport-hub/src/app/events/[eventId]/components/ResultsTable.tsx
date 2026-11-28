@@ -14,7 +14,7 @@ export type ResultsTableRow = {
 };
 
 const columnHelper = createColumnHelper<ResultsTableRow>();
-const linkClassName = 'text-blue-600 hover:text-blue-800 hover:underline font-medium';
+const linkClassName = 'text-link hover:text-link-hover hover:underline font-medium';
 
 const columns = [
   columnHelper.accessor('place', {

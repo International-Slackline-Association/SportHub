@@ -86,7 +86,7 @@ export default function FormikAutocomplete({
         helpers.setTouched(true, false);
       }}
       onChange={(value, option) => {
-        if (!option || value.startsWith(ECHO)) return;
+        if (!option) return;
         if (setFieldOnSelect) helpers.setValue(toFormValue(option));
         helpers.setTouched(true, false);
         onSelectOption?.(option);

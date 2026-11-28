@@ -63,7 +63,7 @@ export default function SearchBar({ onSearch, onClear, isSearching, currentQuery
   }, [isRoleMenuOpen]);
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+    <div className="bg-default p-4 rounded-lg shadow-md mb-6">
       <form onSubmit={handleSubmit} className="flex flex-wrap gap-2">
         <div className="relative flex-1 min-w-48">
           <input
@@ -71,10 +71,10 @@ export default function SearchBar({ onSearch, onClear, isSearching, currentQuery
             placeholder="Search by name or email..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full border border-gray-300 p-3 pl-10 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-default p-3 pl-10 rounded-md focus:outline-none focus:ring-2 focus:ring-border-focus"
           />
           <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -90,10 +90,10 @@ export default function SearchBar({ onSearch, onClear, isSearching, currentQuery
             onClick={() => setIsRoleMenuOpen(!isRoleMenuOpen)}
             disabled={isSearching}
             title={rolesInput.length ? rolesSummary(rolesInput) : 'All roles'}
-            className="w-48 h-full flex items-center justify-between gap-2 border border-gray-300 p-3 rounded-md bg-white text-left focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            className="w-48 h-full flex items-center justify-between gap-2 border border-default p-3 rounded-md bg-default text-left focus:outline-none focus:ring-2 focus:ring-border-focus disabled:opacity-50"
           >
             <span className="truncate">{rolesInput.length ? rolesSummary(rolesInput) : 'All roles'}</span>
-            <svg className="w-4 h-4 shrink-0 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 shrink-0 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
@@ -101,10 +101,10 @@ export default function SearchBar({ onSearch, onClear, isSearching, currentQuery
             <div
               role="listbox"
               aria-multiselectable="true"
-              className="absolute right-0 z-10 mt-1 w-56 bg-white border border-gray-200 rounded-md shadow-lg py-1"
+              className="absolute right-0 z-10 mt-1 w-56 bg-default border border-default rounded-md shadow-lg py-1"
             >
               {ROLE_FILTER_OPTIONS.map(({ value, label }) => (
-                <label key={value} className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-gray-50">
+                <label key={value} className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-subtle">
                   <input
                     type="checkbox"
                     checked={rolesInput.includes(value)}
@@ -120,7 +120,7 @@ export default function SearchBar({ onSearch, onClear, isSearching, currentQuery
         <button
           type="submit"
           disabled={isSearching}
-          className="bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-600 disabled:opacity-50 transition-colors"
+          className="bg-action-primary-bg text-inverse px-6 py-3 rounded-md hover:bg-action-primary-bg disabled:opacity-50 transition-colors"
         >
           Search
         </button>
@@ -128,14 +128,14 @@ export default function SearchBar({ onSearch, onClear, isSearching, currentQuery
           <button
             type="button"
             onClick={handleClear}
-            className="bg-gray-200 text-gray-700 px-4 py-3 rounded-md hover:bg-gray-300 transition-colors"
+            className="bg-muted text-default px-4 py-3 rounded-md hover:bg-muted transition-colors"
           >
             Clear
           </button>
         )}
       </form>
       {isFiltered && (
-        <p className="mt-2 text-sm text-gray-600">
+        <p className="mt-2 text-sm text-default">
           {currentQuery && (
             <>Searching for: <span className="font-medium">&quot;{currentQuery}&quot;</span></>
           )}
@@ -146,7 +146,7 @@ export default function SearchBar({ onSearch, onClear, isSearching, currentQuery
         </p>
       )}
       {hasManagerRoleFilter && (
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-muted">
           General Admins have every role but are only listed under General Admin.
         </p>
       )}

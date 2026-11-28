@@ -21,7 +21,7 @@ export default async function AdminPage() {
       title="Admin Dashboard"
       description={`Signed in as ${rolesLabel(roles)}. You see the tools your roles can use.`}
     >
-      <div className="p-4 sm:p-0">
+      <div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {can('events:create') && (
             <GridSection

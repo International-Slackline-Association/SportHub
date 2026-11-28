@@ -38,8 +38,8 @@ export default function EditScoresClient({ eventId, initialValues }: Props) {
 
   if (savedMessage) {
     return (
-      <div className="stack gap-4 p-4 sm:p-0">
-        <p className="text-sm text-gray-600">{savedMessage}</p>
+      <div className="stack gap-4">
+        <p className="text-sm text-default">{savedMessage}</p>
         <div className="flex gap-3">
           <Link href="/events/my-events">
             <Button type="button" variant="primary">Back to My Events</Button>
@@ -58,7 +58,7 @@ export default function EditScoresClient({ eventId, initialValues }: Props) {
       onSubmit={handleSubmit}
     >
       {({ isSubmitting }) => (
-        <Form className={cn(styles.formWrapper, 'stack p-4 sm:p-0')}>
+        <Form className="stack">
           <TabbedContestForms
             showContestActions={false}
             showGeneralInfoTab={false}

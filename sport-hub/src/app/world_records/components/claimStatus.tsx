@@ -11,12 +11,12 @@ export const CLAIM_STATUS_LABELS: Record<ClaimStatus, string> = {
 };
 
 const STATUS_CLASSES: Record<ClaimStatus, string> = {
-  draft: 'bg-gray-100 text-gray-700 border-gray-200',
-  pending: 'bg-blue-50 text-blue-700 border-blue-200',
-  changes_requested: 'bg-amber-50 text-amber-800 border-amber-200',
-  published: 'bg-green-50 text-green-700 border-green-200',
-  rejected: 'bg-red-50 text-red-700 border-red-200',
-  historical: 'bg-gray-50 text-gray-600 border-gray-200',
+  draft: 'bg-muted text-default border-default',
+  pending: 'bg-status-info-bg text-link border-default',
+  changes_requested: 'bg-status-warning-bg text-status-warning-fg border-strong',
+  published: 'bg-status-success-bg text-success border-default',
+  rejected: 'bg-status-danger-bg text-danger border-danger',
+  historical: 'bg-subtle text-default border-default',
 };
 
 export function ClaimStatusBadge({ status }: { status: ClaimStatus }) {

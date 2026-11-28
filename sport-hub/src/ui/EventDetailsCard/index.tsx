@@ -10,7 +10,7 @@ import styles from "./styles.module.css";
 import { formatDateRange } from '@utils/dates';
 import Link from 'next/link';
 
-const linkClassName = 'text-blue-600 hover:text-blue-800 hover:underline font-medium';
+const linkClassName = 'text-link hover:text-link-hover hover:underline font-medium';
 
 // Duplicate from YouTubePreviewTextField for server
 export function extractYouTubeId(url: string): string | null {

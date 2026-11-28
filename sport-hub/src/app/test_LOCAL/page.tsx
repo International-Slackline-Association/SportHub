@@ -58,40 +58,40 @@ export default async function LocalTestPage() {
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2">Local DynamoDB Testing</h1>
-        <p className="text-gray-600">
+        <p className="text-default">
           Test and interact with your local DynamoDB instance
         </p>
       </div>
 
       {/* Environment Status */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-default p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-4 flex items-center">
             <span className={`inline-block w-3 h-3 rounded-full mr-2 ${
-              envStatus.ready ? 'bg-green-500' : 'bg-red-500'
+              envStatus.ready ? 'bg-action-primary-bg' : 'bg-action-danger-bg'
             }`}></span>
             Environment Status
           </h2>
           {envStatus.ready ? (
-            <div className="text-green-600">
+            <div className="text-success">
               ✅ All tables are ready
             </div>
           ) : (
             <div>
-              <div className="text-red-600 mb-2">
+              <div className="text-danger mb-2">
                 ❌ Missing tables: {envStatus.missing.join(', ')}
               </div>
-              <p className="text-sm text-gray-600">
-                Run <code className="bg-gray-100 px-1 rounded">pnpm db:setup</code> to create missing tables
+              <p className="text-sm text-default">
+                Run <code className="bg-muted px-1 rounded">pnpm db:setup</code> to create missing tables
               </p>
             </div>
           )}
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-default p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-4">Current Data</h2>
           <div className="space-y-2">
-            <div className="text-sm font-semibold text-gray-600 mb-1">Users Table:</div>
+            <div className="text-sm font-semibold text-default mb-1">Users Table:</div>
             <div className="flex justify-between pl-4">
               <span className="text-sm">Profiles:</span>
               <span className="font-mono text-sm">{stats.tables['users-profiles'] || 0}</span>
@@ -109,7 +109,7 @@ export default async function LocalTestPage() {
               <span className="font-mono">{stats.tables['users-total'] || 0}</span>
             </div>
             <div className="border-t my-2"></div>
-            <div className="text-sm font-semibold text-gray-600 mb-1">Events Table:</div>
+            <div className="text-sm font-semibold text-default mb-1">Events Table:</div>
             <div className="flex justify-between pl-4">
               <span className="text-sm">Event Metadata:</span>
               <span className="font-mono text-sm">{stats.tables['events-metadata'] || 0}</span>
@@ -137,41 +137,41 @@ export default async function LocalTestPage() {
       </div>
 
       {/* Available Mock Data Stats */}
-      <div className="bg-blue-50 p-6 rounded-lg shadow-md mb-8">
+      <div className="bg-status-info-bg p-6 rounded-lg shadow-md mb-8">
         <h2 className="text-xl font-semibold mb-4">Available Mock Data (from JSON files)</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-center mb-4">
           <div>
-            <div className="text-2xl font-bold text-blue-600">{dataStats.userProfiles}</div>
-            <div className="text-sm text-gray-600">Athlete Profiles</div>
+            <div className="text-2xl font-bold text-link">{dataStats.userProfiles}</div>
+            <div className="text-sm text-default">Athlete Profiles</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-blue-600">{dataStats.athleteRankings}</div>
-            <div className="text-sm text-gray-600">Ranking Records</div>
+            <div className="text-2xl font-bold text-link">{dataStats.athleteRankings}</div>
+            <div className="text-sm text-default">Ranking Records</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-blue-600">{dataStats.athleteParticipations}</div>
-            <div className="text-sm text-gray-600">Participations</div>
+            <div className="text-2xl font-bold text-link">{dataStats.athleteParticipations}</div>
+            <div className="text-sm text-default">Participations</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-blue-600">{dataStats.eventMetadata}</div>
-            <div className="text-sm text-gray-600">Events</div>
+            <div className="text-2xl font-bold text-link">{dataStats.eventMetadata}</div>
+            <div className="text-sm text-default">Events</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-blue-600">{dataStats.contests}</div>
-            <div className="text-sm text-gray-600">Contests</div>
+            <div className="text-2xl font-bold text-link">{dataStats.contests}</div>
+            <div className="text-sm text-default">Contests</div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4 text-center">
           <div>
-            <div className="text-lg font-bold text-blue-600">{dataStats.disciplines.length}</div>
-            <div className="text-xs text-gray-600">Disciplines</div>
+            <div className="text-lg font-bold text-link">{dataStats.disciplines.length}</div>
+            <div className="text-xs text-default">Disciplines</div>
           </div>
           <div>
-            <div className="text-lg font-bold text-blue-600">{dataStats.countries.length}</div>
-            <div className="text-xs text-gray-600">Countries</div>
+            <div className="text-lg font-bold text-link">{dataStats.countries.length}</div>
+            <div className="text-xs text-default">Countries</div>
           </div>
         </div>
-        <div className="mt-4 text-sm text-gray-600 border-t pt-4">
+        <div className="mt-4 text-sm text-default border-t pt-4">
           <div><strong>Total User Records:</strong> {dataStats.totalUserRecords}</div>
           <div><strong>Total Event Records:</strong> {dataStats.totalEventRecords}</div>
           <div><strong>Date Range:</strong> {dataStats.dateRange.earliest} to {dataStats.dateRange.latest}</div>
@@ -189,7 +189,7 @@ export default async function LocalTestPage() {
         <div className="mt-8 space-y-8">
           {/* Sample Users */}
           {sampleUsers && sampleUsers.length > 0 && (
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="bg-default p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-4">Sample User Profiles</h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -204,7 +204,7 @@ export default async function LocalTestPage() {
                   </thead>
                   <tbody>
                     {sampleUsers.map((user) => (
-                      <tr key={user.userId} className="border-b hover:bg-gray-50">
+                      <tr key={user.userId} className="border-b hover:bg-subtle">
                         <td className="p-2 font-mono text-xs">{user.userId}</td>
                         <td className="p-2">{user.athleteSlug || 'N/A'}</td>
                         <td className="p-2">{user.primarySubType || 'N/A'}</td>
@@ -220,7 +220,7 @@ export default async function LocalTestPage() {
 
           {/* Sample Events */}
           {sampleContests && sampleContests.length > 0 && (
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="bg-default p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-4">Sample Event Metadata</h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -235,7 +235,7 @@ export default async function LocalTestPage() {
                   </thead>
                   <tbody>
                     {sampleContests.map((event) => (
-                      <tr key={event.eventId} className="border-b hover:bg-gray-50">
+                      <tr key={event.eventId} className="border-b hover:bg-subtle">
                         <td className="p-2 font-mono text-xs">{event.eventId}</td>
                         <td className="p-2">{event.eventName}</td>
                         <td className="p-2">{event.startDate}{event.endDate !== event.startDate ? ` - ${event.endDate}` : ''}</td>

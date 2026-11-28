@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default async function Page() {
   return (
     <PageLayout title="Judging" heroImage={randomS3Image('JUDGING')}>
-      <section className="p-4 sm:p-0">
+      <section>
         <p>Judging content under development.</p>
       </section>
     </PageLayout>

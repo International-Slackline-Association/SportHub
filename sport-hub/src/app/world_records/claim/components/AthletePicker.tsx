@@ -29,28 +29,28 @@ export default function AthletePicker({ index, onRemove }: { index: number; onRe
   const clear = () => setFieldValue(key, { name: '' });
 
   return (
-    <div className="border border-gray-200 rounded-lg p-3 stack gap-2">
+    <div className="border border-default rounded-lg p-3 stack gap-2">
       <div className="flex justify-between items-center gap-2">
         <span className="text-sm font-medium">Athlete {index + 1}</span>
         {onRemove && (
-          <button type="button" className="text-xs text-red-600 underline" onClick={onRemove}>Remove</button>
+          <button type="button" className="text-xs text-danger underline" onClick={onRemove}>Remove</button>
         )}
       </div>
 
       {athlete.userId && (
         <div className="flex items-center gap-2 flex-wrap">
-          <a href={`/athlete/${athlete.userId}`} target="_blank" className="text-blue-600 hover:underline text-sm">{athlete.name}</a>
-          <span className="text-xs text-gray-500">SportHub profile</span>
-          <button type="button" className="text-xs text-gray-500 underline" onClick={clear}>Change</button>
+          <a href={`/athlete/${athlete.userId}`} target="_blank" className="text-link hover:underline text-sm">{athlete.name}</a>
+          <span className="text-xs text-muted">SportHub profile</span>
+          <button type="button" className="text-xs text-muted underline" onClick={clear}>Change</button>
         </div>
       )}
 
       {athlete.pendingUser && (
         <div className="stack gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">New athlete</span>
-            <span className="text-xs text-gray-500">Their SportHub profile is created when the claim is approved.</span>
-            <button type="button" className="text-xs text-gray-500 underline" onClick={clear}>Cancel</button>
+            <span className="text-xs font-medium text-status-warning-fg bg-status-warning-bg border border-strong px-2 py-0.5 rounded">New athlete</span>
+            <span className="text-xs text-muted">Their SportHub profile is created when the claim is approved.</span>
+            <button type="button" className="text-xs text-muted underline" onClick={clear}>Cancel</button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <FormikTextField id={`${key}.pendingUser.name`} name={`${key}.pendingUser.name`} label="First name" required />
@@ -79,7 +79,7 @@ export default function AthletePicker({ index, onRemove }: { index: number; onRe
           )}
         </div>
       )}
-      {showError && <p className="text-sm text-red-600">{error}</p>}
+      {showError && <p className="text-sm text-danger">{error}</p>}
     </div>
   );
 }

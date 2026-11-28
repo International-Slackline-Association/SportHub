@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 export default async function Page() {
   return (
     <PageLayout title="Partners/Members">
-      <section className="p-4 sm:p-0">
+      <section>
         <p>ISA Members and Partners content will be implemented here.</p>
       </section>
     </PageLayout>

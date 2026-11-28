@@ -73,7 +73,7 @@ export default function RecordCategoryPicker({ recordCategories, name = 'categor
       cell: info => (
         <div className="stack">
           <span className="font-medium">{info.getValue()}</span>
-          {info.row.original.description && <span className="text-xs text-gray-700">{info.row.original.description}</span>}
+          {info.row.original.description && <span className="text-xs text-default">{info.row.original.description}</span>}
         </div>
       ),
       size: 220,
@@ -99,9 +99,9 @@ export default function RecordCategoryPicker({ recordCategories, name = 'categor
       {selected && (
         <div className="flex flex-wrap items-center gap-3">
           <p>
-            <span className="text-sm text-gray-600">{selected.group} · </span>
+            <span className="text-sm text-default">{selected.group} · </span>
             <strong>{selected.name}</strong>
-            {selected.status !== 'active' && <span className="text-sm text-gray-600"> ({statusLabel(selected.status).toLowerCase()})</span>}
+            {selected.status !== 'active' && <span className="text-sm text-default"> ({statusLabel(selected.status).toLowerCase()})</span>}
           </p>
           {!showTable && (
             <Button type="button" size="small" variant="secondary" onClick={() => setBrowsing(true)}>
@@ -110,7 +110,7 @@ export default function RecordCategoryPicker({ recordCategories, name = 'categor
           )}
         </div>
       )}
-      {selected?.description && !showTable && <p className="text-sm text-gray-600">{selected.description}</p>}
+      {selected?.description && !showTable && <p className="text-sm text-default">{selected.description}</p>}
       {showTable && (
         <div onKeyDown={preventEnterSubmit}>
           <Table
@@ -119,7 +119,7 @@ export default function RecordCategoryPicker({ recordCategories, name = 'categor
           />
         </div>
       )}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );
 }

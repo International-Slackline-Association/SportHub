@@ -23,7 +23,7 @@ const REASON_LABELS: Record<RecordsImportIssueTableItem['reason'], string> = {
 };
 
 const NOT_IMPORTED: RecordsImportIssueTableItem['reason'][] = ['no_category', 'value_unparsed', 'invalid_row'];
-const inputClass = 'border border-gray-300 rounded px-2 py-1 text-sm';
+const inputClass = 'border border-default rounded px-2 py-1 text-sm';
 
 const GENDER_OPTIONS: Option[] = [
   { value: 'MEN', label: 'Male' },
@@ -77,15 +77,15 @@ function IssueCard({ issue, recordCategories, firstCategories }: { issue: Record
     : [row['Name'], row['Type of Line'], row['Description of World First'], row['Date']];
 
   return (
-    <div className={`border rounded-lg p-3 stack gap-2 text-sm ${issue.resolved ? 'border-gray-100 opacity-60' : 'border-gray-200'}`}>
+    <div className={`border rounded-lg p-3 stack gap-2 text-sm ${issue.resolved ? 'border-default opacity-60' : 'border-default'}`}>
       <div className="flex justify-between gap-2 flex-wrap">
         <span className="font-medium">{REASON_LABELS[issue.reason]} · {issue.kind} · Cert {issue.certId}</span>
-        {issue.resolved && <span className="text-xs text-green-700">Resolved</span>}
+        {issue.resolved && <span className="text-xs text-success">Resolved</span>}
       </div>
-      <span className="text-gray-700">{issue.detail}</span>
-      <span className="text-gray-500">{summary.filter(Boolean).join(' · ')}</span>
+      <span className="text-default">{issue.detail}</span>
+      <span className="text-muted">{summary.filter(Boolean).join(' · ')}</span>
       {issue.entryId && !NOT_IMPORTED.includes(issue.reason) && (
-        <Link href={`/admin/records-review/${issue.kind}/${issue.entryId}`} className="text-blue-600 hover:underline">Open the entry</Link>
+        <Link href={`/admin/records-review/${issue.kind}/${issue.entryId}`} className="text-link hover:underline">Open the entry</Link>
       )}
       {error && <Alert variant="danger">{error}</Alert>}
 
@@ -150,7 +150,7 @@ export default function ImportIssueList({ issues, recordCategories, firstCategor
         </select>
         <label className="flex gap-1 items-center"><input type="checkbox" checked={showResolved} onChange={() => setShowResolved(!showResolved)} /> Show resolved</label>
       </div>
-      {shown.length === 0 ? <p className="text-gray-600">Nothing to review.</p> : shown.map(issue => (
+      {shown.length === 0 ? <p className="text-default">Nothing to review.</p> : shown.map(issue => (
         <IssueCard key={issue.sortKey} issue={issue} recordCategories={recordCategories} firstCategories={firstCategories} />
       ))}
     </div>

@@ -26,7 +26,7 @@ export default async function MyEventsPage() {
       title="My Events"
       description="Events you have submitted. Submit drafts for admin approval when ready."
     >
-      <section className="p-4 sm:p-0">
+      <section>
         {device?.type === "mobile"
           ? <MyEventsList events={events} />
           : <MyEventsTable events={events} />

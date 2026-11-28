@@ -74,12 +74,12 @@ export default function SubmitEventClient() {
         if (submittedStatus) {
           const isDraft = submittedStatus === 'draft';
           return (
-            <div className={cn(styles.formWrapper, "stack gap-6 items-start p-4 sm:p-0")}>
+            <div className="stack gap-6 items-start">
               <div className="stack gap-2">
                 <h2 className="text-xl font-semibold">
                   {isDraft ? 'Event saved as draft' : 'Event submitted for approval'}
                 </h2>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-default">
                   {isDraft
                     ? <>Your event has been saved as a draft. Go to{" "}
                         <Link href="/events/my-events" className="underline font-medium">My Events</Link>
@@ -115,7 +115,7 @@ export default function SubmitEventClient() {
         const submitting = isSubmitting && submitIntentRef.current === 'pending';
 
         return (
-          <Form className={cn(styles.formWrapper, "stack")}>
+          <Form className="stack">
             {/* Form Header */}
             <Tabs
               aria-label="Submission steps"

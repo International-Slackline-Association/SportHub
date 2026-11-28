@@ -63,7 +63,7 @@ export default function ProfileSection({
   return (
     <div>
       {showSuccess && (
-        <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+        <div className="mb-4 bg-status-success-bg border border-default text-success px-4 py-3 rounded">
           Profile updated successfully!
         </div>
       )}
@@ -71,16 +71,16 @@ export default function ProfileSection({
       <div className="space-y-4">
         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <dt className="text-sm font-medium text-gray-500">Name</dt>
-            <dd className="mt-1 text-sm text-gray-900">{`${name} ${surname || ''}`.trim() || 'Not provided'}</dd>
+            <dt className="text-sm font-medium text-muted">Name</dt>
+            <dd className="mt-1 text-sm text-default">{`${name} ${surname || ''}`.trim() || 'Not provided'}</dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-gray-500">Email</dt>
-            <dd className="mt-1 text-sm text-gray-900">{email || 'Not provided'}</dd>
+            <dt className="text-sm font-medium text-muted">Email</dt>
+            <dd className="mt-1 text-sm text-default">{email || 'Not provided'}</dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-gray-500">Country</dt>
-            <dd className="mt-1 text-sm text-gray-900">
+            <dt className="text-sm font-medium text-muted">Country</dt>
+            <dd className="mt-1 text-sm text-default">
               {countryData ? (
                 <div className="flex items-center gap-2">
                   <CircleFlag countryCode={countryData.code} height={22} width={22} />
@@ -92,25 +92,25 @@ export default function ProfileSection({
             </dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-gray-500">City</dt>
-            <dd className="mt-1 text-sm text-gray-900">{city || 'Not specified'}</dd>
+            <dt className="text-sm font-medium text-muted">City</dt>
+            <dd className="mt-1 text-sm text-default">{city || 'Not specified'}</dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-gray-500">Birthdate</dt>
-            <dd className="mt-1 text-sm text-gray-900">{birthdate || 'Not specified'}</dd>
+            <dt className="text-sm font-medium text-muted">Birthdate</dt>
+            <dd className="mt-1 text-sm text-default">{birthdate || 'Not specified'}</dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-gray-500">Gender</dt>
-            <dd className="mt-1 text-sm text-gray-900 capitalize">{gender || 'Not specified'}</dd>
+            <dt className="text-sm font-medium text-muted">Gender</dt>
+            <dd className="mt-1 text-sm text-default capitalize">{gender || 'Not specified'}</dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-gray-500">Roles</dt>
+            <dt className="text-sm font-medium text-muted">Roles</dt>
             <dd className="mt-1">
               <span
                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                   roles.length > 0
-                    ? 'bg-purple-100 text-purple-800'
-                    : 'bg-gray-100 text-gray-800'
+                    ? 'bg-category-purple-bg text-category-purple-fg'
+                    : 'bg-muted text-default'
                 }`}
               >
                 {rolesLabel(roles)}
@@ -118,19 +118,19 @@ export default function ProfileSection({
             </dd>
           </div>
           {/* <div>
-            <dt className="text-sm font-medium text-gray-500">SportHub User ID</dt>
-            <dd className="mt-1 text-xs text-gray-900 font-mono break-all">{userId}</dd>
+            <dt className="text-sm font-medium text-muted">SportHub User ID</dt>
+            <dd className="mt-1 text-xs text-default font-mono break-all">{userId}</dd>
           </div> */}
           {isaUsersId && (
             <div>
-              <dt className="text-sm font-medium text-gray-500">ISA User ID</dt>
-              <dd className="mt-1 text-xs text-gray-900 font-mono break-all">{isaUsersId}</dd>
+              <dt className="text-sm font-medium text-muted">ISA User ID</dt>
+              <dd className="mt-1 text-xs text-default font-mono break-all">{isaUsersId}</dd>
             </div>
           )}
           {linkEntries.length > 0 && (
             <div className="col-span-full">
-              <dt className="text-sm font-medium text-gray-500 mb-1">Links</dt>
-              <dd className="mt-1 text-sm text-gray-900">
+              <dt className="text-sm font-medium text-muted mb-1">Links</dt>
+              <dd className="mt-1 text-sm text-default">
                 <div className="flex flex-wrap gap-2">
                   {linkEntries.map((url) => (
                     <a
@@ -138,7 +138,7 @@ export default function ProfileSection({
                       href={url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100"
+                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-status-info-bg text-link hover:bg-status-info-bg"
                     >
                       {url}
                     </a>

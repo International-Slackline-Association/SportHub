@@ -1,7 +1,6 @@
 @import 'tailwindcss';
-/* Onsight tokens and component classes. The Tailwind theme stays out until default color classes are gone. */
 @import '@slacklineinternational/onsight/fonts.css';
-@import '@slacklineinternational/onsight/tokens.css';
+@import '@slacklineinternational/onsight/tailwind.css';
 @import '@slacklineinternational/onsight/components.css' layer(components);
 /* Tailwind's margin reset drops the browser's dialog centering, and a stretched
    height pins the dialog to the top. Fit the content and let auto margins center it. */
@@ -13,131 +12,17 @@
 @tailwind components;
 @tailwind utilities;
 
-@font-face {
-  font-family: "Metropolis";
-  src: url("/fonts/metropolis/Metropolis-Regular.otf") format("opentype");
-  font-weight: normal;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "Metropolis";
-  src: url("/fonts/metropolis/Metropolis-Bold.otf") format("opentype");
-  font-weight: bold;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "Metropolis";
-  src: url("/fonts/metropolis/Metropolis-SemiBold.otf") format("opentype");
-  font-weight: semi-bold;
-  font-style: normal;
-}
-
-:root {
-  --color-primary: #009F9A; /* ISA Green */
-  --color-primary-dark: #0A6564;
-  --color-neutral-50: #FBFBFB;
-  --color-neutral-100: #F7F7F7;
-  --color-neutral-200: #E8E8E8;
-  --color-neutral-300: #DEDEDE;
-  --color-neutral-400: #B5B5B5;
-  --color-neutral-500: #8E8E8E;
-  --color-neutral-600: #707070;
-  --color-neutral-700: #5E5E5E;
-  --color-neutral-800: #454545;
-  --color-neutral-900: #353535;
-  --color-neutral-950: #252525;
-  --color-green-50: #EFFEFC;
-  --color-green-100: #C7FFF7;
-  --color-green-200: #90FFEF;
-  --color-green-300: #51F7E7;
-  --color-green-400: #1DE4D6;
-  --color-green-500: #04C8BD;
-  --color-green-600: #009F9A;
-  --color-green-700: #05807D;
-  --color-green-800: #0A6564;
-  --color-green-900: #0D5453;
-  --color-green-950: #003133;
-  --color-red-50: #FFF3F1;
-  --color-red-100: #FFE4E0;
-  --color-red-200: #FFCFC7;
-  --color-red-300: #FFADA0;
-  --color-red-400: #FF7D69;
-  --color-red-500: #F9543A;
-  --color-red-600: #E84026;
-  --color-red-700: #C22A13;
-  --color-red-800: #A12613;
-  --color-red-900: #852617;
-  --color-red-950: #490F06;
-
-  --color-blue-100: #DCE7FD;
-  --color-blue-600: #3259E7;
-  --color-green-100: #D7F4E4;
-  --color-green-600: #1B805F;
-  --color-orange-100: #FFE5DB;
-  --color-orange-600: #BE4E26;
-  --color-pink-100: #FDF2F9;
-  --color-pink-600: #E0218A;
-  --color-teal-100: #F2FCFF;
-  --color-teal-600: #4D9EB7;
-  --color-purple-100: #E9E4FF;
-  --color-purple-600: #796EA9;
-  --color-yellow-100: #FFF0C6;
-  --color-yellow-600: #DD6702;
-  --color-violet-100: #D8D4FF;
-  --color-violet-600: #8966FF;
-
-  --font-metropolis: "Metropolis", sans-serif;
-
-  --font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-
 html {
   height: 100%;
 }
 
 body {
-  background-color: white;
-  color: var(--color-neutral-700);
-  font-family: var(--font-inter);
+  background-color: var(--isa-color-surface-default);
+  color: var(--isa-color-text-default);
+  font-family: var(--isa-font-family-body);
   margin: 0;
   padding: 0;
-  /* Allow body to shrink below 692px to prevent horizontal scroll issues */
-  min-width: 320px; /* Standard mobile minimum width */
-}
-
-/* Fluid Typography - scales smoothly between mobile and desktop */
-h1 {
-  color: var(--color-neutral-600);
-  font-weight: 700;
-  font-size: clamp(1.5rem, 4vw + 1rem, 2rem); /* 24px -> 32px */
-  line-height: 1.2;
-}
-
-h2 {
-  color: var(--color-neutral-600);
-  font-weight: 700;
-  font-size: clamp(1.25rem, 3vw + 0.5rem, 1.75rem); /* 20px -> 28px */
-  line-height: 1.3;
-}
-
-h3 {
-  color: var(--color-neutral-700);
-  font-weight: 700;
-  font-size: clamp(1.125rem, 2.5vw + 0.5rem, 1.25rem); /* 18px -> 20px */
-  line-height: 1.4;
-}
-
-h1, h2, h3, h4 {
-  font-family: var(--font-metropolis);
-}
-
-p {
-  color: var(--color-neutral-500);
-  font-weight: 400;
-  font-size: clamp(0.875rem, 1vw + 0.5rem, 1rem); /* 14px -> 16px */
-  line-height: 1.6;
+  min-width: 320px;
 }
 
 /* This rule is unlayered, so it beats Onsight's error color, which lives in
@@ -162,12 +47,13 @@ li.isa-autocomplete__option {
   display: block;
 }
 
-figcaption {
-  color: var(--color-neutral-600);
-  display: block;
-  font-weight: lighter;
-  font-size: 12px;
-  text-align: center;
+/* The home hero stacks two pictures to crossfade. Onsight sizes every img in
+   the figure, which fights that stack. */
+.isa-hero .relative img {
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  border-radius: 0;
 }
 
 .stack {
@@ -180,16 +66,31 @@ figcaption {
   flex-direction: row;
 }
 
-main {
-  padding: 0;
-  margin: 0;
-  max-width: 100%;
+/* Sport Hub footer: links left, logo right. Grid beats Onsight's column flex in
+   the components layer; a wrapped flex row was pushing the logo under the nav. */
+footer.isa-footer.sport-hub-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--isa-space-8);
+  row-gap: var(--isa-space-6);
+}
 
-  @media (min-width: 40rem) {  /* --breakpoint-sm: Large phones/tablets */
-    /* Ensure main content is centered when viewport is wider than minimum */
-    margin: 0 auto;
-    max-width: min(87.5rem, 95vw); /* Responsive maximum width */
-    min-width: stretch;
-    padding: 2.5rem 2.5rem 3.75rem; /* Convert to rem units */
-  }
+footer.isa-footer.sport-hub-footer > nav {
+  grid-column: 1;
+  min-width: 0;
+}
+
+footer.isa-footer.sport-hub-footer .isa-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--isa-space-1) var(--isa-space-6);
+}
+
+footer.isa-footer.sport-hub-footer .sport-hub-footer__brand {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  align-self: center;
 }

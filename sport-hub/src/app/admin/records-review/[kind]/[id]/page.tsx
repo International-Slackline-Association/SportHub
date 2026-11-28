@@ -26,8 +26,8 @@ const countryName = (country?: string) => (country && getCountryByCode(country)?
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   if (children === undefined || children === null || children === '') return null;
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-1 py-1 border-b border-gray-100">
-      <span className="text-sm text-gray-500">{label}</span>
+    <div className="grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-1 py-1 border-b border-default">
+      <span className="text-sm text-muted">{label}</span>
       <span className="text-sm whitespace-pre-wrap">{children}</span>
     </div>
   );
@@ -50,21 +50,21 @@ export default async function ReviewClaimPage({ params }: Props) {
 
   return (
     <PageLayout title={entry.kind === 'first' ? `First: ${entry.trickName}` : `Record: ${entry.categoryName}`}>
-      <section className="p-4 sm:p-0 flex gap-3 items-center flex-wrap">
+      <section className="flex gap-3 items-center flex-wrap">
         <Button as={Link} href="/admin/records-review" variant="secondary" size="small">Back to the review queue</Button>
-        <Link href={`/admin/records-manage/${entry.kind === 'first' ? 'firsts' : 'records'}`} className="text-blue-600 hover:underline text-sm">All {entry.kind === 'first' ? 'firsts' : 'records'}</Link>
+        <Link href={`/admin/records-manage/${entry.kind === 'first' ? 'firsts' : 'records'}`} className="text-link hover:underline text-sm">All {entry.kind === 'first' ? 'firsts' : 'records'}</Link>
         <ClaimStatusBadge status={entry.status} />
-        <span className="text-sm text-gray-600">Gender: {GENDER_LABELS[entry.gender]}</span>
-        {entry.source === 'import' && <span className="text-sm text-gray-500">Imported from the sheet</span>}
+        <span className="text-sm text-default">Gender: {GENDER_LABELS[entry.gender]}</span>
+        {entry.source === 'import' && <span className="text-sm text-muted">Imported from the sheet</span>}
       </section>
 
       {unchallengedPrompt && (
-        <section className="p-4 sm:p-0">
+        <section>
           <Alert variant="warning">This category is Unchallenged and already has an achievement. If this claim equals or beats it, approving makes the whole category Active and its best performances World Records.</Alert>
         </section>
       )}
 
-      <section className="p-4 sm:p-0 grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
+      <section className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
         <div className="stack gap-6">
           <div className="stack">
             <h3 className="text-lg font-semibold mb-2">Claim</h3>
@@ -90,11 +90,11 @@ export default async function ReviewClaimPage({ params }: Props) {
             <Row label="Athletes">
               {entry.athletes.map((a, i) => (
                 <span key={i} className="block">
-                  {a.userId ? <Link href={`/athlete/${a.userId}`} className="text-blue-600 hover:underline">{a.name}</Link> : a.name}
+                  {a.userId ? <Link href={`/athlete/${a.userId}`} className="text-link hover:underline">{a.name}</Link> : a.name}
                   {` · ${a.gender === 'MEN' ? 'male' : 'female'}`}{a.country ? ` · ${countryName(a.country)}` : ''}
                   {a.pendingUser && ` · new athlete (${a.pendingUser.email}), profile created on approval`}
                   {entryHasCertificate(entry, entry.kind === 'record' ? (category as RecordCategoryTableItem | null)?.status : undefined) && (
-                    <> · <a href={`/api/certificates/${entry.kind}/${entry.entryId}?athlete=${i}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">certificate</a></>
+                    <> · <a href={`/api/certificates/${entry.kind}/${entry.entryId}?athlete=${i}`} target="_blank" rel="noreferrer" className="text-link hover:underline">certificate</a></>
                   )}
                 </span>
               ))}
@@ -110,19 +110,19 @@ export default async function ReviewClaimPage({ params }: Props) {
               </>
             )}
             <Row label="Witnesses">
-              {entry.witnesses?.length ? entry.witnesses.map((w, i) => <span key={i} className="block">{[w.name, w.email, w.phone, w.contact, w.role].filter(Boolean).join(' · ')}</span>) : <span className="text-gray-500">None named</span>}
+              {entry.witnesses?.length ? entry.witnesses.map((w, i) => <span key={i} className="block">{[w.name, w.email, w.phone, w.contact, w.role].filter(Boolean).join(' · ')}</span>) : <span className="text-muted">None named</span>}
             </Row>
             <Row label="Evidence folder">
-              {folderUrl ? <a href={folderUrl} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">Open in Google Drive</a> : undefined}
+              {folderUrl ? <a href={folderUrl} target="_blank" rel="noreferrer" className="text-link hover:underline">Open in Google Drive</a> : undefined}
             </Row>
             <Row label="Evidence">
               {entry.evidence.length > 0 ? entry.evidence.map(e => (
                 <span key={e.driveFileId ?? e.url} className="block">
                   {(e.description ?? e.label) && <span>{e.description ?? e.label}: </span>}
-                  <a href={e.url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline break-all">
+                  <a href={e.url} target="_blank" rel="noreferrer" className="text-link hover:underline break-all">
                     {e.type === 'file' ? e.fileName : e.url}
                   </a>
-                  {e.type === 'file' && <span className="text-gray-500"> (file, {formatFileSize(e.size)})</span>}
+                  {e.type === 'file' && <span className="text-muted"> (file, {formatFileSize(e.size)})</span>}
                 </span>
               )) : undefined}
             </Row>
@@ -134,11 +134,11 @@ export default async function ReviewClaimPage({ params }: Props) {
 
           <div className="stack gap-2">
             <h3 className="text-lg font-semibold">History</h3>
-            {audit.length === 0 ? <p className="text-sm text-gray-500">No entries.</p> : (
+            {audit.length === 0 ? <p className="text-sm text-muted">No entries.</p> : (
               <ul className="text-sm stack gap-1">
                 {audit.map(a => (
                   <li key={a.sortKey}>
-                    <span className="text-gray-500">{new Date(a.at).toISOString().slice(0, 16).replace('T', ' ')}</span>{' '}
+                    <span className="text-muted">{new Date(a.at).toISOString().slice(0, 16).replace('T', ' ')}</span>{' '}
                     <strong>{a.action.replace(/_/g, ' ')}</strong>{a.byName && ` by ${a.byName}`}{a.comment && `: ${a.comment}`}
                   </li>
                 ))}
@@ -165,7 +165,7 @@ export default async function ReviewClaimPage({ params }: Props) {
           {entry.kind === 'record' && (
             <div className="stack gap-2">
               <h3 className="font-semibold">Current records in this category</h3>
-              {isNewCategory ? <p className="text-sm text-gray-500">New category, no records yet.</p> : RECORD_GENDERS.map(list => (
+              {isNewCategory ? <p className="text-sm text-muted">New category, no records yet.</p> : RECORD_GENDERS.map(list => (
                 <div key={list} className="text-sm">
                   <span className="font-medium">{GENDER_TITLE_LABELS[list]}:</span>{' '}
                   {currentByGender[list] ? `${currentByGender[list]!.value} by ${currentByGender[list]!.holders.join(', ')} (${formatISODay(currentByGender[list]!.date)})` : 'none'}
@@ -178,7 +178,7 @@ export default async function ReviewClaimPage({ params }: Props) {
             <div className="stack gap-2">
               <h3 className="font-semibold">{entry.kind === 'first' ? 'Firsts in this discipline' : 'Similar categories'}</h3>
               <ul className="text-sm stack gap-1 max-h-80 overflow-auto">
-                {similar.map(s => <li key={s.id}>{s.label}{s.detail && <span className="text-gray-500"> · {s.detail}</span>}</li>)}
+                {similar.map(s => <li key={s.id}>{s.label}{s.detail && <span className="text-muted"> · {s.detail}</span>}</li>)}
               </ul>
             </div>
           )}

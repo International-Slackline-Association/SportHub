@@ -98,7 +98,7 @@ const columns = [
       return (
         <div className="stack">
           <div className="cluster justify-between items-center gap-2">
-            <span className="text-xs text-gray-400">{date}</span>
+            <span className="text-xs text-muted">{date}</span>
             <TitleBadge title={title} standing={standing} />
           </div>
           <span className="font-medium pb-2">{categoryName}</span>

@@ -17,7 +17,7 @@ const labelOf = (opts: Option[], val: string | undefined) =>
 const Row = ({ label, value }: { label: string; value: ReactNode }) => (
   value ? (
     <div className="flex gap-2 text-sm">
-      <span className="text-gray-500 min-w-32 shrink-0">{label}</span>
+      <span className="text-muted min-w-32 shrink-0">{label}</span>
       <span>{value}</span>
     </div>
   ) : null
@@ -29,7 +29,7 @@ const ContestSummary = ({ contest, idx, values }: { contest: ContestFormValues; 
   const results = contest.results ?? [];
 
   return (
-    <div className="border border-gray-200 rounded-lg p-4 stack gap-2">
+    <div className="border border-default rounded-lg p-4 stack gap-2">
       <h4 className="font-semibold text-sm">{name || `Contest ${idx + 1}`}</h4>
       <div className="stack gap-1">
         <Row label="Discipline" value={labelOf(disciplineOptions, contest.discipline)} />
@@ -55,7 +55,7 @@ const ContestSummary = ({ contest, idx, values }: { contest: ContestFormValues; 
                     ? `${j.pendingUser.name} ${j.pendingUser.surname} (new)`
                     : j.name || j.userId
                 ).join(", ")
-              : <span className="text-gray-400">None added</span>
+              : <span className="text-muted">None added</span>
           }
         />
         <Row
@@ -63,14 +63,14 @@ const ContestSummary = ({ contest, idx, values }: { contest: ContestFormValues; 
           value={
             results.length
               ? `${results.length} athlete${results.length === 1 ? "" : "s"}`
-              : <span className="text-gray-400">None added</span>
+              : <span className="text-muted">None added</span>
           }
         />
         {results.length > 0 && (
           <div className="mt-2 overflow-x-auto">
             <table className="text-xs w-full">
               <thead>
-                <tr className="text-gray-500 border-b border-gray-100">
+                <tr className="text-muted border-b border-default">
                   <th className="text-left py-1 pr-3 font-medium">Rank</th>
                   <th className="text-left py-1 pr-3 font-medium">Athlete</th>
                   <th className="text-right py-1 font-medium">ISA pts</th>
@@ -78,11 +78,11 @@ const ContestSummary = ({ contest, idx, values }: { contest: ContestFormValues; 
               </thead>
               <tbody>
                 {results.map((r: ContestResult, i: number) => (
-                  <tr key={i} className="border-b border-gray-50">
+                  <tr key={i} className="border-b border-default">
                     <td className="py-1 pr-3">{r.rank}</td>
                     <td className="py-1 pr-3">
                       {r.pendingUser
-                        ? <>{r.pendingUser.name} {r.pendingUser.surname}{" "}<span className="text-amber-600 font-medium">(new)</span></>
+                        ? <>{r.pendingUser.name} {r.pendingUser.surname}{" "}<span className="text-status-warning-fg font-medium">(new)</span></>
                         : r.name || r.id || "—"}
                     </td>
                     <td className="py-1 text-right">{r.isaPoints}</td>
@@ -104,11 +104,11 @@ export const ReviewEventForm = () => {
   const countryName = COUNTRIES.find(c => c.code === event.country)?.name ?? event.country;
 
   return (
-    <div className="stack gap-6 p-4 sm:p-0">
+    <div className="stack gap-6">
 
       {/* Event details */}
       <section className="stack gap-3">
-        <h3 className="font-semibold border-b border-gray-200 pb-2">Event Details</h3>
+        <h3 className="font-semibold border-b border-default pb-2">Event Details</h3>
         <div className="stack gap-1">
           <div className="text-base font-medium">{event.eventName || "—"}</div>
           <Row label="Dates" value={[event.startDate, event.endDate].filter(Boolean).join(" – ")} />
@@ -133,11 +133,11 @@ export const ReviewEventForm = () => {
 
       {/* Contests */}
       <section className="stack gap-3">
-        <h3 className="font-semibold border-b border-gray-200 pb-2">
+        <h3 className="font-semibold border-b border-default pb-2">
           Contests ({contests.length})
         </h3>
         {contests.length === 0 ? (
-          <p className="text-sm text-gray-400">No contests added.</p>
+          <p className="text-sm text-muted">No contests added.</p>
         ) : (
           <div className="stack gap-3">
             {contests.map((contest, idx) => (
@@ -148,7 +148,7 @@ export const ReviewEventForm = () => {
       </section>
 
       {/* Submission note */}
-      <div className="text-sm text-gray-500 border border-gray-200 rounded-lg p-3 bg-gray-50">
+      <div className="text-sm text-muted border border-default rounded-lg p-3 bg-subtle">
         Submitting will save this event as a <strong>draft</strong>. An admin must approve it before it appears publicly on the site.
       </div>
 

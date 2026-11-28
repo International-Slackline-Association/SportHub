@@ -27,14 +27,14 @@ interface CurrentUserPanelProps {
 export default function CurrentUserPanel({ session, dbUser }: CurrentUserPanelProps) {
   if (!session) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-semibold text-yellow-800 mb-2">Not Signed In</h2>
-        <p className="text-yellow-700">
+      <div className="bg-status-warning-bg border border-strong rounded-lg p-6 mb-6">
+        <h2 className="text-xl font-semibold text-status-warning-fg mb-2">Not Signed In</h2>
+        <p className="text-status-warning-fg">
           Sign in to see your session and database information.
         </p>
         <a
           href="/auth/signin"
-          className="inline-block mt-3 px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+          className="inline-block mt-3 px-4 py-2 bg-status-warning-bg text-inverse rounded hover:bg-status-warning-bg"
         >
           Sign In
         </a>
@@ -48,37 +48,37 @@ export default function CurrentUserPanel({ session, dbUser }: CurrentUserPanelPr
   const permissions = permissionsOf(session.user.roles);
 
   return (
-    <div className="bg-white rounded-lg shadow-md mb-6 overflow-hidden">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
-        <h2 className="text-xl font-semibold text-white">Current User</h2>
+    <div className="bg-default rounded-lg shadow-md mb-6 overflow-hidden">
+      <div className="bg-gradient-to-r from-action-primary-bg to-action-primary-bg-hover px-6 py-4">
+        <h2 className="text-xl font-semibold text-inverse">Current User</h2>
       </div>
 
       <div className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Session Info */}
           <div>
-            <h3 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+            <h3 className="font-medium text-default mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 bg-action-primary-bg rounded-full"></span>
               Session Info
             </h3>
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <dt className="text-gray-500">User ID</dt>
-                <dd className="font-mono text-gray-900 text-xs truncate max-w-[200px]" title={session.user.id}>
+                <dt className="text-muted">User ID</dt>
+                <dd className="font-mono text-default text-xs truncate max-w-[200px]" title={session.user.id}>
                   {session.user.id}
                 </dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-500">Email</dt>
-                <dd className="text-gray-900">{session.user.email}</dd>
+                <dt className="text-muted">Email</dt>
+                <dd className="text-default">{session.user.email}</dd>
               </div>
               <div className="flex justify-between items-center">
-                <dt className="text-gray-500">Role</dt>
+                <dt className="text-muted">Role</dt>
                 <dd>
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                     session.user.roles.length > 0
-                      ? 'bg-purple-100 text-purple-800'
-                      : 'bg-gray-100 text-gray-700'
+                      ? 'bg-category-purple-bg text-category-purple-fg'
+                      : 'bg-muted text-default'
                   }`}>
                     {sessionRole}
                   </span>
@@ -86,8 +86,8 @@ export default function CurrentUserPanel({ session, dbUser }: CurrentUserPanelPr
               </div>
               {session.user.cognitoSub && (
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Cognito Sub</dt>
-                  <dd className="font-mono text-gray-500 text-xs truncate max-w-[200px]" title={session.user.cognitoSub}>
+                  <dt className="text-muted">Cognito Sub</dt>
+                  <dd className="font-mono text-muted text-xs truncate max-w-[200px]" title={session.user.cognitoSub}>
                     {session.user.cognitoSub}
                   </dd>
                 </div>
@@ -97,60 +97,60 @@ export default function CurrentUserPanel({ session, dbUser }: CurrentUserPanelPr
 
           {/* Database Info */}
           <div>
-            <h3 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${dbUser ? 'bg-blue-500' : 'bg-red-500'}`}></span>
+            <h3 className="font-medium text-default mb-3 flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${dbUser ? 'bg-action-primary-bg' : 'bg-action-danger-bg'}`}></span>
               Database Record
             </h3>
             {dbUser ? (
               <dl className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Name</dt>
-                  <dd className="text-gray-900">{`${dbUser.name} ${dbUser.surname || ''}`.trim()}</dd>
+                  <dt className="text-muted">Name</dt>
+                  <dd className="text-default">{`${dbUser.name} ${dbUser.surname || ''}`.trim()}</dd>
                 </div>
                 {dbUser.isaUsersId && (
                   <div className="flex justify-between">
-                    <dt className="text-gray-500">ISA User ID</dt>
-                    <dd className="font-mono text-gray-900 text-xs">{dbUser.isaUsersId}</dd>
+                    <dt className="text-muted">ISA User ID</dt>
+                    <dd className="font-mono text-default text-xs">{dbUser.isaUsersId}</dd>
                   </div>
                 )}
                 {dbUser.country && (
                   <div className="flex justify-between">
-                    <dt className="text-gray-500">Country</dt>
-                    <dd className="text-gray-900">{dbUser.country}</dd>
+                    <dt className="text-muted">Country</dt>
+                    <dd className="text-default">{dbUser.country}</dd>
                   </div>
                 )}
                 {dbUser.city && (
                   <div className="flex justify-between">
-                    <dt className="text-gray-500">City</dt>
-                    <dd className="text-gray-900">{dbUser.city}</dd>
+                    <dt className="text-muted">City</dt>
+                    <dd className="text-default">{dbUser.city}</dd>
                   </div>
                 )}
                 {dbUser.birthdate && (
                   <div className="flex justify-between">
-                    <dt className="text-gray-500">Birthdate</dt>
-                    <dd className="text-gray-900">{dbUser.birthdate}</dd>
+                    <dt className="text-muted">Birthdate</dt>
+                    <dd className="text-default">{dbUser.birthdate}</dd>
                   </div>
                 )}
                 {dbUser.gender && (
                   <div className="flex justify-between">
-                    <dt className="text-gray-500">Gender</dt>
-                    <dd className="text-gray-900 capitalize">{dbUser.gender}</dd>
+                    <dt className="text-muted">Gender</dt>
+                    <dd className="text-default capitalize">{dbUser.gender}</dd>
                   </div>
                 )}
                 <div className="flex justify-between items-center">
-                  <dt className="text-gray-500">Role</dt>
+                  <dt className="text-muted">Role</dt>
                   <dd>
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                       !!dbUser?.roles?.length
-                        ? 'bg-purple-100 text-purple-800'
-                        : 'bg-gray-100 text-gray-700'
+                        ? 'bg-category-purple-bg text-category-purple-fg'
+                        : 'bg-muted text-default'
                     }`}>
                       {dbRole}
                     </span>
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Sub-Types</dt>
+                  <dt className="text-muted">Sub-Types</dt>
                   <dd className="flex gap-1 flex-wrap justify-end">
                     {dbUser.userSubTypes && dbUser.userSubTypes.length > 0 ? (
                       dbUser.userSubTypes.map(st => (
@@ -158,21 +158,21 @@ export default function CurrentUserPanel({ session, dbUser }: CurrentUserPanelPr
                           key={st}
                           className={`px-2 py-0.5 rounded text-xs ${
                             st === dbUser.primarySubType
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-600'
+                              ? 'bg-status-success-bg text-success'
+                              : 'bg-muted text-default'
                           }`}
                         >
                           {st}
                         </span>
                       ))
                     ) : (
-                      <span className="text-gray-400">None</span>
+                      <span className="text-muted">None</span>
                     )}
                   </dd>
                 </div>
               </dl>
             ) : (
-              <p className="text-sm text-red-600">
+              <p className="text-sm text-danger">
                 User not found in database
               </p>
             )}
@@ -181,8 +181,8 @@ export default function CurrentUserPanel({ session, dbUser }: CurrentUserPanelPr
 
         {/* Role Mismatch Warning */}
         {roleMismatch && (
-          <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-sm text-yellow-800">
+          <div className="mt-4 bg-status-warning-bg border border-strong rounded-lg p-4">
+            <p className="text-sm text-status-warning-fg">
               <strong>Role Mismatch:</strong> Session roles ({sessionRole}) differ from database roles ({dbRole}).
               Sign out and back in to refresh your session.
             </p>
@@ -191,20 +191,20 @@ export default function CurrentUserPanel({ session, dbUser }: CurrentUserPanelPr
 
         {/* Permissions */}
         <div className="mt-6 pt-4 border-t">
-          <h3 className="font-medium text-gray-700 mb-3">Permissions</h3>
+          <h3 className="font-medium text-default mb-3">Permissions</h3>
           {permissions.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {permissions.map((perm: Permission) => (
                 <span
                   key={perm}
-                  className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-mono"
+                  className="px-2 py-1 bg-status-info-bg text-link rounded text-xs font-mono"
                 >
                   {perm}
                 </span>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted">
               No special permissions. Users can access public content and edit their own profile.
             </p>
           )}
@@ -212,10 +212,10 @@ export default function CurrentUserPanel({ session, dbUser }: CurrentUserPanelPr
 
         {/* Debug: Full Session */}
         <details className="mt-4">
-          <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
+          <summary className="cursor-pointer text-sm text-muted hover:text-default">
             View Full Session Object
           </summary>
-          <pre className="mt-2 p-3 bg-gray-900 text-gray-100 rounded text-xs overflow-auto max-h-48">
+          <pre className="mt-2 p-3 bg-inverse text-inverse rounded text-xs overflow-auto max-h-48">
             {JSON.stringify(session, null, 2)}
           </pre>
         </details>
